@@ -155,7 +155,7 @@ This enables, for example, a parameter set describing a mutant to be combined wi
 set derived by optimization for the same model.
 
 \subsection{Model specificity}
-\label{specificity}
+\label{sec:specificity}
 A parameter set may or may not be specific to a given source model.  A parameter set should
 have an optional field that refers to a specific model.  It is not clear whether the standard
 should or can enforce the correct use of this field.  The use of this field enables a target
@@ -168,7 +168,7 @@ cases a parameter set may be a ``database'' of values taken form experiments tha
 applied to several models.
 
 \subsection{Parameter Sets as Independent Data Stores}
-
+\label{sec:datastore}
 Whilst parameter sets primarily are used as transformations on source models, they should support
 reading and writing operations on the parameter set.  Ideally these operations should be possible
 without reference to a source model.  For example given the identifier for a species it should be
@@ -397,10 +397,108 @@ The advantages of using XSLT are:
 \item all other requirements of parameter sets are met by XSLT.
 \end{itemize}
 
-\subsection{Non-Generic Format}
+\subsection{Model Composition}
+
+An alternative approach would be to use the model composition proposal~\citep{finney:2003b}
+as an implementation of parameter sets.  The requirements of model composition do overlap with that
+of parameter sets: in both cases an overloading mechanism is needed.  However model composition is
+always applied to specific submodels whereas parameter sets do not always specify the model that they
+are applied to (see section~\ref{sec:specificity}).  Therefore we describe here a small modification to
+the \class{Instance} type in the model composition to assist the use of model composition as an
+implementation for parameter sets.
+
+The new form of \class{Instance} is shown in the UML diagram in figure~\ref{fig:instance}.
+
+\begin{figure}[h]
+  \vspace*{8pt}
+  \centering
+  \includegraphics[scale = 0.7]{instance}
+  \caption{The revised \class{Instance} type}
+  \label{fig:instance}
+\end{figure}
+
+In the revised type the XLink attributes are optional.  A \class{Instance} structure which does not
+include these attributes is applied to a submodel supplied by the parsing environment.
+
+As an example of this revised form of model composition being used to implement parameter sets
+here are the parameter sets corresponding the XSLT transformations given above.
+First a parameter set overloading the initial concentrations of species \texttt{P0} and \texttt{C}.
+This example uses unlocated species to supply the initial species concentrations.
+
+\begin{example}
+<?xml version="1.0"?>
+<sbml xmlns="http://www.sbml.org/sbml/level3" version="1" level="3">
+    <model id="parameter_set">
+        <listOfSpecies>
+            <species id="P0" initialAmount=10"/>
+            <species id="C" initialAmount="5"/>
+        </listOfSpecies>
+        <listOfInstances>
+            <instance id="source"/>
+        </listOfInstances>
+        <listOfLinks>
+            <link>
+                <from object="P0"/>
+                <to object="source">
+                    <subobject object="P0"/>
+                </to>
+            </link>
+            <link>
+                <from object="C"/>
+                <to object="source">
+                    <subobject object="C"/>
+                </to>
+            </link>
+        </listOfLinks>
+    </model>
+</sbml>
+\end{example}
+
+The following example shows how the previous example cascaded can be overloaded.
+
+\begin{example}
+<?xml version="1.0"?>
+<sbml xmlns="http://www.sbml.org/sbml/level3" version="1" level="3">
+    <model id="cascading_set">
+        <listOfSpecies>
+            <species id="C" initialAmount="20"/>
+        </listOfSpecies>
+        <listOfParameters>
+            <parameter id="J23__V_24" value="1.2"/>
+        </listOfParameters>
+        <listOfInstances>
+            <instance id="outer_source" xsl:type="simple" xsl:href="justa.xml"/>
+        </listOfInstances>
+        <listOfLinks>
+            <link>
+                <from object="C"/>
+                <to object="source">
+                    <subobject object="C"/>
+                </to>
+            </link>
+            <link>
+                <from object="J23__V_24"/>
+                <to object="outer_source">
+                    <subobject="source">
+                        <subobject object="J23">
+                            <subobject object="V_24"/>
+                        </subobject>
+                    </subobject>
+                </to>
+            </link>
+        </listOfLinks>
+    </model>
+</sbml>
+\end{example}
+
+The first \texttt{link} element overloads the previous parameter set to
+set the initial concentration of \texttt{C} to 20.  The second \texttt{template} element 
+replaces the value of the \texttt{V\_24} parameter with 1.2.
+
+\subsection{Parameter Set specific Format}
 
 This section describes a new non-generic format for parameter sets as a clear alternative
-to XSLT.
+to XSLT and Model Composition.
 There seems to be little point in developing another generic form like XSLT.
 
 The scope of the format described here allows the initial values of parameters, species

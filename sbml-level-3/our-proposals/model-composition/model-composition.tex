@@ -332,11 +332,13 @@ merges with the object referenced by the \attrib{to} field (\emph{to object}) to
 become the same entity.  These objects are called the referenced objects. 
 The attribute values 
 of the \emph{to object}
-are replaced by those of the \emph{from object}.  The value of an optional attribute without a default
- (e.g. \attrib{initialAmount} on
-\class{Species}) is either taken from the referenced object on which the attribute value is
-supplied or from the \emph{from object} if it is supplied
-by both objects.  Structures (e.g. \class{SpeciesReference}) that refer to either
+are replaced by those of the \emph{from object}.
+%The value of an optional attribute without a default
+% (e.g. \attrib{initialAmount} on
+%\class{Species}) is either taken from the referenced object on which the attribute value is
+%supplied or from the \emph{from object} if it is supplied
+% by both objects.
+ Structures (e.g. \class{SpeciesReference}) that refer to either
 object effectively refer to the combined entity.
 Any assignment rules that control the value of a \emph{from object} replace those
 controlling a \emph{to object}.  The merged entities should obey all the semantic rules
@@ -345,8 +347,10 @@ of SBML Level 2.
 The interpretation of a \class{Link} structure referencing a port is described 
 in section~\ref{sec:ports}.
 
-In any list of links in a model an object cannot be referenced by more than one \class{Link} \attrib{to} field
-i.e. an object can't be overloaded twice at the same level in the instance hierarchy.
+In any list of links in a model an object cannot be referenced by more than one \attrib{to} field in the list.
+i.e. an object can't be overloaded twice at the same level in the instance hierarchy.  However it is possible for an object
+to be referenced by more than one \attrib{from} field in the list i.e. an object can overload more than one object.
+An object can't be referenced from a \attrib{to} field and a \attrib{from} field in the same list.
 
 For example given the following instance in the model above.
 
@@ -641,19 +645,20 @@ Under this proposal, as shown in figure~\ref{fig:model-composition}, types like
 alternative to an existing \class{SId} field.
 
 On \class{Compartment} the \class{ObjectRef} field \attrib{outsideLink}
-is an alternative to the \class{SId} field \attrib{outside}.  Similarly on \class{Species} \attrib{compartmentLink} is an
-alternative to \attrib{compartment} and on \class{SpeciesReference} \attrib{speciesLink} is
-an alternative to \attrib{species}.
+is an alternative to the \class{SId} field \attrib{outside}.  Similarly
+on \class{Species} \attrib{compartmentLink} is an
+alternative to \attrib{compartment}, on \class{SimpleSpeciesReference} \attrib{speciesLink} is
+an alternative to \attrib{species} and
+on \class{SingleVariableRule} \attrib{variableLink} is an alternative to the \attrib{variable}.
 In each of the types one and only one of
 these fields (\class{SId} or \class{ObjectRef}) can have a value.
 For example \class{Species} structures can contain
 a value for \attrib{compartment} or \attrib{compartmentLink} but not both.
-It is possible for both the \class{SId} or \class{ObjectRef} fields to be
-omitted.  The semantics of this case are described in detail in section~\ref{sec:missinglinks}.
-For the moment the case where one of the fields is present is considered.
+It is not possible for both the \class{SId} or \class{ObjectRef} fields to be
+omitted except in the case of the \attrib{outside} and \attrib{outsideLink} fields.
 
 In each case the \class{ObjectRef} field
-can refer to an object of the appropriate type inside any instance: \class{Compartment}
+can refer to an object of the appropriate type inside any instance, for example \class{Compartment}
 in the case of \attrib{compartmentLink} and \attrib{outsideLink}, \class{Species} in the case
 of \attrib{speciesLink}. Section~\ref{sec:egdirectlinks} has an examples of a complete model using these fields.
 
@@ -730,38 +735,6 @@ For example we can extend the previous fragment to contain a simple kinetic law 
 </reaction>
 \end{example}
 
-\subsection{Semantics of Missing Links}
-\label{sec:missinglinks}
-
-\subsubsection{Species}
-
-The figure~\ref{fig:model-composition} shows that the attributes \attrib{compartment} and \attrib{compartmentLink}
-on the \class{Species} type are optional.  Thus it is possible to create a model containing species which are not
-located in a given compartment.  Model composition enables such a model to be used in a submodel so that located
-species are linked to or from the unlocated species.  The result is model in which all the species are correctly located.
-A model which is composed in such a way that species are left unlocated is incomplete.  This feature should
-be used with care.  All unlocated species have eventually to be located by links which limits the utility of this feature.
-There is no concept of a default compartment.  This feature is useful if we wish to use model composition to implement
-parameter sets.
-
-\emph{issue}
-
-Do we really want this?
-
-\subsubsection{SimpleSpeciesReference}
-
-Although figure~\ref{fig:model-composition} shows that the attributes \attrib{species} and \attrib{speciesLink}
-on the \class{SimpleSpeciesReference} type are optional one of these attributes must always be present on
-\class{SimpleSpeciesReference}
-structures.  (There is no mechanism by which these structures can be linked together to ensure that the species
-is referenced correctly).
-
-\subsubsection{Compartment}
-
-The figure~\ref{fig:model-composition} shows that the attributes \attrib{outside} and \attrib{outsideLink}
-on the \class{Compartment} type are optional.  In SBML Level 2 \attrib{outside} is optional and thus
-this attribute's semantics do not change in this proposal
-
 \section{Example of Direct links}
 \label{sec:egdirectlinks}
 
@@ -789,14 +762,14 @@ of the model.
                 <listOfReactants>
                     <speciesReference stoichiometry="1">
                         <speciesLink object="a">
-                            <objectRef object="f"/>
+                            <subobject object="f"/>
                         </speciesLink>
                     </speciesReference>
                 </listOfReactants>
                 <listOfProducts>
                     <speciesReference stoichiometry="1">
                         <speciesLink object="b">
-                            <objectRef object="e"/>
+                            <subobject object="e"/>
                         </speciesLink>
                     </speciesReference>
                 </listOfProducts>

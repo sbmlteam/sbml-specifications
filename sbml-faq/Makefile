@@ -42,8 +42,8 @@ html:
 	/bin/mkdir $(HTML_DIR)
 	/bin/cp $(HTML_EXTRAS) $(HTML_DIR)
 	if /usr/bin/test ! -e cekfaq.perl ; then ln -s ../../tex/cekfaq.perl; fi
-	latex2html -white -split +0 -show_section_numbers -image_type gif \
-		   -short_extn -antialias -no_navigation -local_icons \
+	latex2html -white -split +1 -show_section_numbers -image_type gif \
+		   -short_extn -antialias -local_icons \
 		   -discard -no_auto_link \
 		   -t "SBML Frequently Asked Questions and Answers" \
 		   -mkdir -dir "html" -prefix "sbml-faq-" $(BASENAME)

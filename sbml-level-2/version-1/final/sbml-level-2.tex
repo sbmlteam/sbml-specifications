@@ -14,7 +14,7 @@
 \newcommand{\tm}{\textsuperscript{\tiny{\texttrademark}}}
 
 \pagestyle{myheadings}
-\markboth{\textbf{SBML Level 2 Working Draft}}{\textbf{SBML Level 2 Working Draft}}
+\markboth{\textbf{SBML Level 2 Proposal}}{\textbf{SBML Level 2 Proposal}}
 
 
 \begin{document}
@@ -38,7 +38,7 @@
 
 \acknowledge{Principal Investigators: John Doyle and Hiroaki Kitano}
 
-\date{SBML Level 2, Version 1, Working Draft}
+\date{SBML Level 2, Version 1, Proposal}
 
 \maketitlepage
 
@@ -76,7 +76,7 @@ following simulation systems: \emph{BioSpice}~\citep{arkin:2001},
 and \emph{Virtual Cell}~\citep{schaff:2000,schaff:2001}. SBML was
 developed with the help of the authors of these packages.  In addition SBML Level 2 was developed in close collaboration with the authors of CellML~\citep{Physiome:2001}.
 
-
+We hope to finalize the final form of the core of SBML Level 2 in September 2002. Candidate extensions to SBML for inclusion in Level 2 are outlined in Appendix~\ref{apdx:extensions}.  We anticipate making a final decision on their inclusion in Level 2 at ICSB 2002 in December 2002.
 %-----------------------------------------------------------------------------
 \subsection{Scope and Limitations}
 %-----------------------------------------------------------------------------
@@ -134,11 +134,8 @@ restricted than CellML.
 definitions, of type \class{MathDefinition}, which use MathML. See
 Section~\ref{sec:functions}.
 
-\item \class{Model} has an optional list of \class{Event}
-structures which describe the time and form of explicit instantaneous discontinuous state changes in the model.  See Section~\ref{sec:events}.
-
 \item The main identifier namespace does not contain any built-in
-symbols.  We use a MathML mechanism to refer to two built-in entities: a symbol representing time and a delay function. See Section~\ref{sec:mathmltokens}.
+symbols.  We use a MathML mechanism to refer to one built-in entitiy: a symbol representing time. See Section~\ref{sec:mathmltokens}.
 
 \item Unit identifiers are in a separate namespace from the
 namespace used for models, functions, species, compartments,
@@ -147,7 +144,7 @@ reactions and parameters.
 \item \class{Compartment}, \class{Species} and \class{Parameter}
 structures have boolean \attrib{constant} fields.  These fields
 determine whether the variables represented by these structures
-can be changed by events, rules and reactions.  See
+can be changed by rules and reactions.  See
 Sections~\ref{sec:compartments}, \ref{sec:species}
 and~\ref{sec:parameters}.
 
@@ -248,7 +245,6 @@ simply consists of lists of these components:
         \>list of species (optional)\\
         \>list of parameters (optional)\\
         \>list of rules (optional)\\
-        \>list of events (optional)\\
         \>list of reactions (optional)\\
         end of model definition
       \end{tabbing}
@@ -295,12 +291,6 @@ Level~2
   to the differential equations constructed from the set of reactions and
   can be used to set parameter values, establish constraints between
   quantities, etc.
-
-\item \emph{Event}: A statement that describes both the exact
-point in time, and the form of, a set of discontinuous state
-changes in the model.  For example, an event my describe that one
-species concentration is halved when another species concentration
-exceeds a given threshold value.
 
 \end{description}
 
@@ -652,9 +642,8 @@ namespace rule described here, with each submodel having its own
 Math in SBML Level 2 is expressed using MathML~\citep{w3c:2000b}.
 It is used in the definitions of functions
 (Section~\ref{sec:functions}), kinetic laws
-(Section~\ref{subsec:kinetic-law}), events
-(Section~\ref{sec:events}) and rules (Section~\ref{sec:rules}).
-The \class{KineticLaw}, \class{Rule} and \class{Event} types have
+(Section~\ref{subsec:kinetic-law}), and rules (Section~\ref{sec:rules}).
+The \class{KineticLaw} and \class{Rule} types have
 \class{math} subelements.  A function definition has a single
 MathML \class{lambda} subelement. The URI
 \texttt{http://www.w3.org/1998/Math/MathML} namespace should be used as the namespace for these MathML elements.  A W3C
@@ -741,9 +730,8 @@ URL: in this context the URL should be interpreted as a URI.  The
 content of the \class{csymbol} element is for rendering purposes
 only and can be ignored by a parser.
 
-In SBML Level 2 there are two URLs in the set of predefined SBML symbols:
-\begin{itemize}
-\item \texttt{http://www.sbml.org/symbols/time}, which represents the
+In SBML Level 2 there is one URL in the set of predefined SBML symbols:
+ \texttt{http://www.sbml.org/symbols/time}, which represents the
 current simulation time.  The units of this entity is determined
 from the built-in \texttt{time} of Table~\vref{tab:builtin}.
 
@@ -763,30 +751,6 @@ where $t$ is the built-in symbol for time.
 </math>
 \end{example}
 
-\item \texttt{http://www.sbml.org/symbols/delay}, which represents the function $delay(x, d)$.  The result of this function is the value of $x$ at $d$ time units before the current time.  The units of the $d$ parameter are determined from the built-in \texttt{time} of Table~\vref{tab:builtin}.
-
-As an example the following XML fragment encodes the equation $k + delay(x, 0.1)$ or alternatively $k_t + x_{t - 0.1}$
-
-\begin{example}
-<math xmlns="http://www.w3.org/1998/Math/MathML">
-    <apply>
-        <add/>
-        <ci> k </ci>
-        <apply>
-            <csymbol encoding="SBML"
-                        definitionURL="http://www.sbml.org/symbols/delay">
-                delay
-            </csymbol>
-            <ci> x </ci>
-            <ci> 0.1 </ci>
-        </apply>
-    </apply>
-</math>
-\end{example}
-
-Section~\ref{sec:delayeg} contains an SBML model which uses delay to represent gene expression.
-
-\end{itemize}
 %-----------------------------------------------------------------------
 \subsection{Valid Headers for SBML Level 2}
 \label{sec:header}
@@ -824,7 +788,7 @@ Section~\ref{sec:xml-rep}.
 The \class{Model} structure is the highest-level construct in an
 SBML data stream or document.  It defines a grouping of
 components---the list of math definitions, compartments, species,
-reactions, parameters, events, rules and unit definitions that
+reactions, parameters, rules and unit definitions that
 define a given model. Only one component of type \class{Model} is
 allowed per instance of an SBML document or data stream, although
 it does not necessarily need to represent a single biological
@@ -839,12 +803,7 @@ shown in Figure~\vref{fig:model}.
   \label{fig:model}
 \end{figure}
 
-A \class{Model} data
-object may optionally have lists of \class{Species}, \class{Compartment}, \class{MathDefinition},
-\class{UnitDefinition}, \class{Parameter}, \class{Reaction},
-\class{Event} and \class{Rule} components (they are optional
-because the lists in fields \attrib{species}, \attrib{compartment}, \attrib{mathDefinition}, \attrib{unitDefinition}, \attrib{parameter}, \attrib{reaction}, \attrib{event} and \attrib{rule} are permitted to have zero
-length).
+A \class{Model} data object may optionally have lists of \class{Species}, \class{Compartment}, \class{MathDefinition}, \class{UnitDefinition}, \class{Parameter}, \class{Reaction}, and \class{Rule} components (they are optional because the lists in fields \attrib{species}, \attrib{compartment}, \attrib{mathDefinition}, \attrib{unitDefinition}, \attrib{parameter}, \attrib{reaction}, and \attrib{rule} are permitted to have zero length).
 
 A model may also have an optional \attrib{id} field that can be
 used to assign the model an identifier. The identifier must be a
@@ -856,7 +815,7 @@ section~\ref{sec:idnameattribs}.
 
 In the XML encoding of an SBML model, the lists of species,
 compartments, and optional unit definitions, parameters,
-reactions, math definitions, events and rules, are translated into
+reactions, math definitions and rules, are translated into
 lists of XML elements that each have headings of the form
 \class{listOf}\rule{0.5in}{0.5pt}\class{s}, where the blank is
 replaced by the name of the component type (e.g.,
@@ -883,9 +842,6 @@ form illustrated by the following skeletal model:
     <listOfRules>
         ...
     </listOfRules>
-    <listOfEvents>
-        ...
-    </listOfEvents>
     <listOfReactions>
         ...
     </listOfReactions>
@@ -1138,7 +1094,7 @@ to be calculated in the absence of geometry information. The
 A \class{Compartment} structure has an optional \attrib{constant}
 boolean field which indicates whether the compartment's volume can
 vary during the simulation.  A \texttt{false} value indicates that
-the compartment's volume can be determined by rules and events.
+the compartment's volume can be determined by rules.
 The default value for the \attrib{constant} field is
 \texttt{true}.
 
@@ -1230,7 +1186,7 @@ absent, the units default to the value set by the built-in
 A \class{Species} structure has an optional \attrib{constant}
 boolean field which indicates whether the concentration of the species
 can vary during the simulation.  A \texttt{false} value indicates
-that the species' concentration can be determined by events, rules
+that the species' concentration can be determined by rules
 and reactions. The default value for the \attrib{constant} field
 is \texttt{false}.
 
@@ -1242,8 +1198,9 @@ By default when a species is a product or reactant of one or more reactions the 
   \begin{tabular}{lllll}
     \toprule
     \textbf{\attrib{constant}} & \textbf{\attrib{boundaryCondition}} &
-    \textbf{can have} & \textbf{can be reactant} & \textbf{concentration} \\
-    \textbf{value} & \textbf{value} & \textbf{assignment rule} & \textbf{or product} & \textbf{is changed by} \\
+    \textbf{can have} & \textbf{can be} & \textbf{concentration} \\
+    \textbf{value} & \textbf{value} & \textbf{assignment} & \textbf{reactant or} & \textbf{is changed by} \\
+    & & \textbf{rule} & \textbf{product}\\
     \midrule
     true & true & no & yes & never changes\\
     false & true & yes & yes & rule \\
@@ -1309,7 +1266,7 @@ enclosing \class{Model} structure.
 A \class{Parameter} structure has an optional \attrib{constant}
 boolean field which indicates whether the parameter's value can
 vary during the simulation.  A \texttt{false} value indicates that
-the parameter's value can be determined by rules and events.  The
+the parameter's value can be determined by rules.  The
 default value for the \attrib{constant} field is \texttt{true}.
 
 Parameters are used in two places in SBML: in lists of parameters defined
@@ -1354,30 +1311,33 @@ variables:
 
 \begin{center}
 \begin{tabular}{ll}
-  Case 1, left-hand side is zero:             & $0 = f(X)$\\
-  Case 2, left-hand side is a scalar:         & $x = f(X)$\\
-  Case 3, left-hand side is a rate-of-change: & $dx/dt = f(X)$
+  \emph{Algebraic} rules, left-hand side is zero:             & $0 = f(X)$\\
+  \emph{Scalar} rules, left-hand side is a scalar:         & $x = f(X)$\\
+  \emph{Rate} rules, left-hand side is a rate-of-change: & $dx/dt = f(X)$
 \end{tabular}
 \end{center}
 
 The vector of variables consists of the set of species,
 compartments and parameters.  
 
-As written above there is little to distinguish between the first two categories however the second category is constrained to eliminate algebraic loops amongst the rules in that category. There are no constraints on the rules in the first category.  The constraints on rules are described in more detail in Section~\ref{sec:ruleconstraints}. The distinction between the first two categories is useful for the following reasons:
+SBML specifically does not specify the form of the algorithms that can be applied to rules and reactions.  For example SBML does not specify when or how often rules should be evaluated.  The constraints described by rules and kinetic rate laws are meant to apply collectively to the set of variable values for a specific time.
+
+As written above there is little to distinguish between \emph{scalar} and \emph{algebraic} rules however \emph{scalar} rules are constrained to eliminate algebraic loops amongst the set of \emph{scalar} rules. The constraints on rules are described in more detail in Section~\ref{sec:ruleconstraints}. The distinction between the 
+\emph{algebraic} and \emph{scalar} rules is useful for the following reasons:
 \begin{itemize}
-\item given an incomplete vector of variable values, calculated using numerical methods from the rest of the model, the rules in the second category can be simply evaluated to complete the vector
-\item some simulators don't contain solvers capable of solving unconstrained algebraic equations in the first category,
-\item those simulators that can solve these algebraic equations do make
+\item \emph{scalar} rules can be simply evaluated to calculate values for input into numeric methods.
+\item some simulators don't contain solvers capable of solving unconstrained \emph{algebraic} equations,
+\item those simulators that can solve these \emph{algebraic} equations do make
 a distinction between these categories and
-\item some specialized numeric analyses of Models may only be applicable to models that don't contain rules in the first category
+\item some specialized numeric analyses of models may only be applicable to models that don't contain \emph{algebraic} rules.
 \end{itemize}
 
-Rules can be categorized by the role of the variable $x$ in the
+\emph{Scalar} and \emph{rate} rules are collectively referred to as \emph{assignment} rules.  \emph{Assignment} rules can be categorized by the role of the variable $x$ in the
 equations above: $x$ can be the name of a compartment (to
 constrain its volume), the name of a species (to constrain its
 concentration), or a parameter name (to constrain its value).
 
-The approach taken to covering these cases in SBML is to define an
+The approach taken to covering these forms of equations in SBML is to define an
 abstract \class{Rule} structure that contains just one field,
 \attrib{math}, to hold the right-hand side expression, then to
 derive subtypes of \class{Rule} that add fields to cover the
@@ -1387,7 +1347,7 @@ shows that \class{AlgebraicRule} is defined directly from
 \class{Rule}, whereas \class{CompartmentVolumeRule},
 \class{SpeciesConcentrationRule}, and \class{ParameterRule} are
 all derived from an intermediate abstract structure called
-\class{AssignmentRule}.  \class{AlgebraicRule} represents case 1 above whereas \class{AssignmentRule} represents cases 2 and 3 above.
+\class{AssignmentRule}.  \class{AlgebraicRule} represents \emph{algebric} rules whereas \class{AssignmentRule} represents \emph{assignment} rules.
 
 The \attrib{math} field consists of a MathML \class{math}
 subelement.
@@ -1401,13 +1361,13 @@ subelement.
 
 The \attrib{type} field introduced in \class{AssignmentRule} is an
 enumeration of type \class{RuleType} that determines whether a
-rule falls into category 2 or 3 in the list of cases above.  In
+rule falls into the \emph{scalar} or {rate} categories. In
 SBML Level~2, the enumeration has two possible values:
 ``\class{scalar}'' and ``\class{rate}''.  The former means that
 the expression has a scalar value on the left-hand side (i.e., $x
-= f(X)$, as in case 2 in the list above); the latter means that
+= f(X)$); the latter means that
 the expression has a rate of change differential on the left-hand
-side (i.e. $\frac{d x}{d t} = f(X)$ as in case 3 in the list above). Future releases of SBML may
+side (i.e. $\frac{d x}{d t} = f(X)$). Future releases of SBML may
 add to the possible values of \class{RuleType}.
 
 \subsubsection{\class{AlgebraicRule}}
@@ -1510,6 +1470,8 @@ amongst the scalar rules.  As an example consider the following math, in the ord
   \end{array}
 \end{equation*}
 If this math was interpreted as a set of scalar rules it would be invalid because the rule for $x$ refers to $x$ and the rule for $y$ refers to $z$ before $z$ is defined.
+
+Eliminating these algebraic loops ensures that scalar rules can be evaluated any number of times without the result of those evaluations changing.
 
 \subsubsection{Example of Rule Use}
 
@@ -1622,105 +1584,6 @@ This math is encoded by the following valid scalar rule set:
 %variable values determined by \class{rate} and
 %\class{AlgebraicRule} structures.
 %
-
-%-----------------------------------------------------------------------------
-\subsection{Events}
-\label{sec:events}
-%-----------------------------------------------------------------------------
-
-An \emph{event} represents an entity which can invoke an
-instantaneous discontinuous change in the state of the model. An
-\class{Event} structure defines when the event can occur, which
-variables are affected by the event and how those variables are
-affected.  The effect of the event can optionally be delayed after
-the occurrence of the condition which invokes the event entity.
-The operation of an \class{Event} structure is divided into two
-phases (even when the event is not delayed), one when the event is
-\emph{fired} and the other when the event is \emph{executed}. The
-\class{Event} type is defined in Figure~\vref{fig:event}.  An
-example of a model which uses events is given in
-Section~\ref{sec:eventeg}.
-
-\begin{figure}[htb]
-  \centering
-  \includegraphics[scale = 0.68]{event}
-  \caption{The definitions of \class{Event} and \class{EventAssignment}}
-  \label{fig:event}
-\end{figure}
-
-The following sections describe the fields of the \class{Event}
-structure.
-
-\subsubsection{\attrib{trigger}}
-The \attrib{trigger} field defines when the \class{Event}
-structure has an effect on the model.  The \attrib{trigger} field
-contains a MathML boolean expression.  The exact instant that the
-expression evaluates to true is the time point when the
-\class{Event} is \emph{fired}.  The event only fires when the
-\attrib{trigger} makes the transition from false to true.  The
-event will fire at any further time points when the
-\attrib{trigger} make this transition.
-
-\subsubsection{\attrib{delay}}
-The optional \attrib{delay} field defines the length of time after
-the event has \emph{fired} that the event is \emph{executed}. The
-\attrib{delay} field is another MathML expression.  This
-expression should be evaluated when the rule is \emph{fired}.  The
-default value for the \attrib{delay} field is 0.  The value of the
-\attrib{delay} field should always be positive.
-
-\subsubsection{\attrib{timeUnits}}
-The optional field \attrib{timeUnits} determines the units of time
-that apply to the \attrib{delay} field. If not set, the units are
-taken from the defaults defined by the built-in ``\texttt{time}''
-of Table~\vref{tab:builtin}.
-
-\subsubsection{\attrib{eventAssignment}}
-The \attrib{eventAssignment} field consists of a non-empty list of
-\class{eventAssignment} structures.  This field is implemented as a
-\class{listOfEventAssignments} element containing one or more
-\class{eventAssignment} elements).  The \class{EventAssignment}
-structures represent variable assignments which have effect when
-the event is \emph{executed}. The \class{Assignment} structure is
-shown in Figure~\ref{fig:event}. The \attrib{variable} field is of
-type \class{SId} and contains the identifier of a variable i.e. a
-compartment, species or parameter.  The structures referenced by
-the \attrib{variable} field must have their \attrib{constant}
-fields set to ``\texttt{false}''.  The \attrib{math} field
-contains a MathML expression which defines the new value of the
-variable.  This expression is evaluated when the \class{Event} is
-\emph{fired} but the variable only acquires the result or new
-value when the \class{Event} is \emph{executed}.  The order of the
-\class{EventAssignment} structures is not significant (unlike
-scalar rules), the effect of one assignment cannot affect the
-result of another assignment.  The identifiers occurring in the
-MathML \attrib{ci} fields of the \class{EventAssignment}
-structures represent the value of the identifier at the point when
-the \class{Event} is \emph{fired}.
-
-A example of an \class{Event} structure follows:
-
-\begin{example}
-<event>
-    <trigger>
-        <math:math>
-            <math:apply>
-                <math:leq/>
-                <math:ci> P1 </math:ci>
-                <math:ci> t </math:ci>
-            </math:apply>
-        </math:math>
-    </trigger>
-    <listOfAssignments>
-        <assignment variable="k2">
-            <math:cn> 0 </math:cn>
-        </assignment>
-    <listOfAssignments>
-</event>
-\end{example}
-
-This structure makes the assignment $k_2 = 0$ at the point when
-$P_1 \leq t$.
 
 %-----------------------------------------------------------------------------
 \subsection{Reactions}
@@ -2463,190 +2326,6 @@ The following example SBML model uses this approximate form.
 \end{example}
 
 %-----------------------------------------------------------------------------
-\subsection{Use of $delay$ function in a Model}
-\label{sec:delayeg}
-%-----------------------------------------------------------------------------
-This section contains a simple model which uses the built-in $delay$ function described in Section~\ref{sec:mathmltokens}.  This model represents a gene that suppresses its own expression and consists of the single rule:
-\begin{equation*}
-\frac{d P}{d t} = \frac{ \frac{1}{1 + m (P_{delayed})^q} - P }{ \tau }
-\end{equation*}
-where
-\begin{equation*}
-\begin{array}{rl}
-P_{delayed} & \mbox{is } delay(P, delta_t) \mbox{ or P at } t - delta_t\\
-P & \mbox{is protein concentration}\\
-\tau & \mbox{is response time}\\
-m & \mbox{is multiplier or equilibrium constant}\\
-q & \mbox{is Hill coefficient}\\ 
-\end{array}
-\end{equation*}
-
-The SBML form of this model is as follows:
-\begin{example}
-<?xml version="1.0"?>
-<sbml xmlns="http://www.sbml.org/sbml/level2" version="1" level="2"
-      math:xmlns="http://www.w3.org/1998/Math/MathML">
-    <model>
-        <listOfCompartments>
-            <compartment id="cell"/>
-        </listOfCompartments>
-        <listOfSpecies>
-            <species id="P" compartment="cell" initialAmount="0"/>
-        </listOfSpecies>
-        <listOfParameters>
-            <parameter id="tau" value="1"/>
-            <parameter id="m" value="0.5"/>
-            <parameter id="q" value="1"/>
-            <parameter id="delta_t" value="1"/>
-        </listOfParameters>
-        <listOfRules>
-            <speciesConcentrationRule species="P" type="rate">
-                <math:math>
-                 <math:apply>
-                  <math:divide/>
-                  <math:apply>
-                   <math:minus/
-                   <math:apply>
-                    <math:divide/>
-                    <math:cn> 1 </math:cn>
-                    <math:apply>
-                     <math:add/>
-                     <math:cn> 1 </math:cn>
-                     <math:apply>
-                      <math:times/>
-                      <math:ci> m <math:ci/>
-                      <math:apply>
-                       <math:power/>
-                       <math:apply>
-                        <math:csymbol encoding="SBML"
-    definitionURL="http://www.sbml.org/symbols/delay">
-                            delay
-                        </math:csymbol>
-                        <math:ci> P </math:ci>
-                        <math:ci> delta_t </math:ci>
-                       </math:apply>
-                       <math:ci> q </math:ci>
-                      </math:apply>
-                     </math:apply>
-                    </math:apply>
-                   </math:apply>
-                  </math:apply>
-                  <math:ci> tau </math:ci>
-                 </math:apply>
-                </math:math>
-            </speciesConcentrationRule>
-        </listOfRules>
-    </model>
-</sbml>
-\end{example}
-%-----------------------------------------------------------------------------
-\subsection{Use of Events Feature in a Model}
-\label{sec:eventeg}
-%-----------------------------------------------------------------------------
-This section contains a simple model system that demonstrates the
-use of an events.  Consider a system with two genes: $k_1$ and
-$k_2$.  $k_1$ is initially on and $k_2$ is initially off.  The
-genes when on produce products, $P_1$ and $P_2$ respectively, at a
-fixed rate when switched on.  When $P_1$ reaches a given
-concentration $k_2$ switches.  This can be represented
-mathematically as follows:
-
-\begin{equation*}
-  \begin{array}{l}
-    \frac{d P_1}{d t} = k_1 - P_1\\ \\[-4pt]
-    \frac{d P_2}{d t} = k_2 - P_2\\ \\[-4pt]
-  \end{array}
-\end{equation*}
-when $P_1 > \tau$ then $k_2 = 1$ \\
-when $P_1 \leq \tau$ then $k_2 = 0$ \\
-\\
-initially
-\begin{equation*}
-  \begin{array}{lllll}
-    k_1 = 1 & k_2 = 0 & \tau = 0.25 & P_1 = 0 & P_2 = 0\\ \\[-4pt]
-  \end{array}
-\end{equation*}
-
-The SBML Level 2 representation of this as follows:
-
-\begin{example}
-<?xml version="1.0"?>
-<sbml xmlns="http://www.sbml.org/sbml/level2" version="1" level="2"
-      math:xmlns="http://www.w3.org/1998/Math/MathML">
-    <model>
-        <listOfCompartments>
-            <compartment id="cell"/>
-        </listOfCompartments>
-        <listOfSpecies>
-            <species id="P1" compartment="cell" initialAmount="0"/>
-            <species id="P2" compartment="cell" initialAmount="0"/>
-        </listOfSpecies>
-        <listOfParameters>
-            <parameter id="k1" value="1" constant="false"/>
-            <parameter id="k2" value="0" constant="false"/>
-            <parameter id="tau" value="0.25"/>
-        </listOfParameters>
-        <listOfRules>
-            <speciesConcentrationRule species="P1" type="rate">
-                <math:math>
-                    <math:apply>
-                        <math:minus/>
-                        <math:ci> k1 </math:ci>
-                        <math:ci> P1 </math:ci>
-                        </math:apply>
-                    </math:apply>
-                </math:math>
-            </speciesConcentrationRule>
-            <speciesConcentrationRule species="P2" type="rate">
-                <math:math>
-                    <math:apply>
-                        <math:minus/>
-                        <math:ci> k2 </math:ci>
-                        <math:ci> P2 </math:ci>
-                        </math:apply>
-                    </math:apply>
-                </math:math>
-            </speciesConcentrationRule>
-        </listOfRules>
-        <listOfEvents>
-            <event>
-                <trigger>
-                    <math:math>
-                        <math:apply>
-                            <math:gt/>
-                            <math:ci> P1 </math:ci>
-                            <math:ci> tau </math:ci>
-                        </math:apply>
-                    </math:math>
-                </trigger>
-                <listOfAssignments>
-                    <assignment variable="k2">
-                        <math:cn> 1 </math:cn>
-                    </assignment>
-                <listOfAssignments>
-            </event>
-            <event>
-                <trigger>
-                    <math:math>
-                        <math:apply>
-                            <math:leq/>
-                            <math:ci> P1 </math:ci>
-                            <math:ci> tau </math:ci>
-                        </math:apply>
-                    </math:math>
-                </trigger>
-                <listOfAssignments>
-                    <assignment variable="k2">
-                        <math:cn> 0 </math:cn>
-                    </assignment>
-                <listOfAssignments>
-            </event>
-        </listOfEvents>
-    </model>
-</sbml>
-\end{example}
-
-%-----------------------------------------------------------------------------
 \subsection{Use of Math Definition Feature in a Model}
 \label{sec:functioneg}
 %-----------------------------------------------------------------------------
@@ -2758,10 +2437,9 @@ more powerful, flexible and useful.
 \label{sec:level-3}
 %=============================================================================
 
-As mentioned above, SBML Level 2 is intended to provide the most
-basic foundations for modeling biochemical networks.  A number of
-significant capabilities are lacking from Level~2; these will be
-introduced in higher-level definitions of SBML.  The following
+As mentioned above, SBML Level 2 is intended to provide the foundations for modeling biochemical networks.  A number of
+significant capabilities are lacking from Level~2 as described in the main part of this document.  Appendix~\ref{apdx:extensions} contains extensions that could be included in SBML Level 2 (for consideration before the end of 2002). Other features will be
+introduced in future levels of SBML.  The following
 summarizes additional features that under consideration to be
 included in SBML Level~3:
 \begin{itemize}
@@ -2817,6 +2495,7 @@ Conditional rules would enable the expression of the following example maths:
 \end{array}
 \end{equation*}
 where $s$ is not determined by the rule when $s \leq 0$.
+\item \emph{\class{SpeciesAmountRule}}.  This feature would introduce the type \class{SpeciesAmountRule} which would enable the expression of rules that determine the amount of species rather than their concentration.
 \end{itemize}
 %=============================================================================
 \subsection{Relationships to Other Efforts}
@@ -2937,6 +2616,321 @@ especially the authors of BioSpice, DBSolve, Cellerator, COPASI, E-Cell, Gepasi,
 \section{Appendix}
 \setcounter{secnumdepth}{2}
 \appendix
+%=============================================================================
+\section{Candidate Extensions to SBML Level 2}
+\label{apdx:extensions}
+%=============================================================================
+This section describes features for possible inclusion in SBML Level 2.
+
+%-----------------------------------------------------------------------------
+\subsection{Delay function}
+\label{sec:delay}
+%-----------------------------------------------------------------------------
+
+In addition to the built-in symbol to represent time described in Section~\ref{sec:mathmltokens} we propose the additional built-in symbol \texttt{http://www.sbml.org/symbols/delay}, which represents the function $delay(x, d)$.  The result of this function is the value of $x$ at $d$ time units before the current time.  The units of the $d$ parameter are determined from the built-in \texttt{time} of Table~\vref{tab:builtin}.
+
+As an example the following XML fragment encodes the equation $k + delay(x, 0.1)$ or alternatively $k_t + x_{t - 0.1}$
+
+\begin{example}
+<math xmlns="http://www.w3.org/1998/Math/MathML">
+    <apply>
+        <add/>
+        <ci> k </ci>
+        <apply>
+            <csymbol encoding="SBML"
+                        definitionURL="http://www.sbml.org/symbols/delay">
+                delay
+            </csymbol>
+            <ci> x </ci>
+            <ci> 0.1 </ci>
+        </apply>
+    </apply>
+</math>
+\end{example}
+
+%-----------------------------------------------------------------------------
+\subsubsection{Discussion}
+\label{sec:delaydiscuss}
+%-----------------------------------------------------------------------------
+We believe that the \texttt{delay} function is useful for representing biological processes which have a delayed response but where the detail of those processes is not relevant to the function of a given model.  The classic example of such a process is gene expression.  To facilitate this kind of model XPP~\citep{ermentrout:2001} includes a \texttt{delay} function.
+%-----------------------------------------------------------------------------
+\subsubsection{Use of $delay$ function in a Model}
+\label{sec:delayeg}
+%-----------------------------------------------------------------------------
+This section contains a simple model which uses the built-in $delay$ function described above.  This model represents a gene that suppresses its own expression and consists of the single rule:
+\begin{equation*}
+\frac{d P}{d t} = \frac{ \frac{1}{1 + m (P_{delayed})^q} - P }{ \tau }
+\end{equation*}
+where
+\begin{equation*}
+\begin{array}{rl}
+P_{delayed} & \mbox{is } delay(P, delta_t) \mbox{ or P at } t - delta_t\\
+P & \mbox{is protein concentration}\\
+\tau & \mbox{is response time}\\
+m & \mbox{is multiplier or equilibrium constant}\\
+q & \mbox{is Hill coefficient}\\ 
+\end{array}
+\end{equation*}
+
+The SBML form of this model is as follows:
+\begin{example}
+<?xml version="1.0"?>
+<sbml xmlns="http://www.sbml.org/sbml/level2" version="1" level="2"
+      math:xmlns="http://www.w3.org/1998/Math/MathML">
+    <model>
+        <listOfCompartments>
+            <compartment id="cell"/>
+        </listOfCompartments>
+        <listOfSpecies>
+            <species id="P" compartment="cell" initialAmount="0"/>
+        </listOfSpecies>
+        <listOfParameters>
+            <parameter id="tau" value="1"/>
+            <parameter id="m" value="0.5"/>
+            <parameter id="q" value="1"/>
+            <parameter id="delta_t" value="1"/>
+        </listOfParameters>
+        <listOfRules>
+            <speciesConcentrationRule species="P" type="rate">
+                <math:math>
+                 <math:apply>
+                  <math:divide/>
+                  <math:apply>
+                   <math:minus/
+                   <math:apply>
+                    <math:divide/>
+                    <math:cn> 1 </math:cn>
+                    <math:apply>
+                     <math:add/>
+                     <math:cn> 1 </math:cn>
+                     <math:apply>
+                      <math:times/>
+                      <math:ci> m <math:ci/>
+                      <math:apply>
+                       <math:power/>
+                       <math:apply>
+                        <math:csymbol encoding="SBML"
+    definitionURL="http://www.sbml.org/symbols/delay">
+                            delay
+                        </math:csymbol>
+                        <math:ci> P </math:ci>
+                        <math:ci> delta_t </math:ci>
+                       </math:apply>
+                       <math:ci> q </math:ci>
+                      </math:apply>
+                     </math:apply>
+                    </math:apply>
+                   </math:apply>
+                  </math:apply>
+                  <math:ci> tau </math:ci>
+                 </math:apply>
+                </math:math>
+            </speciesConcentrationRule>
+        </listOfRules>
+    </model>
+</sbml>
+\end{example}
+
+%-----------------------------------------------------------------------------
+\subsection{Events}
+\label{sec:events}
+%-----------------------------------------------------------------------------
+
+Under this proposal \class{Model} has an optional list of \class{Event} structures which describe the time and form of explicit instantaneous discontinuous state changes in the model.  For example, an event may describe that one species concentration is halved when another species concentration exceeds a given threshold value.  An \class{Event} structure defines when the event can occur, which variables are affected by the event and how those variables are affected. The effect of the event can optionally be delayed after the occurrence of the condition which invokes the event. The operation of an \class{Event} structure is divided into two phases (even when the event is not delayed), one when the event is \emph{fired} and the other when the event is \emph{executed}. The \class{Event} type is defined in Figure~\vref{fig:event}.  Both \class{Event} and \class{EventAssignment} are derived from \class{SBase} (see Section~\ref{sec:sbase}).  An example of a model which uses events is given below.
+
+\begin{figure}[htb]
+  \centering
+  \includegraphics[scale = 0.68]{event}
+  \caption{The definitions of \class{Event} and \class{EventAssignment}}
+  \label{fig:event}
+\end{figure}
+
+The following sections describe the fields of the \class{Event}
+structure.
+
+\subsubsection{\attrib{trigger}}
+The \attrib{trigger} field defines when the \class{Event}
+structure has an effect on the model.  The \attrib{trigger} field
+contains a MathML boolean expression.  The exact instant that the
+expression evaluates to true is the time point when the
+\class{Event} is \emph{fired}.  The event only fires when the
+\attrib{trigger} makes the transition from false to true.  The
+event will fire at any further time points when the
+\attrib{trigger} make this transition.
+
+\subsubsection{\attrib{delay}}
+The optional \attrib{delay} field defines the length of time after
+the event has \emph{fired} that the event is \emph{executed}. The
+\attrib{delay} field is another MathML expression.  This
+expression should be evaluated when the rule is \emph{fired}.  The
+default value for the \attrib{delay} field is 0.  The value of the
+\attrib{delay} field should always be positive.
+
+\subsubsection{\attrib{timeUnits}}
+The optional field \attrib{timeUnits} determines the units of time
+that apply to the \attrib{delay} field. If not set, the units are
+taken from the defaults defined by the built-in ``\texttt{time}''
+of Table~\vref{tab:builtin}.
+
+\subsubsection{\attrib{eventAssignment}}
+The \attrib{eventAssignment} field consists of a non-empty list of
+\class{eventAssignment} structures.  This field is implemented as a
+\class{listOfEventAssignments} element containing one or more
+\class{eventAssignment} elements).  The \class{EventAssignment}
+structures represent variable assignments which have effect when
+the event is \emph{executed}. The \class{Assignment} structure is
+shown in Figure~\ref{fig:event}. The \attrib{variable} field is of
+type \class{SId} and contains the identifier of a variable i.e. a
+compartment, species or parameter.  The structures referenced by
+the \attrib{variable} field must have their \attrib{constant}
+fields set to ``\texttt{false}''.  The \attrib{math} field
+contains a MathML expression which defines the new value of the
+variable.  This expression is evaluated when the \class{Event} is
+\emph{fired} but the variable only acquires the result or new
+value when the \class{Event} is \emph{executed}.  The order of the
+\class{EventAssignment} structures is not significant (unlike
+scalar rules), the effect of one assignment cannot affect the
+result of another assignment.  The identifiers occurring in the
+MathML \attrib{ci} fields of the \class{EventAssignment}
+structures represent the value of the identifier at the point when
+the \class{Event} is \emph{fired}.
+
+A example of an \class{Event} structure follows:
+
+\begin{example}
+<event>
+    <trigger>
+        <math:math>
+            <math:apply>
+                <math:leq/>
+                <math:ci> P1 </math:ci>
+                <math:ci> t </math:ci>
+            </math:apply>
+        </math:math>
+    </trigger>
+    <listOfAssignments>
+        <assignment variable="k2">
+            <math:cn> 0 </math:cn>
+        </assignment>
+    <listOfAssignments>
+</event>
+\end{example}
+
+This structure makes the assignment $k_2 = 0$ at the point when
+$P_1 \leq t$.
+
+%-----------------------------------------------------------------------------
+\subsubsection{Discussion}
+\label{sec:eventdiscuss}
+%-----------------------------------------------------------------------------
+The requirement for the event feature arises when attempting to represent a cell cycle model~\citep{novak:2001} in XPP~\citep{ermentrout:2001}.  This model uses the \texttt{global} XPP keyword, which is similar to the proposed SBML \class{Event} type, to describe how cell mass is halved when cell division occurs in response to M-phase promoting factor.
+%-----------------------------------------------------------------------------
+\subsubsection{Use of Events Feature in a Model}
+\label{sec:eventeg}
+%-----------------------------------------------------------------------------
+This section contains a simple model system that demonstrates the
+use of an events.  Consider a system with two genes: $k_1$ and
+$k_2$.  $k_1$ is initially on and $k_2$ is initially off.  The
+genes when on produce products, $P_1$ and $P_2$ respectively, at a
+fixed rate when switched on.  When $P_1$ reaches a given
+concentration $k_2$ switches.  This can be represented
+mathematically as follows:
+
+\begin{equation*}
+  \begin{array}{l}
+    \frac{d P_1}{d t} = k_1 - P_1\\ \\[-4pt]
+    \frac{d P_2}{d t} = k_2 - P_2\\ \\[-4pt]
+  \end{array}
+\end{equation*}
+when $P_1 > \tau$ then $k_2 = 1$ \\
+when $P_1 \leq \tau$ then $k_2 = 0$ \\
+\\
+initially
+\begin{equation*}
+  \begin{array}{lllll}
+    k_1 = 1 & k_2 = 0 & \tau = 0.25 & P_1 = 0 & P_2 = 0\\ \\[-4pt]
+  \end{array}
+\end{equation*}
+
+The SBML Level 2 representation of this as follows:
+
+\begin{example}
+<?xml version="1.0"?>
+<sbml xmlns="http://www.sbml.org/sbml/level2" version="1" level="2"
+      math:xmlns="http://www.w3.org/1998/Math/MathML">
+    <model>
+        <listOfCompartments>
+            <compartment id="cell"/>
+        </listOfCompartments>
+        <listOfSpecies>
+            <species id="P1" compartment="cell" initialAmount="0"/>
+            <species id="P2" compartment="cell" initialAmount="0"/>
+        </listOfSpecies>
+        <listOfParameters>
+            <parameter id="k1" value="1" constant="false"/>
+            <parameter id="k2" value="0" constant="false"/>
+            <parameter id="tau" value="0.25"/>
+        </listOfParameters>
+        <listOfRules>
+            <speciesConcentrationRule species="P1" type="rate">
+                <math:math>
+                    <math:apply>
+                        <math:minus/>
+                        <math:ci> k1 </math:ci>
+                        <math:ci> P1 </math:ci>
+                        </math:apply>
+                    </math:apply>
+                </math:math>
+            </speciesConcentrationRule>
+            <speciesConcentrationRule species="P2" type="rate">
+                <math:math>
+                    <math:apply>
+                        <math:minus/>
+                        <math:ci> k2 </math:ci>
+                        <math:ci> P2 </math:ci>
+                        </math:apply>
+                    </math:apply>
+                </math:math>
+            </speciesConcentrationRule>
+        </listOfRules>
+        <listOfEvents>
+            <event>
+                <trigger>
+                    <math:math>
+                        <math:apply>
+                            <math:gt/>
+                            <math:ci> P1 </math:ci>
+                            <math:ci> tau </math:ci>
+                        </math:apply>
+                    </math:math>
+                </trigger>
+                <listOfAssignments>
+                    <assignment variable="k2">
+                        <math:cn> 1 </math:cn>
+                    </assignment>
+                <listOfAssignments>
+            </event>
+            <event>
+                <trigger>
+                    <math:math>
+                        <math:apply>
+                            <math:leq/>
+                            <math:ci> P1 </math:ci>
+                            <math:ci> tau </math:ci>
+                        </math:apply>
+                    </math:math>
+                </trigger>
+                <listOfAssignments>
+                    <assignment variable="k2">
+                        <math:cn> 0 </math:cn>
+                    </assignment>
+                <listOfAssignments>
+            </event>
+        </listOfEvents>
+    </model>
+</sbml>
+\end{example}
+
 %=============================================================================
 \section{Summary of Notation}
 \label{apdx:notation}

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<xsd:schema targetNamespace="http://www.sbml.org/sbml/level2" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns="http://www.sbml.org/sbml/level2" elementFormDefault="qualified" attributeFormDefault="unqualified" version="$Version$">
+<xsd:schema targetNamespace="http://www.sbml.org/sbml/level2" xmlns="http://www.sbml.org/sbml/level2" xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified" version="$Version$">
 	<xsd:import namespace="http://www.w3.org/1998/Math/MathML" schemaLocation="http://www.w3.org/Math/XMLSchema/mathml2/mathml2.xsd"/>
 	<xsd:annotation>
 		<xsd:documentation>
@@ -102,11 +102,9 @@
 			<xsd:enumeration value="katal"/>
 			<xsd:enumeration value="kelvin"/>
 			<xsd:enumeration value="kilogram"/>
-			<xsd:enumeration value="liter"/>
 			<xsd:enumeration value="litre"/>
 			<xsd:enumeration value="lumen"/>
 			<xsd:enumeration value="lux"/>
-			<xsd:enumeration value="meter"/>
 			<xsd:enumeration value="metre"/>
 			<xsd:enumeration value="mole"/>
 			<xsd:enumeration value="newton"/>
@@ -130,6 +128,8 @@
 				<xsd:attribute name="kind" type="UnitKind" use="required"/>
 				<xsd:attribute name="exponent" type="xsd:integer" default="1"/>
 				<xsd:attribute name="scale" type="xsd:integer" default="0"/>
+				<xsd:attribute name="multiplier" type="xsd:double" default="1"/>
+				<xsd:attribute name="offset" type="xsd:double" default="0"/>
 			</xsd:extension>
 		</xsd:complexContent>
 	</xsd:complexType>
@@ -138,16 +138,16 @@
 		<xsd:complexContent>
 			<xsd:extension base="SBase">
 				<xsd:sequence>
-					<xsd:element name="unit" type="Unit" minOccurs="1" maxOccurs="unbounded"/>
+					<xsd:element name="unit" type="Unit" maxOccurs="unbounded"/>
 				</xsd:sequence>
 			</xsd:extension>
 		</xsd:complexContent>
-	</xsd:complexType>	
+	</xsd:complexType>
 	<xsd:complexType name="UnitDefinition">
 		<xsd:complexContent>
 			<xsd:extension base="SBase">
 				<xsd:sequence>
-					<xsd:element name="listOfUnits" type="ListOfUnits" minOccurs="1"/>
+					<xsd:element name="listOfUnits" type="ListOfUnits"/>
 				</xsd:sequence>
 				<xsd:attribute name="id" type="SId" use="required"/>
 				<xsd:attribute name="name" type="xsd:string" use="optional"/>
@@ -160,7 +160,15 @@
 			<xsd:extension base="SBase">
 				<xsd:attribute name="id" type="SId" use="required"/>
 				<xsd:attribute name="name" type="xsd:string" use="optional"/>
-				<xsd:attribute name="volume" type="xsd:double"/>
+				<xsd:attribute name="size" type="xsd:double" use="optional"/>
+				<xsd:attribute name="spatialDimensions" use="optional" default="3">
+					<xsd:simpleType>
+						<xsd:restriction base="xsd:integer">
+							<xsd:minInclusive value="0"/>
+							<xsd:maxInclusive value="3"/>
+						</xsd:restriction>
+					</xsd:simpleType>
+				</xsd:attribute>
 				<xsd:attribute name="units" type="SId" use="optional"/>
 				<xsd:attribute name="outside" type="SId" use="optional"/>
 				<xsd:attribute name="constant" type="xsd:boolean" use="optional" default="true"/>
@@ -175,6 +183,7 @@
 				<xsd:attribute name="name" type="xsd:string" use="optional"/>
 				<xsd:attribute name="compartment" type="SId"/>
 				<xsd:attribute name="initialAmount" type="xsd:double" use="optional"/>
+				<xsd:attribute name="initialConcentration" type="xsd:double" use="optional"/>
 				<xsd:attribute name="units" type="SId" use="optional"/>
 				<xsd:attribute name="boundaryCondition" type="xsd:boolean" use="optional" default="false"/>
 				<xsd:attribute name="charge" type="xsd:integer" use="optional"/>
@@ -198,18 +207,12 @@
 		<xsd:complexContent>
 			<xsd:extension base="SBase">
 				<xsd:sequence>
-					<xsd:element name="parameter" type="Parameter" minOccurs="1" maxOccurs="unbounded"/>
+					<xsd:element name="parameter" type="Parameter" maxOccurs="unbounded"/>
 				</xsd:sequence>
 			</xsd:extension>
 		</xsd:complexContent>
-	</xsd:complexType>	
+	</xsd:complexType>
 	<!--The definition of Rule follows. -->
-	<xsd:simpleType name="RuleType">
-		<xsd:restriction base="xsd:string">
-			<xsd:enumeration value="scalar"/>
-			<xsd:enumeration value="rate"/>
-		</xsd:restriction>
-	</xsd:simpleType>
 	<xsd:complexType name="Rule" abstract="true">
 		<xsd:complexContent>
 			<xsd:extension base="SBase">
@@ -228,7 +231,13 @@
 		<xsd:complexContent>
 			<xsd:extension base="Rule">
 				<xsd:attribute name="variable" type="SId" use="required"/>
-				<xsd:attribute name="type" type="RuleType" default="scalar"/>
+			</xsd:extension>
+		</xsd:complexContent>
+	</xsd:complexType>
+	<xsd:complexType name="RateRule">
+		<xsd:complexContent>
+			<xsd:extension base="Rule">
+				<xsd:attribute name="variable" type="SId" use="required"/>
 			</xsd:extension>
 		</xsd:complexContent>
 	</xsd:complexType>
@@ -261,24 +270,25 @@
 		<xsd:complexContent>
 			<xsd:extension base="SBase">
 				<xsd:sequence>
-					<xsd:element name="modifierSpeciesReference" type="ModifierSpeciesReference" minOccurs="1" maxOccurs="unbounded"/>
+					<xsd:element name="modifierSpeciesReference" type="ModifierSpeciesReference" maxOccurs="unbounded"/>
 				</xsd:sequence>
 			</xsd:extension>
 		</xsd:complexContent>
-	</xsd:complexType>	
+	</xsd:complexType>
 	<xsd:complexType name="SpeciesReference">
 		<xsd:complexContent>
 			<xsd:extension base="SimpleSpeciesReference">
-				<xsd:attribute name="stoichiometry" type="xsd:positiveInteger" use="optional" default="1"/>
-				<xsd:attribute name="denominator" type="xsd:positiveInteger" use="optional" default="1"/>
+					<xsd:sequence>
+						<xsd:element ref="mml:math" minOccurs="0"/>
+					</xsd:sequence>
 			</xsd:extension>
 		</xsd:complexContent>
-	</xsd:complexType>	
+	</xsd:complexType>
 	<xsd:complexType name="ListOfSpeciesReferences">
 		<xsd:complexContent>
 			<xsd:extension base="SBase">
 				<xsd:sequence>
-					<xsd:element name="speciesReference" type="SpeciesReference" minOccurs="1" maxOccurs="unbounded"/>
+					<xsd:element name="speciesReference" type="SpeciesReference" maxOccurs="unbounded"/>
 				</xsd:sequence>
 			</xsd:extension>
 		</xsd:complexContent>
@@ -288,7 +298,7 @@
 			<xsd:extension base="SBase">
 				<xsd:sequence>
 					<xsd:element name="listOfReactants" type="ListOfSpeciesReferences" minOccurs="0"/>
-					<xsd:element name="listOfProducts"  type="ListOfSpeciesReferences" minOccurs="0"/>
+					<xsd:element name="listOfProducts" type="ListOfSpeciesReferences" minOccurs="0"/>
 					<xsd:element name="listOfModifiers" type="ListOfModifierSpeciesReferences" minOccurs="0"/>
 					<xsd:element name="kineticLaw" type="KineticLaw" minOccurs="0"/>
 				</xsd:sequence>
@@ -314,11 +324,11 @@
 		<xsd:complexContent>
 			<xsd:extension base="SBase">
 				<xsd:sequence>
-					<xsd:element name="eventAssignment" type="EventAssignment" minOccurs="1" maxOccurs="unbounded"/>
+					<xsd:element name="eventAssignment" type="EventAssignment" maxOccurs="unbounded"/>
 				</xsd:sequence>
 			</xsd:extension>
 		</xsd:complexContent>
-	</xsd:complexType>	
+	</xsd:complexType>
 	<xsd:complexType name="MathField">
 		<xsd:complexContent>
 			<xsd:extension base="SBase">
@@ -327,15 +337,17 @@
 				</xsd:sequence>
 			</xsd:extension>
 		</xsd:complexContent>
-	</xsd:complexType>	
+	</xsd:complexType>
 	<xsd:complexType name="Event">
 		<xsd:complexContent>
 			<xsd:extension base="SBase">
 				<xsd:sequence>
 					<xsd:element name="trigger" type="MathField"/>
 					<xsd:element name="delay" type="MathField" minOccurs="0"/>
-					<xsd:element name="listOfEventAssignments" type="ListOfEventAssignments" minOccurs="1"/>
+					<xsd:element name="listOfEventAssignments" type="ListOfEventAssignments"/>
 				</xsd:sequence>
+				<xsd:attribute name="id" type="SId" use="optional"/>
+				<xsd:attribute name="name" type="xsd:string" use="optional"/>
 				<xsd:attribute name="timeUnits" type="SId" use="optional"/>
 			</xsd:extension>
 		</xsd:complexContent>
@@ -407,6 +419,7 @@
 									<xsd:choice maxOccurs="unbounded">
 										<xsd:element name="algebraicRule" type="AlgebraicRule" minOccurs="0"/>
 										<xsd:element name="assignmentRule" type="AssignmentRule" minOccurs="0"/>
+										<xsd:element name="rateRule" type="RateRule" minOccurs="0"/>
 									</xsd:choice>
 								</xsd:extension>
 							</xsd:complexContent>

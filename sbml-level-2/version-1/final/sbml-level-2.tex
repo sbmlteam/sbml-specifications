@@ -116,7 +116,7 @@ and from SBML, use a suitable transmission medium and protocol, etc., but
 these issues are outside of the scope of this document.
 
 %-----------------------------------------------------------------------------
-\subsection{Differences between Level 1 Version 1 and Level 2}
+\subsection{Differences between Level 1 Version 2 and Level 2}
 %-----------------------------------------------------------------------------
 
 Compared to SBML Level 1 Version 2, SBML Level 2 introduces the following
@@ -213,16 +213,16 @@ changes:
   carried over from Level~1, to set the values in terms of amounts.
   (Section~\ref{sec:species}.)
  
-\item The rule structures are simpler compared to SBML Level~1.  The new
-  structures \class{AssignmentRule} and \class{RateRule} replace Level~1's
+\item The rule structures are simpler compared to SBML Level~1.
+  There is no \attrib{type} attribute on \class{Rule}.  The new
+  structures \class{AssignmentRule} and \class{RateRule} replace
   \class{ParameterRule}, \class{SpeciesConcentrationRule} and
-  \class{CompartmentVolumeRule}, and there is no \attrib{type} attribute on
-  \class{Rule}. (Section~\ref{sec:rules}.)
+  \class{CompartmentVolumeRule} from  Level~1. (Section~\ref{sec:rules}.)
   
 \item The \class{Reaction} structure has a new list of \emph{modifiers} in
   addition to the list of reactants and products.  The
   \attrib{listOfModifiers} enumerates species that affect a reaction but
-  are neither created nor destroyed by the reaction.  (See
+  are neither created nor destroyed by the reaction.  (
   Section~\ref{sec:reactions}.)
 
 \end{itemize}
@@ -1145,8 +1145,11 @@ $meter\ second^{\,-2}$ is constructed by combining a \class{Unit}-type
 element representing $meter$ with a \class{Unit}-type element representing
 $second^{\,-2}$.  The \class{Unit} data structure has one required field,
 \attrib{kind}, whose value must be taken from \class{UnitKind}, an
-enumeration of units.  The possible values of \class{UnitKind} are listed
-in Table~\vref{tab:unitkind}.
+enumeration of units.  This means thats the unit definition feature in SBML
+is not hierarchial: unit definitions cannot be composed from other unit
+definitions.  SBML differs from CellML in this respect: CellML does allow
+the construction of hierarchial unit definitions.  The possible values of
+\class{UnitKind} are listed in Table~\vref{tab:unitkind}.
 
 \begin{table}[bh]
   \centering
@@ -1256,11 +1259,11 @@ used should be the designated defaults.
     \toprule
     \textbf{Name} & \textbf{Default Units}\\
     \midrule
-    \texttt{substance}	& mole\\
-    \texttt{volume}	& litre\\
-    \texttt{area}	& square metre\\
-    \texttt{length}	& metre\\
-    \texttt{time}	& second\\
+    \texttt{substance}  & mole\\
+    \texttt{volume} & litre\\
+    \texttt{area}   & square metre\\
+    \texttt{length} & metre\\
+    \texttt{time}   & second\\
     \bottomrule
   \end{tabular}
   \caption{SBML's built-in quantities.  Each of these units has a default
@@ -1628,9 +1631,9 @@ variable, $f$ is some arbitrary function, and $W$ is a vector of variables
 that may include $x$):
 \begin{center}
 \begin{tabular}{rll}
-(Algebraic rule) 	& left-hand side is zero:             & $0 = f(W)$\\
-(Assignment rules) 	& left-hand side is a scalar:         & $x = f(W)$\\
-(Rate rule) 		& left-hand side is a rate-of-change: & $dx/dt = f(W)$
+(Algebraic rule)    & left-hand side is zero:             & $0 = f(W)$\\
+(Assignment rules)  & left-hand side is a scalar:         & $x = f(W)$\\
+(Rate rule)         & left-hand side is a rate-of-change: & $dx/dt = f(W)$
 \end{tabular}
 \end{center}
 
@@ -1696,7 +1699,8 @@ on which variable is being set:
   
 \item \emph{In the case of a species}: the rule sets the referenced
   species's concentration to the value determined by the formula in
-  \attrib{math}.  The units are in terms of $substance/size$, where the
+  \attrib{math}.  We use the term `concentration' broadly here so that
+  the units for the rule are in terms of $substance/size$, where the
   $size$ units are either $volume$, $area$ or $length$ when the species'
   compartment spatial dimension is 3, 2 or 1 respectively.  If the
   compartment's spatial dimension is 0 then the rule's units are
@@ -1745,8 +1749,8 @@ variable is being set:
 \begin{itemize}
   
 \item \emph{In the case of a species}: the rule sets the rate of change of the species's
-  concentration to the value determined by the formula.  The units are in
-  terms of $substance/size/time$, where the $size$
+  concentration to the value determined by the formula.  We use the term `concentration'
+  broadly here so that the units are in terms of $substance/size/time$, where the $size$
   units are either $volume$, $area$ or $length$ when the species' compartment spatial
   dimension is 3, 2 or 1 respectively.  If the compartment's spatial dimension is 0 then
   the rule's units are $substance$. 
@@ -1828,11 +1832,11 @@ This section contains an example set of rules.  Consider the following
 set of equations:
 \begin{equation*}
   \begin{array}{lll}
-    k = \D\frac{k_3}{k_2}, & s_2 = \D\frac{k t}{1 + k_2}, & A = 0.10 t
+    k = \D\frac{k_3}{k_2}, & s_2 = \D\frac{k x}{1 + k_2}, & A = 0.10 x
   \end{array}
 \end{equation*}
 This can be encoded by the following scalar rule set (where the definitions
-of \texttt{s}, \texttt{k}, \texttt{k2}, \texttt{k3} and \texttt{A} are
+of \texttt{x}, \texttt{s}, \texttt{k}, \texttt{k2}, \texttt{k3} and \texttt{A} are
 assumed to be located elsewhere in the model and not shown here):
 \begin{example}
 <model>
@@ -1855,7 +1859,7 @@ assumed to be located elsewhere in the model and not shown here):
         <assignmentRule variable="s2">
             <notes>
                 <xhtml:p>
-                    s2 = (k * t)/(1 + k2)
+                    s2 = (k * x)/(1 + k2)
                 </xhtml:p>
             </notes>
             <math xmlns="http://www.w3.org/1998/Math/MathML">
@@ -1864,7 +1868,7 @@ assumed to be located elsewhere in the model and not shown here):
                     <apply>
                         <times/>
                         <ci> k </ci>
-                        <ci> t </ci>
+                        <ci> x </ci>
                     </apply>
                     <apply>
                         <plus/>
@@ -1877,14 +1881,14 @@ assumed to be located elsewhere in the model and not shown here):
         <assignmentRule variable="A">
             <notes>
                 <xhtml:p>
-                    A = 0.10 * t
+                    A = 0.10 * x
                 </xhtml:p>
             </notes>
             <math xmlns="http://www.w3.org/1998/Math/MathML">
                 <apply>
                     <times/>
                     <cn> 0.10 </cn>
-                    <ci> t </ci>
+                    <ci> x </ci>
                 </apply>
             </math>
         </assignmentRule>
@@ -2019,19 +2023,16 @@ in Figure~\vref{fig:reaction}.
 
 In \class{SpeciesReference}, the field \attrib{species} of type \class{SId}
 must refer to the name of an existing species defined in the enclosing
-\class{Model}-type structure.  Stoichiometric numbers for the products and
-reactants can be specified using two optional attributes on the
-\attrib{speciesReference} element: \attrib{stoichiometry} and
-\attrib{denominator}.  Both attributes take positive integers as values,
-and both have default values of ``\class{1}'' (one).  The absolute value of
-the stoichiometric number is the value of \attrib{stoichiometry} divided by
-\attrib{denominator}, and the sign is implicit from the role of the species
-(i.e., negative for reactants and positive for products).  The use of
-separate numerator and denominator terms allows a simulator to employ
-rational arithmetic if it is capable of it, potentially reducing round-off
-errors and other problems during computations.
+\class{Model}-type structure.  The stoichiometry for the products and
+reactants can be specified using the \attrib{math} field of the
+\class{SpeciesReference} structure. This field contains a expression in
+dimensionless units.  It is recommended for maximal interoperability that this field
+should simply contain an integer value (see following example).
+The \attrib{math} field is optional and defaults to containing an
+integer value of 1.
 
-The following is a simple example of a species reference in a list
+The following is a simple example of a species reference for species ``X0'', with
+stoichiometry 2, in a list
 of reactants within a reaction named ``J1'':
 \begin{example}
 <model>
@@ -2039,7 +2040,11 @@ of reactants within a reaction named ``J1'':
     <listOfReactions>
         <reaction id="J1">
             <listOfReactants>
-                <speciesReference species="X0" stoichiometry="2"/>
+                <speciesReference species="X0">
+                    <math xmlns="http://www.w3.org/1998/Math/MathML">
+                        <cn> 2 <cn>
+                    </math>
+                </speciesReference>
             </listOfReactants>
             ...
         </reaction>
@@ -2137,10 +2142,10 @@ a parameter.  It demonstrates the use of species references and the
     <listOfReactions>
         <reaction id="J1">
             <listOfReactants>
-                <speciesReference species="X0" stoichiometry="1"/>
+                <speciesReference species="X0"/>
             </listOfReactants>
             <listOfProducts>
-                <speciesReference species="S1" stoichiometry="1"/>
+                <speciesReference species="S1"/>
             </listOfProducts>
             <listOfModifiers>
                 <modifierSpeciesReference species="S2"/>
@@ -2357,22 +2362,22 @@ above:
             <compartment id="compartmentOne" size="1"/>
         </listOfCompartments>
         <listOfSpecies>
-            <species id="S1" initialAmount="0" compartment="compartmentOne"
+            <species id="S1" initialConcentration="0" compartment="compartmentOne"
                      boundaryCondition="false"/>
-            <species id="X0" initialAmount="0" compartment="compartmentOne"
+            <species id="X0" initialConcentration="0" compartment="compartmentOne"
                      boundaryCondition="true"/>
-            <species id="X1" initialAmount="0" compartment="compartmentOne"
+            <species id="X1" initialConcentration="0" compartment="compartmentOne"
                      boundaryCondition="true"/>
-            <species id="X2" initialAmount="0" compartment="compartmentOne"
+            <species id="X2" initialConcentration="0" compartment="compartmentOne"
                      boundaryCondition="true"/>
         </listOfSpecies>
         <listOfReactions>
             <reaction id="reaction_1" reversible="false">
                 <listOfReactants>
-                    <speciesReference species="X0" stoichiometry="1"/>
+                    <speciesReference species="X0"/>
                 </listOfReactants>
                 <listOfProducts>
-                    <speciesReference species="S1" stoichiometry="1"/>
+                    <speciesReference species="S1"/>
                 </listOfProducts>
                 <kineticLaw>
                     <math xmlns="http://www.w3.org/1998/Math/MathML">
@@ -2389,10 +2394,10 @@ above:
             </reaction>
             <reaction id="reaction_2" reversible="false">
                 <listOfReactants>
-                    <speciesReference species="S1" stoichiometry="1"/>
+                    <speciesReference species="S1"/>
                 </listOfReactants>
                 <listOfProducts>
-                    <speciesReference species="X1" stoichiometry="1"/>
+                    <speciesReference species="X1"/>
                 </listOfProducts>
                 <kineticLaw>
                     <math xmlns="http://www.w3.org/1998/Math/MathML">
@@ -2409,10 +2414,10 @@ above:
             </reaction>
             <reaction id="reaction_3" reversible="false">
                 <listOfReactants>
-                    <speciesReference species="S1" stoichiometry="1"/>
+                    <speciesReference species="S1"/>
                 </listOfReactants>
                 <listOfProducts>
-                    <speciesReference species="X2" stoichiometry="1"/>
+                    <speciesReference species="X2"/>
                 </listOfProducts>
                 <kineticLaw>
                     <math xmlns="http://www.w3.org/1998/Math/MathML">
@@ -2478,14 +2483,14 @@ and milliMolar, respectively.
             </unitDefinition>
             <unitDefinition id="mmls">
                 <listOfUnits>
-                    <unit kind="mole"   scale="-3"/>
-                    <unit kind="litre"  exponent="-1"/>
+                    <unit kind="mole" scale="-3"/>
+                    <unit kind="litre" exponent="-1"/>
                     <unit kind="second" exponent="-1"/>
                 </listOfUnits>
             </unitDefinition>
             <unitDefinition id="mm">
                 <listOfUnits>
-                    <unit kind="mole"   scale="-3"/>
+                    <unit kind="mole" scale="-3"/>
                 </listOfUnits>
             </unitDefinition>
         </listOfUnitDefinitions>
@@ -2493,10 +2498,10 @@ and milliMolar, respectively.
             <compartment id="cell"/>
         </listOfCompartments>
         <listOfSpecies>
-            <species id="x0" compartment="cell" initialAmount="1"/>
-            <species id="x1" compartment="cell" initialAmount="1"/>
-            <species id="s1" compartment="cell" initialAmount="1"/>
-            <species id="s2" compartment="cell" initialAmount="1"/>
+            <species id="x0" compartment="cell" initialConcentration="1"/>
+            <species id="x1" compartment="cell" initialConcentration="1"/>
+            <species id="s1" compartment="cell" initialConcentration="1"/>
+            <species id="s2" compartment="cell" initialConcentration="1"/>
         </listOfSpecies>
         <listOfParameters>
             <parameter id="vm" value="2" units="mmls"/>
@@ -2532,7 +2537,7 @@ and milliMolar, respectively.
                             </apply>
                             <ci> cell </ci>
                         </apply>
-                     </math>
+                    </math>
                 </kineticLaw>
             </reaction>
             <reaction id="v2">
@@ -2549,7 +2554,7 @@ and milliMolar, respectively.
                     <math xmlns="http://www.w3.org/1998/Math/MathML">
                         <apply>
                             <times/>
-                            <apply/>
+                            <apply>
                                 <divide/>
                                 <apply>
                                     <times/>
@@ -2602,6 +2607,7 @@ and milliMolar, respectively.
         </listOfReactions>
     </model>
 </sbml>
+
 \end{example}
 
 %-----------------------------------------------------------------------------
@@ -2649,11 +2655,11 @@ The following example SBML model encodes the approximate form.
             <compartment id="cell"/>
         </listOfCompartments>
         <listOfSpecies>
-            <species id="X0" compartment="cell" initialAmount="1"/>
-            <species id="X1" compartment="cell" initialAmount="0"/>
-            <species id="T" compartment="cell" initialAmount="0"/>
-            <species id="S1" compartment="cell" initialAmount="0"/>
-            <species id="S2" compartment="cell" initialAmount="0"/>
+            <species id="X0" compartment="cell" initialConcentration="1"/>
+            <species id="X1" compartment="cell" initialConcentration="0"/>
+            <species id="T" compartment="cell" initialConcentration="0"/>
+            <species id="S1" compartment="cell" initialConcentration="0"/>
+            <species id="S2" compartment="cell" initialConcentration="0"/>
         </listOfSpecies>
         <listOfParameters>
             <parameter id="Keq" value="2.5"/>
@@ -2768,11 +2774,11 @@ The following example SBML model encodes this approximate form.
             <compartment id="cell"/>
         </listOfCompartments>
         <listOfSpecies>
-            <species id="X0" compartment="cell" initialAmount="1"/>
-            <species id="X1" compartment="cell" initialAmount="0"/>
-            <species id="T" compartment="cell" initialAmount="0"/>
-            <species id="S1" compartment="cell" initialAmount="0"/>
-            <species id="S2" compartment="cell" initialAmount="0"/>
+            <species id="X0" compartment="cell" initialConcentration="1"/>
+            <species id="X1" compartment="cell" initialConcentration="0"/>
+            <species id="T" compartment="cell" initialConcentration="0"/>
+            <species id="S1" compartment="cell" initialConcentration="0"/>
+            <species id="S2" compartment="cell" initialConcentration="0"/>
         </listOfSpecies>
         <listOfParameters>
             <parameter id="Keq" value="2.5"/>
@@ -2903,13 +2909,13 @@ above:
             <compartment id="compartmentOne" size="1"/>
         </listOfCompartments>
         <listOfSpecies>
-            <species id="S1" initialAmount="0" compartment="compartmentOne"
+            <species id="S1" initialConcentration="0" compartment="compartmentOne"
                 boundaryCondition="true" />
-            <species id="S2" initialAmount="1" compartment="compartmentOne"
+            <species id="S2" initialConcentration="1" compartment="compartmentOne"
                 boundaryCondition="true" constant="true" />
-            <species id="S3" initialAmount="3" compartment="compartmentOne"
+            <species id="S3" initialConcentration="3" compartment="compartmentOne"
                 constant="true"/>
-            <species id="S4" initialAmount="0" compartment="compartmentOne"/>
+            <species id="S4" initialConcentration="0" compartment="compartmentOne"/>
         </listOfSpecies>
         <listOfParameters>
             <parameter id="k1" value="0.5"/>
@@ -2927,11 +2933,11 @@ above:
         <listOfReactions>
             <reaction id="reaction_1" reversible="false">
                 <listOfReactants>
-                    <speciesReference species="S1" stoichiometry="1"/>
-                    <speciesReference species="S2" stoichiometry="1"/>
+                    <speciesReference species="S1"/>
+                    <speciesReference species="S2"/>
                 </listOfReactants>
                 <listOfProducts>
-                    <speciesReference species="S4" stoichiometry="1"/>
+                    <speciesReference species="S4"/>
                 </listOfProducts>
                 <listOfModifiers>
                     <modifierSpeciesReference species="S3"/>
@@ -2997,16 +3003,16 @@ above:
             <compartment id="compartmentOne" size="1"/>
         </listOfCompartments>
         <listOfSpecies>
-            <species id="S1" initialAmount="0" compartment="compartmentOne"/>
-            <species id="S2" initialAmount="0" compartment="compartmentOne"/>
+            <species id="S1" initialConcentration="0" compartment="compartmentOne"/>
+            <species id="S2" initialConcentration="0" compartment="compartmentOne"/>
         </listOfSpecies>
         <listOfReactions>
             <reaction id="reaction_1" reversible="false">
                 <listOfReactants>
-                    <speciesReference species="S1" stoichiometry="1"/>
+                    <speciesReference species="S1"/>
                 </listOfReactants>
                 <listOfProducts>
-                    <speciesReference species="S2" stoichiometry="1"/>
+                    <speciesReference species="S2"/>
                 </listOfProducts>
                 <kineticLaw>
                     <math xmlns="http://www.w3.org/1998/Math/MathML">
@@ -3053,7 +3059,7 @@ The SBML form of this model is as follows:
             <compartment id="cell"/>
         </listOfCompartments>
         <listOfSpecies>
-            <species id="P" compartment="cell" initialAmount="0"/>
+            <species id="P" compartment="cell" initialConcentration="0"/>
         </listOfSpecies>
         <listOfParameters>
             <parameter id="tau" value="1"/>
@@ -3142,8 +3148,8 @@ The SBML Level 2 representation of this as follows:
             <compartment id="cell"/>
         </listOfCompartments>
         <listOfSpecies>
-            <species id="P1" compartment="cell" initialAmount="0"/>
-            <species id="P2" compartment="cell" initialAmount="0"/>
+            <species id="P1" compartment="cell" initialConcentration="0"/>
+            <species id="P2" compartment="cell" initialConcentration="0"/>
         </listOfSpecies>
         <listOfParameters>
             <parameter id="k1" value="1" constant="false"/>
@@ -3209,6 +3215,139 @@ The SBML Level 2 representation of this as follows:
             </event>
         </listOfEvents>
     </model>
+</sbml>
+\end{example}
+
+\subsection{Use of 2 dimensional compartments in a model}
+
+The following example is a model which includes 2 dimensional compartments.
+
+\begin{example}
+<?xml version="1.0" encoding="UTF-8"?>
+<sbml xmlns="http://www.sbml.org/sbml/level2" level="2" version="1">
+   <model id="facilitated_ca_diffusion">
+      <listOfCompartments>
+         <compartment id="Extracellular" spatialDimensions="3" />
+         <compartment id="PlasmaMembrane" outside="Extracellular" spatialDimensions="2" />
+         <compartment id="Cytosol" outside="PlasmaMembrane" spatialDimensions="3" />
+         <compartment id="NuclearMembrane" outside="Cytosol" spatialDimensions="2" />
+         <compartment id="Nucleus" outside="NuclearMembrane" spatialDimensions="3" />
+      </listOfCompartments>
+      <listOfSpecies>
+         <species id="CaBPB_C" compartment="Cytosol" initialConcentration="47.17"/>
+         <species id="B_C" compartment="Cytosol" initialConcentration="396.04"/>
+         <species id="CaB_C" compartment="Cytosol" initialConcentration="3.96"/>
+         <species id="Ca_N" compartment="Nucleus" initialConcentration="0.1"/>
+         <species id="Ca_EC" compartment="Extracellular" initialConcentration="1000"/>
+         <species id="CaBP_N" compartment="Nucleus" initialConcentration="202.83"/>
+         <species id="CaBPB_N" compartment="Nucleus" initialConcentration="47.17"/>
+         <species id="Ca_C" compartment="Cytosol" initialConcentration="0.1"/>
+         <species id="CaCh_PM" compartment="PlasmaMembrane" initialConcentration="1"/>
+         <species id="CaPump_PM" compartment="PlasmaMembrane" initialConcentration="1"/>
+         <species id="CaBP_C" compartment="Cytosol" initialConcentration="202.83"/>
+      </listOfSpecies>
+      <listOfRules>
+         <parameterRule type="scalar" id="J_Calbindin" formula="(Pcalbindin * (CaBP_C - CaBP_N))"/>
+         <parameterRule type="scalar" id="J_Ca_Pump" formula="((Vmax * kP * ((Ca_C - Ca_Rest) / (Ca_C + kP)) / (Ca_Rest + kP)) * CaPump_PM)"/>
+         <parameterRule type="scalar" id="Vmax" formula=" - 4000.0"/>
+         <parameterRule type="scalar" id="J_CalbindinBound" formula="(Pcalbindin_bound * (CaBPB_C - CaBPB_N))"/>
+         <parameterRule type="scalar" id="J_Ca_channel" formula="(J0 * Kc * (Ca_EC - Ca_C) / (Kc + Ca_C) * CaCh_PM)"/>
+      </listOfRules>
+      <listOfReactions>
+         <reaction id="CalciumCalbindin_gt_BoundCytosol" fast="true">
+            <listOfReactants>
+               <speciesReference specie="CaBP_C"/>
+               <speciesReference specie="Ca_C"/>
+            </listOfReactants>
+            <listOfProducts>
+               <speciesReference specie="CaBPB_C"/>
+            </listOfProducts>
+            <kineticLaw formula="(((Kf_CalciumCalbindin_BoundCytosol * CaBP_C) * Ca_C) - (Kr_CalciumCalbindin_BoundCytosol * CaBPB_C))">
+               <listOfParameters>
+                  <parameter id="Kf_CalciumCalbindin_BoundCytosol" value="20.0"/>
+                  <parameter id="Kr_CalciumCalbindin_BoundCytosol" value="8.6"/>
+               </listOfParameters>
+            </kineticLaw>
+         </reaction>
+         <reaction id="CaciumCalbindin_gt_BoundNucleus" fast="true">
+            <listOfReactants>
+               <speciesReference specie="Ca_N"/>
+               <speciesReference specie="CaBP_N"/>
+            </listOfReactants>
+            <listOfProducts>
+               <speciesReference specie="CaBPB_N"/>
+            </listOfProducts>
+            <kineticLaw formula="(((Kf_CaciumCalbindin_BoundNucleus * Ca_N) * CaBP_N) - (Kr_CaciumCalbindin_BoundNucleus * CaBPB_N))">
+               <listOfParameters>
+                  <parameter id="Kf_CaciumCalbindin_BoundNucleus" value="20.0"/>
+                  <parameter id="Kr_CaciumCalbindin_BoundNucleus" value="8.6"/>
+               </listOfParameters>
+            </kineticLaw>
+         </reaction>
+         <reaction id="CalciumBuffer_gt_BoundCytosol" fast="true">
+            <listOfReactants>
+               <speciesReference specie="Ca_C"/>
+               <speciesReference specie="B_C"/>
+            </listOfReactants>
+            <listOfProducts>
+               <speciesReference specie="CaB_C"/>
+            </listOfProducts>
+            <kineticLaw formula="(((Kf_CalciumBuffer_BoundCytosol * Ca_C) * B_C) - (Kr_CalciumBuffer_BoundCytosol * CaB_C))">
+               <listOfParameters>
+                  <parameter id="Kf_CalciumBuffer_BoundCytosol" value="0.1"/>
+                  <parameter id="Kr_CalciumBuffer_BoundCytosol" value="1.0"/>
+               </listOfParameters>
+            </kineticLaw>
+         </reaction>
+         <reaction id="Calcium">
+            <listOfReactants />
+            <listOfProducts />
+            <kineticLaw formula="(Pcalcium * (Ca_C - Ca_N))">
+               <listOfParameters>
+                  <parameter id="Pcalcium" value="150.0"/>
+               </listOfParameters>
+            </kineticLaw>
+         </reaction>
+         <reaction id="Calbindin">
+            <listOfReactants />
+            <listOfProducts />
+            <kineticLaw formula="J_Calbindin">
+               <listOfParameters>
+                  <parameter id="Pcalbindin" value="30.0"/>
+               </listOfParameters>
+            </kineticLaw>
+         </reaction>
+         <reaction id="Ca_Pump">
+            <listOfReactants />
+            <listOfProducts />
+            <kineticLaw formula="J_Ca_Pump">
+               <listOfParameters>
+                  <parameter id="kP" value="0.25"/>
+                  <parameter id="Ca_Rest" value="0.1"/>
+               </listOfParameters>
+            </kineticLaw>
+         </reaction>
+         <reaction id="CalbindinBound">
+            <listOfReactants />
+            <listOfProducts />
+            <kineticLaw formula="J_CalbindinBound">
+               <listOfParameters>
+                  <parameter id="Pcalbindin_bound" value="30.0"/>
+               </listOfParameters>
+            </kineticLaw>
+         </reaction>
+         <reaction id="Ca_channel">
+            <listOfReactants />
+            <listOfProducts />
+            <kineticLaw formula="J_Ca_channel">
+               <listOfParameters>
+                  <parameter id="J0" value="0.014"/>
+                  <parameter id="Kc" value="0.5"/>
+               </listOfParameters>
+            </kineticLaw>
+         </reaction>
+      </listOfReactions>
+   </model>
 </sbml>
 \end{example}
 
@@ -3531,16 +3670,17 @@ Language, using the W3C Recommendation for XML Schema version 1.0 of 2 May
 \tightspacing
 \begin{verbatim}
 <?xml version="1.0" encoding="UTF-8"?>
-<xsd:schema targetNamespace="http://www.sbml.org/sbml/level2"
-        xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xmlns:xlink="http://www.w3.org/1999/xlink" 
-        xmlns:mml="http://www.w3.org/1998/Math/MathML"
+<xsd:schema
+        targetNamespace="http://www.sbml.org/sbml/level2"
         xmlns="http://www.sbml.org/sbml/level2"
-        elementFormDefault="qualified" 
-        attributeFormDefault="unqualified" 
-        version="$Version$">
-    <xsd:import namespace="http://www.w3.org/1998/Math/MathML"
+        xmlns:mml="http://www.w3.org/1998/Math/MathML"
+        xmlns:xlink="http://www.w3.org/1999/xlink"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+        elementFormDefault="qualified"
+        attributeFormDefault="unqualified" version="$Version$">
+    <xsd:import
+        namespace="http://www.w3.org/1998/Math/MathML"
         schemaLocation="http://www.w3.org/Math/XMLSchema/mathml2/mathml2.xsd"/>
     <xsd:annotation>
         <xsd:documentation>
@@ -3584,8 +3724,8 @@ Language, using the W3C Recommendation for XML Schema version 1.0 of 2 May
     <xsd:simpleType name="SId">
         <xsd:annotation>
             <xsd:documentation>
-                The type SId is used throughout SBML as the type of the 'id' 
-                attributes on model elements.
+                The type SId is used throughout SBML as the
+                type of the 'id' attributes on model elements.
             </xsd:documentation>
         </xsd:annotation>
         <xsd:restriction base="xsd:string">
@@ -3604,8 +3744,10 @@ Language, using the W3C Recommendation for XML Schema version 1.0 of 2 May
             <xsd:element name="notes" minOccurs="0">
                 <xsd:complexType>
                     <xsd:sequence>
-                        <xsd:any namespace="http://www.w3.org/1999/xhtml"
-                            processContents="skip" maxOccurs="unbounded"/>
+                        <xsd:any
+                            namespace="http://www.w3.org/1999/xhtml"
+                            processContents="skip"
+                            maxOccurs="unbounded"/>
                     </xsd:sequence>
                 </xsd:complexType>
             </xsd:element>
@@ -3650,11 +3792,9 @@ Language, using the W3C Recommendation for XML Schema version 1.0 of 2 May
             <xsd:enumeration value="katal"/>
             <xsd:enumeration value="kelvin"/>
             <xsd:enumeration value="kilogram"/>
-            <xsd:enumeration value="liter"/>
             <xsd:enumeration value="litre"/>
             <xsd:enumeration value="lumen"/>
             <xsd:enumeration value="lux"/>
-            <xsd:enumeration value="meter"/>
             <xsd:enumeration value="metre"/>
             <xsd:enumeration value="mole"/>
             <xsd:enumeration value="newton"/>
@@ -3678,6 +3818,8 @@ Language, using the W3C Recommendation for XML Schema version 1.0 of 2 May
                 <xsd:attribute name="kind" type="UnitKind" use="required"/>
                 <xsd:attribute name="exponent" type="xsd:integer" default="1"/>
                 <xsd:attribute name="scale" type="xsd:integer" default="0"/>
+                <xsd:attribute name="multiplier" type="xsd:double" default="1"/>
+                <xsd:attribute name="offset" type="xsd:double" default="0"/>
             </xsd:extension>
         </xsd:complexContent>
     </xsd:complexType>
@@ -3686,16 +3828,16 @@ Language, using the W3C Recommendation for XML Schema version 1.0 of 2 May
         <xsd:complexContent>
             <xsd:extension base="SBase">
                 <xsd:sequence>
-                    <xsd:element name="unit" type="Unit" minOccurs="1" maxOccurs="unbounded"/>
+                    <xsd:element name="unit" type="Unit" maxOccurs="unbounded"/>
                 </xsd:sequence>
             </xsd:extension>
         </xsd:complexContent>
-    </xsd:complexType>  
+    </xsd:complexType>
     <xsd:complexType name="UnitDefinition">
         <xsd:complexContent>
             <xsd:extension base="SBase">
                 <xsd:sequence>
-                    <xsd:element name="listOfUnits" type="ListOfUnits" minOccurs="1"/>
+                    <xsd:element name="listOfUnits" type="ListOfUnits"/>
                 </xsd:sequence>
                 <xsd:attribute name="id" type="SId" use="required"/>
                 <xsd:attribute name="name" type="xsd:string" use="optional"/>
@@ -3708,7 +3850,15 @@ Language, using the W3C Recommendation for XML Schema version 1.0 of 2 May
             <xsd:extension base="SBase">
                 <xsd:attribute name="id" type="SId" use="required"/>
                 <xsd:attribute name="name" type="xsd:string" use="optional"/>
-                <xsd:attribute name="volume" type="xsd:double"/>
+                <xsd:attribute name="size" type="xsd:double" use="optional"/>
+                <xsd:attribute name="spatialDimensions" use="optional" default="3">
+                    <xsd:simpleType>
+                        <xsd:restriction base="xsd:integer">
+                            <xsd:minInclusive value="0"/>
+                            <xsd:maxInclusive value="3"/>
+                        </xsd:restriction>
+                    </xsd:simpleType>
+                </xsd:attribute>
                 <xsd:attribute name="units" type="SId" use="optional"/>
                 <xsd:attribute name="outside" type="SId" use="optional"/>
                 <xsd:attribute name="constant" type="xsd:boolean" use="optional" default="true"/>
@@ -3723,9 +3873,10 @@ Language, using the W3C Recommendation for XML Schema version 1.0 of 2 May
                 <xsd:attribute name="name" type="xsd:string" use="optional"/>
                 <xsd:attribute name="compartment" type="SId"/>
                 <xsd:attribute name="initialAmount" type="xsd:double" use="optional"/>
+                <xsd:attribute name="initialConcentration" type="xsd:double" use="optional"/>
                 <xsd:attribute name="units" type="SId" use="optional"/>
-                <xsd:attribute name="boundaryCondition" type="xsd:boolean" use="optional"
-                    default="false"/>
+                <xsd:attribute
+                    name="boundaryCondition" type="xsd:boolean" use="optional" default="false"/>
                 <xsd:attribute name="charge" type="xsd:integer" use="optional"/>
                 <xsd:attribute name="constant" type="xsd:boolean" use="optional" default="false"/>
             </xsd:extension>
@@ -3747,19 +3898,12 @@ Language, using the W3C Recommendation for XML Schema version 1.0 of 2 May
         <xsd:complexContent>
             <xsd:extension base="SBase">
                 <xsd:sequence>
-                    <xsd:element name="parameter" type="Parameter" minOccurs="1"
-                        maxOccurs="unbounded"/>
+                    <xsd:element name="parameter" type="Parameter" maxOccurs="unbounded"/>
                 </xsd:sequence>
             </xsd:extension>
         </xsd:complexContent>
-    </xsd:complexType>  
+    </xsd:complexType>
     <!--The definition of Rule follows. -->
-    <xsd:simpleType name="RuleType">
-        <xsd:restriction base="xsd:string">
-            <xsd:enumeration value="scalar"/>
-            <xsd:enumeration value="rate"/>
-        </xsd:restriction>
-    </xsd:simpleType>
     <xsd:complexType name="Rule" abstract="true">
         <xsd:complexContent>
             <xsd:extension base="SBase">
@@ -3778,7 +3922,13 @@ Language, using the W3C Recommendation for XML Schema version 1.0 of 2 May
         <xsd:complexContent>
             <xsd:extension base="Rule">
                 <xsd:attribute name="variable" type="SId" use="required"/>
-                <xsd:attribute name="type" type="RuleType" default="scalar"/>
+            </xsd:extension>
+        </xsd:complexContent>
+    </xsd:complexType>
+    <xsd:complexType name="RateRule">
+        <xsd:complexContent>
+            <xsd:extension base="Rule">
+                <xsd:attribute name="variable" type="SId" use="required"/>
             </xsd:extension>
         </xsd:complexContent>
     </xsd:complexType>
@@ -3811,28 +3961,29 @@ Language, using the W3C Recommendation for XML Schema version 1.0 of 2 May
         <xsd:complexContent>
             <xsd:extension base="SBase">
                 <xsd:sequence>
-                    <xsd:element name="modifierSpeciesReference" type="ModifierSpeciesReference"
-                        minOccurs="1" maxOccurs="unbounded"/>
+                    <xsd:element
+                        name="modifierSpeciesReference"
+                        type="ModifierSpeciesReference"
+                        maxOccurs="unbounded"/>
                 </xsd:sequence>
             </xsd:extension>
         </xsd:complexContent>
-    </xsd:complexType>  
+    </xsd:complexType>
     <xsd:complexType name="SpeciesReference">
         <xsd:complexContent>
             <xsd:extension base="SimpleSpeciesReference">
-                <xsd:attribute name="stoichiometry" type="xsd:positiveInteger" use="optional"
-                    default="1"/>
-                <xsd:attribute name="denominator" type="xsd:positiveInteger" use="optional" 
-                    default="1"/>
+                    <xsd:sequence>
+                        <xsd:element ref="mml:math" minOccurs="0"/>
+                    </xsd:sequence>
             </xsd:extension>
         </xsd:complexContent>
-    </xsd:complexType>  
+    </xsd:complexType>
     <xsd:complexType name="ListOfSpeciesReferences">
         <xsd:complexContent>
             <xsd:extension base="SBase">
                 <xsd:sequence>
-                    <xsd:element name="speciesReference" type="SpeciesReference" minOccurs="1"
-                        maxOccurs="unbounded"/>
+                    <xsd:element
+                        name="speciesReference" type="SpeciesReference" maxOccurs="unbounded"/>
                 </xsd:sequence>
             </xsd:extension>
         </xsd:complexContent>
@@ -3841,13 +3992,16 @@ Language, using the W3C Recommendation for XML Schema version 1.0 of 2 May
         <xsd:complexContent>
             <xsd:extension base="SBase">
                 <xsd:sequence>
-                    <xsd:element name="listOfReactants" type="ListOfSpeciesReferences"
+                    <xsd:element
+                        name="listOfReactants" type="ListOfSpeciesReferences" minOccurs="0"/>
+                    <xsd:element
+                        name="listOfProducts" type="ListOfSpeciesReferences" minOccurs="0"/>
+                    <xsd:element
+                        name="listOfModifiers"
+                        type="ListOfModifierSpeciesReferences"
                         minOccurs="0"/>
-                    <xsd:element name="listOfProducts"  type="ListOfSpeciesReferences"
-                        minOccurs="0"/>
-                    <xsd:element name="listOfModifiers" type="ListOfModifierSpeciesReferences"
-                        minOccurs="0"/>
-                    <xsd:element name="kineticLaw" type="KineticLaw" minOccurs="0"/>
+                    <xsd:element
+                        name="kineticLaw" type="KineticLaw" minOccurs="0"/>
                 </xsd:sequence>
                 <xsd:attribute name="id" type="SId" use="required"/>
                 <xsd:attribute name="name" type="xsd:string" use="optional"/>
@@ -3871,12 +4025,12 @@ Language, using the W3C Recommendation for XML Schema version 1.0 of 2 May
         <xsd:complexContent>
             <xsd:extension base="SBase">
                 <xsd:sequence>
-                    <xsd:element name="eventAssignment" type="EventAssignment" minOccurs="1"
-                        maxOccurs="unbounded"/>
+                    <xsd:element
+                        name="eventAssignment" type="EventAssignment" maxOccurs="unbounded"/>
                 </xsd:sequence>
             </xsd:extension>
         </xsd:complexContent>
-    </xsd:complexType>  
+    </xsd:complexType>
     <xsd:complexType name="MathField">
         <xsd:complexContent>
             <xsd:extension base="SBase">
@@ -3885,16 +4039,17 @@ Language, using the W3C Recommendation for XML Schema version 1.0 of 2 May
                 </xsd:sequence>
             </xsd:extension>
         </xsd:complexContent>
-    </xsd:complexType>  
+    </xsd:complexType>
     <xsd:complexType name="Event">
         <xsd:complexContent>
             <xsd:extension base="SBase">
                 <xsd:sequence>
                     <xsd:element name="trigger" type="MathField"/>
                     <xsd:element name="delay" type="MathField" minOccurs="0"/>
-                    <xsd:element name="listOfEventAssignments" type="ListOfEventAssignments"
-                        minOccurs="1"/>
+                    <xsd:element name="listOfEventAssignments" type="ListOfEventAssignments"/>
                 </xsd:sequence>
+                <xsd:attribute name="id" type="SId" use="optional"/>
+                <xsd:attribute name="name" type="xsd:string" use="optional"/>
                 <xsd:attribute name="timeUnits" type="SId" use="optional"/>
             </xsd:extension>
         </xsd:complexContent>
@@ -3909,7 +4064,8 @@ Language, using the W3C Recommendation for XML Schema version 1.0 of 2 May
                             <xsd:complexContent>
                                 <xsd:extension base="SBase">
                                     <xsd:sequence>
-                                        <xsd:element name="functionDefinition"
+                                        <xsd:element
+                                            name="functionDefinition"
                                             type="FunctionDefinition"
                                             maxOccurs="unbounded"/>
                                     </xsd:sequence>
@@ -3922,7 +4078,8 @@ Language, using the W3C Recommendation for XML Schema version 1.0 of 2 May
                             <xsd:complexContent>
                                 <xsd:extension base="SBase">
                                     <xsd:sequence>
-                                        <xsd:element name="unitDefinition"
+                                        <xsd:element
+                                            name="unitDefinition"
                                             type="UnitDefinition"
                                             maxOccurs="unbounded"/>
                                     </xsd:sequence>
@@ -3935,7 +4092,9 @@ Language, using the W3C Recommendation for XML Schema version 1.0 of 2 May
                             <xsd:complexContent>
                                 <xsd:extension base="SBase">
                                     <xsd:sequence>
-                                        <xsd:element name="compartment" type="Compartment"
+                                        <xsd:element
+                                            name="compartment"
+                                            type="Compartment"
                                             maxOccurs="unbounded"/>
                                     </xsd:sequence>
                                 </xsd:extension>
@@ -3947,8 +4106,8 @@ Language, using the W3C Recommendation for XML Schema version 1.0 of 2 May
                             <xsd:complexContent>
                                 <xsd:extension base="SBase">
                                     <xsd:sequence>
-                                        <xsd:element name="species" type="Species"
-                                            maxOccurs="unbounded"/>
+                                        <xsd:element
+                                            name="species" type="Species" maxOccurs="unbounded"/>
                                     </xsd:sequence>
                                 </xsd:extension>
                             </xsd:complexContent>
@@ -3959,7 +4118,9 @@ Language, using the W3C Recommendation for XML Schema version 1.0 of 2 May
                             <xsd:complexContent>
                                 <xsd:extension base="SBase">
                                     <xsd:sequence>
-                                        <xsd:element name="parameter" type="Parameter"
+                                        <xsd:element
+                                            name="parameter"
+                                            type="Parameter"
                                             maxOccurs="unbounded"/>
                                     </xsd:sequence>
                                 </xsd:extension>
@@ -3971,9 +4132,17 @@ Language, using the W3C Recommendation for XML Schema version 1.0 of 2 May
                             <xsd:complexContent>
                                 <xsd:extension base="SBase">
                                     <xsd:choice maxOccurs="unbounded">
-                                        <xsd:element name="algebraicRule" type="AlgebraicRule" 
+                                        <xsd:element
+                                            name="algebraicRule"
+                                            type="AlgebraicRule"
                                             minOccurs="0"/>
-                                        <xsd:element name="assignmentRule" type="AssignmentRule"
+                                        <xsd:element
+                                            name="assignmentRule"
+                                            type="AssignmentRule"
+                                            minOccurs="0"/>
+                                        <xsd:element
+                                            name="rateRule"
+                                            type="RateRule"
                                             minOccurs="0"/>
                                     </xsd:choice>
                                 </xsd:extension>
@@ -3985,8 +4154,8 @@ Language, using the W3C Recommendation for XML Schema version 1.0 of 2 May
                             <xsd:complexContent>
                                 <xsd:extension base="SBase">
                                     <xsd:sequence>
-                                        <xsd:element name="reaction" type="Reaction"
-                                        maxOccurs="unbounded"/>
+                                        <xsd:element
+                                            name="reaction" type="Reaction" maxOccurs="unbounded"/>
                                     </xsd:sequence>
                                 </xsd:extension>
                             </xsd:complexContent>
@@ -3997,8 +4166,8 @@ Language, using the W3C Recommendation for XML Schema version 1.0 of 2 May
                             <xsd:complexContent>
                                 <xsd:extension base="SBase">
                                     <xsd:sequence>
-                                        <xsd:element name="event" type="Event"
-                                            maxOccurs="unbounded"/>
+                                        <xsd:element
+                                            name="event" type="Event" maxOccurs="unbounded"/>
                                     </xsd:sequence>
                                 </xsd:extension>
                             </xsd:complexContent>
@@ -4096,10 +4265,10 @@ Language, using the W3C Recommendation for XML Schema version 1.0 of 2 May
 %        <listOfReactions>
 %            <reaction id="reaction_1" reversible="false">
 %                <listOfReactants>
-%                    <speciesReference species="X0" stoichiometry="1"/>
+%                    <speciesReference species="X0"/>
 %                </listOfReactants>
 %                <listOfProducts>
-%                    <speciesReference species="S1" stoichiometry="1"/>
+%                    <speciesReference species="S1"/>
 %                </listOfProducts>
 %                <kineticLaw>
 %                    <math xmlns="http://www.w3.org/1998/Math/MathML">
@@ -4116,10 +4285,10 @@ Language, using the W3C Recommendation for XML Schema version 1.0 of 2 May
 %            </reaction>
 %            <reaction id="reaction_2" reversible="false">
 %                <listOfReactants>
-%                    <speciesReference species="S1" stoichiometry="1"/>
+%                    <speciesReference species="S1"/>
 %                </listOfReactants>
 %                <listOfProducts>
-%                    <speciesReference species="X1" stoichiometry="1"/>
+%                    <speciesReference species="X1"/>
 %                </listOfProducts>
 %                <kineticLaw>
 %                    <math xmlns="http://www.w3.org/1998/Math/MathML">
@@ -4136,10 +4305,10 @@ Language, using the W3C Recommendation for XML Schema version 1.0 of 2 May
 %            </reaction>
 %            <reaction id="reaction_3" reversible="false">
 %                <listOfReactants>
-%                    <speciesReference species="S1" stoichiometry="1"/>
+%                    <speciesReference species="S1"/>
 %                </listOfReactants>
 %                <listOfProducts>
-%                    <speciesReference species="X2" stoichiometry="1"/>
+%                    <speciesReference species="X2"/>
 %                </listOfProducts>
 %                <kineticLaw>
 %                    <math xmlns="http://www.w3.org/1998/Math/MathML">

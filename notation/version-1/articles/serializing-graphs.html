@@ -1,0 +1,681 @@
+<html>
+
+<head>
+<meta HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=windows-1252">
+<title>XML Syntax Recommendation for Serializing Graphs of Data</title>
+</head>
+
+<body>
+<p>[This local archive copy is from the official and canonical URL, <a href="http://www.w3.org/TandS/QL/QL98/pp/microsoft-serializing.html">http://www.w3.org/TandS/QL/QL98/pp/microsoft-serializing.html</a>, 1999-02-05;  please refer to the canonical source document if possible.]</p>
+<hr>
+
+<h1>XML Syntax Recommendation for Serializing Graphs of Data</h1>
+
+<p>author: <author>Andrew Layman <a href="mailto:(andrewl@microsoft.com">(andrewl@microsoft.com</a>)</author>,
+December 2, 1998.</p>
+
+<p>This paper describes a specific way to use XML in order to serialize graphs of data
+such as database tables and relations, nodes and edges from directed labeled graphs, and
+similar constructions. By graphs, we mean objects having properties and relations to other
+objects, where the relations are directed (and have inverses) and where there may be
+multiple paths to an object. A graph of data serialized according to the described rules
+is said to be in &quot;canonical form.&quot; Other representations of the same data can be
+mapped into and out of the canonical form.</p>
+
+<p>This paper does not change the fact that every validatable XML document conforms to a
+specific grammar. Rather, it proposes a way to mechanically generate, from a database's or
+graph's schema, a particular grammar that can be used to serialize data from the database
+or graph, and into which any other serialization of that data can be mapped.</p>
+
+<p>When designing the canonical form, the following criteria were considered: 
+
+<ol>
+  <li>Typical syntax must be readable by humans.</li>
+  <li>It must use only facilities available today in XML, that is, the XML 1.0 specification
+    plus the XML Namespaces specification.</li>
+  <li>The rules must be simple enough to be easily taught.</li>
+  <li>Instances must be capable of expressing graphs of objects and directed relations. </li>
+  <li>The syntax must support a clear query model.</li>
+  <li>It should be possible to embed the syntax within web pages. It is beneficial if such
+    embedded XML does not affect rendering.</li>
+  <li>There must be a well-defined mechanism for mapping other syntax families to and from
+    canonical form.</li>
+</ol>
+
+<p>It is not a requirement that all serializations must be fully decodable without schema.
+That is, while it is beneficial if basic information can be extracted from a document
+lacking its schema, it is acceptable if full decoding requires schema. </p>
+
+<p>Canonical syntax is syntax which obeys these five rules: 
+
+<ol>
+  <li>Entities (nodes) are expressed as elements.</li>
+  <li>Properties (edges) are expressed as attributes.</li>
+  <li>Relations (edges) to other objects are expressed as attributes with datatype of
+    &quot;IDREF&quot;. If several objects are related by the same relation type, they are
+    expressed as a single attribute with datatype &quot;IDREFS&quot;.</li>
+  <li>The top-level element is the name of a package or message type. All other elements are
+    child elements of that top-level element (except as noted by rule 5, below). Order does
+    not matter.</li>
+  <li>If an element can only be related to one other element, and cannot exist independently,
+    it may be expressed as a child of either the top-level element or that single other
+    element.</li>
+</ol>
+
+<p>For example, consider a database or other graph (described by a UML diagram or other
+notation) and containing 
+
+<ul>
+  <li>Classes, Students, Teachers and Addresses</li>
+  <li>Classes, Students, and Teachers each has a 'name' property, whose datatype is 'String.'</li>
+  <li>Students have an 'attends' relation to 0 or more Classes; Classes have the inverse
+    relation, 'attendedBy' to 1 or more Students.</li>
+  <li>Teachers have a 'teaches' relation to 1 or more Classes; Classes have the inverse
+    relation, 'taughtBy' exactly one Class.</li>
+  <li>Students have a 'home' relation to 0 or 1 Address. (For purposes of illustration we make
+    the unrealistic presumption that addresses are not shared.)</li>
+  <li>An Address is a String.</li>
+</ul>
+
+<p>A serialized instance would look like </p>
+
+<pre>&lt;School&gt;
+&nbsp; &lt;Class id=&quot;Class:19&quot; name=&quot;Western Civilization&quot; taughtBy=&quot;#Teacher83&quot;/&gt;
+&nbsp; &lt;Class id=&quot;Class:253&quot; name=&quot;English Literature&quot; taughtBy=&quot;#Teacher83&quot;/&gt; 
+&nbsp; &lt;Student id=&quot;Student:30006&quot; name=&quot;Raphael&quot; home=&quot;Address:1&quot; attends=&quot;Class:19&quot;&gt;
+&nbsp;&nbsp;&nbsp; &lt;Address id=&quot;Address:1&quot; street=&quot;950 Greenhill Rd&quot; city=&quot;Mill Valley&quot; state=&quot;CA&quot;/&gt;
+&nbsp; &lt;/Student&gt;
+&nbsp; &lt;Student id=&quot;Student:2567&quot; name=&quot;Michael&quot; home=&quot;Address:3&quot; attends=&quot;Class:19 Class:253&quot;&gt;
+&nbsp;&nbsp;&nbsp; &lt;Address id=&quot;Address:3&quot; street=&quot;28 Mountain Road&quot; city=&quot;Lark Creek&quot; state=&quot;CA&quot;/&gt;
+&nbsp; &lt;/Student&gt;
+&nbsp; &lt;Student id=&quot;Student:31415&quot; name=&quot;Sandro&quot; home=&quot;Address:4&quot; attends=&quot;Class:253&quot;&gt;
+&nbsp;&nbsp;&nbsp; &lt;Address id=&quot;Address:4&quot; street=&quot;14 16 Street&quot; city=&quot;San Raphael&quot; state=&quot;CA&quot;/&gt;
+&nbsp; &lt;/Student&gt;
+&nbsp; &lt;Teacher id=&quot;Teacher:83&quot; name=&quot;Thorsten&quot;&gt;
+&lt;/School&gt;</pre>
+
+<p>Entities may have relations to entities not in the serialized graph using the same
+general mechanism, but where the attribute's datatype is &quot;uri&quot;. For example: </p>
+
+<pre>&lt;Student id=&quot;Student:31415&quot; name=&quot;Linda&quot; webPage=&quot;http://home.navisoft.com/lindamann&quot;/&gt;</pre>
+
+<p>As mentioned earlier, if several entities are related by the same relation type, they
+are expressed as a single attribute with datatype &quot;IDREFS&quot;. The order in which
+the ids are listed is presumed significant, and expresses the ordering (if any) of the
+collection of related entities (e.g. chapters in a book). When significant, it is
+fundamentally an aspect of the relations between the elements (e.g. between the chapters,
+such that chapter 1 precedes chapter two, and so on).</p>
+
+<p>This does not preclude application domains designing vocabulary for collections with
+more specialized semantics. In these cases, the semantics would be indicated by explicit
+collection elements, or by information in the schema for the relation attribute, as
+appropriate. Similarly, while these rules permit the serialization of any graph, they
+neither include nor preclude elements or attributes with specific semantics, including
+elements or attributes designed to layer on additional graph facilities such as reference,
+attribution or subsumption. All of these facilities can be effected by designing
+appropriate vocabularies and namespaces.</p>
+
+<h3>Procedure for UML to Syntax Schema conversion</h3>
+
+<p>Given an arbitrary UML diagram, we can mechanically produce a canonical grammar. 
+
+<ol>
+  <li>Objects are expressed as elements. They always have id attributes.</li>
+  <li>Properties are expressed as attributes.</li>
+  <li>Relations are expressed as attributes. The value of the attribute is an idref (or
+    space-separated list of idrefs) to the related element. (Relations to objects not in the
+    serialized instance have datatype uri or uris.)</li>
+  <li>The top-level element is the name of the <i>package </i>or<i> message</i>. </li>
+  <li>The top-level element has a content model which allows any other element type in any
+    order. </li>
+  <li>If an object can only be referenced once, and its existence is dependent on the
+    existence of another element, it may also appear in the content model of the referencing
+    element (which continues to have an attribute making the relation explicit).</li>
+  <li>Regarding ordering, content models use a group that allows sub-elements to appear in any
+    order.</li>
+  <li>A relation between elements could be expressed as an attribute of either side. To choose
+    which side gets the content, </li>
+  <ol TYPE="a">
+    <li>If only one role is named, use that, else</li>
+    <li>Pick the role with the smallest maximum cardinality, else</li>
+    <li>Pick the role with the largest minimum cardinality, else </li>
+    <li>Pick the role with the shortest name, else</li>
+    <li>Pick the role whose name appears first in the alphabet.</li>
+  </ol>
+</ol>
+
+<h3>Procedure for Graph to XML Instance Conversion</h3>
+
+<ol>
+  <li>Emit the top-level element tag corresponding to the package or message. Within this,</li>
+  <li>Walk the graph using any of the well-known techniques. For each node,</li>
+  <ol TYPE="a">
+    <li>Emit a element corresponding to the node, with GI indicating the node's type and with a
+      unique id attribute/value. Emit attributes corresponding to each property and relation,
+      where the value of a relation is expressed as a idref if the object of the relation is in
+      the graph, else as a full uri. If order of related nodes is significant, emit relations in
+      that order.</li>
+    <li>Optionally, if the object of a relation is known to be only potentially referred to by a
+      single node, emit that object node as a child element, following these rules recursively.
+      Else defer to later in the graph walk.</li>
+  </ol>
+</ol>
+
+<h3>Procedure for XML Instance to Graph Conversion</h3>
+
+<ol>
+  <li>For each element in the document, create a node identified by the id attribute of the
+    element, and with a node type given by the type of the element.</li>
+  <li>For each relation (idref or idrefs) attribute of each element create an edge whose role
+    name is identified by the attribute's name and whose value is the node identified by the
+    attribute's value.</li>
+  <li>For each property attribute of each element create a property whose role name is
+    identified by the attribute's name and whose value is the attribute's value. The type of
+    the value is identified by the datatype of the attribute.</li>
+</ol>
+
+<h3>Procedure for converting a set of Database Tables to XML Instance Conversion</h3>
+
+<ol>
+  <li>Emit the top-level element tag corresponding to the package or message. Within this,</li>
+  <li>For each row in each table</li>
+  <ol TYPE="a">
+    <li>Emit a element corresponding to the row. The id attribute has a value formed by
+      concatenating the element type name with the value of the primary key column, separating
+      with a colon. (Multi-column keys should be concatenated into a single key value, using a
+      separator that allows the parts to be separated again.) Emit attributes corresponding to
+      each property, formatting as necessary according to the column's datatype. Emit attributes
+      corresponding to each relation, where the value of a relation is expressed as an idref if
+      the object of the relation is in the instance, else as a full uri. . If order of related
+      rows is significant, emit relations in that order.</li>
+    <li>Optionally, if the object of a relation is known to be only potentially referred to by
+      this single row, emit that object as a child element, following these rules recursively.
+      Else defer to later in the output.</li>
+  </ol>
+</ol>
+
+<h3>Procedure for XML Instance to set of Database Tables Conversion</h3>
+
+<ol>
+  <li>For each element type, create a table with columns corresponding to the attributes of
+    the element type.</li>
+  <li>For each element in the document, create a row in the table corresponding to the
+    element's name, with the row identified by its id value.</li>
+  <li>For each property attribute of each element, set the corresponding column to have a
+    value equal to the attribute's value., decoding it if necessary according to the datatype.</li>
+  <li>For each relation (idref or idrefs) attribute of each element, set the corresponding
+    column to have a (foreign key) value equal to the primary key attribute of the referenced
+    element. (Multi-column keys are more complicated. If the element contains the attributes
+    corresponding to the foreign key columns, the row will reference the right other row. But
+    if it does not, extra information will be needed to know which PK column corresponds to
+    which FK column.)</li>
+</ol>
+
+<h2>Mapping Abbreviated Syntax to Canonical Syntax</h2>
+
+<p>A fully-explicit, canonical syntax makes it easy to convert from syntax to a graph of
+objects. Provided one has a schema telling which attributes are IDREFs, one merely
+interprets all attributes as either properties or relations via IDREF. However, the
+canonical syntax is not the only syntax that could be used to serialize a graph. In many
+cases, alternative syntaxes may be used, either due to historical or political factors, or
+to take advantage of compressions that are available if one has domain knowledge. We call
+all of these &quot;abbreviated syntaxes.&quot; For example, we might find an instance such
+as this: </p>
+
+<pre>&lt;Class&gt;
+  &lt;name&gt;Western Civilization&lt;/name&gt;
+  &lt;taughtBy&gt;Thorsten&lt;/taughtBy&gt;
+  &lt;attendedBy&gt;Raphael&lt;/attendedBy&gt;
+  &lt;attendedBy&gt;Smith&lt;/attendedBy&gt;
+&lt;/Class&gt;</pre>
+
+<p>Here, the class's name was expressed by a sub-element, and teachers and students were
+identified only by their name. We need a means to convert such abbreviated syntax to a
+fully-explicit (canonical) syntax. There are two basic approaches possible. One is to have
+some declarative information in the schema that restores the missing elements. The other
+is to use a transform language such as XSL to convert the abbreviated to a explicit
+syntax.</p>
+
+<p>The declarative approach is initially simpler. each abbreviated syntactic schema
+declares its relation to a canonical schema and provides appropriate declarative mappings.
+The drawback to this is that it requires additions to the schema vocabulary, and can only
+handle a limited number of simple cases. In the real world, judging by the experience with
+Architectural Forms, especially given the deployment of systems that evolve over several
+years, declarative mapping either fails or becomes very complex.</p>
+
+<p>If we take the transform language approach, then each abbreviated syntactic schema
+declares its relation to a canonical schema and provides appropriate transforms to and
+from. </p>
+
+<p>We right now favor a composite approach. For a small number of very common and simple
+cases we can annotate schemas with declarative mapping information in the form of
+attributes of the element types. The exact details of what constitutes &quot;common and
+simple&quot; should be determined, but candidates appear to be (a) simple renaming of
+elements or attributes, (b) conversion of a sub-element to an attribute, (c) inference of
+a relation based on element containment, (d) reference by a &quot;foreign key&quot;
+converted to reference by IDREF or URI. For more complex cases we should look to a
+transform language such as XSL.</p>
+
+<p>Finally, one might reasonably ask why we have a canonical syntax at all. Why not
+provide mappings directly to the graph's schema? But if we ask that, we need to also ask
+what those mappings would look like. In effect, they would map elements and attributes to
+objects and properties, much as XSL maps things today, but using new keywords to signal
+the difference in result types. Having done all that &#150; introducing a new vocabulary
+for syntax to graph mapping &#150; we would not have any greater functionality than
+provided by the canonical syntax approach, but we would have doubled the vocabulary
+needed. Further, we would require that all clients of XML implement mapping machinery
+(while with the canonical syntax approach a server could choose to emit canonical syntax,
+thereby avoiding any need for a special mapper). We would not be able to leverage future
+developments in XSL Finally, we would not be providing any clear suggestions for syntax
+that people should use, and would therefore greatly increase the actual amount of mapping
+that would need to occur.</p>
+
+<h1>Appendix A: Schema for Classes, Students, Teachers example</h1>
+
+<p>This sample schema uses <a href="http://www.w3.org/TR/1998/NOTE-XML-data-0105/">XML-Data
+notation</a> to describe a vocabulary and syntax for serializing the example data of
+Classes, Students and Teachers.</p>
+
+<pre>
+
+&lt;?xml version=&quot;1.0&quot; encoding=&quot;windows-1252&quot; ?&gt;
+&lt;!-- Schema for package ClassesStudentsTeachers  --&gt;
+&lt;Schema   xmlns=&quot;urn:schemas-microsoft-com:xml-data&quot;
+            xmlns:dt=&quot;urn:schemas-microsoft-com:datatypes&quot;
+            xmlns:x=&quot;urn:schemas-microsoft-com:xml-data-ex&quot;&gt;
+ 
+ 
+    &lt;!-- *****  TYPE Address ***** --&gt;
+ 
+ 
+    &lt;ElementType name=&quot;Address&quot;&gt;
+ 
+        &lt;AttributeType name=&quot;id&quot; dt:type=&quot;id&quot;/&gt;
+            &lt;attribute type=&quot;id&quot; /&gt;
+ 
+ 
+    &lt;/ElementType&gt;
+ 
+ 
+    &lt;!-- *****  TYPE Class ***** --&gt;
+ 
+ 
+    &lt;ElementType name=&quot;Class&quot;&gt;
+ 
+        &lt;AttributeType name=&quot;id&quot; dt:type=&quot;id&quot;/&gt;
+            &lt;attribute type=&quot;id&quot; /&gt;
+  
+        &lt;AttributeType name=&quot;name&quot; dt:type=&quot;string&quot;/&gt;
+            &lt;attribute type=&quot;name&quot; required=&amp;apos;yes&amp;apos; /&gt;         
+        &lt;AttributeType name=&quot;taughtBy&quot; dt:type=&quot;idref&quot; /&gt;
+            &lt;attribute type=&quot;taughtBy&quot; required=&amp;apos;yes&amp;apos; x:range=&quot;Teacher&quot;/&gt;
+ 
+    &lt;/ElementType&gt;
+ 
+ 
+    &lt;!-- *****  TYPE Student ***** --&gt;
+ 
+ 
+    &lt;ElementType name=&quot;Student&quot;&gt;
+ 
+        &lt;AttributeType name=&quot;id&quot; dt:type=&quot;id&quot;/&gt;
+            &lt;attribute type=&quot;id&quot; /&gt;
+         
+        &lt;AttributeType name=&quot;attends&quot; dt:type=&quot;idrefs&quot; /&gt;
+            &lt;attribute type=&quot;attends&quot; x:range=&quot;Class&quot;/&gt;         
+        &lt;AttributeType name=&quot;home&quot; dt:type=&quot;idref&quot; /&gt;
+            &lt;attribute type=&quot;home&quot; x:range=&quot;Address&quot;/&gt; 
+        &lt;AttributeType name=&quot;name&quot; dt:type=&quot;string&quot;/&gt;
+            &lt;attribute type=&quot;name&quot; required=&amp;apos;yes&amp;apos; /&gt;
+ 
+        &lt;group seq=&amp;apos;many&amp;apos;&gt;
+            &lt;element  type=&quot;Address&quot; minOccurs=&quot;0&quot; maxOccurs=&quot;1&quot; /&gt;
+        &lt;/group&gt;
+ 
+    &lt;/ElementType&gt;
+ 
+ 
+    &lt;!-- *****  TYPE Teacher ***** --&gt;
+ 
+ 
+    &lt;ElementType name=&quot;Teacher&quot;&gt;
+ 
+        &lt;AttributeType name=&quot;id&quot; dt:type=&quot;id&quot;/&gt;
+            &lt;attribute type=&quot;id&quot; /&gt;
+ 
+        &lt;AttributeType name=&quot;name&quot; dt:type=&quot;string&quot;/&gt;
+            &lt;attribute type=&quot;name&quot; required=&amp;apos;yes&amp;apos; /&gt; 
+ 
+    &lt;/ElementType&gt;
+ 
+  
+  &lt;!-- The PACKAGE --&gt;
+ 
+ 
+ 
+ 
+    &lt;!-- *****  TYPE School ***** --&gt;
+ 
+ 
+    &lt;ElementType name=&quot;School&quot;&gt;
+ 
+        &lt;AttributeType name=&quot;id&quot; dt:type=&quot;id&quot;/&gt;
+            &lt;attribute type=&quot;id&quot; /&gt;
+         
+        &lt;AttributeType name=&quot;classes&quot; dt:type=&quot;idrefs&quot; /&gt;
+            &lt;attribute type=&quot;classes&quot; x:range=&quot;Class&quot;/&gt;         
+        &lt;AttributeType name=&quot;students&quot; dt:type=&quot;idrefs&quot; /&gt;
+            &lt;attribute type=&quot;students&quot; x:range=&quot;Student&quot;/&gt;         
+        &lt;AttributeType name=&quot;teachers&quot; dt:type=&quot;idrefs&quot; /&gt;
+            &lt;attribute type=&quot;teachers&quot; x:range=&quot;Teacher&quot;/&gt;
+ 
+        &lt;group seq=&amp;apos;many&amp;apos;&gt;
+            &lt;element  type=&quot;Student&quot; minOccurs=&quot;0&quot; maxOccurs=&quot;*&quot; /&gt;
+            &lt;element  type=&quot;Class&quot; minOccurs=&quot;0&quot; maxOccurs=&quot;*&quot; /&gt;
+            &lt;element  type=&quot;Teacher&quot; minOccurs=&quot;0&quot; maxOccurs=&quot;*&quot; /&gt;
+        &lt;/group&gt;
+ 
+    &lt;/ElementType&gt;
+ 
+ 
+&lt;/Schema&gt;</pre>
+
+<h1>Appendix B: Schema for the &quot;Northwind&quot; Sample Database</h1>
+
+<p>The &quot;Northwind&quot; database is a sample database supplied with Microsoft Access,
+containing representative tables for a hypothetical business.</p>
+
+<pre>&lt;?xml version=&quot;1.0&quot; encoding=&quot;windows-1252&quot; ?&gt;
+&lt;!-- Schema for package Northwind Database  --&gt;
+&lt;Schema   xmlns=&quot;urn:schemas-microsoft-com:xml-data&quot;
+            xmlns:dt=&quot;urn:schemas-microsoft-com:datatypes&quot;
+            xmlns:x=&quot;urn:schemas-microsoft-com:xml-data-ex&quot;&gt;
+ 
+ 
+    &lt;!-- *****  TYPE Category ***** --&gt;
+ 
+ 
+    &lt;ElementType name=&quot;Category&quot;&gt;
+ 
+        &lt;AttributeType name=&quot;id&quot; dt:type=&quot;id&quot;/&gt;
+            &lt;attribute type=&quot;id&quot; /&gt;
+ 
+        &lt;AttributeType name=&quot;categoryID&quot; dt:type=&quot;string&quot; x:type=&quot;int&quot;/&gt;
+            &lt;attribute type=&quot;categoryID&quot; required=&amp;apos;yes&amp;apos; /&gt; 
+        &lt;AttributeType name=&quot;categoryName&quot; dt:type=&quot;string&quot;/&gt;
+            &lt;attribute type=&quot;categoryName&quot; required=&amp;apos;yes&amp;apos; /&gt;  
+        &lt;AttributeType name=&quot;description&quot; dt:type=&quot;string&quot;/&gt;
+            &lt;attribute type=&quot;description&quot; required=&amp;apos;yes&amp;apos; /&gt;
+ 
+    &lt;/ElementType&gt;
+ 
+ 
+    &lt;!-- *****  TYPE Customer ***** --&gt;
+ 
+ 
+    &lt;ElementType name=&quot;Customer&quot;&gt;
+ 
+        &lt;AttributeType name=&quot;id&quot; dt:type=&quot;id&quot;/&gt;
+            &lt;attribute type=&quot;id&quot; /&gt;
+ 
+        &lt;AttributeType name=&quot;address&quot; dt:type=&quot;string&quot;/&gt;
+            &lt;attribute type=&quot;address&quot; required=&amp;apos;yes&amp;apos; /&gt; 
+        &lt;AttributeType name=&quot;city&quot; dt:type=&quot;string&quot;/&gt;
+            &lt;attribute type=&quot;city&quot; required=&amp;apos;yes&amp;apos; /&gt; 
+        &lt;AttributeType name=&quot;companyName&quot; dt:type=&quot;string&quot;/&gt;
+            &lt;attribute type=&quot;companyName&quot; required=&amp;apos;yes&amp;apos; /&gt; 
+        &lt;AttributeType name=&quot;contactName&quot; dt:type=&quot;string&quot;/&gt;
+            &lt;attribute type=&quot;contactName&quot; required=&amp;apos;yes&amp;apos; /&gt; 
+        &lt;AttributeType name=&quot;contactTitle&quot; dt:type=&quot;string&quot;/&gt;
+            &lt;attribute type=&quot;contactTitle&quot; required=&amp;apos;yes&amp;apos; /&gt; 
+        &lt;AttributeType name=&quot;country&quot; dt:type=&quot;string&quot;/&gt;
+            &lt;attribute type=&quot;country&quot; required=&amp;apos;yes&amp;apos; /&gt; 
+        &lt;AttributeType name=&quot;customerID&quot; dt:type=&quot;string&quot;/&gt;
+            &lt;attribute type=&quot;customerID&quot; required=&amp;apos;yes&amp;apos; /&gt; 
+        &lt;AttributeType name=&quot;fax&quot; dt:type=&quot;string&quot;/&gt;
+            &lt;attribute type=&quot;fax&quot; required=&amp;apos;yes&amp;apos; /&gt;  
+        &lt;AttributeType name=&quot;phone&quot; dt:type=&quot;string&quot;/&gt;
+            &lt;attribute type=&quot;phone&quot; required=&amp;apos;yes&amp;apos; /&gt; 
+        &lt;AttributeType name=&quot;postalCode&quot; dt:type=&quot;string&quot;/&gt;
+            &lt;attribute type=&quot;postalCode&quot; required=&amp;apos;yes&amp;apos; /&gt;
+ 
+    &lt;/ElementType&gt;
+ 
+ 
+    &lt;!-- *****  TYPE Employee ***** --&gt;
+ 
+ 
+    &lt;ElementType name=&quot;Employee&quot;&gt;
+ 
+        &lt;AttributeType name=&quot;id&quot; dt:type=&quot;id&quot;/&gt;
+            &lt;attribute type=&quot;id&quot; /&gt;
+ 
+        &lt;AttributeType name=&quot;address&quot; dt:type=&quot;string&quot;/&gt;
+            &lt;attribute type=&quot;address&quot; required=&amp;apos;yes&amp;apos; /&gt; 
+        &lt;AttributeType name=&quot;birthDate&quot; dt:type=&quot;string&quot; x:type=&quot;date&quot;/&gt;
+            &lt;attribute type=&quot;birthDate&quot; required=&amp;apos;yes&amp;apos; /&gt; 
+        &lt;AttributeType name=&quot;city&quot; dt:type=&quot;string&quot;/&gt;
+            &lt;attribute type=&quot;city&quot; required=&amp;apos;yes&amp;apos; /&gt; 
+        &lt;AttributeType name=&quot;country&quot; dt:type=&quot;string&quot;/&gt;
+            &lt;attribute type=&quot;country&quot; required=&amp;apos;yes&amp;apos; /&gt; 
+        &lt;AttributeType name=&quot;employeeID&quot; dt:type=&quot;string&quot; x:type=&quot;int&quot;/&gt;
+            &lt;attribute type=&quot;employeeID&quot; required=&amp;apos;yes&amp;apos; /&gt; 
+        &lt;AttributeType name=&quot;firstName&quot; dt:type=&quot;string&quot;/&gt;
+            &lt;attribute type=&quot;firstName&quot; required=&amp;apos;yes&amp;apos; /&gt; 
+        &lt;AttributeType name=&quot;hireDate&quot; dt:type=&quot;string&quot; x:type=&quot;date&quot;/&gt;
+            &lt;attribute type=&quot;hireDate&quot; required=&amp;apos;yes&amp;apos; /&gt; 
+        &lt;AttributeType name=&quot;homePhone&quot; dt:type=&quot;string&quot;/&gt;
+            &lt;attribute type=&quot;homePhone&quot; required=&amp;apos;yes&amp;apos; /&gt; 
+        &lt;AttributeType name=&quot;lastName&quot; dt:type=&quot;string&quot;/&gt;
+            &lt;attribute type=&quot;lastName&quot; required=&amp;apos;yes&amp;apos; /&gt;  
+        &lt;AttributeType name=&quot;notes&quot; dt:type=&quot;string&quot;/&gt;
+            &lt;attribute type=&quot;notes&quot; required=&amp;apos;yes&amp;apos; /&gt; 
+        &lt;AttributeType name=&quot;postalCode&quot; dt:type=&quot;string&quot;/&gt;
+            &lt;attribute type=&quot;postalCode&quot; required=&amp;apos;yes&amp;apos; /&gt; 
+        &lt;AttributeType name=&quot;region&quot; dt:type=&quot;string&quot;/&gt;
+            &lt;attribute type=&quot;region&quot; required=&amp;apos;yes&amp;apos; /&gt;         
+        &lt;AttributeType name=&quot;reportsTo&quot; dt:type=&quot;idref&quot; /&gt;
+            &lt;attribute type=&quot;reportsTo&quot; required=&amp;apos;yes&amp;apos; x:range=&quot;Employee&quot;/&gt; 
+        &lt;AttributeType name=&quot;title&quot; dt:type=&quot;string&quot;/&gt;
+            &lt;attribute type=&quot;title&quot; required=&amp;apos;yes&amp;apos; /&gt; 
+        &lt;AttributeType name=&quot;titleOfCourtesy&quot; dt:type=&quot;string&quot;/&gt;
+            &lt;attribute type=&quot;titleOfCourtesy&quot; required=&amp;apos;yes&amp;apos; /&gt; 
+ 
+    &lt;/ElementType&gt;
+ 
+ 
+    &lt;!-- *****  TYPE Order ***** --&gt;
+ 
+ 
+    &lt;ElementType name=&quot;Order&quot;&gt;
+ 
+        &lt;AttributeType name=&quot;id&quot; dt:type=&quot;id&quot;/&gt;
+            &lt;attribute type=&quot;id&quot; /&gt;
+         
+        &lt;AttributeType name=&quot;customer&quot; dt:type=&quot;idref&quot; /&gt;
+            &lt;attribute type=&quot;customer&quot; required=&amp;apos;yes&amp;apos; x:range=&quot;Customer&quot;/&gt;          
+        &lt;AttributeType name=&quot;employee&quot; dt:type=&quot;idref&quot; /&gt;
+            &lt;attribute type=&quot;employee&quot; required=&amp;apos;yes&amp;apos; x:range=&quot;Employee&quot;/&gt; 
+        &lt;AttributeType name=&quot;freight&quot; dt:type=&quot;string&quot; x:type=&quot;float&quot;/&gt;
+            &lt;attribute type=&quot;freight&quot; required=&amp;apos;yes&amp;apos; /&gt; 
+        &lt;AttributeType name=&quot;orderDate&quot; dt:type=&quot;string&quot; x:type=&quot;date&quot;/&gt;
+            &lt;attribute type=&quot;orderDate&quot; required=&amp;apos;yes&amp;apos; /&gt; 
+        &lt;AttributeType name=&quot;orderID&quot; dt:type=&quot;string&quot; x:type=&quot;int&quot;/&gt;
+            &lt;attribute type=&quot;orderID&quot; required=&amp;apos;yes&amp;apos; /&gt; 
+        &lt;AttributeType name=&quot;requiredDate&quot; dt:type=&quot;string&quot; x:type=&quot;date&quot;/&gt;
+            &lt;attribute type=&quot;requiredDate&quot; required=&amp;apos;yes&amp;apos; /&gt; 
+        &lt;AttributeType name=&quot;shipAddress&quot; dt:type=&quot;string&quot;/&gt;
+            &lt;attribute type=&quot;shipAddress&quot; required=&amp;apos;yes&amp;apos; /&gt; 
+        &lt;AttributeType name=&quot;shipCity&quot; dt:type=&quot;string&quot;/&gt;
+            &lt;attribute type=&quot;shipCity&quot; required=&amp;apos;yes&amp;apos; /&gt; 
+        &lt;AttributeType name=&quot;shipCountry&quot; dt:type=&quot;string&quot;/&gt;
+            &lt;attribute type=&quot;shipCountry&quot; required=&amp;apos;yes&amp;apos; /&gt; 
+        &lt;AttributeType name=&quot;shipName&quot; dt:type=&quot;string&quot;/&gt;
+            &lt;attribute type=&quot;shipName&quot; required=&amp;apos;yes&amp;apos; /&gt; 
+        &lt;AttributeType name=&quot;shippedDate&quot; dt:type=&quot;string&quot; x:type=&quot;date&quot;/&gt;
+            &lt;attribute type=&quot;shippedDate&quot; required=&amp;apos;yes&amp;apos; /&gt; 
+        &lt;AttributeType name=&quot;shipPostalCode&quot; dt:type=&quot;string&quot;/&gt;
+            &lt;attribute type=&quot;shipPostalCode&quot; required=&amp;apos;yes&amp;apos; /&gt; 
+        &lt;AttributeType name=&quot;shipRegion&quot; dt:type=&quot;string&quot;/&gt;
+            &lt;attribute type=&quot;shipRegion&quot; required=&amp;apos;yes&amp;apos; /&gt;         
+        &lt;AttributeType name=&quot;shipVia&quot; dt:type=&quot;idref&quot; /&gt;
+            &lt;attribute type=&quot;shipVia&quot; required=&amp;apos;yes&amp;apos; x:range=&quot;Shipper&quot;/&gt;
+ 
+    &lt;/ElementType&gt;
+ 
+ 
+    &lt;!-- *****  TYPE OrderDetail ***** --&gt;
+ 
+ 
+    &lt;ElementType name=&quot;OrderDetail&quot;&gt;
+ 
+        &lt;AttributeType name=&quot;id&quot; dt:type=&quot;id&quot;/&gt;
+            &lt;attribute type=&quot;id&quot; /&gt;
+ 
+        &lt;AttributeType name=&quot;discount&quot; dt:type=&quot;string&quot; x:type=&quot;float&quot;/&gt;
+            &lt;attribute type=&quot;discount&quot; required=&amp;apos;yes&amp;apos; /&gt;         
+        &lt;AttributeType name=&quot;order&quot; dt:type=&quot;idref&quot; /&gt;
+            &lt;attribute type=&quot;order&quot; required=&amp;apos;yes&amp;apos; x:range=&quot;Order&quot;/&gt;         
+        &lt;AttributeType name=&quot;product&quot; dt:type=&quot;idref&quot; /&gt;
+            &lt;attribute type=&quot;product&quot; required=&amp;apos;yes&amp;apos; x:range=&quot;Product&quot;/&gt; 
+        &lt;AttributeType name=&quot;quantity&quot; dt:type=&quot;string&quot; x:type=&quot;float&quot;/&gt;
+            &lt;attribute type=&quot;quantity&quot; required=&amp;apos;yes&amp;apos; /&gt; 
+        &lt;AttributeType name=&quot;unitPrice&quot; dt:type=&quot;string&quot; x:type=&quot;float&quot;/&gt;
+            &lt;attribute type=&quot;unitPrice&quot; required=&amp;apos;yes&amp;apos; /&gt;
+ 
+    &lt;/ElementType&gt;
+ 
+ 
+    &lt;!-- *****  TYPE Product ***** --&gt;
+ 
+ 
+    &lt;ElementType name=&quot;Product&quot;&gt;
+ 
+        &lt;AttributeType name=&quot;id&quot; dt:type=&quot;id&quot;/&gt;
+            &lt;attribute type=&quot;id&quot; /&gt;
+         
+        &lt;AttributeType name=&quot;category&quot; dt:type=&quot;idref&quot; /&gt;
+            &lt;attribute type=&quot;category&quot; required=&amp;apos;yes&amp;apos; x:range=&quot;Category&quot;/&gt; 
+        &lt;AttributeType name=&quot;discontinued&quot; dt:type=&quot;string&quot; x:type=&quot;boolean&quot;/&gt;
+            &lt;attribute type=&quot;discontinued&quot; required=&amp;apos;yes&amp;apos; /&gt; 
+        &lt;AttributeType name=&quot;productID&quot; dt:type=&quot;string&quot; x:type=&quot;int&quot;/&gt;
+            &lt;attribute type=&quot;productID&quot; required=&amp;apos;yes&amp;apos; /&gt; 
+        &lt;AttributeType name=&quot;productName&quot; dt:type=&quot;string&quot;/&gt;
+            &lt;attribute type=&quot;productName&quot; required=&amp;apos;yes&amp;apos; /&gt;  
+        &lt;AttributeType name=&quot;quantityPerUnit&quot; dt:type=&quot;string&quot;/&gt;
+            &lt;attribute type=&quot;quantityPerUnit&quot; required=&amp;apos;yes&amp;apos; /&gt; 
+        &lt;AttributeType name=&quot;reorderLevel&quot; dt:type=&quot;string&quot; x:type=&quot;int&quot;/&gt;
+            &lt;attribute type=&quot;reorderLevel&quot; required=&amp;apos;yes&amp;apos; /&gt;         
+        &lt;AttributeType name=&quot;supplier&quot; dt:type=&quot;idref&quot; /&gt;
+            &lt;attribute type=&quot;supplier&quot; required=&amp;apos;yes&amp;apos; x:range=&quot;Supplier&quot;/&gt; 
+        &lt;AttributeType name=&quot;unitPrice&quot; dt:type=&quot;string&quot; x:type=&quot;float&quot;/&gt;
+            &lt;attribute type=&quot;unitPrice&quot; required=&amp;apos;yes&amp;apos; /&gt; 
+        &lt;AttributeType name=&quot;unitsInStock&quot; dt:type=&quot;string&quot; x:type=&quot;int&quot;/&gt;
+            &lt;attribute type=&quot;unitsInStock&quot; required=&amp;apos;yes&amp;apos; /&gt; 
+        &lt;AttributeType name=&quot;unitsOnOrder&quot; dt:type=&quot;string&quot; x:type=&quot;int&quot;/&gt;
+            &lt;attribute type=&quot;unitsOnOrder&quot; required=&amp;apos;yes&amp;apos; /&gt;
+ 
+    &lt;/ElementType&gt;
+ 
+ 
+    &lt;!-- *****  TYPE Shipper ***** --&gt;
+ 
+ 
+    &lt;ElementType name=&quot;Shipper&quot;&gt;
+ 
+        &lt;AttributeType name=&quot;id&quot; dt:type=&quot;id&quot;/&gt;
+            &lt;attribute type=&quot;id&quot; /&gt;
+ 
+        &lt;AttributeType name=&quot;companyName&quot; dt:type=&quot;string&quot;/&gt;
+            &lt;attribute type=&quot;companyName&quot; required=&amp;apos;yes&amp;apos; /&gt; 
+        &lt;AttributeType name=&quot;phone&quot; dt:type=&quot;string&quot;/&gt;
+            &lt;attribute type=&quot;phone&quot; required=&amp;apos;yes&amp;apos; /&gt; 
+        &lt;AttributeType name=&quot;shipperID&quot; dt:type=&quot;string&quot; x:type=&quot;int&quot;/&gt;
+            &lt;attribute type=&quot;shipperID&quot; required=&amp;apos;yes&amp;apos; /&gt;
+ 
+    &lt;/ElementType&gt;
+ 
+ 
+    &lt;!-- *****  TYPE Supplier ***** --&gt;
+ 
+ 
+    &lt;ElementType name=&quot;Supplier&quot;&gt;
+ 
+        &lt;AttributeType name=&quot;id&quot; dt:type=&quot;id&quot;/&gt;
+            &lt;attribute type=&quot;id&quot; /&gt;
+ 
+        &lt;AttributeType name=&quot;address&quot; dt:type=&quot;string&quot;/&gt;
+            &lt;attribute type=&quot;address&quot; required=&amp;apos;yes&amp;apos; /&gt; 
+        &lt;AttributeType name=&quot;city&quot; dt:type=&quot;string&quot;/&gt;
+            &lt;attribute type=&quot;city&quot; required=&amp;apos;yes&amp;apos; /&gt; 
+        &lt;AttributeType name=&quot;companyName&quot; dt:type=&quot;string&quot;/&gt;
+            &lt;attribute type=&quot;companyName&quot; required=&amp;apos;yes&amp;apos; /&gt; 
+        &lt;AttributeType name=&quot;contactName&quot; dt:type=&quot;string&quot;/&gt;
+            &lt;attribute type=&quot;contactName&quot; required=&amp;apos;yes&amp;apos; /&gt; 
+        &lt;AttributeType name=&quot;contactTitle&quot; dt:type=&quot;string&quot;/&gt;
+            &lt;attribute type=&quot;contactTitle&quot; required=&amp;apos;yes&amp;apos; /&gt; 
+        &lt;AttributeType name=&quot;country&quot; dt:type=&quot;string&quot;/&gt;
+            &lt;attribute type=&quot;country&quot; required=&amp;apos;yes&amp;apos; /&gt; 
+        &lt;AttributeType name=&quot;fax&quot; dt:type=&quot;string&quot;/&gt;
+            &lt;attribute type=&quot;fax&quot; required=&amp;apos;yes&amp;apos; /&gt; 
+        &lt;AttributeType name=&quot;homePage&quot; dt:type=&quot;string&quot; x:type=&quot;&quot;/&gt;
+            &lt;attribute type=&quot;homePage&quot; required=&amp;apos;yes&amp;apos; /&gt; 
+        &lt;AttributeType name=&quot;phone&quot; dt:type=&quot;string&quot;/&gt;
+            &lt;attribute type=&quot;phone&quot; required=&amp;apos;yes&amp;apos; /&gt; 
+        &lt;AttributeType name=&quot;postalCode&quot; dt:type=&quot;string&quot;/&gt;
+            &lt;attribute type=&quot;postalCode&quot; required=&amp;apos;yes&amp;apos; /&gt; 
+        &lt;AttributeType name=&quot;region&quot; dt:type=&quot;string&quot;/&gt;
+            &lt;attribute type=&quot;region&quot; required=&amp;apos;yes&amp;apos; /&gt; 
+        &lt;AttributeType name=&quot;supplierID&quot; dt:type=&quot;string&quot; x:type=&quot;int&quot;/&gt;
+            &lt;attribute type=&quot;supplierID&quot; required=&amp;apos;yes&amp;apos; /&gt; 
+ 
+    &lt;/ElementType&gt;
+ 
+  
+  &lt;!-- The PACKAGE --&gt;
+ 
+ 
+ 
+ 
+    &lt;!-- *****  TYPE Nwind ***** --&gt;
+ 
+ 
+    &lt;ElementType name=&quot;Nwind&quot;&gt;
+ 
+        &lt;AttributeType name=&quot;id&quot; dt:type=&quot;id&quot;/&gt;
+            &lt;attribute type=&quot;id&quot; /&gt;
+         
+        &lt;AttributeType name=&quot;categories&quot; dt:type=&quot;idrefs&quot; /&gt;
+            &lt;attribute type=&quot;categories&quot; x:range=&quot;Category&quot;/&gt;         
+        &lt;AttributeType name=&quot;customers&quot; dt:type=&quot;idrefs&quot; /&gt;
+            &lt;attribute type=&quot;customers&quot; x:range=&quot;Customer&quot;/&gt;         
+        &lt;AttributeType name=&quot;employees&quot; dt:type=&quot;idrefs&quot; /&gt;
+            &lt;attribute type=&quot;employees&quot; x:range=&quot;Employee&quot;/&gt;         
+        &lt;AttributeType name=&quot;orderDetails&quot; dt:type=&quot;idrefs&quot; /&gt;
+            &lt;attribute type=&quot;orderDetails&quot; x:range=&quot;OrderDetail&quot;/&gt;         
+        &lt;AttributeType name=&quot;orders&quot; dt:type=&quot;idrefs&quot; /&gt;
+            &lt;attribute type=&quot;orders&quot; x:range=&quot;Order&quot;/&gt;         
+        &lt;AttributeType name=&quot;products&quot; dt:type=&quot;idrefs&quot; /&gt;
+            &lt;attribute type=&quot;products&quot; x:range=&quot;Product&quot;/&gt;         
+        &lt;AttributeType name=&quot;shippers&quot; dt:type=&quot;idrefs&quot; /&gt;
+            &lt;attribute type=&quot;shippers&quot; x:range=&quot;Shipper&quot;/&gt;         
+        &lt;AttributeType name=&quot;suppliers&quot; dt:type=&quot;idrefs&quot; /&gt;
+            &lt;attribute type=&quot;suppliers&quot; x:range=&quot;Supplier&quot;/&gt;
+ 
+        &lt;group seq=&amp;apos;many&amp;apos;&gt;
+            &lt;element  type=&quot;Order&quot; minOccurs=&quot;0&quot; maxOccurs=&quot;*&quot; /&gt;
+            &lt;element  type=&quot;Customer&quot; minOccurs=&quot;0&quot; maxOccurs=&quot;*&quot; /&gt;
+            &lt;element  type=&quot;Employee&quot; minOccurs=&quot;0&quot; maxOccurs=&quot;*&quot; /&gt;
+            &lt;element  type=&quot;Supplier&quot; minOccurs=&quot;0&quot; maxOccurs=&quot;*&quot; /&gt;
+            &lt;element  type=&quot;Category&quot; minOccurs=&quot;0&quot; maxOccurs=&quot;*&quot; /&gt;
+            &lt;element  type=&quot;Product&quot; minOccurs=&quot;0&quot; maxOccurs=&quot;*&quot; /&gt;
+            &lt;element  type=&quot;OrderDetail&quot; minOccurs=&quot;0&quot; maxOccurs=&quot;*&quot; /&gt;
+            &lt;element  type=&quot;Shipper&quot; minOccurs=&quot;0&quot; maxOccurs=&quot;*&quot; /&gt;
+        &lt;/group&gt;
+ 
+    &lt;/ElementType&gt;
+ 
+ 
+&lt;/Schema&gt;</pre>
+</body>
+</html>

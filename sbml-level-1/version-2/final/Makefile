@@ -4,8 +4,8 @@
 # Organization: CDS, Caltech
 # Language    : Make
 # Created     : 2000-10-17
-# Revision    : Makefile,v 1.1.1.1 2002/12/05 23:59:38 mhucka Exp
-# /cvsroot/sbw/sbw/project/docs/sbml/sbml-level-1/version-1/Makefile,v
+# Revision    : $Revision$
+# $Id$
 
 BASENAME = sbml-level-1
 

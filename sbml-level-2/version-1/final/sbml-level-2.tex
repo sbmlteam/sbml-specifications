@@ -19,8 +19,8 @@
 \newcommand{\tm}{\textsuperscript{\tiny{\texttrademark}}}
 
 \pagestyle{myheadings}
-\markboth{\textit{SBML Level 2: Working Draft Revision 2}}{\textit{SBML
-    Level 2: Working Draft Revision 2}}
+\markboth{\textit{SBML Level 2: Working Draft Revision 3}}{\textit{SBML
+    Level 2: Working Draft Revision 3}}
 
 
 
@@ -45,8 +45,8 @@
 
 \acknowledge{Principal Investigators: John Doyle and Hiroaki Kitano}
 
-\date{SBML Level 2, Version 1\\[5pt]\fbox{Working Draft Revision 2}\\[5pt]
-  August 26, 2002}
+\date{SBML Level 2, Version 1\\[5pt]\fbox{Working Draft Revision 3}\\[5pt]
+  \today{}}
 
 \maketitlepage
 
@@ -81,20 +81,14 @@ by the following software systems: \emph{BioSpice}~\citep{arkin:2001},
 \emph{E-Cell}~\citep{tomita:1999,tomita:2001},
 \emph{Gepasi}~\citep{mendes:1997,mendes:2001},
 \emph{Jarnac}~\citep{sauro:2000,sauro:1991},
+\emph{JigCell}~\citep{?},
 \emph{NetBuilder}~\citep{schilstra:2002},
 \emph{ProMot/DIVA}~\citep{stelling:2001},
 \emph{StochSim}~\citep{bray:2001,morton-firth:1998}, and \emph{Virtual
-  Cell}~\citep{schaff:2000,schaff:2001}. SBML was developed with the help
+  Cell}~\citep{schaff:2000,schaff:2001}. 
+SBML was developed with the help
 of the authors of these packages.  In addition SBML Level 2 was developed
 in close collaboration with the authors of CellML~\citep{hedley:2001b}.
-
-We hope to finalize the final form of the core of SBML Level 2 detailed in
-this document in September 2002.  In Appendix~\ref{apdx:extensions}, we
-describe several additional features for possible inclusion in Level~2.
-We ask readers to evaluate whether they should be included in the final
-definition of SBML Level~2.  Our goal is to make a final decision on
-their status during the ICSB 2002 conference in December, 2002.
-
 
 %-----------------------------------------------------------------------------
 \subsection{Scope and Limitations}
@@ -152,19 +146,31 @@ changes:
   operators that enable the expression of discontinuous functions,
   something that was not possible in SBML Level~1.
   
+\item All attributes which contain initial conditions or parameter values,
+  including compartment volumes and species concentrations,
+  are optional in Level~2 rather than, as in Level~1, either being mandatory
+  or having default values. A missing attribute value for one of these attributes
+  implies that the value is either unknown, not required for analysis, or should be obtained
+  from an external source; see Sections~\ref{sec:compartments}, \ref{sec:species} and \ref{sec:parameters}.
+  
 \item The top-level \class{Model} structure can contain an optional list of
   global function definitions expressed in MathML and organized in new
   structures of type \class{FunctionDefinition}.  See
   Sections~\ref{sec:formulas} and \ref{sec:functions}.
+  
+\item The top-level \class{Model} structure can contain an optional list of
+  event organized in strutures of type \class{Event} which specify the a
+  discrete event can occur during a simulation. See Section \ref{sec:events}.
   
 \item The namespace for identifiers in a model does not contain any
   built-in symbols; gone, for example, are the predefined rate laws of SBML
   Level~1.  The approach taken in SBML Level~2 is that each model must
   itself define whatever functions it uses using the new
   \class{FunctionDefinition} mechanism.  SBML Level~2 uses a feature of
-  MathML to allow models to refer to one built-in entity, a symbol
-  representing time, but even this is not in the namespace of a model's
-  identifiers.  See Section~\ref{sec:mathmltokens}.
+  MathML to allow models to refer to two built-in entities, a symbol
+  representing time and a delay function which represents a variable's value
+  at some point in the past.  However even these entities are not in the
+  namespace of a model's identifiers.  See Section~\ref{sec:mathmltokens}.
   
 \item Species, compartments and reactions are each optional in a model;
   thus, a model does not need to contain species, compartments or reactions
@@ -275,6 +281,7 @@ simply consists of lists of these components:
         \>list of parameters (optional)\\
         \>list of rules (optional)\\
         \>list of reactions (optional)\\
+        \>list of events (optional)\\
         end of model definition
       \end{tabbing}
     \end{minipage}
@@ -319,6 +326,10 @@ The meaning of each component is as follows:
   Reactions have associated rate laws describing how quickly they take
   place.
 
+\item \emph{Event}: A statement describing a discrete instantaneous
+  discontinuous transformation of a set of variables of any type
+  (species concentration, compartment volume or parameter) when the
+  model makes a defined transition from one state to another.
 \end{description}
 
 A software package can read an SBML model description and translate it
@@ -630,10 +641,13 @@ other identifiers.
 \end{itemize}
 
 The set of rules above can enable software packages using either
-local or global namespaces for parameters to exchange SBML model definitions. In particular, software environments using local namespaces for parameters
+local or global namespaces for parameters to exchange SBML model definitions.
+In particular, software environments using local namespaces for parameters
 internally should be able to accept SBML model definitions without
 needing to change component identifiers. Environments using a
-global namespace for parameters internally can perform a simple manipulation of the identifiers of local parameter elements within reaction definitions to avoid name collisions.  (An example approach for the latter would be the
+global namespace for parameters internally can perform a simple manipulation of
+the identifiers of local parameter elements within reaction definitions to
+avoid name collisions.  (An example approach for the latter would be the
 following: when receiving an SBML-encoded model, prefix each
 parameter identifier inside each reaction with a string constructed from the
 reaction's identifier; when writing an SBML-encoded model, strip
@@ -752,12 +766,25 @@ URL: in this context the URL should be interpreted as a URI.  The content
 of the \class{csymbol} element is for rendering purposes only and can be
 ignored by a parser.
 
-In SBML, there is one URL in the set of predefined SBML symbols:
-\texttt{http://www.sbml.org/symbols/time}, which represents the current
-simulation time.  The units of this entity is determined from the built-in
-\texttt{time} of Table~\vref{tab:builtin}.
+In SBML Level 2, there are 2 URLs in the set of predefined SBML symbols:
+\begin{itemize}
 
-The following example demonstrates these concepts.  The XML fragment below
+\item \texttt{http://www.sbml.org/symbols/time}, which represents the current
+simulation time.  The units of the current time entity is
+determined from the built-in \texttt{time} of Table~\vref{tab:builtin}.
+
+\item \texttt{http://www.sbml.org/symbols/delay}, for
+representing a delay function.  
+The delay function has the form $delay(x, d)$, taking two
+arguments.  Its value is the value of argument $x$ at $d$ time units
+before the current time.  The units of the $d$ parameter are
+determined from the built-in \texttt{time}.  The \texttt{delay} function is
+useful for representing biological processes having a delayed response, but
+where the detail of the processes and delay mechanism is not relevant to the
+operation of a given model.  
+\end{itemize}
+
+The following examples demonstrates these concepts.  The XML fragment below
 encodes the formula $x + t$, where $t$ is the built-in symbol for time.
 
 \begin{example}
@@ -771,6 +798,25 @@ encodes the formula $x + t$, where $t$ is the built-in symbol for time.
     </apply>
 </math>
 \end{example}
+As a further example, the following XML fragment encodes the equation
+$k + delay(x, 0.1)$ or alternatively $k_t + x_{t - 0.1}$:
+\begin{example}
+<math xmlns="http://www.w3.org/1998/Math/MathML">
+    <apply>
+        <add/>
+        <ci> k </ci>
+        <apply>
+            <csymbol encoding="SBML" definitionURL="http://www.sbml.org/symbols/delay">
+                delay
+            </csymbol>
+            <ci> x </ci>
+            <cn> 0.1 </cn>
+        </apply>
+    </apply>
+</math>
+\end{example}
+
+Section~\ref{sec:delayeg} contains a complete model which uses the built-in delay function.
 
 %-----------------------------------------------------------------------
 \subsection{Valid XML Headers for SBML Level 2}
@@ -870,6 +916,9 @@ skeletal model:
     <listOfReactions>
         ...
     </listOfReactions>
+    <listOfEvents>
+        ...
+    </listOfEvents>
 </model>
 \end{example}
 
@@ -1108,15 +1157,19 @@ called \attrib{volume}, representing the total volume of the
 compartment in the default units of volume.  (See
 Table~\vref{tab:builtin}.)  This enables concentrations of species
 to be calculated in the absence of geometry information. The
-\attrib{volume} field is optional and defaults to a value of
-``\texttt{1}'' (one).
+\attrib{volume} field is optional.  A missing \attrib{volume} value
+implies that the value is either unknown, not required for analysis,
+or available from an external data source.  A missing \attrib{volume}
+value does not imply that the compartment volume is 1.
 
 A \class{Compartment} structure has an optional boolean field called
 \attrib{constant} which indicates whether the compartment's volume stays
 constant or can vary during a simulation.  A value of \attribvalue{false}
 indicates that the compartment's volume can be determined by rules.  The
 default value for the \attrib{constant} field is \attribvalue{true} because
-in typical modeling scenarios, compartment volumes do not change.
+in typical modeling scenarios, compartment volumes do not change.  When
+\attrib{constant} field id is \attribvalue{false} then \attrib{volume}
+contains the initial volume of the compartment.
 
 The units of volume may be explicitly set using the optional field
 \attrib{units} in \class{Compartment}; the named units must be either one
@@ -1196,9 +1249,11 @@ these entities.  Its definition is shown in Figure~\vref{fig:species}.
 \class{Species} has an \attrib{id} field of type \class{SId} and optional
 \attrib{name} field of type \class{string}.  The field
 \attrib{compartment}, also of type \class{SId}, is used to identify the
-compartment in which the species is located.  The field
+compartment in which the species is located.  The optional field
 \attrib{initialAmount}, of type \class{double}, is used to set the initial
-amount of the species in the named compartment.  The units of the substance
+amount of the species in the named compartment.  A missing \attrib{initialAmount} value
+implies that the value is either either unknown, not required for analysis
+or available from an external data source.  The units of the substance
 quantity may be explicitly set using the optional field \attrib{units}.  The
 value assigned to \attrib{units} must be chosen from one of the following
 possibilities: one of base unit names from Table~\vref{tab:unitkind}, the
@@ -1295,8 +1350,10 @@ called ``parameters'' instead of variables in SBML.  The definition of
 \class{Parameter} has an \attrib{id} field of type \class{SId} and
 an optional \attrib{name} field of type \class{string}.  The
 symbol in the \attrib{id} field identifies the parameter.  The
-field \attrib{value} determines the value (of type \class{double})
-assigned to the identifer.  The units of the parameter
+optional field \attrib{value} determines the value (of type \class{double})
+assigned to the identifer.  A missing \attrib{value} 
+implies that the \attrib{value} is either unknown, not required for analysis
+or available from an external data source.  The units of the parameter
 \attrib{value} are specified by the optional field \attrib{units}.
 The value assigned to \attrib{units} must be chosen from one of
 the following possibilities: one of base unit names from
@@ -1310,7 +1367,8 @@ The \class{Parameter} structure has an optional boolean field named
 \attrib{constant} which indicates whether the parameter's value can vary
 during the simulation.  The default value is \attribvalue{true}; a value of
 \attribvalue{false} indicates that the parameter's value can be changed by
-rules (see Section~\ref{sec:rules}).
+rules (see Section~\ref{sec:rules}) and that the \attrib{value} contains
+the initial value of the parameter.
 
 Parameters are used in two places in SBML: in lists of parameters defined
 at the top level in a \class{Model}-type structure, and within individual
@@ -1859,6 +1917,111 @@ a parameter.  It demonstrates the use of species references and the
     ...
 </model>
 \end{example}
+
+%-----------------------------------------------------------------------------
+\subsection{Events}
+\label{sec:events}
+%-----------------------------------------------------------------------------
+
+\class{Model} has an optional list of
+\class{Event} structures that describe the time and form of explicit
+instantaneous discontinuous state changes in the model.  For example, an
+event may describe that one species concentration is halved when another
+species concentration exceeds a given threshold value.
+
+An \class{Event} structure defines when the event can occur, the variables
+that are affected by the event, and how the variables are affected.  The
+effect of the event can optionally be delayed after the occurrence of the
+condition which invokes it.  The operation of an \class{Event} structure is
+divided into two phases (even when the event is not delayed): one when the
+event is \emph{fired} and the other when the event is \emph{executed}. The
+\class{Event} type is defined in Figure~\vref{fig:event}.  Both
+\class{Event} and \class{EventAssignment} are derived from \class{SBase}
+(see Section~\ref{sec:sbase}).  An example of a model which uses events is
+given below.
+
+\begin{figure}[htb]
+  \centering
+  \includegraphics[scale = 0.68]{event}
+  \caption{The definitions of \class{Event} and \class{EventAssignment}}
+  \label{fig:event}
+\end{figure}
+
+The following sections describe the fields of the \class{Event}
+structure.
+
+\subsubsection{\attrib{trigger}}
+The \attrib{trigger} field defines when the \class{Event}
+structure has an effect on the model.  The \attrib{trigger} field
+contains a MathML boolean expression.  The exact instant that the
+expression evaluates to true is the time point when the
+\class{Event} is \emph{fired}.  The event only fires when the
+\attrib{trigger} makes the transition from false to true.  The
+event will fire at any further time points when the
+\attrib{trigger} make this transition.
+
+\subsubsection{\attrib{delay}}
+The optional \attrib{delay} field defines the length of time after
+the event has \emph{fired} that the event is \emph{executed}. The
+\attrib{delay} field is another MathML expression.  This
+expression should be evaluated when the rule is \emph{fired}.  The
+default value for the \attrib{delay} field is 0.  The value of the
+\attrib{delay} field should always be positive.
+
+\subsubsection{\attrib{timeUnits}}
+The optional field \attrib{timeUnits} determines the units of time
+that apply to the \attrib{delay} field. If not set, the units are
+taken from the defaults defined by the built-in ``\texttt{time}''
+of Table~\vref{tab:builtin}.
+
+\subsubsection{\attrib{eventAssignment}}
+The \attrib{eventAssignment} field consists of a non-empty list of
+\class{eventAssignment} structures.  This field is implemented as a
+\class{listOfEventAssignments} element containing one or more
+\class{eventAssignment} elements.  The \class{EventAssignment}
+structures represent variable assignments which have effect when
+the event is \emph{executed}. The \class{Assignment} structure is
+shown in Figure~\ref{fig:event}. The \attrib{variable} field is of
+type \class{SId} and contains the identifier of a variable i.e. a
+compartment, species or parameter.  The structures referenced by
+the \attrib{variable} field must have their \attrib{constant}
+fields set to ``\texttt{false}''.  The \attrib{math} field
+contains a MathML expression which defines the new value of the
+variable.  This expression is evaluated when the \class{Event} is
+\emph{fired} but the variable only acquires the result or new
+value when the \class{Event} is \emph{executed}.  The order of the
+\class{EventAssignment} structures is not significant (unlike
+scalar rules), the effect of one assignment cannot affect the
+result of another assignment.  The identifiers occurring in the
+MathML \attrib{ci} fields of the \class{EventAssignment}
+structures represent the value of the identifier at the point when
+the \class{Event} is \emph{fired}.
+
+A example of an \class{Event} structure follows:
+
+\begin{example}
+<event>
+    <trigger>
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+                <leq/>
+                <ci> P1 </ci>
+                <ci> t </ci>
+            </apply>
+        </math>
+    </trigger>
+    <listOfAssignments>
+        <assignment variable="k2">
+            <math:cn> 0 </math:cn>
+        </assignment>
+    <listOfAssignments>
+</event>
+\end{example}
+
+This structure makes the assignment $k_2 = 0$ at the point when
+$P_1 \leq t$.
+
+A complete example model that uses events is shown in Section~\ref{sec:eventeg}
 
 %=============================================================================
 \section{Example Models Expressed in XML Using SBML}
@@ -2449,6 +2612,193 @@ above:
 </sbml>
 \end{example}
 
+%-----------------------------------------------------------------------------
+\subsection{Use of the $delay$ Function in a Model}
+\label{sec:delayeg}
+%-----------------------------------------------------------------------------
+
+The following is a simple model illustrating the use of $delay$ to
+represent a gene that suppresses its own expression.  The model can be
+expressed in a single rule:
+\begin{equation*}
+\frac{d P}{d t} = \D\frac{ \D\frac{1}{1 + m (P_{delayed})^q} - P }{ \tau }
+\end{equation*}
+where
+\begin{equation*}
+\begin{array}{rl}
+P_{delayed} & \mbox{is } delay(P, \Delta_t) \mbox{ or P at } t - \Delta_t\\
+P & \mbox{is protein concentration}\\
+\tau & \mbox{is the response time}\\
+m & \mbox{is a multiplier or equilibrium constant}\\
+q & \mbox{is the Hill coefficient}\\ 
+\end{array}
+\end{equation*}
+
+The SBML form of this model is as follows:
+\begin{example}
+<?xml version="1.0"?>
+<sbml xmlns="http://www.sbml.org/sbml/level2" version="1" level="2">
+    <model>
+        <listOfCompartments>
+            <compartment id="cell"/>
+        </listOfCompartments>
+        <listOfSpecies>
+            <species id="P" compartment="cell" initialAmount="0"/>
+        </listOfSpecies>
+        <listOfParameters>
+            <parameter id="tau" value="1"/>
+            <parameter id="m" value="0.5"/>
+            <parameter id="q" value="1"/>
+            <parameter id="delta_t" value="1"/>
+        </listOfParameters>
+        <listOfRules>
+            <speciesConcentrationRule species="P" type="rate">
+                <math xmlns="http://www.w3.org/1998/Math/MathML">
+                 <apply>
+                  <divide/>
+                  <apply>
+                   <minus/
+                   <apply>
+                    <divide/>
+                    <cn> 1 </cn>
+                    <apply>
+                     <add/>
+                     <cn> 1 </cn>
+                     <apply>
+                      <times/>
+                      <ci> m <ci/>
+                      <apply>
+                       <power/>
+                       <apply>
+                        <csymbol encoding="SBML"
+definitionURL="http://www.sbml.org/symbols/delay">
+                            delay
+                        </csymbol>
+                        <ci> P </ci>
+                        <ci> delta_t </ci>
+                       </apply>
+                       <ci> q </ci>
+                      </apply>
+                     </apply>
+                    </apply>
+                   </apply>
+                  </apply>
+                  <ci> tau </ci>
+                 </apply>
+                </math>
+            </speciesConcentrationRule>
+        </listOfRules>
+    </model>
+</sbml>
+\end{example}
+%-----------------------------------------------------------------------------
+\subsection{Use of Events Feature in a Model}
+\label{sec:eventeg}
+%-----------------------------------------------------------------------------
+
+This section contains a simple model system that demonstrates the
+use of an events.  Consider a system with two genes: $k_1$ and
+$k_2$.  $k_1$ is initially on and $k_2$ is initially off.  The
+genes when on produce products, $P_1$ and $P_2$ respectively, at a
+fixed rate when switched on.  When $P_1$ reaches a given
+concentration $k_2$ switches.  This can be represented
+mathematically as follows:
+
+\begin{equation*}
+  \begin{array}{l}
+    \D\frac{d P_1}{d t} = k_1 - P_1\\ \\[-4pt]
+    \D\frac{d P_2}{d t} = k_2 - P_2\\ \\[-4pt]
+  \end{array}
+\end{equation*}
+when $P_1 > \tau$ then $k_2 = 1$ \\
+when $P_1 \leq \tau$ then $k_2 = 0$ \\
+\\
+initially
+\begin{equation*}
+  \begin{array}{lllll}
+    k_1 = 1 & k_2 = 0 & \tau = 0.25 & P_1 = 0 & P_2 = 0\\ \\[-4pt]
+  \end{array}
+\end{equation*}
+
+The SBML Level 2 representation of this as follows:
+
+\begin{example}
+<?xml version="1.0"?>
+<sbml xmlns="http://www.sbml.org/sbml/level2" version="1" level="2"
+      math:xmlns="http://www.w3.org/1998/Math/MathML">
+    <model>
+        <listOfCompartments>
+            <compartment id="cell"/>
+        </listOfCompartments>
+        <listOfSpecies>
+            <species id="P1" compartment="cell" initialAmount="0"/>
+            <species id="P2" compartment="cell" initialAmount="0"/>
+        </listOfSpecies>
+        <listOfParameters>
+            <parameter id="k1" value="1" constant="false"/>
+            <parameter id="k2" value="0" constant="false"/>
+            <parameter id="tau" value="0.25"/>
+        </listOfParameters>
+        <listOfRules>
+            <speciesConcentrationRule species="P1" type="rate">
+                <math:math>
+                    <math:apply>
+                        <math:minus/>
+                        <math:ci> k1 </math:ci>
+                        <math:ci> P1 </math:ci>
+                        </math:apply>
+                    </math:apply>
+                </math:math>
+            </speciesConcentrationRule>
+            <speciesConcentrationRule species="P2" type="rate">
+                <math:math>
+                    <math:apply>
+                        <math:minus/>
+                        <math:ci> k2 </math:ci>
+                        <math:ci> P2 </math:ci>
+                        </math:apply>
+                    </math:apply>
+                </math:math>
+            </speciesConcentrationRule>
+        </listOfRules>
+        <listOfEvents>
+            <event>
+                <trigger>
+                    <math:math>
+                        <math:apply>
+                            <math:gt/>
+                            <math:ci> P1 </math:ci>
+                            <math:ci> tau </math:ci>
+                        </math:apply>
+                    </math:math>
+                </trigger>
+                <listOfAssignments>
+                    <assignment variable="k2">
+                        <math:cn> 1 </math:cn>
+                    </assignment>
+                <listOfAssignments>
+            </event>
+            <event>
+                <trigger>
+                    <math:math>
+                        <math:apply>
+                            <math:leq/>
+                            <math:ci> P1 </math:ci>
+                            <math:ci> tau </math:ci>
+                        </math:apply>
+                    </math:math>
+                </trigger>
+                <listOfAssignments>
+                    <assignment variable="k2">
+                        <math:cn> 0 </math:cn>
+                    </assignment>
+                <listOfAssignments>
+            </event>
+        </listOfEvents>
+    </model>
+</sbml>
+\end{example}
+
 %=============================================================================
 \section{Discussion}
 \label{sec:discussion}
@@ -2495,12 +2845,10 @@ more powerful, flexible and useful.
 
 As mentioned above, SBML Level 2 is intended to provide the foundations for
 modeling biochemical networks.  A number of significant capabilities are
-lacking from Level~2 as described in the main part of this document.
-Appendix~\ref{apdx:extensions} contains extensions that could be included
-in SBML Level 2 (for consideration before the end of 2002). Other features
-will be introduced in future levels of SBML.  The following summarizes
-additional features that are under consideration to be included in SBML
-Level~3:
+lacking from Level~2 as described in the main part of this document.  Features
+to implement these capabilities will be introduced in future levels of SBML.
+The following summarizes additional features that are under consideration to be
+included in SBML Level~3:
 \begin{itemize}
 
 \item \emph{Arrays}.  This will enable the creation of arrays of components
@@ -2550,7 +2898,9 @@ Conditional rules would enable the expression of the following example:
 \end{array}
 \end{equation*}
 where $s$ is not determined by the rule when $s \leq 0$.
-\item \emph{\class{SpeciesAmountRule}}.  This feature would introduce the type \class{SpeciesAmountRule} which would enable the expression of rules that determine the amount of species rather than their concentration.
+\item \emph{\class{SpeciesAmountRule}}.  This feature would introduce the type
+\class{SpeciesAmountRule} which would enable the expression of rules that determine
+the amount of species rather than their concentration.
 \end{itemize}
 
 
@@ -2657,23 +3007,26 @@ Biology project, a project funded by the Japan Science and Technology
 Corporation and hosted in part at the California Institute of Technology.
 
 SBML was first conceived at the JST/ERATO-sponsored \emph{First Workshop on
-  Software Platforms for Molecular Biology}, held in April, 2000, at the
+Software Platforms for Systems Biology}, held in April, 2000, at the
 California Institute of Technology in Pasadena, California, USA.  The
 participants collectively decided to begin developing a common XML-based
 declarative language for representing models.  A draft version of the
 Systems Biology Markup Language was developed by the Caltech ERATO team and
 delivered to all collaborators in August, 2000.  This draft version
 underwent extensive discussion over mailing lists and then again during the
-\emph{Second Workshop on Software Platforms for Molecular Biology} held in
+\emph{Second Workshop on Software Platforms for Systems Biology} held in
 Tokyo, Japan, November 2000.  A revised version of SBML was issued by the
 Caltech ERATO team in December, 2000, and after further discussions over
 mailing lists and in meetings, we produced a description of SBML
 Level~1~\citep{hucka:2001}.
 
 SBML Level~2 was conceived at the \emph{5th Workshop on Software Platforms
-  for Molecular Biology}, held in July 2002, at the University of
+for Systems Biology}, held in July 2002, at the University of
 Hertfordshire, UK.  The participants collectively decided to revise the
-form of SBML in Level~2.
+form of SBML in Level~2.  The first draft of this document was released in
+August 2002. The final set of features in SBML Level 2 described
+in this document was finalized in December 2002 at the \emph{6th Workshop on
+Software Platforms for Systems Biology} at ICSB 2002 in Stockholm.
 
 SBML Level 2 was developed with the help of many people, especially the
 authors of BioSpice, DBSolve, Cellerator, COPASI, E-Cell, Gepasi, Jarnac,
@@ -2695,461 +3048,115 @@ Kouichi Takahashi, Masaru Tomita, John Wagner and Olaf Wolkenhauer.
 \setcounter{secnumdepth}{2}
 \appendix
 
-%=============================================================================
-\section{Additional Candidate Changes and Extensions to SBML Level 2}
-\label{apdx:extensions}
-%=============================================================================
-
-This section describes additional features that have been proposed and
-appear to be worthwhile adding to SBML Level~2, but that have not yet been
-discussed widely within the SBML community.  We propose these features also
-be adopted for Level~2 if there is widespread support and no significant
-objections.
-
-
-%-----------------------------------------------------------------------------
-\subsection{Default Compartment}
-\label{sec:defaultcompartment}
-%-----------------------------------------------------------------------------
-
-We propose that the \attrib{compartment} field of the \class{Species}
-structure be made optional.  Under this proposal, in the absence of a value
-for this field, the species would by default be placed in a compartment
-of unit volume.  This means that a compartment structure would always
-occur in a model with a species structure.
-
-The following SBML example illustrating this feature encodes the model
-given in Section~\ref{sec:modeleg}:
-\begin{example}
-<?xml version="1.0"?>
-<sbml xmlns="http://www.sbml.org/sbml/level2" version="1" level="2"
-    <model id="Branch">
-        <notes>
-            <body xmlns="http://www.w3.org/1999/xhtml">
-                <p>Simple branch system.</p>
-                <p>The reaction looks like this:</p>
-                <p>reaction-1:   X0 -> S1; k1*X0;</p>
-                <p>reaction-2:   S1 -> X1; k2*S1;</p>
-                <p>reaction-3:   S1 -> X2; k3*S1;</p>
-            </body>
-        </notes>
-        <listOfSpecies>
-            <species id="S1" initialAmount="0" boundaryCondition="false"/>
-            <species id="X0" initialAmount="0" boundaryCondition="true"/>
-            <species id="X1" initialAmount="0" boundaryCondition="true"/>
-            <species id="X2" initialAmount="0" boundaryCondition="true"/>
-        </listOfSpecies>
-        <listOfReactions>
-            <reaction id="reaction_1" reversible="false">
-                <listOfReactants>
-                    <speciesReference species="X0" stoichiometry="1"/>
-                </listOfReactants>
-                <listOfProducts>
-                    <speciesReference species="S1" stoichiometry="1"/>
-                </listOfProducts>
-                <kineticLaw>
-                    <math xmlns="http://www.w3.org/1998/Math/MathML">
-                        <apply>
-                            <times/>
-                            <ci> k1 </ci>
-                            <ci> X0 </ci>
-                        </apply>
-                    </math>
-                    <listOfParameters>
-                        <parameter id="k1" value="0"/>
-                    </listOfParameters>
-                </kineticLaw>
-            </reaction>
-            <reaction id="reaction_2" reversible="false">
-                <listOfReactants>
-                    <speciesReference species="S1" stoichiometry="1"/>
-                </listOfReactants>
-                <listOfProducts>
-                    <speciesReference species="X1" stoichiometry="1"/>
-                </listOfProducts>
-                <kineticLaw>
-                    <math xmlns="http://www.w3.org/1998/Math/MathML">
-                        <apply>
-                            <times/>
-                            <ci> k2 </ci>
-                            <ci> S1 </ci>
-                        </apply>
-                    </math>
-                    <listOfParameters>
-                        <parameter id="k2" value="0"/>
-                    </listOfParameters>
-                </kineticLaw>
-            </reaction>
-            <reaction id="reaction_3" reversible="false">
-                <listOfReactants>
-                    <speciesReference species="S1" stoichiometry="1"/>
-                </listOfReactants>
-                <listOfProducts>
-                    <speciesReference species="X2" stoichiometry="1"/>
-                </listOfProducts>
-                <kineticLaw>
-                    <math xmlns="http://www.w3.org/1998/Math/MathML">
-                        <apply>
-                            <times/>
-                            <ci> k3 </ci>
-                            <ci> S1 </ci>
-                        </apply>
-                    </math>
-                    <listOfParameters>
-                        <parameter id="k3" value="0"/>
-                    </listOfParameters>
-                </kineticLaw>
-            </reaction>
-        </listOfReactions>
-    </model>
-</sbml>
-\end{example}
-
-%-----------------------------------------------------------------------------
-\subsection{Delay function}
-\label{sec:delay}
-%-----------------------------------------------------------------------------
-
-In addition to the built-in symbol representing time as described in
-Section~\ref{sec:mathmltokens}, we propose an additional built-in symbol,
-\texttt{http://www.sbml.org/symbols/delay}, for reprensenting a delay
-function.  This function would have the form $delay(x, d)$, taking two
-arguments.  Its value would be the value of argument $x$ at $d$ time units
-before the current time.  The units of the $d$ parameter would be
-determined from the built-in \texttt{time} of Table~\vref{tab:builtin}.
-
-As an example, the following XML fragment encodes the equation $k +
-delay(x, 0.1)$ or alternatively $k_t + x_{t - 0.1}$:
-\begin{example}
-<math xmlns="http://www.w3.org/1998/Math/MathML">
-    <apply>
-        <add/>
-        <ci> k </ci>
-        <apply>
-            <csymbol encoding="SBML" definitionURL="http://www.sbml.org/symbols/delay">
-                delay
-            </csymbol>
-            <ci> x </ci>
-            <ci> 0.1 </ci>
-        </apply>
-    </apply>
-</math>
-\end{example}
-
-%-----------------------------------------------------------------------------
-\subsubsection{Motivations}
-\label{sec:delaydiscuss}
-%-----------------------------------------------------------------------------
-
-We believe the \texttt{delay} function would be useful for representing
-biological processes having a delayed response, but where the detail of the
-processes and delay mechanism is not relevant to the operation of a given
-model.  An example of such a process is gene expression.  To facilitate
-this kind of model, the software tool XPP~\citep{ermentrout:2001} includes
-a \texttt{delay} function.
-
-
-%-----------------------------------------------------------------------------
-\subsubsection{Use of the $delay$ Function in a Model}
-\label{sec:delayeg}
-%-----------------------------------------------------------------------------
-
-The following is a simple model illustrating the use of $delay$ to
-represent a gene that suppresses its own expression.  The model can be
-expressed in a single rule:
-\begin{equation*}
-\frac{d P}{d t} = \D\frac{ \D\frac{1}{1 + m (P_{delayed})^q} - P }{ \tau }
-\end{equation*}
-where
-\begin{equation*}
-\begin{array}{rl}
-P_{delayed} & \mbox{is } delay(P, \Delta_t) \mbox{ or P at } t - \Delta_t\\
-P & \mbox{is protein concentration}\\
-\tau & \mbox{is the response time}\\
-m & \mbox{is a multiplier or equilibrium constant}\\
-q & \mbox{is the Hill coefficient}\\ 
-\end{array}
-\end{equation*}
-
-The SBML form of this model is as follows:
-\begin{example}
-<?xml version="1.0"?>
-<sbml xmlns="http://www.sbml.org/sbml/level2" version="1" level="2">
-    <model>
-        <listOfCompartments>
-            <compartment id="cell"/>
-        </listOfCompartments>
-        <listOfSpecies>
-            <species id="P" compartment="cell" initialAmount="0"/>
-        </listOfSpecies>
-        <listOfParameters>
-            <parameter id="tau" value="1"/>
-            <parameter id="m" value="0.5"/>
-            <parameter id="q" value="1"/>
-            <parameter id="delta_t" value="1"/>
-        </listOfParameters>
-        <listOfRules>
-            <speciesConcentrationRule species="P" type="rate">
-                <math xmlns="http://www.w3.org/1998/Math/MathML">
-                 <apply>
-                  <divide/>
-                  <apply>
-                   <minus/
-                   <apply>
-                    <divide/>
-                    <cn> 1 </cn>
-                    <apply>
-                     <add/>
-                     <cn> 1 </cn>
-                     <apply>
-                      <times/>
-                      <ci> m <ci/>
-                      <apply>
-                       <power/>
-                       <apply>
-                        <csymbol encoding="SBML"
-definitionURL="http://www.sbml.org/symbols/delay">
-                            delay
-                        </csymbol>
-                        <ci> P </ci>
-                        <ci> delta_t </ci>
-                       </apply>
-                       <ci> q </ci>
-                      </apply>
-                     </apply>
-                    </apply>
-                   </apply>
-                  </apply>
-                  <ci> tau </ci>
-                 </apply>
-                </math>
-            </speciesConcentrationRule>
-        </listOfRules>
-    </model>
-</sbml>
-\end{example}
-
-%-----------------------------------------------------------------------------
-\subsection{Events}
-\label{sec:events}
-%-----------------------------------------------------------------------------
-
-Under this proposal, \class{Model} would have an optional list of
-\class{Event} structures that would describe the time and form of explicit
-instantaneous discontinuous state changes in the model.  For example, an
-event may describe that one species concentration is halved when another
-species concentration exceeds a given threshold value.
-
-An \class{Event} structure defines when the event can occur, the variables
-that are affected by the event, and how the variables are affected.  The
-effect of the event can optionally be delayed after the occurrence of the
-condition which invokes it.  The operation of an \class{Event} structure is
-divided into two phases (even when the event is not delayed): one when the
-event is \emph{fired} and the other when the event is \emph{executed}. The
-\class{Event} type is defined in Figure~\vref{fig:event}.  Both
-\class{Event} and \class{EventAssignment} are derived from \class{SBase}
-(see Section~\ref{sec:sbase}).  An example of a model which uses events is
-given below.
-
-\begin{figure}[htb]
-  \centering
-  \includegraphics[scale = 0.68]{event}
-  \caption{The definitions of \class{Event} and \class{EventAssignment}}
-  \label{fig:event}
-\end{figure}
-
-The following sections describe the fields of the \class{Event}
-structure.
-
-\subsubsection{\attrib{trigger}}
-The \attrib{trigger} field defines when the \class{Event}
-structure has an effect on the model.  The \attrib{trigger} field
-contains a MathML boolean expression.  The exact instant that the
-expression evaluates to true is the time point when the
-\class{Event} is \emph{fired}.  The event only fires when the
-\attrib{trigger} makes the transition from false to true.  The
-event will fire at any further time points when the
-\attrib{trigger} make this transition.
-
-\subsubsection{\attrib{delay}}
-The optional \attrib{delay} field defines the length of time after
-the event has \emph{fired} that the event is \emph{executed}. The
-\attrib{delay} field is another MathML expression.  This
-expression should be evaluated when the rule is \emph{fired}.  The
-default value for the \attrib{delay} field is 0.  The value of the
-\attrib{delay} field should always be positive.
-
-\subsubsection{\attrib{timeUnits}}
-The optional field \attrib{timeUnits} determines the units of time
-that apply to the \attrib{delay} field. If not set, the units are
-taken from the defaults defined by the built-in ``\texttt{time}''
-of Table~\vref{tab:builtin}.
-
-\subsubsection{\attrib{eventAssignment}}
-The \attrib{eventAssignment} field consists of a non-empty list of
-\class{eventAssignment} structures.  This field is implemented as a
-\class{listOfEventAssignments} element containing one or more
-\class{eventAssignment} elements.  The \class{EventAssignment}
-structures represent variable assignments which have effect when
-the event is \emph{executed}. The \class{Assignment} structure is
-shown in Figure~\ref{fig:event}. The \attrib{variable} field is of
-type \class{SId} and contains the identifier of a variable i.e. a
-compartment, species or parameter.  The structures referenced by
-the \attrib{variable} field must have their \attrib{constant}
-fields set to ``\texttt{false}''.  The \attrib{math} field
-contains a MathML expression which defines the new value of the
-variable.  This expression is evaluated when the \class{Event} is
-\emph{fired} but the variable only acquires the result or new
-value when the \class{Event} is \emph{executed}.  The order of the
-\class{EventAssignment} structures is not significant (unlike
-scalar rules), the effect of one assignment cannot affect the
-result of another assignment.  The identifiers occurring in the
-MathML \attrib{ci} fields of the \class{EventAssignment}
-structures represent the value of the identifier at the point when
-the \class{Event} is \emph{fired}.
-
-A example of an \class{Event} structure follows:
-
-\begin{example}
-<event>
-    <trigger>
-        <math xmlns="http://www.w3.org/1998/Math/MathML">
-            <apply>
-                <leq/>
-                <ci> P1 </ci>
-                <ci> t </ci>
-            </apply>
-        </math>
-    </trigger>
-    <listOfAssignments>
-        <assignment variable="k2">
-            <math:cn> 0 </math:cn>
-        </assignment>
-    <listOfAssignments>
-</event>
-\end{example}
-
-This structure makes the assignment $k_2 = 0$ at the point when
-$P_1 \leq t$.
-
-%-----------------------------------------------------------------------------
-\subsubsection{Discussion}
-\label{sec:eventdiscuss}
-%-----------------------------------------------------------------------------
-
-The requirement for the event feature arises when attempting to represent a
-cell cycle model~\citep{novak:2001} in XPP~\citep{ermentrout:2001}.  This
-model uses the \texttt{global} XPP keyword, which is similar to the
-proposed SBML \class{Event} type, to describe how cell mass is halved when
-cell division occurs in response to M-phase promoting factor.
-
-%-----------------------------------------------------------------------------
-\subsubsection{Use of Events Feature in a Model}
-\label{sec:eventeg}
-%-----------------------------------------------------------------------------
-
-This section contains a simple model system that demonstrates the
-use of an events.  Consider a system with two genes: $k_1$ and
-$k_2$.  $k_1$ is initially on and $k_2$ is initially off.  The
-genes when on produce products, $P_1$ and $P_2$ respectively, at a
-fixed rate when switched on.  When $P_1$ reaches a given
-concentration $k_2$ switches.  This can be represented
-mathematically as follows:
-
-\begin{equation*}
-  \begin{array}{l}
-    \D\frac{d P_1}{d t} = k_1 - P_1\\ \\[-4pt]
-    \D\frac{d P_2}{d t} = k_2 - P_2\\ \\[-4pt]
-  \end{array}
-\end{equation*}
-when $P_1 > \tau$ then $k_2 = 1$ \\
-when $P_1 \leq \tau$ then $k_2 = 0$ \\
-\\
-initially
-\begin{equation*}
-  \begin{array}{lllll}
-    k_1 = 1 & k_2 = 0 & \tau = 0.25 & P_1 = 0 & P_2 = 0\\ \\[-4pt]
-  \end{array}
-\end{equation*}
-
-The SBML Level 2 representation of this as follows:
-
-\begin{example}
-<?xml version="1.0"?>
-<sbml xmlns="http://www.sbml.org/sbml/level2" version="1" level="2"
-      math:xmlns="http://www.w3.org/1998/Math/MathML">
-    <model>
-        <listOfCompartments>
-            <compartment id="cell"/>
-        </listOfCompartments>
-        <listOfSpecies>
-            <species id="P1" compartment="cell" initialAmount="0"/>
-            <species id="P2" compartment="cell" initialAmount="0"/>
-        </listOfSpecies>
-        <listOfParameters>
-            <parameter id="k1" value="1" constant="false"/>
-            <parameter id="k2" value="0" constant="false"/>
-            <parameter id="tau" value="0.25"/>
-        </listOfParameters>
-        <listOfRules>
-            <speciesConcentrationRule species="P1" type="rate">
-                <math:math>
-                    <math:apply>
-                        <math:minus/>
-                        <math:ci> k1 </math:ci>
-                        <math:ci> P1 </math:ci>
-                        </math:apply>
-                    </math:apply>
-                </math:math>
-            </speciesConcentrationRule>
-            <speciesConcentrationRule species="P2" type="rate">
-                <math:math>
-                    <math:apply>
-                        <math:minus/>
-                        <math:ci> k2 </math:ci>
-                        <math:ci> P2 </math:ci>
-                        </math:apply>
-                    </math:apply>
-                </math:math>
-            </speciesConcentrationRule>
-        </listOfRules>
-        <listOfEvents>
-            <event>
-                <trigger>
-                    <math:math>
-                        <math:apply>
-                            <math:gt/>
-                            <math:ci> P1 </math:ci>
-                            <math:ci> tau </math:ci>
-                        </math:apply>
-                    </math:math>
-                </trigger>
-                <listOfAssignments>
-                    <assignment variable="k2">
-                        <math:cn> 1 </math:cn>
-                    </assignment>
-                <listOfAssignments>
-            </event>
-            <event>
-                <trigger>
-                    <math:math>
-                        <math:apply>
-                            <math:leq/>
-                            <math:ci> P1 </math:ci>
-                            <math:ci> tau </math:ci>
-                        </math:apply>
-                    </math:math>
-                </trigger>
-                <listOfAssignments>
-                    <assignment variable="k2">
-                        <math:cn> 0 </math:cn>
-                    </assignment>
-                <listOfAssignments>
-            </event>
-        </listOfEvents>
-    </model>
-</sbml>
-\end{example}
+%%=============================================================================
+%\section{Additional Candidate Changes and Extensions to SBML Level 2}
+%\label{apdx:extensions}
+%%=============================================================================
+%
+%This section describes additional features that have been proposed and
+%appear to be worthwhile adding to SBML Level~2, but that have not yet been
+%discussed widely within the SBML community.  We propose these features also
+%be adopted for Level~2 if there is widespread support and no significant
+%objections.
+%
+%
+%%-----------------------------------------------------------------------------
+%\subsection{Default Compartment}
+%\label{sec:defaultcompartment}
+%%-----------------------------------------------------------------------------
+%
+%We propose that the \attrib{compartment} field of the \class{Species}
+%structure be made optional.  Under this proposal, in the absence of a value
+%for this field, the species would by default be placed in a compartment
+%of unit volume.  This means that a compartment structure would always
+%occur in a model with a species structure.
+%
+%The following SBML example illustrating this feature encodes the model
+%given in Section~\ref{sec:modeleg}:
+%\begin{example}
+%<?xml version="1.0"?>
+%<sbml xmlns="http://www.sbml.org/sbml/level2" version="1" level="2"
+%    <model id="Branch">
+%        <notes>
+%            <body xmlns="http://www.w3.org/1999/xhtml">
+%                <p>Simple branch system.</p>
+%                <p>The reaction looks like this:</p>
+%                <p>reaction-1:   X0 -> S1; k1*X0;</p>
+%                <p>reaction-2:   S1 -> X1; k2*S1;</p>
+%                <p>reaction-3:   S1 -> X2; k3*S1;</p>
+%            </body>
+%        </notes>
+%        <listOfSpecies>
+%            <species id="S1" initialAmount="0" boundaryCondition="false"/>
+%            <species id="X0" initialAmount="0" boundaryCondition="true"/>
+%            <species id="X1" initialAmount="0" boundaryCondition="true"/>
+%            <species id="X2" initialAmount="0" boundaryCondition="true"/>
+%        </listOfSpecies>
+%        <listOfReactions>
+%            <reaction id="reaction_1" reversible="false">
+%                <listOfReactants>
+%                    <speciesReference species="X0" stoichiometry="1"/>
+%                </listOfReactants>
+%                <listOfProducts>
+%                    <speciesReference species="S1" stoichiometry="1"/>
+%                </listOfProducts>
+%                <kineticLaw>
+%                    <math xmlns="http://www.w3.org/1998/Math/MathML">
+%                        <apply>
+%                            <times/>
+%                            <ci> k1 </ci>
+%                            <ci> X0 </ci>
+%                        </apply>
+%                    </math>
+%                    <listOfParameters>
+%                        <parameter id="k1" value="0"/>
+%                    </listOfParameters>
+%                </kineticLaw>
+%            </reaction>
+%            <reaction id="reaction_2" reversible="false">
+%                <listOfReactants>
+%                    <speciesReference species="S1" stoichiometry="1"/>
+%                </listOfReactants>
+%                <listOfProducts>
+%                    <speciesReference species="X1" stoichiometry="1"/>
+%                </listOfProducts>
+%                <kineticLaw>
+%                    <math xmlns="http://www.w3.org/1998/Math/MathML">
+%                        <apply>
+%                            <times/>
+%                            <ci> k2 </ci>
+%                            <ci> S1 </ci>
+%                        </apply>
+%                    </math>
+%                    <listOfParameters>
+%                        <parameter id="k2" value="0"/>
+%                    </listOfParameters>
+%                </kineticLaw>
+%            </reaction>
+%            <reaction id="reaction_3" reversible="false">
+%                <listOfReactants>
+%                    <speciesReference species="S1" stoichiometry="1"/>
+%                </listOfReactants>
+%                <listOfProducts>
+%                    <speciesReference species="X2" stoichiometry="1"/>
+%                </listOfProducts>
+%                <kineticLaw>
+%                    <math xmlns="http://www.w3.org/1998/Math/MathML">
+%                        <apply>
+%                            <times/>
+%                            <ci> k3 </ci>
+%                            <ci> S1 </ci>
+%                        </apply>
+%                    </math>
+%                    <listOfParameters>
+%                        <parameter id="k3" value="0"/>
+%                    </listOfParameters>
+%                </kineticLaw>
+%            </reaction>
+%        </listOfReactions>
+%    </model>
+%</sbml>
+%\end{example}
 
 %=============================================================================
 \section{Summary of Notation}

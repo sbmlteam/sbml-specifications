@@ -424,36 +424,43 @@ Figure~\ref{fig:malate_aspartate_shuttle4-xml} modified to include a kinetic law
 
 \subsubsection{The Unit Attributes of \class{SimpleSpeciesReference}}
 
-To make the units of species explicit in kinetic laws under this proposal
-\class{SimpleSpeciesReference} structures have the attributes \attrib{substanceUnits},
-\attrib{spatialSizeUnits} and \attrib{hasOnlySubstanceUnits}.  These have the same semantics as
+To make the units of species explicit in kinetic laws under this
+proposal \class{SimpleSpeciesReference} structures have the
+attributes \attrib{substanceUnits}, \attrib{spatialSizeUnits} and
+\attrib{hasOnlySubstanceUnits}.  These have the same semantics as
 the corresponding attributes on \class{Species}.
-When a \class{SimpleSpeciesReference} structure matches with a \class{Species} structure
-the unit attributes of the \class{SimpleSpeciesReference} structure should default to the
-\class{Species} attributes and/or be exactly equivalent to them.
 
-EXAMPLE HERE
+\subsection{Species Implied from \class{SpeciesTypes}}
 
-\subsection{Implied Species}
+Under this proposal \class{Species} structures are used to
+indicate the initial conditions and/or attributes of species and
+don't represent the complete set of species.  In fact this
+proposal does not assume that an interpreter (e.g. simulator) of
+models in the proposed format would use species as it's
+fundamental representational form, for example an interpreter may
+represent individual chemical entities as distinct objects. In
+SBML Level 2 the model's \attrib{species} list is a complete
+enumeration of the pools of chemical entities.  In this proposal
+this set of species is a subset of the complete set of species
+defined by the model. The remaining species are implied by
+\class{SpeciesType} structures, as described in this section, or
+are implied by reactions generalized to cover classes of
+\class{SpeciesTypes}, see Section~\ref{sec:generalizedreactions}.
 
-Under this proposal \class{Species} structures are used to indicate the initial conditions
-and/or attributes of species and don't represent the complete
-set of species.  In fact this proposal does not assume that an interpreter (e.g.
-simulator) of models in the proposed format would use species as it's fundamental representational form,
-for example an interpreter may represent individual chemical entities as distinct objects.
-In SBML Level 2 the model's \attrib{species} list is a complete enumeration of the
-pools of chemical entities.  Instead, in this proposal, the set of \class{Species} structures
-which have an undefined or non-zero initial amount or concentration are the \emph{initial species}
-and can be used as a starting point to infer the complete set of species in the model.
-The complete set of species located in a given compartment can be inferred by traversing the reaction
-network, defined by the set of \class{Reaction} structures, from the initial species that are located
-in the compartment.
+For each \class{SpeciesType} there exists a species of the given
+type in each compartment in the model unless there already exists
+an equivalent \class{Species} structure located in that
+compartment.  These implied species always have an initial
+concentration or substance amount of zero and are never constant
+nor boundary conditions. This means that constant or boundary
+condition species or species with any initial concentration must
+be made explicit using a \class{Species} structure.
 
-So if we consider the model \texttt{malate\_aspartate\_shuttle4} the existence of
-\texttt{Oxaloacetate} in the compartment \texttt{Cytosol} can be inferred given the reaction
-\texttt{Transamination} and the species \texttt{Aspartate\_in\_Cytosol}.  This means we can omit
-the species \texttt{Oxaloacetate\_in\_Cytosol} from the \texttt{malate\_aspartate\_shuttle4} as shown
-in Figure~\ref{fig:malate_aspartate_shuttle5-xml}.
+So if we consider the model \texttt{malate\_aspartate\_shuttle4}
+we can omit any species structures which we wish to model as
+having an initial concentration of zero.   In
+Figure~\ref{fig:malate_aspartate_shuttle5-xml} we assume that only
+\class{Aspartate} species have an initial concentration.
 
 \begin{figure}[h]
 \begin{example}
@@ -470,11 +477,13 @@ in Figure~\ref{fig:malate_aspartate_shuttle5-xml}.
         <species
             id="Aspartate_in_Cytosol"
             speciesType="Aspartate"
-            compartment="Cytosol"/>
+            compartment="Cytosol"
+            initialConcentration="1"/>
         <species
             id="Aspartate_in_Mitochondrial_Matrix"
             speciesType="Aspartate"
-            compartment="Mitochondrial_Matrix"/>
+            compartment="Mitochondrial_Matrix"
+            initialConcentration="1"/>
     </listOfSpecies>
     <listOfReactions>
         <reaction id="Transamination" reversible="true">
@@ -496,25 +505,6 @@ structures.}
 
 \emph{The concept of implied species could be introduced later in the SBML development road map.
 It is however an essential component of features introduced later.}
-
-Just as it is not possible to explicitly locate a \class{SpeciesType} in \class{Compartment} more than
-once implied species cannot duplicate each other or explicit \class{Species} structures.
-Any process that computes the set of implied species must compute the equivalence of
-species.  This is described in detail in Section~\ref{sec:species-equals}.
-
-Implied species, which don't match any \class{Species} structures, always have an initial
-concentration or substance amount of zero and are never
-constant nor boundary conditions.  This means that constant or boundary condition pools or pools
-with any initial concentration must be made explicit using a \class{Species} structure.
-Two
-\class{SimpleSpeciesReference} structures that refer to the same implied species should have
-the same units.
-
-Reactions of the form used in the example reaction \texttt{Malate\_Transport} fit in with this scheme.
-If \texttt{Malate} exists in the
-Cytosol then we can infer the existence of a pool of \texttt{Malate} in the
-Mitochondrial Matrix.  Given this form of reaction \class{Species} structures are only
-required to define the initial conditions of a model.
 
 \subsection{Simple Multi-Component Chemical Entities}
 \label{sec:multicomponentspecies}
@@ -1231,8 +1221,8 @@ Ste5 and is generalized to cover all states of the Ste11 to Ste50 binding site.
   \vspace*{8pt}
   \centering
   \includegraphics[scale = 0.7]{bind_Ste11_Ste50.eps}
-  \caption{The \texttt{bind\_Ste11\_Ste50} binding reaction that operate on the types defined in
-  Figure~\ref{fig:non_exclusive_binding_types}}
+  \caption{The \texttt{bind\_Ste11\_Ste50} generalized binding reaction that operate on the types
+  defined in Figure~\ref{fig:non_exclusive_binding_types}}
   \label{fig:bind_Ste11_Ste50}
 \end{figure}
 
@@ -1286,10 +1276,17 @@ Ste5 and is generalized to cover all states of the Ste11 to Ste50 binding site.
   \vspace*{8pt}
   \centering
   \includegraphics[scale = 0.7]{bind_Ste11_Ste5.eps}
-  \caption{The \texttt{bind\_Ste11\_Ste5} reaction that operates on the types defined in
+  \caption{The \texttt{bind\_Ste11\_Ste5} generalized reaction that operates on the types defined in
   Figure~\ref{fig:non_exclusive_binding_types}}
   \label{fig:bind_Ste11_Ste5}
 \end{figure}
+
+The \class{ModifierSpeciesReference} structures cannot contain
+\class{GenericBonds} (this means a reaction can't be generalized
+to cover a class of modifiers).  A reaction containing
+\class{GenericBonds} can't be reversible.  \emph{These
+restrictions are proposed to simplify the process of interpreting
+this type of reaction.}
 
 \clearpage
 \subsubsection{Missing Binding Sites Infers Unchanged State}
@@ -1353,14 +1350,12 @@ Figure~\ref{fig:bind_Ste11_Ste5_v2} on page~\pageref{fig:bind_Ste11_Ste5_v2}.
 
   \caption{
   The \texttt{bind\_Ste11\_Ste5\_v2} reaction that operates on the types defined in
-  Figure~\ref{fig:non_exclusive_binding_types} and is a simplification of the \texttt{bind\_Ste11\_Ste5}
-  reaction shown in Figure~\ref{fig:bind_Ste11_Ste5}. The \texttt{SAM} binding site is not changed by
+  Figure~\ref{fig:non_exclusive_binding_types} on page~\pageref{fig:non_exclusive_binding_types}
+  and is a simplification of the \texttt{bind\_Ste11\_Ste5}
+  reaction shown in Figure~\ref{fig:bind_Ste11_Ste5} on page~\pageref{fig:bind_Ste11_Ste5}.
+  The \texttt{SAM} binding site on \texttt{Ste11} is not changed by
   this reaction and the reaction is generalized to cover all states of that binding site.  As a result
-  the
-  \texttt{SAM}
-  binding site
-  can and
-  has been omitted from the model.}
+  the \texttt{SAM} binding site on \texttt{Ste11} can and has been omitted from the reaction.}
 
   \label{fig:bind_Ste11_Ste5_v2}
 \end{figure}
@@ -1494,10 +1489,14 @@ Figure~\ref{fig:hierarchial} on Page~\pageref{fig:hierarchial}}
 
 \clearpage
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 \section{Formal Definition of Proposal}
 \label{sec:definitions}
 
 \subsection{Introduction}
+\label{sec:defintro}
 
 This proposal builds on the structures and semantics of SBML Level
 2.  Section~\ref{sec:class-in-detail} describes the various
@@ -1505,20 +1504,25 @@ structures introduced by this proposal and also describes how SBML
 Level 2 structures are augmented by this proposal.
 
 This proposal describe operations on chemical entities without
-describing specific instances of those entities.  Instead the
+describing specific instances of those entities.  The
 \emph{species} term used in this document refers to a pool of
 chemical entities of identical structure located in a specific
 compartment.  The term \emph{species type} refers to a set of
 \emph{species} all with identical structure across the entire
 modelled system.  The issue of equivalence between species and
 species types is described in more detail in
-Section~\ref{sec:species-equals}.
+Section~\ref{sec:species-equals}.  The \class{Species} and
+\class{SpeciesType} structures are the subsets of \emph{species}
+and \emph{species types} that are made explicit a SBML document.
+The complete set of species and species types is defined by
+reactions.
 
 Just as a model doesn't identify individual chemical entities nor
 does is it necessarily need to identify specific species and
 species types which are operated on by the reactions in the model.
 Instead reactions imply the existence of classes of entities. This
-is described in detail in Section~\ref{sec:reaction-semantics}.
+is described in detail in
+Section~\ref{sec:reaction-simplification}.
 
 \subsection{Proposed Classes in Detail}
 \label{sec:class-in-detail}
@@ -1698,8 +1702,29 @@ one in which the \class{BindingSite} \emph{is} referenced by a
 \class{GenericBond} structure with a unique identity occurring
 either just in the set of modifiers or in both the set of
 reactants and products.  Such a reaction will not modify the state
-of the given \class{BindingSite} is generalised to cover all
-states of that \class{BindingSite}.
+of the given \class{BindingSite} and is thus generalized to cover
+all states of that \class{BindingSite}.
+
+\item If the reaction contains any \class{GenericBond} structures
+then the following further restrictions apply.
+
+\begin{enumerate}
+
+\item The \attrib{stoichiometry} field of all
+\class{SpeciesReference} structures must have a value of one (the
+default value).  \emph{This restriction applies because it is not
+possible (at least within this scheme) to identify the $n$
+seperate entities that would match with a \class{SpeciesReference}
+structure with a stoichiometry of $n$ where $n \neq 1$.  Without
+this clear identification the interpreation of the product
+structures of the reaction is impossible.}
+
+\item the reaction must have a \attrib{reversible} attribute of
+\texttt{false}. \emph{This restriction applies to simplify the
+enumeration of implied species.  Species can be matched and
+transformed in single defined direction.}
+
+\end{enumerate}
 
 \end{enumerate}
 
@@ -1734,12 +1759,13 @@ the enclosing \class{Reaction} structure.
 \attrib{hasOnlySubstanceUnits}, these optional fields have the
 same semantics as the corresponding attributes on \class{Species}.
 These attributes default to the values of matching \class{Species}
-structures before following the \class{Species} semnatics.
-\class{SimpleSpeciesReference} structures that match with a
-\class{Species} structure should default to the \class{Species}
-attributes and/or be exactly equivalent to them.  Two
-\class{SimpleSpecisReference} structures that refer to the same
-implied species should have the same units.
+structures before following the \class{Species} semantics, for
+example, the \attrib{spatialSizeUnits} must correspond to the
+spatial dimensions of the compartment in which the species is
+located.  \emph{This means that a reaction may refer to a species
+in its kinetic law using different units to that used in the
+species' initial definition.  It is expected that a SBML
+interpretor will perform a units conversion.}
 
 \item \attrib{species}, this \class{SId} field is present in Level 2 however we now make this field
 optional.  This field refers to a \class{Species} that is involved in the reaction.  If this field is
@@ -1763,20 +1789,19 @@ structure then it must not be present on any other
 
 \end{itemize}
 
-\emph{We might want to consider restricting stoichiometry if \class{SpeciesTypeInstance} structures\
-are used.}
-
 \subsubsection{Species}
 \label{sec:species}
 
-See SBML Level 2 for the existing definition of \class{Species}.  In this proposal a
-\class{Species} structure represents a pool of a given chemical entity located in a specific
-compartment.
-This proposal introduces one optional \class{SId} field, \attrib{speciesType} which refers to
-the \class{SpeciesType} (chemical entity) to be located in the \class{Compartment} referenced by
-the \attrib{compartment} field.  There can only one \class{Species} structure in a model with a given
-pair of values for the \attrib{speciesType} and \attrib{compartment} attributes i.e.
-a given \class{SpeciesType} cannot be located in the same \attrib{Compartment} mode than once.
+As in SBML Level 2 a \class{Species} structure represents a pool
+of a given chemical entity located in a specific compartment. This
+proposal introduces one optional \class{SId} field,
+\attrib{speciesType} which refers to the \class{SpeciesType}
+(chemical entity) to be located in the \class{Compartment}
+referenced by the \attrib{compartment} field.  There can only one
+\class{Species} structure in a model with a given pair of values
+for the \attrib{speciesType} and \attrib{compartment} attributes
+i.e. a given \class{SpeciesType} cannot be located in the same
+\attrib{Compartment} mode than once.
 
 When the \attrib{speciesType} field is not present then the
 \class{Species} structure is equivalent to a \class{Species}
@@ -1816,9 +1841,20 @@ the \attrib{speciesTypeInstance} field.
 
 \subsubsection{SpeciesType}
 
+\label{sec:class-speciestype}
+
 The class \class{SpeciesType} represents a type of chemical
-entity. \class{SpeciesType} is derived from \class{SpeciesGraph},
-and has the following fields:
+entity. The existence of a \class{SpeciesType} implies the
+existence of a species of that type in every compartment. These
+species have zero concentration and a \attrib{boundary} and
+\attrib{constant} attribute values of \texttt{false}. These
+implied species are overloaded by \class{Species} structures of
+the given \class{SpeciesType}.  A set of equivalent
+\class{SpeciesTypes} only imply a single species per
+\class{Compartment}.
+
+\class{SpeciesType} is derived from \class{SpeciesGraph}, and has
+the following fields:
 
 \begin{itemize}
 
@@ -1841,9 +1877,10 @@ Consider all the \class{BindingSite} structures of the
 \class{SpeciesTypeInstance} structures in a given
 \class{SpeciesType} structure. Each of these \class{BindingSite}
 structures should be referenced exactly once by a
-\class{SpecificBond} structure enclosed in the \class{SpeciesType}
-structure.  This means that the status of a \class{BindingSite}
-can't be left undefined or ambiguous by a \class{SpeciesType}.
+\class{BindingSiteReference} structure enclosed in the
+\class{SpeciesType} structure.  This means that the status of a
+\class{BindingSite} can't be left undefined or ambiguous by a
+\class{SpeciesType}.
 
 \subsubsection{SpeciesTypeInstance}
 
@@ -1911,7 +1948,7 @@ type are transformed into a standard \emph{complex} form of
 Section~\ref{sec:trans-type}. Second these \class{SpeciesGraph}
 are normalized (flattened), as described in
 Section~\ref{sec:norm-graphs}. Finally if these normalized
-structures can the be matched, as decribed in
+structures can the be matched, as described in
 Section~\ref{sec:match-graphs}, then the species type structures
 are equivalent.
 
@@ -1923,11 +1960,14 @@ This section describes how a species type is normalized.
 A \class{SpeciesGraph} is \emph{simple} if it contains no \class{SpeciesTypeInstance} structures.
 A \class{SpeciesGraph} is \emph{complex} if it contains one or more \class{SpeciesTypeInstance} structures.
 
-A normalized \class{SpeciesType} is always complex.
-A simple \class{SpeciesType} structure is normalized by creating a \class{SpeciesGraph}
-that contains one \class{SpeciesTypeInstance} structure which refers to the simple \class{SpeciesType}.
-All binding sites of the simple \class{SpeciesType} are referenced as unbound in a set of
-\class{SpecificBonds} within the new normalized \class{SpeciesGraph}.
+A normalized \class{SpeciesType} is always complex. A simple
+\class{SpeciesType} structure is normalized by initially creating
+a \class{SpeciesGraph} that contains one
+\class{SpeciesTypeInstance} structure which refers to the simple
+\class{SpeciesType}. All binding sites of the simple
+\class{SpeciesType} are referenced as unbound in a set of
+\class{SpecificBonds} within the new normalized
+\class{SpeciesGraph}.
 
 A complex \class{SpeciesType} with one or more \class{BindingSite} structures is transformed
 to remove the those structures.  Each \class{BindingSite} structure is replaced by a
@@ -1948,10 +1988,10 @@ simply reduces the given \class{SpeciesGraph} to a single
 hierarchical level.
 
 A \class{SpeciesGraph} structure (i.e. either a
-\class{SpeciesType} or \class{SimpleSpecies} structure) is
-normalized if the set of \class{SpeciesType} structures, refereed
-to by the set of \class{SpeciesTypeInstance} structures, are
-simple. The normalization process consists of iteratively
+\class{SpeciesType} or \class{SimpleSpeciesReference} structure)
+is normalized if the set of \class{SpeciesType} structures,
+refereed to by the set of \class{SpeciesTypeInstance} structures,
+are simple. The normalization process consists of iteratively
 replacing any \class{SpeciesTypeInstance} structures that refer to
 complex \class{SpeciesType} structures with a set of new
 \class{SpeciesTypeInstance} structures and \class{SpecificBond}
@@ -2068,13 +2108,78 @@ equivalence.
 \subsection{\class{Species} Equivalence}
 \label{sec:species-equals}
 
-Two \class{Species} are equivalent if they are located in the same compartment and their associated
-\class{SpeciesType} structures are equivalent.  A model must not contain equivalent \class{Species}.
-The species implied by the reactions in a model, described in Section~\ref{sec:reaction-semantics},
-are inherently not equivalent.
+Two \class{Species} are equivalent if they are located in the same
+compartment and their associated \class{SpeciesType} structures
+are equivalent.  A model must not contain equivalent
+\class{Species}. The species implied by the reactions in a model,
+described in Section~\ref{sec:reaction-simplification}, are
+inherently not equivalent.
 
-\subsection{Semantics of Reactions}
-\label{sec:reaction-semantics}
+\subsection{Simplification of Reactions}
+\label{sec:reaction-simplification}
+
+\subsubsection{Introduction}
+\label{sec:reaction-simplification-intro}
+
+This section describes in outline how the proposed
+\class{Reaction} structures can be transformed into SBML Level2
+reaction structures.  Any reaction that follows the Level 2 form
+obviously ignores this process.  This process definition is used
+as a way to define the semantics of reactions relative to SBML
+Level 2.  An interpretor of the proposal format may or may not
+actually implement this transformation.  The process has the
+following stages:
+
+\begin{enumerate}
+
+\item This transformation process starts by replacing a reaction
+which does not refer to a \class{Compartment} with a set of
+reactions one for each defined compartment in the model.  (The
+\attrib{compartment} attrib on the \class{SimpleSpeciesReference}
+structures are set to refer to the given \class{Compartment}.)
+
+\item At this point those \class{SimpleSpeciesReference}
+structures that have a \attrib{speciesType} attribute can be
+replaced by a \attrib{species} that refers to the species that
+represents the given \class{SpeciesType} in the given
+\class{Compartment}.  This species may be already be explicitly
+defined by a \class{Species} structure or already defined as an
+implict species as described in
+Section~\ref{sec:class-speciestype}.
+
+\item For those \class{SimpleSpeciesReference} structures that are
+not transformed by the previous stage the next step is to
+normalize the \class{SimpleSpeciesReference} structures according
+to the process described in \ref{sec:norm-graphs}.  In this
+normalization process any \class{GenericBond} structures should be
+treated as if they were one half of a \class{SpecificBond}
+structure.
+
+\item If the \class{Reaction} does not contain \class{GenericBond}
+structures then the normalized graph is match to the set of
+\class{SpeciesType} in the model as described in
+Section~\ref{sec:match-graphs}.  For those that do not match with
+an existing \class{SpeciesType} a new \class{SpeciesType} is
+created corresponding to the normalized graph.  The graph is then
+discarded and the \class{SimpleSpeciesReference} is replaced by a
+simple reference to the \class{Species} corresponding to the
+\class{SpeciesType} as described in stage 2 above.
+
+\item If \class{Reaction} does not contain \class{GenericBond}
+structures then the \class{Reaction} is interpreted with all other
+\class{Reaction} structures of that type as described in
+Section~\ref{sec:reaction-semantics-GBs}.
+
+\end{enumerate}
+
+\subsection{Semantics of Reactions containing \class{GenericBond} structures}
+\label{sec:reaction-semantics-GBs}
+
+This section describes the semantics of reactions containing
+\class{GenericBond} structures.  These reactions are transformed
+as described in Section~\ref{sec:reaction-simplification} and then
+interpreted together as described in this section.
+
 \subsubsection{Simple Framework for Operational Semantics}
 
 For the definition of the semantics of reactions we will consider a model with a simulator to be form of
@@ -2097,28 +2202,25 @@ database is satisfied.~\citep{Nilsson:1982}
 
 In the context of this proposal reactions are considered to be
 rules. The global database is formed by the modelled species which
-are pools of chemical entities. In SBML Level 2 the set of
-\class{Species} structures defines the complete set of pools of
-chemical entities that are created by, destroyed by and affect the
-set of reactions. In this proposal the set of \class{Species}
-structures only describes the initial conditions of the model. The
-reactions themselves define the species or set of pools of
-entities that are relevant to the model.
+are pools of chemical entities.  The initial state of the global
+database consists of the explicitly defined \class{Species}
+structures and the species implied from \class{SpeciesType}
+structures (see Section~\ref{sec:class-speciestype})
+\class{Reaction} structures (see
+Section~\ref{sec:reaction-simplification}).
 
 It is expected that many analyzes of models will require the
-computation of the set of species. This proposal does not depend
-on any particular representation scheme for species within a given
-software analysis system.  The set of species and species types
-are properties of the global database.  A given representation
-scheme may or may not make the concept of species or species types
-explicit.
+computation of the set of species however this proposal does not
+depend on any particular representation scheme for species within
+a given software analysis system.  The set of species and species
+types are properties of the global database. A given
+representation scheme may only deal with individual chemical
+entities. Similarly another representation may not track
+individual entities but compute the concentration of species.
 
 A reaction matches
 the set of reactants, its precondition, to the set of species, the global database.  The effect of the
 reaction is to remove reactant entities and create product entities within the set of species.
-The existence of a modifier entity is not a pre-condition of a reaction however the number of
-chemical entities in the modifier's pool will affect the reaction according to the reaction's
-rate law.
 
 For the purposes of this definition the control system is
 idealized. Real software systems will in practice create
@@ -2127,54 +2229,18 @@ simply applies all matching reactions concurrently at the rate
 defined by the reaction' kinetic laws.  Unlike a AI production
 system this proposal does not define any termination conditions.
 
-\subsubsection{Matching of Species}
+\subsubsection{Matching of Reactants Containing \class{GenericBond} Structures to Species}
 
-This section describes how reactions are matched to the global database of species.
-
-\emph{Matching of Species to Reactants and Modifiers}
-
-The matching of reactant and modifiers, \class{SimpleSpeciesReference} structures,
-to species is similar to equivalence between species.
-The cases we will consider with respect to the \class{SimpleSpeciesReference} are:
-\begin{itemize}
-
-\item \emph{\attrib{species} attribute is present}, in this case the match is with the indicated
-\class{Species}.
-
-\item \emph{\attrib{speciesType} and \attrib{compartment}
-attributes are present}, in this case the match is with the
-species located in the given \class{Compartment} which has a
-\class{SpeciesType} equivalent to the given \class{SpeciesType}.
-
-\item \emph{\attrib{speciesType} is present but the \attrib{compartment} attribute is not present},
-in this case the match is
-with any species which has a \class{SpeciesType} equivalent to
-the given \class{SpeciesType}.  The \class{Compartment} of the species must be the same as
-all other species involved in the reaction.
-
-\item \emph{all of the remaining cases} are described below.
-\end{itemize}
-
-If the \attrib{compartment} attribute is not present on the
-\class{SimpleSpeciesReference} then the match is with any species
- matching the \class{SimpleSpeciesReference} located in the same
-\class{Compartment} as all the other species involved in the
-reaction. If the \attrib{compartment} attribute is present then
-the match is with any species matching the
-\class{SimpleSpeciesReference} located in the given
-\class{Compartment}.
-
-Before matching can occur between a \class{SimpleSpeciesReference}
-and a species the implicit generic bonds in the reaction should be
-made explicit (see Section~\ref{sec:class-reaction} rule 3).
-
-To enable the definition of a match between a
-\class{SimpleSpeciesReference} and a species we first require a
-definition of a \emph{generic graph} and definition of
-\class{SimpleSpeciesReference} in terms of a \emph{generic graph}.
-(The use \emph{generic graph} here is to capture the semantics of
-\class{GenericBond} structures which may be contained within a
-\class{SimpleSpeciesReference}.)
+The matching of reactant \class{SpeciesReference} structures, to
+species is similar to equivalence between species.
+(\class{SpeciesReference} is a subclass of
+\class{SimpleSpeciesReference}.)  To enable the definition of a
+match between a \class{SpeciesReference} and a species we first
+require a definition of a \emph{generic graph} and definition of
+\class{SpeciesReference} in terms of a \emph{generic graph}. The
+use \emph{generic graph} here is to capture the semantics of
+\class{GenericBond} structures which are contained within the
+\class{SpeciesReference}.
 
 \textbf{Definition} (A Generic Graph) A \emph{generic graph} $G$ is a tuple
 $G = (G_{V}, G_{E}, G_{X}, L, I, J, s, t, u, \ell, i, j)$
@@ -2226,85 +2292,72 @@ attributes in the arc's label.
 The label of generic node is the \attrib{bindingSite} attribute of the given
 \class{GenericBond} structure.
 
-A match of generic graph (from a \class{SimpleSpeciesReference})
-into a simple graph (from a \class{SpeciesType} as described in
-Section~\ref{sec:match-graphs}) is given by a graph morphism,
-which is a mapping of the generic graph's object sets into the
-simple graph's, with some restrictions to preserve the generic
-graph's structure and it's typing information:
+When matching a \class{SimpleSpeciesReference} (a generic graph)
+to a species we are in fact matching the
+\class{SimpleSpeciesReference} to the normalized
+\class{SpeciesGraph} (a simple graph) of the species type
+associated with the given species.  A match of generic graph to a
+simple graph is given by a graph morphism, which is a mapping of
+the generic graph's object sets into the simple graph's, with some
+restrictions to preserve the generic graph's structure and it's
+typing information:
 
-\textbf{Definition} (Generic Graph Morphism) A \emph{generic graph morphism}
-$m : L \rightarrow G$ between
+\textbf{Definition} (Generic Graph Morphism) A \emph{generic graph
+morphism} $n : L \rightarrow G$ between
 \begin{itemize}
-\item a generic graph
-$L = (L_{V}, L_{E}, L_{X}, L_{L}, I_{L}, J_{L}, s_{L}, t_{L}, u_{L}, \ell_{L}, i_{L}, j_{L})$ and
-\item a simple graph $G = (G_{V}, G_{E}, L_{G}, I_{G}, J_{G}, s_{G}, t_{G}, \ell_{G}, i_{G}, j_{G})$
+\item a generic graph $L = (L_{V}, L_{E}, L_{X}, L_{L}, I_{L},
+J_{L}, s_{L}, t_{L}, u_{L}, \ell_{L}, i_{L}, j_{L})$ and
+
+\item a simple graph $G = (G_{V}, G_{E}, L_{G}, I_{G}, J_{G},
+s_{G}, t_{G}, \ell_{G}, i_{G}, j_{G})$
 \end{itemize}
 is a triple
 
-$m = (m_{V} : L_{V} \rightarrow G_{V}, m_{E} : L_{E} \cup L_{X}
-\rightarrow G_{E}, m_{X} : L_{X} \rightarrow G_{E})$
+$n = (n_{V} : L_{V} \rightarrow G_{V}, n_{E} : L_{E} \cup L_{X}
+\rightarrow G_{E}, n_{X} : L_{X} \rightarrow G_{E})$
 
-where $m_{V}$ and $m_{E}$ are total mappings; $m_{X}$ is a partial
+where $n_{V}$ and $n_{E}$ are total mappings; $n_{X}$ is a partial
 mapping and the following restrictions apply:
 
 \begin{enumerate}
 
-\item $\forall x \in L_{X} : m_{V}(u(x)) = s_{G}(m_{X}(x)) \vee
-m_{V}(u(x)) = t_{G}(m_{X}(x)) \vee m_{X}(x) = \emptyset$
+\item $\forall x \in L_{X} : n_{V}(u(x)) = s_{G}(n_{X}(x)) \vee
+n_{V}(u(x)) = t_{G}(n_{X}(x)) \vee n_{X}(x) = \emptyset$
 
 \item $\forall e \in L_{E} : $
     \begin{itemize}
-    \item $m_{V}(s_{L}(e))= s_{G}(m_{E}(e))$
-    \item $m_{V}(t_{L}(e))= t_{G}(m_{E}(e))$
+    \item $n_{V}(s_{L}(e))= s_{G}(n_{E}(e))$
+    \item $n_{V}(t_{L}(e))= t_{G}(n_{E}(e))$
     \end{itemize}
-\item $\forall v \in L_{V} : \ell_{L}(v) = \ell_{G}(m_{V}(v))$
-\item $\forall e \in L_{E} : i_{L}(e) = i_{G}(m_{E}(e))$
-\item $\forall e \in L_{E} : j_{L}(e) = j_{G}(m_{E}(e))$
+\item $\forall v \in L_{V} : \ell_{L}(v) = \ell_{G}(n_{V}(v))$
+
+\item $\forall e \in L_{E} : i_{L}(e) = i_{G}(n_{E}(e))$
+
+\item $\forall e \in L_{E} : j_{L}(e) = j_{G}(n_{E}(e))$
+
 \item $ \forall x \in L_{X} : \ell_{L}(x) = \left\{
 \begin{array}{ll}
-\emptyset & \mbox{if $m_{X}(x) = \emptyset $}\\
-i_{G}(m_{X}(x)) & \mbox{if $m_{V}(u(x)) = s_{G}(m_{X}(x))$}\\
-j_{G}(m_{X}(x)) & \mbox{if $m_{V}(u(x)) = t_{G}(m_{X}(x))$}
+\emptyset & \mbox{if $n_{X}(x) = \emptyset $}\\
+i_{G}(n_{X}(x)) & \mbox{if $n_{V}(u(x)) = s_{G}(n_{X}(x))$}\\
+j_{G}(n_{X}(x)) & \mbox{if $n_{V}(u(x)) = t_{G}(n_{X}(x))$}
 \end{array} \right. $
 \end{enumerate}
 
-The mapping $m_{X}$ from the set of generic bonds, $L_{X}$, to
+The mapping $n_{X}$ from the set of generic bonds, $L_{X}$, to
 specific bonds, $G_{E}$, represents a set of assignments which are
 used to determine the effect of a reaction. This is described
 further in Section~\ref{sec:effect-of-reactions}.
 
-Unlike the equivalence of species a mapping from a generic graph
-to species graph is the only requirement for a unification between
-reactant and species.
-
-\subsubsection{Matching Reactions}
-
-A \class{Reaction} which does not contain any \class{GenericBond} structures represents a single
-\emph{reaction instance}.  A \class{Reaction} that does contain \class{GenericBond} structures
-represents a set of reaction instances where each instance in this set is a concrete reaction
-with generic graph mappings for all the reactant and modifier \class{SimpleSpeciesReference} structures.
-There is a separate reaction instance for all possible combinations of these graph mappings.
-Each reaction instance exists concurrently with the other instance and operates at the
-rate determined by the reaction's kinetic law.
-
-\emph{This means that some care must be taken when formulating the kinetic laws of reactions containing
-\class{GenericBond} structures.  Typically to obtain the correct results kinetic laws should be defined
-so that the rate of the reaction is directly proportional to the amount of the species matched
-using \class{GenericBond} structures.}
-
-\subsubsection{The Effect of Reactions}
+\subsubsection{The Effect of Reactions Containing \class{GenericBond} Structures}
 \label{sec:effect-of-reactions}
 
-A reaction reduces the amount of the reactant species and increases the amount of the product
-species.  A reaction does not affect the amount of a Modifier species (unless its a reactant or product).
-If the species graph for a product which doesn't contain \class{GenericBond} structures it can be
-matched to a species as for reactants.
-
-In this section we describe the effect of a reaction as graph
-transformation process. The resulting product species graphs can
-then be matched to species. In this transformation process we take
-each set of matching reactant species graphs. All the
+Reactions containing \class{GenericBond} structures have the same
+general effect as reactions without these structures: reactants
+are consumed, products are created and modifiers are left
+unchanged. In this section we describe the effect of a reaction as
+graph transformation process. The resulting product species graphs
+can then be matched to species. In this transformation process we
+take each set of matching reactant species graphs. All the
 \class{SpeciesTypeInstance}, \class{BindingSiteReference} and
 \class{SpecificBond} structures in these graphs that are mapped
 from equivalent structures in the reactant
@@ -2316,20 +2369,33 @@ the corresponding reactant \class{SpeciesReference} structures.
 The product graphs are created starting from the species graphs in
 the product \class{SpeciesReference} structures.  The
 \class{GenericBond} structures are replaced by
-\class{SpecificBond} structures via the mapping $m_{X}$ created by
+\class{SpecificBond} structures via the mapping $n_{X}$ created by
 the matching process. These structures are then combined with the
 subgraphs that are left from the reactant species to form the set
-of product species graphs. These can then be matched with the
-global database of species.
+of product species graphs. If these species graphs are not
+equivalent to existing species types in the global database then
+the global database will now include those species types and
+associated species.
 
-\subsubsection{Matching more than one \class{SimpleSpeciesReference} to a single species}
+\subsubsection{Matching Reactions Containing \class{GenericBond} Structures}
 
-The above description is written from the perspective that the
-modifiers, reactants and products of a reaction are always
-separate species.
+A \class{Reaction} which does not contain any \class{GenericBond}
+structures represents a single \emph{reaction instance}.  A
+\class{Reaction} that does contain \class{GenericBond} structures
+represents a set of reaction instances where each instance in this
+set is a concrete reaction with generic graph mappings for all the
+reactant and modifier \class{SimpleSpeciesReference} structures.
+There is a separate reaction instance for all possible
+combinations of these graph mappings. Each reaction instance
+exists concurrently with the other instance and operates at the
+rate determined by the reaction's kinetic law.
 
-\subsubsection{Reversible reactions}
-
+\emph{This means that some care must be taken when formulating the
+kinetic laws of reactions containing \class{GenericBond}
+structures.  Typically to obtain the correct results kinetic laws
+should be defined so that the rate of the reaction is directly
+proportional to the amount of the species matched using
+\class{GenericBond} structures.}
 
 %\clearpage
 %\section{Discussion}

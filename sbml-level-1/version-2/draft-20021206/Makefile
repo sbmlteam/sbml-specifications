@@ -30,7 +30,7 @@ pdf:;
 	pdflatex $(BASENAME).tex
 
 eps:;
-	@(for i in *.eps; do echo "epstopdf $$i"; epstopdf $$i; done)
+	@(for i in *.eps; do echo "converting $$i to PDF"; epstopdf $$i; done)
 
 html:;
 	latex2html -white -split +0 -show_section_numbers -image_type gif \

@@ -1,0 +1,1125 @@
+\documentclass{cekarticle}
+\usepackage[latin1]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{color}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{array}
+
+
+%%%% Good for A4 paper
+\setlength{\textheight}{240mm}
+\setlength{\topmargin}{-40pt}
+\setlength{\headheight}{12pt}
+\setlength{\headsep}{35pt}
+
+%-------------------------------
+% to modify locally the margins
+%-------------------------------
+\newenvironment{changemargin}[2]{\begin{list}{}{%
+%\setlength{\topsep}{0pt}%
+\setlength{\leftmargin}{0pt}%
+\setlength{\rightmargin}{0pt}%
+\setlength{\listparindent}{\parindent}%
+\setlength{\itemindent}{\parindent}%
+%\setlength{\parsep}{0pt plus 1pt}%
+\addtolength{\leftmargin}{#1}%
+\addtolength{\rightmargin}{#2}%
+}\item }{\end{list}}
+
+% The following does not work: somehow locked in cekarticle.cls 
+\addtocounter{tocdepth}{4}
+\setcounter{secnumdepth}{5}
+
+
+%=============================================================================
+% Title page
+%=============================================================================
+
+\title{Systems Biology Markup Language (SBML) Level~2 Proposal: Multistate Features}
+
+\author{Nicolas Le Nov\`{e}re, Thomas Simon Shimizu, Andrew Finney}
+
+\begin{document}
+
+\authoremail{
+\begin{minipage}{\textwidth}\centering
+lenov@pasteur.fr,tss26@cus.cam.ac.uk,afinney@cds.caltech.edu
+\end{minipage}}
+
+\maketitlepage
+
+%=============================================================================
+\section{Introduction}
+\label{sec:introduction}
+%=============================================================================
+
+This document describes a proposed extension for inclusion in Systems Biology
+Markup Language (SBML) Level~2. It describes features enabling the inclusion of
+complexes with several alternative states in models.
+
+This document is not a definition of SBML Level~2 or part of it.  This document
+simply presents various features which could be incorporated into SBML Level~2
+as the Systems Biology community wishes.  This document is intended for detailed
+review by that community and to provoke alternative proposals.  Throughout this
+document issues that the authors believe will require further discussion have
+been highlighted.
+
+For brevity the text of this document is with reference to SBML Level~1
+\citep{Hucka:2001}, i.e. features are described in terms of changes to SBML
+Level 1.  This document uses UML diagrams in the same way except that new
+features are shown in red.
+
+All types proposed in this document will be derived from the \texttt{SBase}
+type.
+
+%=============================================================================
+\section{Why this extension?}
+\label{sec:why}
+%=============================================================================
+
+An alternative introduction to the problem of multistate reactants can be found
+in Andrew Finney's initial proposal ``Complex Species:species with multiple
+states'' \citep{Finney:2001a}.
+
+Many biological macromolecules possess multiple internal states which can affect
+reaction rates.  Typical examples are:
+
+\begin{itemize}
+ \item Different relative atomic coordinates $\Rightarrow$ Conformational changes or folding
+ \item Covalent modification $\Rightarrow$ glycosylation, phosphorylation, methylation
+ \item Non-covalent modification $\Rightarrow$ metal or ligand binding
+\end{itemize}
+
+In modelling reaction systems that involve such molecules, it is possible to
+treat all the different states as separate species. However the number of
+possible reactions increases exponentially with the number of reacting species
+(of course in most cases, not all states will affect every reaction, so the
+number of reactions which need to be computed separately will be somewhat less
+than this).  Writing out all of these reactions separately is tedious at best,
+and devastating at worst.  It is desirable to have an efficient notation which
+compresses the redundant information.  In addition, some simulators (e.g.
+\textsc{StochSim} \citep{Mortonfirth:1998} or MCell \citep{Stiles:1996})
+explicitly consider individual molecules, not populations of molecular species.
+This calls for a mechanism in SBML which can distinguish between specific
+instances of the same specie.
+
+%=============================================================================
+\section{Specie}
+\label{sec:species}
+%=============================================================================
+
+Andrew's initial proposal \citep{Finney:2001a} allowed a subset of the
+state-dependent reaction instances that involve different reactant states, but
+have identical rates, to be grouped together and expressed as a single reaction.
+This was achieved by defining several new SBML elements such as
+\texttt{complexSpecie} (for defining species with multiple states) and
+\texttt{complexSpecieInstance} (for distinguishing between specific instances of
+the same specie that take part in a reaction).  However, in the case that
+different states have a different effect on the reaction rate, these had to be
+defined as separate reactions.
+
+We take a similar, but slightly different approach that introduces some new
+elements, but attempts to incorporate much of the multistate-specific
+information by extending the existing SBML~1 elements with optional attributes.
+
+The proposed structure of the \texttt{Specie} type is shown in
+figure~\ref{fig:specie}.
+
+\begin{figure}[h]
+  \vspace*{8pt}
+  \centering
+  \begin{tabular}{|l|}
+    \hline
+    \multicolumn{1}{|c|}{\rule[-3mm]{0mm}{8mm}{\textsf{Specie}}}\\
+    \hline
+    \rule[0mm]{0mm}{5mm}{\textsf{\small name: SName }}\\
+    \textsf{\small compartment: SName }\\
+    \textsf{\small initialAmount: double }\\
+    \textsf{\small units: SName \{use=``optional''\}  }\\
+    \textsf{\small boundaryCondition: boolean \{use=``default'' value=``false''\} }\\
+    \textsf{\small charge: integer \{use=``optional''\} }\\
+    \textsf{\small \textcolor{red}{feature: Feature[0..*] \{use=``optional''\}} }\\
+    \rule[-3mm]{0mm}{5mm}{\textsf{\small \textcolor{red}{initialState: InitialState[0..*] \{use=``optional''\}} }}\\
+    \hline
+  \end{tabular}
+  \caption{The definition of the proposed extended \texttt{Specie} type. Addenda are shown in red.}
+  \label{fig:specie}
+\end{figure}
+
+The ``state'' of a multi-state molecule is defined collectively by the states of
+all ``features'' that it possesses.  A ``feature'' here is a characteristic of the
+specie which can be in one of at least two states that affect certain reaction
+rates.  Therefore the extended \texttt{specie} element posesses now two new attributes, a
+\texttt{listOfFeatures} and a \texttt{listOfInitialStates}.
+
+\subsection{Feature}\label{sec:feature}
+
+The \texttt{listOfFeatures} lists all the features of the specie which can
+possess several alternative states.
+
+\begin{figure}[h]
+  \vspace*{8pt}
+  \centering
+  \textcolor{red}{%
+  \begin{tabular}{|l|}
+    \hline
+    \multicolumn{1}{|c|}{\rule[-3mm]{0mm}{8mm}{\textsf{Feature}}}\\
+    \hline
+    \rule[0mm]{0mm}{5mm}{\textsf{\small name: SName }}\\
+    \rule[-3mm]{0mm}{5mm}{\textsf{\small state: State[2..*] }}\\
+    \hline
+  \end{tabular}
+}
+  \caption{The definition of a specific Feature attached to a Specie type.}
+  \label{fig:feature}
+\end{figure}
+
+\paragraph{State}\label{sec:state}
+
+Each \texttt{feature} element contains a \texttt{listOfStates} attribute,
+containing at least two \texttt{state} element (otherwise one doesn't need this
+feature, do we?).
+
+\begin{figure}[h]
+  \vspace*{8pt}
+  \centering
+  \textcolor{red}{%
+  \begin{tabular}{|l|}
+    \hline
+    \multicolumn{1}{|c|}{\rule[-3mm]{0mm}{8mm}{\textsf{State}}}\\
+    \hline
+    \rule[-3mm]{0mm}{8mm}{\textsf{\small name: SName }}\\
+    \hline
+  \end{tabular}
+}
+  \caption{The definition of one of the states possibly taken by a specific 
+\texttt{feature} of a \texttt{specie} type.}
+  \label{fig:state}
+\end{figure}
+
+\subsubsection{Example of a Feature}\label{sec:examplefeature}
+
+The following example describes a protein which can exist under various
+conformations, according to its degree of folding. Therefore we define a feature
+named ``Folding'', which here can take three alternative values: ``unfolded'',
+``folded'' and ``inactivated'' (the latter can correspond to a degradation, a
+misfolding, or even to an interaction with some kind of other molecule such as a
+chaperone).
+
+\begin{example}
+<feature name="Folding">
+    <listOfStates>
+        <state name="unfolded">
+        <state name="folded">
+        <state name="inactivated">
+    </listOfStates>
+</feature>
+\end{example}
+
+
+\subsection{InitialState}\label{sec:initialstate}
+
+The \texttt{listOfInitialStates} expresses the initial amount of each state of
+the specie (that is specific sets of values taken by each of the features) which
+is present at the beginning of the simulation.  All features with an
+\texttt{initialAmount} different of zero must be listed in the
+\texttt{listOfInitialStates}.
+
+\begin{figure}[h]
+  \vspace*{8pt}
+  \centering
+  \textcolor{red}{%
+  \begin{tabular}{|l|}
+    \hline
+    \multicolumn{1}{|c|}{\rule[-3mm]{0mm}{8mm}{\textsf{InitialState}}}\\
+    \hline
+    \rule[0mm]{0mm}{5mm}{\textsf{\small name: SName }}\\
+    \textsf{\small initialAmount: double }\\
+    \textsf{\small units: SName \{use=``optional''\}  }\\
+    \rule[-3mm]{0mm}{5mm}{\textsf{\small featureState: FeatureState[1..*] }}\\
+    \hline
+  \end{tabular}
+}
+  \caption{The definition of a specific \texttt{InitialState} of a given \texttt{Specie} type}
+  \label{fig:initialstate}
+\end{figure}
+
+The sum of the \texttt{initialAmount} of all the \texttt{initialStates}
+(Figure~\ref{fig:initialstate}) in a \texttt{listOfInitialStates} must equal the
+\texttt{initialAmount} of the corresponding specie (i.e. all instances of the
+specie are under one state or another).
+
+\subsubsection{FeatureState}\label{sec:featurestate}
+
+The \texttt{listOfFeatureState} element describes one state of the specie, i.e.
+a unique list of values taken by all the features.
+
+\begin{figure}[h]
+  \vspace*{8pt}
+  \centering
+  \textcolor{red}{%
+  \begin{tabular}{|l|}
+    \hline
+    \multicolumn{1}{|c|}{\rule[-3mm]{0mm}{8mm}{\textsf{FeatureState}}}\\
+    \hline
+    \rule[0mm]{0mm}{5mm}{\textsf{\small feature: SName }}\\
+    \rule[-3mm]{0mm}{5mm}{\textsf{\small state: SName }}\\
+    \hline
+  \end{tabular}
+}
+  \caption{The definition of a particular state taken by a specific \texttt{feature}
+    of a \texttt{specie} type}
+  \label{fig:featurestate}
+\end{figure}
+
+\subsubsection{Example of an InitialState}\label{sec:exampleinitialstate}
+
+\begin{example}
+<initialState name="nonactivated" initialAmount="500">
+    <listOfFeatureStates>
+        <featureState name="Folding" state="unfolded">
+        <featureState name="Phosphorylation" state="noPhosphate">     
+   </listOfFeatureStates>
+</initialState>
+\end{example}
+
+\subsection{Complete example of a specie element}\label{sec:examplespecie}
+
+\begin{example}
+<specie name="Specie1" initialAmount="1000">
+    <listOfFeatures>
+        <feature name="Folding">
+            <listOfStates>
+                <state name="unfolded">
+                <state name="folded">
+                <state name="inactivated">
+            </listOfStates>
+        </feature>
+        <feature name="Phosphorylation">
+            <listOfStates>
+                <state name="noPhosphate">
+                <state name="Phosphate">
+            </listOfStates>
+        </feature>
+    </listOfFeatures> 
+    <listOfInitialStates>
+        <initialState name="nonactivated" initialAmount="500">
+            <listOfFeatureStates>
+                <featureState name="Folding" state="unfolded">
+                <featureState name="Phosphorylation" state="noPhosphate">     
+            </listOfFeatureStates>
+        </initialState>
+        <initialState name="activated" initialAmount="500">
+            <listOfFeatureStates>
+                <featureState name="Folding" state="folded">
+                <featureState name="Phosphorylation" state="Phosphate">       
+            </listOfFeatureStates>
+        </initialState>
+    </listOfInitialStates>
+</specie>
+\end{example}
+
+\subsection{Issues}\label{sec:issuespecie}
+
+In this proposal, we have attempted to express multistate molecules by extending
+the \texttt{complex} element present in SBML~1.  This contrasts from Andrew's
+initial approach of introducing a novel \texttt{complexSpecie} element.
+We think our approach works quite well, but have we left anything out?  Are
+there any objections to extending the \texttt{complex} element using optional
+attributes?
+
+Confusion could arise from the dual meaning we use for the word ``state''. A
+\emph{feature} is one of the many characteristics of a specie, which can take a
+discrete number of \textbf{states}. At the same time, a \textbf{state} of the
+\emph{specie} itself is defined by a specific set of feature \textbf{states}.
+
+The \texttt{compartment} element could be conserved for SBML~1 compatibility.
+However its removal would be coherent with the extension proposed by the ECell
+group.  If a specie is defined at the root of the model, it is defined for every
+compartment (The initialAmount has to be expressed as a concentration then).
+If a specie is defined in a subset of the various compartments, we don't need to
+specify the compartments since all the definitions are located within the
+compartments themselves.
+
+%=============================================================================
+\section{Reactions}
+\label{sec:reactions}
+%=============================================================================
+
+We present two alternatives of how to extend the \texttt{reaction} element to
+enable the distinction between specific instances of species.  One does not
+require any change of the \texttt{reaction} element, but affects the
+\texttt{specieReference} instead, while the other affects
+the \texttt{reaction} element itself.  We would appreciate feedback on which
+you think is better.
+
+Before that, we will present parts of the extension which are common to both
+options, dealing with the modification of reaction rates, and with the states
+of nascent species, created or modified by reactions. We utilise the concept of
+a ``reaction modifier'', which defines the effect of the reactant state on a
+reaction.  This allows all state-dependent instances of a reaction to be
+expressed as a single reaction.
+
+
+\subsection{kineticLaw}\label{sec:kineticLaw}
+
+Because the value of a reaction rate modifier can depend on the
+state of more than one species, we need to tie it to kinetic
+parameters rather than individual specie concentrations.  
+
+In this proposal a \texttt{listOfStateEffects} is an optional
+attribute of the \texttt{kineticLaw} element
+(Figure~\ref{fig:kineticlaw}).
+
+\begin{figure}[h]
+  \vspace*{8pt}
+  \centering
+  \begin{tabular}{|l|}
+    \hline
+    \multicolumn{1}{|c|}{\rule[-3mm]{0mm}{8mm}{\textsf{KineticLaw}}}\\
+    \hline
+    \rule[0mm]{0mm}{5mm}{\textsf{\small formula: string}}\\
+    \textsf{\small parameter: Parameter[0..*]} \\
+    \textsf{\small timeUnits: SName \{use=``optional''\}}\\
+    \textsf{\small substanceUnits: SName \{use=``optional''\}}\\
+    \rule[-3mm]{0mm}{5mm}{\textsf{\small \textcolor{red}{stateEffect: StateEffect[0..*] \{use=``optional''\}}}}\\
+    \hline
+  \end{tabular}
+  \caption{The definition of the proposed extended \texttt{kineticLaw} element. Addenda are shown in red.}
+  \label{fig:kineticlaw}
+\end{figure}
+
+\subsubsection{stateEffect}\label{sec:stateeffect}
+
+The \texttt{stateEffect} element specifies which parameter it will modify (by
+name), the actual value of the modifier (as a real-valued number) and a
+\texttt{listOfSpecieStates}.  \texttt{specieState} (there might be a better name
+for this) is a new element used to specify the set of conditions under which
+this \texttt{stateEffect} applies.  The elements of the
+\texttt{listOfSpecieStates} are interpreted using the AND operator, so the
+conditions in all elements of the list must be satisfied for the
+\texttt{stateEffect} to apply (figure~\ref{fig:stateeffect}).
+
+\begin{figure}[h]
+  \vspace*{8pt}
+  \centering
+  \textcolor{red}{%
+  \begin{tabular}{|l|}
+    \hline
+    \multicolumn{1}{|c|}{\rule[-3mm]{0mm}{8mm}{\textsf{StateEffect}}}\\
+    \hline
+    \rule[0mm]{0mm}{5mm}{\textsf{\small \textcolor{red}{parameter: SName }}}\\
+    \textsf{\small \textcolor{red}{modifier: double \{use=``default'' value=``0''\}}}\\
+    \rule[-3mm]{0mm}{5mm}{\textsf{\small \textcolor{red}{specieState: SpecieState[1..*] }}}\\
+    \hline
+  \end{tabular}
+}
+  \caption{The definition of the stateEffect element.}
+  \label{fig:stateeffect}
+\end{figure}
+
+The ``modifier'' attribute is the coefficient which modulates the reaction
+velocity.  It is multiplied with the term of the kinetic law which involves the
+specie to which it is associated.  Within the framework of the mass action law,
+this is effectively equivalent to modifying the quantity of the reacting specie.
+
+\paragraph{specieState}
+
+Each \texttt{specieState} element specifies a \texttt{specieReference} (or a
+\texttt{specieInstance}, see section~\ref{sec:reactsecond}) by its name and a
+\texttt{listOfFeatureConditions}.
+
+\begin{figure}[h]
+  \vspace*{8pt}
+  \centering
+  \textcolor{red}{%
+  \begin{tabular}{|l|}
+    \hline
+    \multicolumn{1}{|c|}{\rule[-3mm]{0mm}{8mm}{\textsf{SpecieState}}}\\
+    \hline
+    \rule[0mm]{0mm}{5mm}{\textsf{\small \textcolor{red}{specie: SName }}}\\
+    \rule[-3mm]{0mm}{5mm}{\textsf{\small \textcolor{red}{featureCondition: FeatureCondition[1..*] }}}\\
+    \hline
+  \end{tabular}
+}
+  \caption{The definition of the specieState element.}
+  \label{fig:speciestate}
+\end{figure}
+
+\subparagraph{featureCondition}
+
+\begin{figure}[h]
+  \vspace*{8pt}
+  \centering
+  \textcolor{red}{%
+  \begin{tabular}{|l|}
+    \hline
+    \multicolumn{1}{|c|}{\rule[-3mm]{0mm}{8mm}{\textsf{FeatureCondition}}}\\
+    \hline
+    \rule[0mm]{0mm}{5mm}{\textsf{\small feature: SName }}\\
+    \rule[-3mm]{0mm}{5mm}{\textsf{\small condition: formula }}\\
+    \hline
+  \end{tabular}
+}
+  \caption{The definition of the \texttt{featureCondition} element.}
+  \label{fig:featurecondition}
+\end{figure}
+
+Each \texttt{featureCondition} element uses logic expressions (consisting of
+parentheses and the operators AND, OR and NOT) to define the states of each
+feature that the \texttt{stateEffect} applies to.  For instance, if a feature
+has five states A, B, C, D and E, and a \texttt{stateEffect} applies to states A
+or B, one could either write ``A OR B'', or ``NOT (C OR D OR E)''.
+
+(Comment: The data type "LogicExpression" could be called LogExpression,
+LExpression or even LExp, or again BooleanExpression or BoolExpression.)
+
+States which do not match the \texttt{listOfFeatureConditions} of any of the
+\texttt{stateEffects} of a reaction are assumed to have a modifier of 0 (i.e.
+they cannot take part in the reaction).
+
+\subsubsection{example}
+
+Reactants A and B bind to produce reactant C.  Both A and B can be in
+one of two states, active, or inactive (denoted by a subscript of 1 or
+0, respectively).  The rates are:
+
+\begin{itemize}
+\item $A_0 + B_0 \rightarrow C$   ---  modifier = 0
+\item $A_0 + B_1 \rightarrow C$   ---  modifier = 0.6
+\item $A_1 + B_0 \rightarrow C$   ---  modifier = 0.2
+\item $A_1 + B_1 \rightarrow C$   ---  modifier = 1
+\end{itemize}
+
+\begin{example}
+<kineticLaw formula="kf * A * B - kr * C">
+    <listOfParameters>
+        <parameter name ="kf" value="1000">
+        <parameter name ="kr" value="1">
+    </listOfParameters>
+    <listOfStateEffect>
+        <stateEffect parameter="kf" modifier="0.6">
+            <listOfSpecieStates>
+                <specieState specie="A">
+                    <listOfFeatureConditions>
+                        <featureCondition feature="Activity" state="inactive">
+                    </listOfFeatureConditions>
+                </specieState>
+                <specieState specie="B">
+                    <listOfFeatureConditions>
+                        <featureCondition feature="Activity" state="active">
+                    </listOfFeatureConditions>
+                </specieState>
+            </listOfSpecieStates>
+        </stateEffect>
+        <stateEffect parameter="kf" modifier="0.2">
+            <listOfSpecieStates>
+                <specieState specie="A">
+                    <listOfFeatureConditions>
+                        <featureCondition feature="Activity" state="active">
+                    </listOfFeatureConditions>
+                </specieState>
+                <specieState specie="B">
+                    <listOfFeatureConditions>
+                        <featureCondition feature="Activity" state="inactive">
+                    </listOfFeatureConditions>
+                </specieState>
+            </listOfSpecieStates>
+        </stateEffect>
+        <stateEffect parameter="kf" modifier="1.0">
+            <listOfSpecieStates>
+                <specieState specie="A">
+                    <listOfFeatureConditions>
+                        <featureCondition feature="Activity" state="active">
+                    </listOfFeatureConditions>
+                </specieState>
+                <specieState specie="B">
+                    <listOfFeatureConditions>
+                        <featureCondition feature="Activity" state="active">
+                    </listOfFeatureConditions>
+                </specieState>
+            </listOfSpecieStates>
+        </stateEffect>
+    </listOfStateEffects>
+</kineticLaw>
+\end{example}
+
+
+\subsection{States of nascent molecules}\label{sec:nascentstate}
+
+If the newly created molecule is also a multistate complex, it is
+necessary to specify all the state of all of its features.  This is
+easily implemented by creating a new element called
+\texttt{nascentState} (figure~\ref{fig:nascentstate}) which has a
+\texttt{listOfFeatureStates} as an attribute (see
+section~\ref{sec:featurestate}). \texttt{nascentState} in turn becomes
+an optional attribute of the \texttt{specieReference} element (option~1
+section~\ref{sec:reactfirst}) or the \texttt{specieInstance} element
+(option~2 section~\ref{sec:reactsecond}).
+
+\begin{figure}[h]
+  \vspace*{8pt}
+  \centering
+  \textcolor{red}{%
+  \begin{tabular}{|l|}
+    \hline
+    \multicolumn{1}{|c|}{\rule[-3mm]{0mm}{8mm}{\textsf{NascentState}}}\\
+    \hline
+    \rule[0mm]{0mm}{5mm}{\textsf{\small name: SName }}\\
+    \textsf{\small proportion: double }\\
+    \rule[-3mm]{0mm}{5mm}{\textsf{\small featureState: FeatureState[1..*] }}\\
+    \hline
+  \end{tabular}
+}
+  \caption{The definition of a specific \texttt{nascentState} of a given \texttt{specie} type}
+  \label{fig:nascentstate}
+\end{figure}
+
+
+If the created molecules come to existence under a specific set of nascent
+states, with well defined probabilities, we fill the \texttt{nascentState}
+elements. Each element contains an attribute which specifies the probability of
+that state (the default is 1. It is up to the parser to rescale everything if
+the sum of the \texttt{proportion} elements over all the \texttt{nascentState}
+elements is more than 1).
+
+\subsubsection{Example}
+
+Here is the result of a ligand binding affecting the activity of a specie. The
+specie has two features: the presence of ligand, and the activity.
+
+\begin{example}
+<listOfNascentState>
+    <nascentState name="A1" proportion="0.9">
+        <listOfFeatureState>
+            <featureState name="ligand" state="bound"/>
+            <featureState name="activity" state="active"/>
+        </listOfFeatureState>
+    </nascentState>
+    <nascentState name="I1" proportion="0.1">
+        <listOfFeatureState>
+            <featureState name="ligand" state="bound"/>
+            <featureState name="activity" state="inactive"/>
+        </listOfFeatureState>
+    </nascentState>
+</listOfNascentState>
+
+\end{example}
+
+In case the nascent state depends on the state(s) of the reactants, we have to
+enumerate the various reactions, with each \texttt{listOfNascentState} limited
+to one element.
+
+If no nascent states are defined for a multistate product, the feature
+values are allocated randomly with a stochastic algorithm, or evenly
+with a deterministic algorithm.
+
+We now turn to the two alternative proposals for the \texttt{reaction}
+element and its attributes.
+
+\subsection{First possibility: \texttt{reaction} unchanged}\label{sec:reactfirst}
+
+\subsubsection{specieReference}
+
+In a first option, the \texttt{reaction} element is not modified, but the
+\texttt{specieReference} element, as shown in figure~\ref{fig:speciereference1}.
+
+\begin{figure}[h]
+  \vspace*{8pt}
+  \centering
+  \begin{tabular}{|l|}
+    \hline
+    \multicolumn{1}{|c|}{\rule[-3mm]{0mm}{8mm}{\textsf{SpecieReference}}}\\
+    \hline
+    \rule[0mm]{0mm}{5mm}{\textsf{\small \textcolor{red}{name: SName }}}\\
+    \textsf{\small specie: SName }\\
+    \textsf{\small stoichiometry: integer \{use=``default'' value=``1''\}  }\\
+    \textsf{\small denominator: integer \{use=``default'' value=``1''\} }\\
+    \rule[-3mm]{0mm}{5mm}{\textsf{\small \textcolor{red}{nascentState: NascentState[0..*] \{use=``optional''\}} }}\\
+    \hline
+  \end{tabular}
+  \caption{The definition of the extended specieReference element under the first option. Addenda are shown in red.}
+  \label{fig:speciereference1}
+\end{figure}
+
+The addition of the \texttt{name} attribute to the \texttt{specieReference} element
+allows different instances of the same specie to be distinguished
+within a reaction.  This name would be used instead of the specie name
+in the \texttt{kineticLaw}.  It takes the same value as the \texttt{specie} by
+default, so it need not be explicitly defined for reactants that don't
+need specific instances identified (i.e. if the reactant and product species do not have
+multiple states, as in SBML~1).
+
+\subsubsection{example}
+
+An example of a reaction which requires specific instances to be
+identified is the reversible transfer of a phosphate group between
+two molecules of specie A:
+\begin{displaymath}
+  A1P + A2 \rightleftharpoons A1 + A2P
+\end{displaymath}
+
+For this reaction, \texttt{listOfReactants} and \texttt{listOfProducts} would
+look like this (see figure~\ref{fig:stateeffect} for the definition of
+\texttt{stateEffect} and figure~\ref{fig:featurecondition} for the definition of
+\texttt{featureCondition}):
+
+\begin{example}
+<listOfReactants>
+    <specieReference name="A1" specie="A" />
+    <specieReference name="A2" specie="A" />
+</listOfReactants>
+<listOfProducts>
+    <specieReference name="A1" specie="A" />
+    <specieReference name="A2" specie="A"/>
+</listOfReactants>
+<kineticLaw formula="(kf * Specie1A * Specie1B - kr * Specie1A * Specie1B) * compOne * N_A">
+    <listOfParameters>
+        <parameter name="kf" value="100" />
+        <parameter name="kr" value="0" />
+    </listOfParameters>
+    <listOfStateEffects>
+        <stateEffect parameter="kf" modifier="1">
+            <listOfSpecieStates>
+                <specieState specie="A1">
+                    <listOfFeatureConditions>
+                        <featureCondition feature="Phosphorylation" state="Phosphate"/>
+                    </listOfFeatureConditions>
+                </specieState>
+                <specieState specie="A2">
+                    <listOfFeatureConditions>
+                        <featureCondition feature="Phosphorylation" state="noPhosphate">
+                    </listOfFeatureConditions>
+                </specieState>
+            </listOfSpecieState>
+        </stateEffect>
+         <stateEffect parameter="kr" modifier="1">
+            <listOfSpecieStates>
+                <specieState specie="A1">
+                    <listOfFeatureConditions>
+                        <featureCondition feature="Phosphorylation" state="noPhosphate"/>
+                    </listOfFeatureConditions>
+                </specieState>
+                <specieState specie="A2">
+                    <listOfFeatureConditions>
+                        <featureCondition feature="Phosphorylation" state="Phosphate">
+                    </listOfFeatureConditions>
+                </specieState>
+            </listOfSpecieState>
+        </stateEffect>
+    </listOfStateEffects>
+</kineticLaw>
+\end{example}
+
+Note that both \texttt{specieReference} elements A1 and A2 point to the same
+specie A. To be compared with the second possibility described in the section
+\ref{sec:reactsecond}
+
+\subsection{Second possibility: extension of the \texttt{reaction} element}\label{sec:reactsecond}
+
+The second option requires modifications of the \texttt{reaction} element as
+shown in figure~\ref{fig:reaction2}.
+
+\begin{figure}[h]
+  \vspace*{8pt}
+  \centering
+  \begin{tabular}{|l|}
+    \hline
+    \multicolumn{1}{|c|}{\rule[-3mm]{0mm}{8mm}{\textsf{Reaction}}}\\
+    \hline
+    \rule[0mm]{0mm}{5mm}{\textsf{\small name: SName }}\\
+    \textsf{\small \textcolor{red}{specieInstance: SpecieInstance[0..*] \{use=``optional''\} }}\\
+    \textsf{\small reactant: SpecieReference[1..*]  }\\
+    \textsf{\small product: SpecieReference[1..*]  }\\
+    \textsf{\small kineticLaw: KineticLaw \{minOccurs=``0''\}  }\\
+    \textsf{\small reversible: boolean \{use=``default'' value=``true''\} }\\
+    \rule[-3mm]{0mm}{5mm}{\textsf{\small fast: boolean \{use=``default'' value=``false''\} }}\\
+    \hline
+  \end{tabular}
+  \caption{The definition of the proposed extended \texttt{reaction} element. Addenda are shown in red.}
+  \label{fig:reaction2}
+\end{figure}
+
+\subsubsection{specieInstance}
+
+This solution follows Andrew's idea of explicitly representing
+individual instances of species with a new element, which we call
+\texttt{specieInstance} (depicted in figure \ref{fig:specieinstance}).  This is used to distinguish between individual
+instances of the species involved in a reaction.  The
+\texttt{listOfSpecieInstance} attribute of the reaction element is optional,
+and would only need to be used in reactions where specific instances
+of reacting species need to be distinguished. 
+
+\begin{figure}[h]
+  \vspace*{8pt}
+  \centering
+  \textcolor{red}{%
+  \begin{tabular}{|l|}
+    \hline
+    \multicolumn{1}{|c|}{\rule[-3mm]{0mm}{8mm}{\textsf{SpecieInstance}}}\\
+    \hline
+    \rule[0mm]{0mm}{5mm}{\textsf{\small name: SName }}\\
+    \textsf{\small specie: SName } \\
+    \rule[-3mm]{0mm}{5mm}{\textsf{\small nascentState: NascentState[0..*]  \{use=``optional''\}}}\\
+    \hline
+  \end{tabular}
+}
+  \caption{The definition of specieInstance}
+  \label{fig:specieinstance}
+\end{figure}
+
+\subsubsection{example}
+
+Under this scheme, to express the reactants and products of the reversible
+phosphorylation example presented above, one would also need a
+\texttt{listOfSpecieInstances}.  Note that the \texttt{specieReference} elements
+point to different \texttt{specie} elements, in fact \texttt{specieInstance}
+elements (to be compared with the first possibility presented in section
+\ref{sec:reactfirst}). The definition would then looks like (see
+figure~\ref{fig:stateeffect} for the definition of \texttt{stateEffect} and
+figure~\ref{fig:featurecondition} for the definition of
+\texttt{featureCondition}):
+
+\begin{example}
+<listOfSpecieInstances>
+    <SpecieInstance name="A1" specie="A" />
+    <SpecieInstance name="A2" specie="A" />
+</listOfSpecieInstances>
+<listOfReactants>
+    <specieReference specie="A1" />
+    <specieReference specie="A2" />
+</listOfReactants>
+<listOfProducts>
+    <specieReference specie="A1" />
+    <specieReference specie="A2" />
+</listOfReactants>
+<kineticLaw formula="(kf * Specie1A * Specie1B - kr * Specie1A * Specie1B) * compOne * N_A">
+    <listOfParameters>
+        <parameter name="kf" value="100" />
+        <parameter name="kr" value="0" />
+    </listOfParameters>
+    <listOfStateEffects>
+        <stateEffect parameter="kf" modifier="1">
+            <listOfSpecieStates>
+                <specieState specie="A1">
+                    <listOfFeatureConditions>
+                        <featureCondition feature="Phosphorylation" state="Phosphate"/>
+                    </listOfFeatureConditions>
+                </specieState>
+                <specieState specie="A2">
+                    <listOfFeatureConditions>
+                        <featureCondition feature="Phosphorylation" state="noPhosphate">
+                    </listOfFeatureConditions>
+                </specieState>
+            </listOfSpecieState>
+        </stateEffect>
+         <stateEffect parameter="kr" modifier="1">
+            <listOfSpecieStates>
+                <specieState specie="A1">
+                    <listOfFeatureConditions>
+                        <featureCondition feature="Phosphorylation" state="noPhosphate"/>
+                    </listOfFeatureConditions>
+                </specieState>
+                <specieState specie="A2">
+                    <listOfFeatureConditions>
+                        <featureCondition feature="Phosphorylation" state="Phosphate">
+                    </listOfFeatureConditions>
+                </specieState>
+            </listOfSpecieState>
+        </stateEffect>
+    </listOfStateEffects>
+</kineticLaw>
+\end{example}
+
+
+\section{Complete example}\label{sec:completeexample}
+
+Note that this example has intentionally been made independent of
+StochSim. In StochSim, the features of multistate complexes are
+represented by binary flags, so each can only have two states. In this
+example the feature ``Folding'' possess three states (this could be
+encoded in StochSim using two binary flags).
+
+\begin{changemargin}{-2cm}{0cm}
+\begin{example}
+<sbml version="1" level="1">
+    <model name="ExampleMultipleState" />
+    <notes>
+        <body xmlns="http://www.w3.org/1999/xhtml">
+            <p>This model exemplifies the use of the extension proposed by the StochSim team.</p>
+            <p>The main reaction is Specie1 + Specie2 <=> Specie3</p>
+            <p>Specie1 possesses 2 features affecting the reaction rate. 
+               The "Folding" exists under three states "unfolded", "folded" and "inactivated", 
+               the "Phosphorylation" under two "noPhosphate" and "Phosphate".</p>
+            <p>The features are regulated by two interconversions and one cross-phosphorylation.</p>
+            <p>Specie1-unfolded <=> Specie1-folded</p>
+            <p>Specie1-folded <=> Specie1-inactivated</p>
+            <p>Specie1-folded + Specie1-inactivated-P <=> Specie1-folded-P + Specie1-inactivated </p>
+        </body>
+    </notes>
+
+    <listOfParameters>
+        <parameter name="N_A" value="6.022e23" />
+    </listOfParameters>
+
+    <listOfCompartments>
+        <compartment name="compOne">
+            <listOfSpecies>
+                <specie name="Specie1" initialAmount="1000">
+                    <listOfFeatures>
+                        <feature name="Folding">
+                            <listOfStates>
+                                <state name="unfolded"/>
+                                <state name="folded"/>
+                                <state name="inactivated"/>
+                            </listOfStates>
+                        </feature>
+                        <feature name="Phosphorylation">
+                            <listOfStates>
+                                <state name="noPhosphate"/>
+                                <state name="Phosphate"/>
+                            </listOfStates>
+                        </feature>
+                    </listOfFeatures>   
+                    <listOfInitialStates>
+                        <initialState name="nonactivated" initialAmount="500">
+                            <listOfFeatureStates>
+                                <featureState feature="Folding" state="unfolded"/>
+                                <featureState feature="Phosphorylation" state="noPhosphate"/>
+                            </listOfFeatureStates>
+                        </initialState>
+                        <initialState name="activated" initialAmount="500">
+                            <listOfFeatureStates>
+                                <featureState feature="Folding" state="folded"/>
+                                <featureState feature="Phosphorylation" state="Phosphate"/>
+                            </listOfFeatureStates>
+                        </initialState>
+                    </listOfInitialStates>
+                </specie>
+                <specie name="Specie2" initialAmount="1000" />
+                <specie name="Specie3" initialAmount="0" />
+            </listOfSpecies>
+
+            <listOfReactions>
+                <reaction  name="main">
+                    <listOfReactants>
+                        <specieReference specie="Specie1" stoichiometry="1"/>
+                        <specieReference specie="Specie2" stoichiometry="1"/>
+                    </listOfReactants>
+                    <listOfProducts>
+                        <specieReference name="Specie3" stoichiometry="1"/>
+                    </listOfProducts>
+                    <kineticLaw formula="(kf * Specie1 * Specie2 - kr * Specie3) * compOne * N_A">
+                        <listOfParameters>
+                            <parameter name="kf" value="2500" />
+                            <parameter name="kr" value="100" />
+                        </listOfParameters>
+                        <listOfStateEffects>
+                            <stateEffect parameter="kf" modifier="0.5">
+                                <listOfSpecieState>
+                                    <specieState specie="specie1">
+                                        <listOfFeatureConditions>
+                                            <featureCondition feature="Folding" condition="folded"/>
+                                            <featureCondition feature="Phosphorylation" condition="noPhosphate"/>
+                                        </listOfFeatureConditions>
+                                    </specieState>
+                                </listOfSpecieState>
+                            </stateEffect>  
+                            <stateEffect parameter="kf" modifier="1">
+                                <listOfSpecieState>
+                                    <specieState specie="specie1">
+                                        <listOfFeatureConditions>
+                                            <featureCondition feature="Folding" condition="folded"/>
+                                            <featureCondition feature="Phosphorylation" condition="Phosphate"/>
+                                        </listOfFeatureConditions>
+                                    </specieState>
+                                </listOfSpecieState>
+                            </stateEffect>  
+
+<!-- This is optional (since the default modifier is 0), and will be omitted in later listOfStateEffects -->
+
+                            <stateEffect parameter="kf" modifier="0">
+                                 <listOfSpecieState>
+                                    <specieState specie="specie1">
+                                        <listOfFeatureConditions>
+                                            <featureCondition feature="Folding" condition="unfolded or inactivated"/>
+                                        </listOfFeatureConditions>
+                                    </specieState>
+                                </listOfSpecieState>
+                            </stateEffect>
+
+<!-- =================================================================================================== -->
+
+                        </listOfStateEffects>
+                    </kineticLaw>
+                </reaction>
+                <reaction name="folding">
+                    <listOfReactants>
+                        <specieReference specie="Specie1" stoichiometry="1" />
+                    </listOfReactants>
+                    <listOfProducts>
+                        <specieReference specie="Specie1" stoichiometry="1">
+                    </listOfProducts>
+                    <kineticLaw formula="(kf * Specie1 - kr * Specie1) * compOne * N_A">
+                        <listOfParameters>
+                            <parameter name="kf" value="1000" />
+                            <parameter name="kr" value="10" />
+                        </listOfParameters>
+                        <listOfStateEffects>
+                            <stateEffect parameter="kf" modifier="1">
+                                <listOfSpecieState>
+                                    <specieState specie="specie1">
+                                        <listOfFeatureConditions>
+                                            <featureCondition feature="Folding" condition="unfolded"/>
+                                        </listOfFeatureConditions>
+                                    </specieState>
+                                </listOfSpecieState>
+                            </stateEffect>  
+                            <stateEffect parameter="kr" modifier="1">
+                                <listOfSpecieState>
+                                    <specieState specie="specie1">
+                                        <listOfFeatureConditions>
+                                            <featureCondition feature="Folding" condition="folded"/>
+                                        </listOfFeatureConditions>
+                                    </specieState>
+                                </listOfSpecieState>
+                           </stateEffect>  
+                        </listOfStateEffects>
+                    </kineticLaw>
+                </reaction>
+
+                <reaction name="inactivation">
+                    <listOfReactants>
+                        <specieReference specie="Specie1" stoichiometry="1" />
+                    </listOfReactants>
+                    <listOfProducts>
+                        <specieReference specie="Specie1" stoichiometry="1">
+                    </listOfProducts>
+                    <kineticLaw formula="(kf * Specie1 - kr * Specie1) * compOne * N_A">
+                        <listOfParameters>
+                            <parameter name="kf" value="100" />
+                            <parameter name="kr" value="0" />
+                        </listOfParameters>
+                        <listOfStateEffects>
+                            <stateEffect parameter="kf" modifier="1">
+                                <listOfSpecieState>
+                                    <specieState specie="specie1">
+                                        <listOfFeatureConditions>
+                                            <featureCondition feature="Folding" condition="folded"/>
+                                        </listOfFeatureConditions>
+                                    </specieState>
+                                </listOfSpecieState>
+                            </stateEffect>  
+                            <stateEffect parameter="kr" modifier="1">
+                                <listOfSpecieState>
+                                    <specieState specie="specie1">
+                                        <listOfFeatureConditions>
+                                            <featureCondition feature="Folding" condition="inactivated"/>
+                                        </listOfFeatureConditions>
+                                    </specieState>
+                                </listOfSpecieState>
+                            </stateEffect>  
+                        </listOfStateEffects>
+                    </kineticLaw>
+                </reaction>
+
+                <reaction name="trans-phosphorylation">
+
+<!-- ============================================ Second solution ====================================== -->
+
+                    <listOfSpecieInstances>           
+                        <specieInstance name="Specie1A" specie="Specie1" />
+                        <specieInstance name="Specie1B" specie="Specie1" />
+                    </listOfSpecieInstances>
+
+                    <listOfReactants>
+
+<!-- ============================================ First solution ======================================= -->
+
+                        <specieReference name="Specie1A" specie="Specie1" stoichiometry="1" />
+                        <specieReference name="Specie1B" specie="Specie1" stoichiometry="1" />
+
+<!-- ============================================ Second solution ====================================== -->
+
+                        <specieReference specie="Specie1A" stoichiometry="1" />
+                        <specieReference specie="Specie1B" stoichiometry="1" />
+
+                    </listOfReactants>
+                    <listOfProducts>
+<!-- ============================================ First solution ======================================= -->
+
+                        <specieReference name="Specie1A" specie="Specie1" stoichiometry="1" />
+                        <specieReference name="Specie1B" specie="Specie1" stoichiometry="1" />
+
+<!-- ============================================ Second solution ====================================== -->
+
+                        <specieReference specie="Specie1A" stoichiometry="1">
+                        <specieReference specie="Specie1B" stoichiometry="1">
+
+                    </listOfProducts>
+                    <kineticLaw formula="(kf * Specie1A * Specie1B - kr * Specie1A * Specie1B) * compOne * N_A">
+                        <listOfParameters>
+                            <parameter name="kf" value="100" />
+                            <parameter name="kr" value="0" />
+                        </listOfParameters>
+                        <listOfStateEffects>
+                            <stateEffect parameter="kf" modifier="1">
+                                <listOfSpecieState>
+                                    <specieState specie="specie1A">
+                                        <listOfFeatureConditions>
+                                            <featureCondition feature="Folding" condition="folded"/>
+                                            <featureCondition feature="Phosphorylation" condition="noPhosphate"/>
+                                        </listOfFeatureConditions>
+                                    </specieState>
+                                </listOfSpecieState>
+                            </stateEffect>  
+                            <stateEffect parameter="kf" modifier="1">
+                                <listOfSpecieState>
+                                    <specieState specie="specie1B">
+                                        <listOfFeatureConditions>
+                                            <featureCondition feature="Folding" condition="inactivated"/>
+                                            <featureCondition feature="Phosphorylation" condition="Phosphate"/>
+                                        </listOfFeatureConditions>
+                                    </specieState>
+                                </listOfSpecieState>
+                            </stateEffect>  
+                            <stateEffect parameter="kr" modifier="1">
+                                <listOfSpecieState>
+                                    <specieState specie="specie1A">
+                                        <listOfFeatureConditions>
+                                            <featureCondition name="Folding"  condition="folded"/>
+                                            <featureCondition name="Phosphorylation" condition="Phosphate"/>
+                                        </listOfFeatureConditions>
+                                    </specieState>
+                                </listOfSpecieState>
+                            </stateEffect>  
+                            <stateEffect parameter="kr" modifier="1">
+                                <listOfSpecieState>
+                                    <specieState specie="specie1B">                                    
+                                        <listOfFeatureConditions>
+                                            <featureCondition feature="Folding" condition="inactivated"/>
+                                            <featureCondition feature="Phosphorylation" condition="noPhosphate"/>
+                                        </listOfFeatureConditions>
+                                    </specieState>
+                                </listOfSpecieState>
+                            </stateEffect>  
+                        </listOfStateEffects>                         
+                    </kineticLaw>
+                </reaction>
+            </listOfReactions>
+        </compartment>
+    </listOfCompartments>
+</model>
+\end{example}
+\end{changemargin}
+
+%=============================================================================
+% References
+%=============================================================================
+
+\bibliographystyle{apalike}
+\bibliography{multistates}
+\end{document}
+
+

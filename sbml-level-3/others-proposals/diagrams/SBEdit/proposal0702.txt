@@ -1,0 +1,413 @@
+--------------------------------------------------------------------
+Proposal for SBEdit's extension of SBML-level-1
+July 2002
+Naoki TANIMURA, Maki NAKAYAMA, Yuichiro INAGAKI, Takayuki SAITO  
+--------------------------------------------------------------------
+
+1. Type Information
+2. Alias
+3. Regulation
+4. Target decision of Regulation
+5. Graphic Information
+6. Name Expression Standards
+7. Full Example
+
+This proposal contains explanation of some new tags for SBEdit's editorial contents and 
+description of current SBEdit's implementation of SBML. 
+Of course, the tags will be actually enclosed in annotation and tag's name will be under 
+"sbedit:" name space, in respect for original SBML-level-1.
+We don't stick this proposal, but these new tags have been generated from actual SBEdit's 
+needs to save to and read from SBML.
+Please think our scheme and tags only for proposal, but we're pleased if this experience 
+contributes for SBML-level-2. 
+
+
+----------------------
+1. Type Information
+----------------------
+
+SBEdit's main purpose is to draw process network diagrams using symbolic notation system,
+described in "The Standard Notation for Biological Networks".
+In the notes there are various types for species(i.e. Protein, Gene, RNA, Ion..) and 
+reactions (i.e. Activation, Dimer formation, Dissociation, Catalysis, Inhibition..).
+Drawing such typed figures, each of species and reactions must contain 
+its type information, i.e. CaM as Protein, Ca2+ as Ion, some reaction as Activation, 
+some reaction as Dimer formation...
+So that, we define Class tag in Specie tag and Type tag in Reaction tag.
+
+Example
+
+<specie name="s1" initialAmount="n" compartment="foo">
+#	<class>PROTEIN</class>
+</specie>
+
+<reaction name="bar">
+#	<type>DIMER_FORMATION</type>
+	<listOfReactants>
+		list of specieReferences
+	</listOfReactants>
+	<listOfProducts>
+		list of specieReferences
+	</listOfProducts>	
+</reaction>
+
+Reading type information, SBEdit draws typed figures, ellipse for PROTEIN, 
+rectangle for Gene....
+The relations of figures and types (e.g. ellipse for PROTEIN) are defined by
+"The Standard Notation for Biological Networks".
+
+note) Actually, these tag will be noted as:
+
+	<annotation>
+		<sbedit:type="DIMER_FORMATION"/>
+	</annotation>
+	
+this notation rule is assumed in all tags below in this report.
+
+
+----------------------
+2. Alias
+----------------------
+
+SBEdit is a process-diagram editor, so that the same specie can appear more than once  
+on a diagram.
+This means that, the view-information of appearing species on the diagram must be 
+distinguished from their original informations of the specie (information in 
+listOfSpecies tag).
+(see fig.1 and fig.2 attached. Please don't care Biological meanings in these figures :-)
+
+For this purpose, we have prepared Alias scheme to express plural view of species on 
+process chart.
+
+Example
+
+<listOfSpecies>
+	<specie name="s1" initialAmount="n" compartment="foo">
+</listOfSpecies>
+
+#<listOfAliases>
+#	<alias name="a1" specie="s1" bounds="x1, y1, w1, h1">
+#	<alias name="a2" specie="s1" bounds="x2, y2, w2, h2">
+#<listOfAliases>
+
+<reaction name="r1">
+	<listOfReactants>(or <listOfProducts>)
+		<specieRef specie="s1">
+#			<alias="a1">
+		</specieRef>
+	</listOfReactants>
+</reaction>
+
+
+<reaction name="r2">
+	<listOfReactants>(or <listOfProducts>)
+		<specieRef specie="s1">
+#			<alias="a2">
+		</specieRef>
+	</listOfReactants>
+</reaction>
+
+
+With these alias informations, the same specie "s1" can appear on different places
+(x1, y1) and (x2,y2) on 2-Dimensional process chart, but its real body is 
+one --specieRef tag refers the same "s1"--, so that quantitative simulation will 
+work well.
+
+notes) Our SBEdit can draw species by any size, so that an alias needs information of its 
+width and height, in addition to position-x and position-y.
+
+Without annotation of alias, this scheme supports the SBML-level-1's standard and its aim ,
+and with annotation of alias, this scheme supports the SBEdit's function and its aim.
+
+In additional, this alias scheme has a merit to allow cname, i.e. salt for NaCl.
+We can describe cnames of a specie in alias freely. 
+
+Example
+
+<listOfSpecies>
+	<specie name="NaCl">
+</listOfSpecies>
+
+<listOfAliases>
+#	<alias name="a1" specie="NaCl" bounds="x1, y1, w1, h1" cname="Salt">
+<listOfAliases>
+
+
+
+----------------------
+3. Regulation
+----------------------
+
+In SBML-level-1, the general scheme of reaction is:
+
+<reaction>
+	<listOfReactants>
+		list of specieReferences (x1,.,xn)
+	</listOfReactants>
+	<listOfProducts>
+		list of specieReferences (y1,..,yn)
+	</listOfProducts>
+	<kineticLaw formula="f(x1,.,xn, y1,..,yn, z1,..,zn)">
+<reaction>
+
+This means, amounts of reactants(x1,.,xn) and products(y1,..,yn)
+will be changed, but there are some species(z1,..,zn) which regulate the reaction process 
+but whose amounts will not change in the process; a typical example is catalyst.
+We call such species(z1,.., zn) as "regulator" here.( that is "effector", you called.)
+
+For SBEdit, its purpose is to draw such regulating-relation-chart concretely on process 
+chart, so that needs explicit information of existence of regulators within reaction tag.
+(We can know the information of regulators via kineticLaw, but SBEdit doesn't assume 
+the existence of kineticLaw tag... The reason is that SBEdit's main aim is to draw 
+topological diagram describing the relations between <specie>s, 
+so that SBEdit must not rely upon the kineticLaw formulae for such a purpose.)
+
+So we define regulation tag containing the explicit information of regulators, as below.
+Using this scheme, we can draw explicit regulative-relationship with no kineticLaw formula.
+
+<reaction>
+	<listOfReactants>
+		list of spacieReferences (x1,.,xn)
+	</listOfReactants>
+	<listOfProducts>
+		list of spacieReferences (y1,..,yn)
+	</listOfProducts>
+#	<listOfRegulations>
+#		list of regulations
+#	</listOfRegulations>
+<reaction>
+
+#<regulation>
+#	<listOfRegulators>
+#		list of spacieReferences (z1,..,zn)
+#	</listOfRegulators>
+#</regulation>
+
+
+Regulation tag is similar to Reaction tag.
+Instead of <listOfReactants> and <listOfProducts>, it has <listOfRegulators>.
+From visual aspect, a reaction means an arrow from species(reactants) to species(products),
+but regulation means an arrow from species(regulators) to arrow(reaction).
+
+
+Example
+
+Following example describes a reaction from s1 to s2,
+and s3 promotes (or inhibits) the reaction.
+
+<reaction>
+	<type>ACTIVATION</TYPE>
+	<listOfReactants>
+		<specieRef specie="s1">
+			<alias="a1">
+		</specieRef>
+	</listOfReactants>
+	<listOfProducts>
+		<specieRef specie="s2">
+			<alias="a3">
+		</specieRef>
+	</listOfProducts>
+#	<listOfRegulations>
+#		<regulation>
+#			<type>CATALYSIS</TYPE> (or INHIBITION, etc.)
+#			<listOfReguators>
+#				<specieRef specie="s3">
+#					<alias="a3">
+#				</specieRef>
+#			</listOfReguators>
+#		</regulation>
+#	</listOfRegulations>
+<reaction>
+
+This example will close-up the SBEdit's needs for drawing symbolical diagram
+that has explicit semantics of reaction process.
+
+note)
+This listOfRegulation tag is temporally enclosed in annotations of reaction tag 
+in respect for SBML Level 1. However, this tag should be legitimate in SBML in the future. 
+Since there is no information on regulators but in kineticLaw formulae 
+if we delete annotations in an SBML. 
+We think you agree that a reaction should be defined with a kineticLaw formula 
+and all concerned species(reactants, products, and regulators) therein.
+
+
+------------
+4. Target decision of Regulation
+------------
+
+When an arrow of Regulation is attached to another arrow of Reaction with 
+some branches, there are some candidate positions the arrow is attached in.
+For example, "dimer formation" has three branches and each branch could be a 
+candidate. Therefore the information that tells which branch the Regulation 
+arrow is attached to is necessary in order to reproduce the network topology. 
+
+For this purpose, we take the following measures in SBEdit.
+
+(1) temporay measure in SBEdit ver. 1.0
+A <reactionTarget> tag in a <reaction> tag specifies its target branch. 
+
+The following example shows that an arrow of Regulation is attached to 
+the "a1"-branch of the reaction "unnamed" with three arms.  
+
+Example.1
+
+<reaction name="unnamed">
+	<annotation>
+		<sbedit:reactionType>DIMER_FORMATION</sbedit:reactionType>
+#		<sbedit:regulationTarget>a1</sbedit:regulationTarget>
+	</annotation>
+	<listOfReactants>
+		<speciesRef specie="s1">
+			<sbedit:alias=a1/>
+		</speciesRef>
+		<speciesRef specie="s2">
+			<sbedit:alias=a2/>
+		</speciesRef>
+	</listOfReactants>
+		<speciesRef specie="s3">
+			<sbedit:alias=a3/>
+		</speciesRef>
+	<listOfProducts>
+	<listOfRegulation>
+		<regulation>.......</regulation>	#atthached to a1 side
+	</listOfRegulation>
+</reaction>
+
+
+In the current measure, if more than one Regulations for a Reaction exist, 
+all Regulations are attached to the same branch of the reaction. 
+
+Example 2.
+All regulations are forced to be attached to the same arrow.
+
+	<listOfRegulation>
+		<regulation>.......</regulation>	#atthached to a1 side
+		<regulation>.......</regulation>	#atthached to a1 side
+	</listOfRegulation>
+
+This restriction is due to SBEdit's convenience of implementation of Regulation structure.
+Thus it should be removed in the future version of SBEdit. 
+
+
+(2) ideal measure in the future
+
+The way of removing the restriction in the preceding paragraph is to place <target> tags, 
+not right under <reaction> tags, but in <regulation> tags. This could tell which branch 
+each regulation is attaced to. 
+
+Example.3
+
+<reaction name="unnamed">
+	<annotation>
+		<sbedit:reactionType>DIMER_FORMATION</sbedit:reactionType>
+	</annotation>
+	<listOfReactants>
+		<speciesRef specie="s1">
+			<sbedit:alias=a1/>
+		</speciesRef>
+		<speciesRef specie="s2">
+			<sbedit:alias=a2/>
+		</speciesRef>
+	</listOfReactants>
+		<speciesRef specie="s3">
+			<sbedit:alias=a3/>
+		</speciesRef>
+	<listOfProducts>
+	<listOfRegulation>
+		<regulation>
+#			<sbedit:regulationTarget>a1</sbedit:regulationTarget>
+		</regulation>
+		<regulation>
+#			<sbedit:regulationTarget>a2</sbedit:regulationTarget>
+		</regulation>
+	</listOfRegulation>
+</reaction>
+
+
+
+------------
+5. Graphic Information
+------------
+
+In the SBEdit's system of drawing, graphical forms of symbols are pre-defined 
+in its own notational system. Therefore it is only configuration of Bounding Box(bbox) 
+that is necessary to draw species. Once bboxes are known, symbols are automatically 
+drawn in the boxes with thier shapes according to the notational system. 
+
+<sbedit:alias name="a5" specie="a">
+#	<sbedit:bounds x="450.0" y="28.0" w="48.0" h="25.0"/>
+</sbedit:alias>
+
+For arrows of Reactions and Regulators, these graphics are automatically drawn 
+so as to connect species, whose positions are determined by bboxes; the other 
+informations are not necessary to draw the arrows. 
+
+Therefore necessary information of graphics in SBEdit's implementation of SBML
+is just in <bounds> tags (and in <modelDisplay> tag at the top of the SBML, 
+which displays the size of whole diagrams). 
+
+This makes an SBML so simple as it should be. 
+
+
+----------------------
+6. Name Expression Standard
+----------------------
+
+According to SBML Level 1, the type of specie name is SName, which is restricted 
+to strings "(_|[a-z]|[A-Z])(_|[a-z]|[A-Z]|[0-9])*". This restriction is from 
+restriction against characters to be able to use in existing simulation tools. 
+If we express real specie names using the restricted letters, 
+these could become long strings readily because of much use of superscripts, 
+subscripts, Greek letters, etc. in biochemical substance names. 
+Followings are examples. 
+(possible expressions by LaTeX math mode and by SBEdit's implementation using 
+the restricted letters of SBML Level 1)
+
+G alpha beta gamma (3-mer G-protein)
+LaTeX:  G_{\alpha\beta\gamma}
+SBML1:  G_sub__alpha__beta__gamma__endsub_
+
+RGS CaM Ca2+ complex
+LaTeX:  RGS\ CaM\ Ca^{2+}
+SBML1:  RGS_space_CaM_space_Ca_super_2_plus__endsuper_
+
+These long strings appears in elsewhere to refer the species: specie definition, 
+alias, reactants, products, regulators, and kineticLaw. 
+(Especially, if we want to input user-defined kineticLaw formulae, combinations 
+of such long names would annoy us: some intelligent kineticLaw editor is needed.)
+
+The problem how we should express specie names is universal throughout softwares 
+to edit SBML and display the specie names not in simple text form, 
+including SBEdit, simulation controller GUI in SBW, and simulation tools with its 
+own result viewer. Thus, a simple standard for expressing specie names is necessary. 
+
+Only from the aspect of user interface in input with SBEdit, full LaTeX style is easy 
+to input complicate substance names and to remember rules for input, with shorter 
+expression of specie names. 
+
+(note)
+Another problem of naming may be how to identify different names(include abbreviations) 
+of the same substance. Linking to ontology DB is necessary. 
+
+
+----------------------
+6. Full Example
+----------------------
+
+The full example which contains 1 to 3 above, is fig.3 attached.
+This figure has drawn by SBEdit, and exported by its "Export JPEG" menu.
+(red notes were added after exporting)
+And the SBML expression of fig.3 is example.xml.
+(This sample is "formal", and has no meaning from biochemical aspect)
+
+Thanks.
+
+-------------------------------------------------------------------
+SBEdit development team.
+Fuji Research Institute Corporation (F-RIC) 
+ Yuichiro Inagaki <yinagaki@star.fuji-ric.co.jp>
+ Naoki Tanimura <ntanimur@star.fuji-ric.co.jp>
+Ad-hoc Network Computing Laboratory, Inc.(ANCL)
+ Takayuki Saito <saito@anclab.com> 
+ Maki Nakayama <PEC03611@nifty.ne.jp>
+-------------------------------------------------------------------

@@ -257,11 +257,13 @@ Figure~\ref{fig:malate_aspartate_shuttle3-xml}
     </listOfReactions>
 </model>
 \end{example}
-\caption{The \texttt{malate\_aspartate\_shuttle3} model which has duplicate reactions for each compartment.} 
+\caption{The \texttt{malate\_aspartate\_shuttle3} model which has duplicate reactions for each
+compartment.} 
 \label{fig:malate_aspartate_shuttle3-xml}
 \end{figure}
 
-Under this proposal we can replace the 2 reactions in Figure~\ref{fig:malate_aspartate_shuttle3-xml} with a single reaction structure as shown in Figure~\ref{fig:malate_aspartate_shuttle4-xml}
+Under this proposal we can replace the 2 reactions in Figure~\ref{fig:malate_aspartate_shuttle3-xml} 
+with a single reaction structure as shown in Figure~\ref{fig:malate_aspartate_shuttle4-xml}
 
 \begin{figure}[h]
 \begin{example}
@@ -1318,7 +1320,8 @@ section I will review the support for hierarchial assembly in the proposal.
 \class{SpeciesType} structures can encapsulate a graph of instances of species types whilst exposing
 a subset of the available binding sites.  The implementation of this consists of a reference,
 on a \class{BindingSite} structure, to a binding site on a chemical entity internal to the
-\class{SpeciesType}.  The example model in Figure~\ref{fig:hierarchial} demonstrates this feature.
+\class{SpeciesType}.  The example model in Figure~\ref{fig:hierarchial} on Page~\pageref{fig:hierarchial}
+demonstrates this feature.
 
 \begin{figure}
 
@@ -1372,8 +1375,61 @@ on a \class{BindingSite} structure, to a binding site on a chemical entity inter
   \centering
   \includegraphics[scale = 0.7]{hierarchial.eps}
 \caption{The \texttt{Hierarchical} model which demonstrates the graph encapsulation facilities of
-the proposal} 
+the proposal.  The \texttt{BindingSite} \texttt{p} on \texttt{SpeciesType} \texttt{C} exposes the
+uncommitted \texttt{BindingSite} \texttt{y} on \texttt{SpeciesTypeInstance} \texttt{iB}.} 
 \label{fig:hierarchial}
+\end{figure}
+
+This proposal contains a simple scheme for species type equivalence (described in more detail in
+Section~\ref{sec:type-equals}).
+This equivalence is used for resolving whether for example the products of different reactions refer
+to the same species.
+In this scheme
+a distinction is made between species types enclosing one or more other species type instances and
+those do not.  I'll call those types which do not contain species type instances \emph{simple}
+all other types are \emph{complex}.
+Simple species types are never equivalent however complex species types can be.  To evaluate the
+equivalence of \emph{complex} types we first normalize them into an equivalent form where all species
+type instances are \emph{simple} species types.  This normalization process simply removes the
+intermediate levels in the hierarchy.  Species type equivalence then considers a normalized 
+type as a graph formed by the species type instances, which are graph nodes, and bonds, which are
+graph arcs.  
+Two species types are equivalent if their graphs are equivalent.
+The identity of species types instances normalized complex species types are not relevant
+for the purposes of comparing these graphs.
+The binding sites of normalized complex species types are also not relevant.
+
+The \texttt{Complex2} \class{SpeciesType} in Figure~\ref{fig:complex2} on Page~\pageref{fig:complex2} is
+equivalent to the \texttt{Complex} \class{SpeciesType} in Figure~\ref{fig:hierarchial} on
+Page~\pageref{fig:hierarchial}.
+
+\begin{figure}
+
+\begin{example}
+<speciesType id="Complex2">
+    <listOfSpeciesTypeInstances>
+        <speciesTypeInstance id="iA1" speciesType="A"/>
+        <speciesTypeInstance id="iA2" speciesType="A"/>
+        <speciesTypeInstance id="iB" speciesType="C"/>
+    </listOfSpeciesTypeInstances>
+    <listOfBonds>
+        <specificBond>
+            <bindingSiteReference speciesTypeInstance="iA1" bindingSite="site"/>
+            <otherBindingSiteReference speciesTypeInstance="iB" bindingSite="y"/>
+        </specificBond>
+        <specificBond>
+            <bindingSiteReference speciesTypeInstance="iA2" bindingSite="site"/>
+            <otherBindingSiteReference speciesTypeInstance="iB" bindingSite="x"/>
+        </specificBond>
+    </listOfBonds>
+</speciesType>
+\end{example}
+  \vspace*{8pt}
+  \centering
+  \includegraphics[scale = 0.7]{complex2.eps}
+\caption{The \texttt{Complex2} \class{SpeciesType} that is equivalent to the \texttt{Complex} type in
+Figure~\ref{fig:hierarchial} on Page~\pageref{fig:hierarchial}} 
+\label{fig:complex2}
 \end{figure}
 
 \clearpage
@@ -1434,6 +1490,12 @@ exposing an internal binding site on a \class{SpeciesTypeInstance}.
 \class{SpeciesType} which is not referenced by another \attrib{bindSiteReference}.
 
 \end{itemize}
+
+A \attrib{bindingSiteReference} value must be present if the enclosing \class{SpeciesType}
+contains one or more \attrib{SpeciesTypeInstance} structures.  This means that a
+\class{SpeciesType} cannot 'introduce' a new binding site that doesn't exist on
+the chemical entites that make up the \class{SpeciesType}.  This restriction is designed to
+ensure that evaluating type equivalence is straightforward.
 
 \subsubsection{BindingSiteReference}
 
@@ -1667,36 +1729,391 @@ structures
 
 \attrib{bindingSite} is inherited from \class{Bond}.
 \attrib{otherBindingSiteReference} is optional.
-The \class{SpecificBond} structure represents the state in which \attrib{bindingSite} is unbound if \attrib{otherBindingSiteReference} is not present.
+The \class{SpecificBond} structure represents the state in which \attrib{bindingSite} is unbound if
+\attrib{otherBindingSiteReference} is not present.
 If \attrib{otherBindingSiteReference} is present the \attrib{bindingSite} and
 \attrib{otherBindingSiteReference} fields represent the 2 binding sites that are linked by a bond.
 Neither binding site has privileged semantics.
 See section~\ref{sec:explicitbonds} for examples.
 
-\subsection{Semantics of Reaction Execution and Species Inference}
+\subsection{Equivalence of Species Types}
 
-\subsubsection{Semantics of Multiple Matching combinations}
+\label{sec:type-equals}
 
-\subsection{Hierarchial Type Equivalence}
+This section defines the equivalence of \class{SpeciesType} structures.
+This is defined as a process with 3 stages described by the following 
+sections in order.  First the \class{SpeciesType} structures are transformed into a
+standard \emph{complex} form of \class{SpeciesGraph}, as described in Section~\ref{sec:trans-type}.
+Second these \class{SpeciesGraph}
+are normalized (flattened), as described in Section~\ref{sec:norm-graphs}.
+Finally if these normalized structures can the be
+matched, as decribed in Section~\ref{sec:match-graphs},
+then the \class{SpeciesType} structures are equivalent. 
 
-\clearpage
-\section{Discussion}
+\subsubsection{Normalization of Species Types}
+\label{sec:trans-type}
 
-\subsection{Modifiers and species inference}
+This section describes how a \class{SpeciesType} is normalized.
 
-\subsection{Use generic bonds in \class{SpeciesType} structures}
+A \class{SpeciesGraph} is \emph{simple} if it contains no \class{SpeciesTypeInstance} structures.
+A \class{SpeciesGraph} is \emph{complex} if it contains one or more \class{SpeciesTypeInstance} structures.
 
-\subsection{Connections between Generic Bonds}
+A normalized \class{SpeciesType} is always complex.
+A simple \class{SpeciesType} structure is normalized by creating a \class{SpeciesGraph}
+that contains one \class{SpeciesTypeInstance} structure which refers to the simple \class{SpeciesType}.
+All binding sites of the simple \class{SpeciesType} are referenced as unbound in a set of
+\class{SpecificBonds} within the new normalized \class{SpeciesGraph}.
 
-\subsection{Option - Reaction Predicates}
+A complex \class{SpeciesType} with one or more \class{BindingSite} structures is transformed
+to remove the those structures.  Each \class{BindingSite} structure is replaced by a
+\class{SpecificBond} structure containing just the \class{BindingSiteReference} structure
+that was contained in the \class{BindingSite} structure.  This means that the original
+binding sites are made unbound by the normalization process
+(instead of being avaliable for binding in a different context).
 
-\subsection{Option - SpeciesType inheritance}
+Once the rules have been applied the \class{SpeciesType} is normalized as described in
+Section~\ref{sec:norm-graphs}.
 
-\subsection{Discussion - Model Composition and Multi-component Species}
+\subsubsection{Normalization of Species Graphs}
+\label{sec:norm-graphs}
 
-\subsection{Discussion - reaction specificity - do we need groups?}
+This section describes how the form of species graphs is normalized for 
+the matching process.  This normalization process simply reduces the
+given Species Graph to a single hierarchical level.
 
-\subsection{Discussion - Attributes of Species and Species Types}
+A \class{SpeciesGraph} structure (i.e. either a \class{SpeciesType} or \class{SimpleSpecies}
+structure) is normalized if the set of \class{SpeciesType} structures, refereed to by the set
+of \class{SpeciesTypeInstance} structures, are simple.  
+The normalization process consists of iteratively replacing any \class{SpeciesTypeInstance} structures
+that refer to complex \class{SpeciesType} structures with a set of new
+\class{SpeciesTypeInstance} structures and \class{SpecificBond} structures that are copies of that
+occurring within the complex \class{SpeciesType} structure.  These new structures are linked into
+the same 'outer' \class{Bond} structures as the initial complex \class{SpeciesType} structure.
+
+\subsubsection{Normalized Species Graph Equivalence}
+\label{sec:match-graphs}
+
+When evaluating the equivalence of \class{SpeciesGraph} structures the following aspects
+are not directly relevant:
+\begin{itemize}
+\item \class{id} on \class{SpeciesTypeInstance}
+\item the order of structures within lists
+\class{SpecificBond} structures representing unbound binding sites
+\end{itemize}
+
+The \class{id} on \class{SpeciesTypeInstance} is only used to provide linkage within a single
+graph.
+
+In this section we consider a normalized \class{SpeciesGraph} to be a formal graph and
+equivalence to be a graph matching operation.  A formal representation of graph is
+
+\textbf{Definition} (A Simple Graph) A \emph{simple graph} $G$ is a
+tuple $G = (G_{V}, G_{E}, L, I, J, s, t, \ell, i, j)$
+consisting of
+\begin{itemize}
+
+\item a finite set of nodes (or ``vertices'') $G_{V}$ and a finite set of arcs (or ``edges'') $G_{E}$
+        where $G_{v} \cap G_{E} = \emptyset$,
+
+\item two total mappings $s, t : G_{E} \rightarrow G_{V}$ (``source and target''),
+
+\item a set of node labels $L$,
+
+\item a set of arc source labels $I$,
+
+\item a set of arc target labels $J$,
+
+\item a total mapping $\ell : G_{V} \rightarrow L$ (``node labelling'')
+
+\item a total mapping $i : G_{E} \rightarrow I$ (``arc source labelling'')
+
+\item a total mapping $j : G_{E} \rightarrow J$ (``arc target labelling'')
+
+\end{itemize}
+The nodes and arcs of a graph are also collectively called the ``objects'' of the graph
+(or ``graph objects'').  Note that in this definition that we are labelling the source and 
+target 'ends' of each arc.
+
+\emph{ modified from \citep{rudolf:1998}}
+
+In this formulation of the formal graphs
+the graph nodes, $G_{V}$, are the \class{SpeciesTypeInstance} structures and
+the arcs, $G_{E}$, are the \class{SpecificBond}
+structures.  The source and target of an arc is determined by the \attrib{speciesTypeInstance} field
+of the \class{BindingSiteReference} structures enclosed in the given \class{SpeciesBond}.
+The arc direction (the distinction between the source and target) is determined by a consistent ordering
+over \attrib{speciesType} attributes of the \attrib{speciesTypeInstance} structures.  
+
+The label, $\ell(v)$ of a node, $v$ is its
+\attrib{speciesType} attribute.  The arc source label, $i(e)$ of an arc, $e$, is formed from the
+\attrib{bindingSite} attribute of the given source \class{BindingSiteReference} structure.
+The arc target label, $j(e)$ of an arc, $e$, is formed from the
+\attrib{bindingSite} attribute of the given target \class{BindingSiteReference} structure.
+
+Two \class{SpeciesGraph} structures are equivalent if their normalized forms as 
+graphs match in both directions.  Formally a match of one graph into another is given by a
+graph morphism, which is a mapping of one graph's object
+sets into the other's, with some restrictions to preserve the graph's structure and it's typing
+information:
+
+\textbf{Definition} (Graph Morphism) A \emph{graph morphism} $m : L \rightarrow G$ between two
+simple graphs
+\begin{itemize}
+\item $L = (L_{V}, L_{E}, L_{L}, I_{L}, J_{L}, s_{L}, t_{L}, \ell_{L}, i_{L}, j_{L})$ and
+\item $G = (G_{V}, G_{E}, L_{G}, I_{G}, J_{G}, s_{G}, t_{G}, \ell_{G}, i_{G}, j_{G})$
+\end{itemize}
+is a pair of total mappings
+$m = (m_{V} : L_{V} \rightarrow G_{V}, m_{E} : L_{E} \rightarrow G_{E})$,
+where the following restrictions apply:
+
+\begin{enumerate}
+\item $\forall e \in L_{E} : $
+    \begin{itemize}
+    \item $m_{V}(s_{L}(e))= s_{G}(m_{E}(e))$
+    \item $m_{V}(t_{L}(e))= t_{G}(m_{E}(e))$
+    \end{itemize}
+\item $\forall v \in L_{V} : \ell_{L}(v) = \ell_{G}(m_{V}(v))$
+\item $\forall e \in L_{E} : i_{L}(e) = i_{G}(m_{E}(e))$
+\item $\forall e \in L_{E} : j_{L}(e) = j_{G}(m_{E}(e))$
+\end{enumerate}
+
+\emph{modified from \citep{rudolf:1998}}
+
+\subsubsection{Implications of \class{SpeciesType} Equivalence}
+
+Two or more equivalent \class{SpeciesType} structures can co-exist in the same model
+(the \attrib{id} attributes must have different values).  Section~\ref{sec:species-equals}
+describes how \class{Species} equivalence is derived from \class{SpeciesType} equivalence.
+
+\subsection{\class{Species} Equivalence}
+\label{sec:species-equals}
+
+Two \class{Species} are equivalent if they are located in the same compartment and their associated
+\class{SpeciesType} structures are equivalent.  A model must not contain equivalent \class{Species}.
+The species implied by the reactions in a model, described in Section~\ref{sec:reaction-semantics},
+are inherently not equivalent.
+
+\subsection{Semantics of Reactions}
+\label{sec:reaction-semantics}
+\subsubsection{Simple Framework for Operational Semantics}
+
+For the definition of the semantics of reactions we will consider a model with a simulator to be form of
+AI \emph{production system}.
+
+\begin{quote}
+The major elements of an AI production system are a \emph{global database}, a set of
+\emph{production rules}, and a \emph{control system}.
+[...]
+Depending on the application, this database may be as simple as a small matrix of numbers or as
+complex as a large, relational, index file structure.  (The reader should not confuse the phrase,
+``global database,'' as it is used [here], with the databases of database systems.)
+
+The production rules operate on the global database.  Each rule has a \emph{precondition} that is either
+satisfied or not by the global database.  If the precondition is satisfied, the rule can be
+\emph{applied}.  Application of the rule changes the database.  The control system chooses which
+applicable rule should be applied and ceases computation when a termination condition on the global
+database is satisfied.~\citep{Nilsson:1982}
+\end{quote}
+
+In the context of this proposal reactions are considered to be rules.  
+The global database is formed by
+the modelled species which are pools of chemical entities.  
+In SBML Level 2 the set of \class{Species} structures defines the complete set of pools of chemical
+entities that are created by, destroyed by and affect the set of reactions. In this proposal the set of
+\class{Species}
+structures only describes the initial conditions of the model.  The reactions themselves define the
+species or set of pools of entities that are relevant to the model. 
+It is expected that any analysis of a model will require the computation of the set of species.
+This proposal does not depend on any particular representation scheme for species within a given
+software analysis system.
+
+A reaction matches
+the set of reactants, its precondition, to the set of species, the global database.  The effect of the
+reaction is to remove reactant entities and create product entities within the set of species.
+The existence of a modifier entity is not a pre-condition of a reaction however the number of
+chemical entities in the modifier's pool will affect the reaction according to the reaction's
+rate law.
+
+For the purposes of this definition the control system is idealized. Real software systems will in
+practice create approximations of this control system.  The ideal control system simply applies all
+matching reactions concurrently at the rate defined by the reaction' kinetic laws.  Unlike a AI
+production system this proposal does not define any termination conditions.  
+
+\subsubsection{Matching of Species}
+
+This section describes how reactions are matched to the global database of species.
+
+\emph{Unification of Species to Reactants and Modifiers}
+
+The matching of reactant and modifiers, \class{SimpleSpeciesReference} structures,
+to species is similar to equivalence between species.  
+The cases we will consider with respect to the \class{SimpleSpeciesReference} are:
+\begin{itemize}
+
+\item \emph{\attrib{species} attribute is present}, in this case the match is with the indicated
+\class{Species}.
+
+\item \emph{\attrib{speciesType} and \attrib{compartment} attributes are present}, in this case the match is
+with the species located in the given \class{Compartment} which has a \class{SpeciesType} equivalent to
+the given \class{SpeciesType}.
+
+\item \emph{\attrib{speciesType} is present but the \attrib{compartment} attribute is not present},
+in this case the match is
+with any species which has a \class{SpeciesType} equivalent to
+the given \class{SpeciesType}.  The \class{Compartment} of the species must be the same as
+all other species involved in the reaction.
+
+\item \emph{all of the remaining cases} are described below.
+\end{itemize}
+
+In the remaining cases the matching between \class{SimpleSpeciesReference} and species
+is considered to be a variant of \class{SpeciesType} equivalence.  If the \attrib{compartment}
+attribute is not present on the \class{SimpleSpeciesReference} then the match is with any
+species matching the \class{SpeciesType} located in the same \class{Compartment} as all the other
+species involved in the reaction.  If the \attrib{compartment} attribute is present then
+the match is with any species matching the \class{SpeciesType} located in the given \class{Compartment}.
+
+To enable the definition of a match between a \class{SimpleSpeciesReference} and a \class{SpeciesType}
+we first require a definition of a \emph{generic graph} and definition of \class{SimpleSpeciesReference}
+in terms of a \emph{generic graph}.  (The use \emph{generic graph} here is to capture the semantics of 
+\class{GenericBond} structures which may be contained within a \class{SimpleSpeciesReference}.)
+
+\textbf{Definition} (A Generic Graph) A \emph{generic graph} $G$ is a tuple
+$G = (G_{V}, G_{E}, G_{X}, L, I, J, s, t, u, \ell, i, j)$
+consisting of
+\begin{itemize}
+
+\item a finite set of nodes (or ``vertices'') $G_{V}$, a finite set of arcs (or ``edges'') $G_{E}$
+and a finite set of generic nodes $G_{X}$ where
+    \begin{enumerate}
+    \item $G_{V} \cap G_{E} = \emptyset$
+    \item $G_{V} \cap G_{X} = \emptyset$
+    \item $G_{E} \cap G_{X} = \emptyset$
+    \end{enumerate}
+    
+\item two total mappings $s, t : G_{E} \rightarrow G_{V}$ (``source and target''),
+
+\item a total mapping $u : G_{X} \rightarrow G_{V}$ (``generic connection''),
+
+\item a set of arc source labels $I$,
+
+\item a set of arc target labels $J$,
+
+\item a total mapping $\ell : G_{V} \cup G_{X} \rightarrow L$ (``node labelling'')
+
+\item a total mapping $i : G_{E} \rightarrow I$ (``arc source labelling'')
+
+\item a total mapping $j : G_{E} \rightarrow J$ (``arc target labelling'')
+
+\end{itemize}
+The nodes, generic nodes and arcs of a graph are also collectively called the ``objects'' of the
+generic graph (or ``generic graph objects'').
+
+The formulation of a \class{SimpleSpeciesReference} as a generic graph similar to that
+of a \class{SpeciesType} to a simple graph.
+The graph nodes, $G_{V}$, are the \class{SpeciesTypeInstance} structures,
+arcs, $G_{E}$, are the \class{SpecificBond} structures and generic nodes, $G_{X}$, are the
+\class{GenericBond} structures.  The source, $s$ and target, $t$, of an arc are determined by the
+\attrib{speciesTypeInstance} field of the \class{BindingSiteReference} structures enclosed in the given
+\class{SpeciesBond}.  The arcs are directed
+where arc direction should be determined using an consistent ordering over the set of simple species
+types.
+The generic connections of a generic node, $u$ are determined by the \attrib{speciesTypeInstance} field
+of the \class{BindingSiteReference} structure enclosed in the given \class{GenericBond}. 
+For our purposes the label or type of a node is its
+\attrib{speciesType} attribute and the label or type of an arc is formed from the pair of
+\attrib{bindingSite} attributes of the given \class{SpecificBond} structures.
+The arc direction determines the ordering of each arc's \attrib{bindingSite}
+attributes in the arc's label.
+The label of generic node is the \attrib{bindingSite} attribute of the given
+\class{GenericBond} structure.
+
+A match of generic graph (from a \class{SimpleSpeciesReference}) into a simple graph
+(from a \class{SpeciesType} as described in Section~\ref{sec:match-graphs}) is given by a graph
+morphism, which is a mapping of the generic graph's object
+sets into the simple graph's, with some restrictions to preserve the generic graph's structure and
+it's typing information:
+
+\textbf{Definition} (Generic Graph Morphism) A \emph{generic graph morphism}
+$m : L \rightarrow G$ between
+\begin{itemize}
+\item a generic graph
+$L = (L_{V}, L_{E}, L_{X}, L_{L}, I_{L}, J_{L}, s_{L}, t_{L}, u_{L}, \ell_{L}, i_{L}, j_{L})$ and
+\item a simple graph $G = (G_{V}, G_{E}, L_{G}, I_{G}, J_{G}, s_{G}, t_{G}, \ell_{G}, i_{G}, j_{G})$
+\end{itemize}
+is a pair of total mappings
+$m = (m_{V} : L_{V} \rightarrow G_{V}, m_{E} : L_{E} \cup L_{X} \rightarrow G_{E})$
+where the following restrictions apply:
+
+\begin{enumerate}
+\item $\forall x \in L_{X} : m_{V}(u(x)) = s_{G}(m_{E}(x)) \vee m_{V}(u(x)) = t_{G}(m_{E}(x))$
+\item $\forall e \in L_{E} : $
+    \begin{itemize}
+    \item $m_{V}(s_{L}(e))= s_{G}(m_{E}(e))$
+    \item $m_{V}(t_{L}(e))= t_{G}(m_{E}(e))$
+    \end{itemize}
+\item $\forall v \in L_{V} : \ell_{L}(v) = \ell_{G}(m_{V}(v))$
+\item $\forall e \in L_{E} : i_{L}(e) = i_{G}(m_{E}(e))$
+\item $\forall e \in L_{E} : j_{L}(e) = j_{G}(m_{E}(e))$
+\item $ \forall x \in L_{X} : \ell_{L}(x) = \left\{
+\begin{array}{ll}
+i_{G}(m_{E}(x)) & \mbox{if $m_{V}(u(x)) = s_{G}(m_{E}(x))$}\\
+j_{G}(m_{E}(x)) & \mbox{if $m_{V}(u(x)) = t_{G}(m_{E}(x))$}
+\end{array} \right. $
+\end{enumerate}
+
+The mapping $m_{E}$ from the set of generic bonds, $L_{X}$ to specific bonds, $G_{E}$ 
+represents a set of assignments which are used to determine the effect of a reaction.
+This is described further in Section~\ref{sec:effect-of-reactions}. 
+
+\subsubsection{Matching Reactions}
+
+A \class{Reaction} which does not contain any \class{GenericBond} structures represents a single
+\emph{reaction instance}.  A \class{Reaction} that does contain \class{GenericBond} structures
+represents a set of reaction instances where each instance in this set is a concrete reaction
+with generic graph mappings for all the reactant and modifier \class{SimpleSpeciesReference} structures.
+There is a separate reaction instance for all possible combinations of these graph mappings.
+Each reaction instance exists concurrently with the other instance and operates at the
+rate determined by the reaction's kinetic law.
+
+\emph{This means that some care must be taken when formulating the kinetic laws of reactions containing
+\class{GenericBond} structures.  Typically to obtain the correct results kinetic laws should be defined
+so that the rate of the reaction is directly proportional to the amount of the species matched
+using \class{GenericBond} structures.}
+
+\subsubsection{The Effect of Reactions}
+\label{sec:effect-of-reactions}
+
+A reaction reduces the amount of the reactant species and increases the amount of the product
+species.  A reaction does not affect the amount of a Modifier species (unless its a reactant or product).
+If the species graph for a product which doesn't contain \class{GenericBond} structures it can be
+matched to a species as for reactants.
+
+In a reaction instance any product \class{GenericBond} structures are eliminated by viewing the effect of
+a reaction as graph transformation process.
+The resulting \emph{concrete} product can then be matched to species.
+In this transformation process we take each set of matching reactant species graphs 
+
+\subsubsection{Reversible reactions}
+
+%\clearpage
+%\section{Discussion}
+%
+%\subsection{Modifiers and species inference}
+%
+%\subsection{Use of generic bonds in \class{SpeciesType} structures}
+%
+%\subsection{Connections between Generic Bonds}
+%
+%\subsection{Option - Reaction Predicates}
+%
+%\subsection{Option - SpeciesType inheritance}
+%
+%\subsection{Discussion - Model Composition and Multi-component Species}
+%
+%\subsection{Discussion - reaction specificity - do we need groups?}
+%
+%\subsection{Discussion - Attributes of Species and Species Types}
 
 \newpage
 \section{Appendix}

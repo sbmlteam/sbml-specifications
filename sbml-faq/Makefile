@@ -19,18 +19,18 @@ default: dvi
 dvi:;
 	-@/bin/rm -f $(BASENAME).toc $(BASENAME).aux
 	latex $(BASENAME).tex
-	bibtex $(BASENAME)
-	latex $(BASENAME).tex
+#	bibtex $(BASENAME)
+#	latex $(BASENAME).tex
 	latex $(BASENAME).tex
 	latex $(BASENAME).tex
 
 pdf:;
-	make eps
+#	make eps
 	-@/bin/rm -f $(BASENAME).toc $(BASENAME).aux
 	pdflatex $(BASENAME).tex
-	bibtex $(BASENAME)
-	pdflatex $(BASENAME).tex
-	pdflatex $(BASENAME).tex
+#	bibtex $(BASENAME)
+#	pdflatex $(BASENAME).tex
+#	pdflatex $(BASENAME).tex
 	pdflatex $(BASENAME).tex
 	pdflatex $(BASENAME).tex
 

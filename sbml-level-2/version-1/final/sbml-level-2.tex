@@ -8,6 +8,28 @@
   \newcommand{\vref}[1]{\ref{#1}}
 }
 
+% Title page graphics.  The path setup is so that the \includegraphics
+% in the @puttile definition can find the logo file no matter where the
+% document is located (but obviously, it only works for certain path
+% combinations -- it's a total hack).
+
+\graphicspath{{./logos/}{../tex/logos/}{../../tex/logos/}{../../../tex/logos/}}
+
+\makeatletter
+\def\@puttitle{%
+  \vspace*{-6ex}%
+  \@ifundefined{pdfoutput}{%
+    \includegraphics[width=2.5in]{sbml-logo}\\%
+  }{%
+    \includegraphics[width=2.5in]{sbml-logo.tif}\\%
+  }%
+  \vspace*{6ex}%
+  \rule{\textwidth}{0.01in}\\[\medskipamount]
+  {\sffamily\bfseries\LARGE \@title \par}%
+  \vskip -2pt%
+  \rule{\textwidth}{0.01in}}
+\makeatother
+
 % Aliases for bibliography entries, to compensate for some issues.
 
 \defcitealias{bipm:1998}{BIPM, 1998}
@@ -39,11 +61,11 @@
   ERATO Kitano Symbiotic Systems Project\\
   Control and Dynamical Systems, MC 107-81\\
   California Institute of Technology, Pasadena, CA 91125, USA\\[3pt]
-  \url{http://www.cds.caltech.edu/erato}}
+  \url{http://www.sbml.org}}
 
 \acknowledge{Principal Investigators: John Doyle and Hiroaki Kitano}
 
-\date{SBML Level 2, Version 1\\[5pt]
+\date{SBML Level 2, Version 1 (Final)\\[5pt]
   June 28, 2003}
 
 \maketitlepage
@@ -140,16 +162,16 @@ structures.  First, compared to using other notations or a programming
 language, the UML visual representations are generally easier to grasp by
 readers who are not computer scientists.  Second, the visual notation is
 implementation-neutral: the defined structures can be encoded in any
-concrete implementation language---not just XML, but C or Java as well.
-Third, UML is a de facto industry standard that is documented in many
-sources.  Readers are therefore more likely to be familiar with it than
-other notations.
+concrete implementation language---not just XML, but C, Java and other
+languages as well.  Third, UML is a de facto industry standard that is
+documented in many sources.  Readers are therefore more likely to be
+familiar with it than other notations.
 
-Our notation and our approach for mapping it to XML Schemas is explained in
-a separate document~\citep{hucka:2000b}.  A summary of the essential points
-is presented in Appendix~\ref{apdx:notation}, and examples throughout this
-document illustrate the approach.  All types in SBML follow XML schema
-datatype definitions and conventions.
+Our notation and our approach for mapping it to XML Schema is explained in
+a separate document~\citep{hucka:2000b}.  Appendix~\ref{apdx:notation}
+presents a summary, and examples throughout this document illustrate the
+approach.  All data types in SBML follow XML Schema datatype definitions
+and conventions.
 
 We follow certain naming and
 typographical conventions throughout this document.  Specifically, the
@@ -207,7 +229,7 @@ The meaning of each component is as follows:
 \begin{description}
 
 \item \emph{Function definition}: A named mathematical function that may be used
-  throughout the rest of the model.
+  throughout the rest of a model.
     
 \item \emph{Unit definition}: A name for a unit used in the expression of
   quantities in a model.
@@ -281,12 +303,16 @@ repeatedly in the rest of SBML Level~2.
 \label{sec:sbase}
 %-----------------------------------------------------------------------------
 
-Every structure composing an SBML Level 2 model definition has a specific
-data type that is derived directly or indirectly from a single abstract
-type called \class{SBase}.  This base type is designed to allow a modeler
-or a software package to attach arbitrary information to each major
-structure or list in an SBML model.  The definition of \class{SBase} is presented
-in Figure~\vref{fig:sbase}.
+The base types in SBML (e.g., \class{integer}, \class{double}, and others)
+are taken directly from XML
+Schema~\citep{biron:2000,fallside:2000,thompson:2000}.  SBML defines
+additional data types and structures beyond this.  Every structure
+composing an SBML Level~2 model definition has a specific data type that is
+derived directly or indirectly from a single abstract type called
+\class{SBase}.  This base type is designed to allow a modeler or a software
+package to attach arbitrary information to each major structure or list in
+an SBML model.  The definition of \class{SBase} is presented in
+Figure~\vref{fig:sbase}.
 
 \begin{figure}[hb]
   \vspace*{8pt}
@@ -332,7 +358,8 @@ user comments about the structure in which the \attrib{notes} field is enclosed.
 Every data object derived directly or
 indirectly from type \class{SBase} can have a separate value for
 \attrib{notes}, allowing users considerable freedom when adding comments to their
-models.
+models.  Section~\ref{sec:examples} provides examples of using
+\attrib{notes} in different models.
 
 \subsubsection{The \attrib{annotation} Field}
 
@@ -354,17 +381,19 @@ elements contained inside \class{SBase} are not derived from
 \class{SBase}.)
 
 \begin{figure}[hb]
+  \vspace*{4pt}
   \centering
   \includegraphics[scale = 0.7]{top-level}
   \caption{A UML diagram of the inheritance hierarchy of major data types
     in SBML.  Open arrows indicate inheritance, pointing from inheritors to
     their parents~\protect\citep{eriksson:1998,oestereich:1999}.  In addition to
     these types, all substructures in SBML (including, for example, all the 
-    \class{listOf} lists) are also derived from \class{SBase}.}
+    \class{listOf} lists) are also derived from \class{SBase}.  See text
+    for details.}
   \label{fig:top-level}
 \end{figure}
 
-In the other SBML type definitions presented below, we follow the UML
+In other type definitions presented below, we follow the UML
 convention of hiding the attributes derived from a parent type such as
 \class{SBase}. It should be kept in mind that these attributes are always
 available.
@@ -506,9 +535,9 @@ data~\citep[][Section~2.4]{bray:2000} must be obeyed:
 
 \end{itemize}
 Other XML built-in character or entity references, e.g., \texttt{\&lt;} and
-\texttt{\&x1A;}, can be used.  No restrictions as to the content of
-\attrib{name} fields are imposed by SBML beyond those defined by the
-\class{string} type of XML Schema.
+\texttt{\&x1A;}, are permitted.  SBML imposes no restrictions as to the
+content of \attrib{name} fields beyond those restrictions defined by the
+\class{string} type in XML Schema.
 
 The recommended practice for handling \attrib{name} is as follows.  If a
 software tool has the capability for displaying the content of
@@ -685,6 +714,7 @@ namespace and MathML in SBML.
 
 The subset of MathML elements used in SBML Level~2 is similar to that used by
 CellML and is itemized below:
+
 \begin{itemize}
 
 \item \emph{token}: \class{cn}, \class{ci}, \class{csymbol}, \class{sep}
@@ -731,11 +761,13 @@ in proposals for SBML Level~3 geometry representations (see
 Section~\ref{sec:level-3}).
 
 The following are the only attributes permitted on MathML elements in SBML:
+
 \begin{itemize}
 \item \attrib{style}, \attrib{class} and \attrib{id} on any element;
 \item \attrib{encoding} and \attrib{definitionURL} on \class{csymbol} elements; and
 \item \attrib{type} on \class{cn} elements.
 \end{itemize}
+
 Missing values for these attributes are to be treated in the same way as
 defined by MathML. 
 These restrictions on attributes are designed to confine the MathML elements to their
@@ -890,6 +922,7 @@ single \class{Sbml} structure enclosing a single \class{Model} structure
 Figure~\ref{fig:sbml}.
 
 \begin{figure}[htb]
+  \vspace*{6pt}
   \centering
   \includegraphics[scale = 0.68]{sbml}
   \caption{The definition of \class{Sbml} for SBML Level~2 Version~1.  Following UML notation, additional fields
@@ -929,7 +962,7 @@ model definition in XML:
 %-----------------------------------------------------------------------------
 
 The \class{Model} structure is the highest-level construct in an SBML data
-stream or document.  The UML definition of \class{Model} is shown in
+stream or document.  Its definition is shown in
 Figure~\vref{fig:model}.  Only one component of type \class{Model} is
 allowed per instance of an SBML document or data stream, although it does
 not necessarily need to represent a single biological entity.

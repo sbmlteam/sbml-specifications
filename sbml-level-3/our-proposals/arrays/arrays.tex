@@ -97,7 +97,7 @@ Because none of the symbols in integer expressions vary at simulation time an in
 
 \section{Conditional Objects}
 \label{sec:exists}
-In this proposal \class{Species}, \class{Parameter}, \class{Link}, \class{Instance}, \class{Rule}, \class{Reaction} and \class{Compartment}
+In this proposal \class{Species}, \class{Parameter}, \class{Link}, \class{Instance}, \class{Rule}, \class{Reaction}, \class{Event} and \class{Compartment}
 objects all have a new \attrib{exists} field.  This field contains a MathML expression which returns a boolean result.  If this expression
 is true the containing object is part of the model.  If the expression is false the object does not exist.  Variables acquire their initial values
 whenever they come into existence.
@@ -125,6 +125,26 @@ contains constant expressions in \attrib{exists} fields is \emph{static} i.e the
 This feature is independent of the rest of the features described in this proposal.
 As will be shown in section~\ref{sec:sparseandconnections} there is a class of static models which use \attrib{exists}
 attributes as a mechanism for describing sparse arrays.
+
+\subsection{Initial Assignment Rules}
+
+One of the limitations of the previously described structures is that there is no way to 
+specify that initial conditions vary across elements of an array.  We describe a new feature
+in this section to overcome this limitation.
+
+In this proposal we introduce a new subtype of \class{Rule} \class{InitialAssignmentRule} in addition
+to the existing \class{AssignmentRule} and \class{RateRule} types.  
+\class{InitialAssignmentRule} and \class{AssignmentRule} structures are evaluated at the beginning of a simulation to establish
+initial values for variables.  \class{AssignmentRule} structures constrain the model for all time
+whereas \class{InitialAssignmentRule} structures only constrain the model at time zero. 
+An \class{InitialAssignmentRule} structure and an \class{AssignmentRule} structure cannot have the same
+\attrib{variable} attribute value.  An \class{InitialAssignmentRule} structure and a \class{RateRule} structure can have the same
+\attrib{variable} attribute value.  The combined \class{InitialAssignmentRule} and \class{AssignmentRule} structures
+set must not contain algebraic loops.  The behavior of variables assigned values by an
+\class{InitialAssignmentRule} structure can be determined either by a reaction  or a \class{RateRule} structure (this is not
+true of \class{AssignmentRule} structures ).
+
+This feature could be considered separately from the rest of the arrays proposal.
 
 \section{Arrays}
 \label{sec:arrays}
@@ -395,7 +415,7 @@ a numeric expression.
         <times/>
         <apply>
             <csymbol
-                encoding="SBML" 
+                encoding="text" 
                 definitionURL="http://www.sbml.org/symbols/arrayselector">
                 ?
             </csymbol>
@@ -412,6 +432,215 @@ a numeric expression.
 \subsubsection{Issue}
 
 Do we want to support these two operators simultaneously? 
+
+\subsection{Arrays of Rules}
+
+Although \class{rule} structures do not declare a symbol it is still possible to
+create an array of rules as described above.  
+It is not possible to define more than one rate or assignment rules that applies
+to the same single array cell.
+
+For example:
+
+\begin{example}
+<model id="rules">
+    <listOfCompartments>
+        <compartment id="cell"/>
+    </listOfCompartments>
+    <listOfSpecies>
+        <species id="s" initialAmount="0.1" compartment="cell">
+            <listOfDimensions>
+                <dimension id="x">
+                    <lowerLimit>
+                        <math xmlns="http://www.w3.org/1998/Math/MathML">
+                            <cn> 0 </cn>
+                        </math>
+                    </lowerLimit>
+                    <upperLimit>
+                        <math xmlns="http://www.w3.org/1998/Math/MathML">
+                            <cn> 9 </cn>
+                        </math>
+                    </upperLimit>
+                </dimension>
+            </listOfDimensions>
+        </species>
+    </listOfSpecies>
+    <listOfRules>
+        <rateRule>
+            <listOfDimensions>
+                <dimension id="x">
+                    <lowerLimit>
+                        <math xmlns="http://www.w3.org/1998/Math/MathML">
+                            <cn> 0 </cn>
+                        </math>
+                    </lowerLimit>
+                    <upperLimit>
+                        <math xmlns="http://www.w3.org/1998/Math/MathML">
+                            <cn> 9 </cn>
+                        </math>
+                    </upperLimit>
+                </dimension>
+            </listOfDimensions>
+            <variableLink object="s">
+                <listOfIndices>
+                    <math xmlns="http://www.w3.org/1998/Math/MathML">
+                        <ci> x </ci>
+                    </math>          
+                </listOfIndices>
+            </variableLink>
+            <math xmlns="http://www.w3.org/1998/Math/MathML">
+                <cn> 0.1 </cn>
+            </math>
+        </rateRule>
+    </listOfRules>
+</model>
+\end{example}
+
+As rules do not declare symbols it is possible for more than one
+rule to be applied to the same array. For example consider the
+following example in which two different rules are applied to different halves of the
+same array:
+
+\begin{example}
+<model id="rules">
+    <listOfCompartments>
+        <compartment id="cell"/>
+    </listOfCompartments>
+    <listOfSpecies>
+        <species id="s" initialAmount="0.1" compartment="cell">
+            <listOfDimensions>
+                <dimension id="x">
+                    <lowerLimit>
+                        <math xmlns="http://www.w3.org/1998/Math/MathML">
+                            <cn> 0 </cn>
+                        </math>
+                    </lowerLimit>
+                    <upperLimit>
+                        <math xmlns="http://www.w3.org/1998/Math/MathML">
+                            <cn> 9 </cn>
+                        </math>
+                    </upperLimit>
+                </dimension>
+            </listOfDimensions>
+        </species>
+    </listOfSpecies>
+    <listOfRules>
+        <rateRule>
+            <listOfDimensions>
+                <dimension id="x">
+                    <lowerLimit>
+                        <math xmlns="http://www.w3.org/1998/Math/MathML">
+                            <cn> 0 </cn>
+                        </math>
+                    </lowerLimit>
+                    <upperLimit>
+                        <math xmlns="http://www.w3.org/1998/Math/MathML">
+                            <cn> 4 </cn>
+                        </math>
+                    </upperLimit>
+                </dimension>
+            </listOfDimensions>
+            <variableLink object="s">
+                <listOfIndices>
+                    <math xmlns="http://www.w3.org/1998/Math/MathML">
+                        <ci> x </ci>
+                    </math>          
+                </listOfIndices>
+            </variableLink>
+            <math xmlns="http://www.w3.org/1998/Math/MathML">
+                <cn> 0.1 </cn>
+            </math>
+        </rateRule>
+        <rateRule>
+            <listOfDimensions>
+                <dimension id="x">
+                    <lowerLimit>
+                        <math xmlns="http://www.w3.org/1998/Math/MathML">
+                            <cn> 5 </cn>
+                        </math>
+                    </lowerLimit>
+                    <upperLimit>
+                        <math xmlns="http://www.w3.org/1998/Math/MathML">
+                            <cn> 9 </cn>
+                        </math>
+                    </upperLimit>
+                </dimension>
+            </listOfDimensions>
+            <variableLink object="s">
+                <listOfIndices>
+                    <math xmlns="http://www.w3.org/1998/Math/MathML">
+                        <ci> x </ci>
+                    </math>          
+                </listOfIndices>
+            </variableLink>
+            <math xmlns="http://www.w3.org/1998/Math/MathML">
+                <cn> 0.2 </cn>
+            </math>
+        </rateRule>
+    </listOfRules>
+</model>
+\end{example}
+
+In the following example a model varies the initial concentration of a species
+across a 1 dimensional array of species:
+
+\begin{example}
+<model id="varying">
+    <listOfCompartments>
+        <compartment id="cell"/>
+    </listOfCompartment>
+    <listOfSpecies>
+        <species id="s">
+            <listOfDimensions>
+                <dimension id="x">
+                    <lowerLimit>
+                        <math xmlns="http://www.w3.org/1998/Math/MathML">
+                            <cn> 0 </cn>
+                        </math>
+                    <lowerLimit>
+                    <upperLimit>
+                        <math xmlns="http://www.w3.org/1998/Math/MathML">
+                            <cn> 9 </cn>
+                        </math>
+                    <upperLimit>
+                </dimension>
+            </listOfDimensions>
+        </species>
+    </listOfSpecies>
+    <listOfRules>
+        <initalAssignmentRule>
+            <listOfDimensions>
+                <dimension id="x">
+                    <lowerLimit>
+                        <math xmlns="http://www.w3.org/1998/Math/MathML">
+                            <cn> 0 </cn>
+                        </math>
+                    </lowerLimit>
+                    <upperLimit>
+                        <math xmlns="http://www.w3.org/1998/Math/MathML">
+                            <cn> 9 </cn>
+                        </math>
+                    </upperLimit>
+                </dimension>
+            </listOfDimensions>
+            <variableLink object="s">
+                <listOfIndices>
+                    <math xmlns="http://www.w3.org/1998/Math/MathML">
+                        <ci> x </ci>
+                    </math>          
+                </listOfIndices>
+            </variableLink>
+            <math xmlns="http://www.w3.org/1998/Math/MathML">
+                <apply>
+                    <times/>
+                    <ci> x </ci>
+                    <cn> 0.1 </cn>
+                </apply>
+            </math>
+        </initalAssignmentRule>
+    </listOfRules>
+</model>
+\end{example}
 
 \section{Simplified Array Structures for Related Objects}
 
@@ -684,141 +913,6 @@ is equivalent to
 
 Similar scoping rules for symbols apply here as they do for species structures.
 
-\section{Arrays of Rules}
-
-Declaring arrays of rules is slightly different from other component types.
-Rule structures don't contain an \texttt{id}
-field that declares a new symbol instead they reference another
-structure via the \texttt{variable} field.  The \attrib{dimension} field
-(\texttt{listOfDimensions} sub-elements) operate in the same way as described in previous sections.
-The integer symbols declared in the \attrib{dimension} field have scope in the rule expression.
-An rule arrays will simply create a set of constraints applied over the range of 
-these integer symbols.
-Assignment and rate rule array cells constrain those cells with same indices
-in the array referenced by the \texttt{variable} field.
-For example the following model has a rule applied to an array of species.
-
-\begin{example}
-<model id="rules">
-    <listOfCompartments>
-        <compartment id="cell"/>
-    </listOfCompartments>
-    <listOfSpecies>
-        <species id="s" initialAmount="0.1" compartment="cell">
-            <listOfDimensions>
-                <dimension id="x">
-                    <lowerLimit>
-                        <math xmlns="http://www.w3.org/1998/Math/MathML">
-                            <cn> 0 </cn>
-                        </math>
-                    </lowerLimit>
-                    <upperLimit>
-                        <math xmlns="http://www.w3.org/1998/Math/MathML">
-                            <cn> 9 </cn>
-                        </math>
-                    </upperLimit>
-                </dimension>
-            </listOfDimensions>
-        </species>
-    </listOfSpecies>
-    <listOfRules>
-        <assignmentRule variable="s" type="rate">
-            <listOfDimensions>
-                <dimension id="x">
-                    <lowerLimit>
-                        <math xmlns="http://www.w3.org/1998/Math/MathML">
-                            <cn> 0 </cn>
-                        </math>
-                    </lowerLimit>
-                    <upperLimit>
-                        <math xmlns="http://www.w3.org/1998/Math/MathML">
-                            <cn> 9 </cn>
-                        </math>
-                    </upperLimit>
-                </dimension>
-            </listOfDimensions>
-            <math xmlns="http://www.w3.org/1998/Math/MathML">
-                <cn> 0.1 </cn>
-            </math>
-        </assignmentRule>
-    </listOfRules>
-</model>
-\end{example}
-
-As rules do not declare symbols it is possible for more than one
-rule to be applied to the same array. For example consider the
-following example in which two different rules are applied to different halves of the
-same array:
-
-\begin{example}
-<model id="rules">
-    <listOfCompartments>
-        <compartment id="cell"/>
-    </listOfCompartments>
-    <listOfSpecies>
-        <species id="s" initialAmount="0.1" compartment="cell">
-            <listOfDimensions>
-                <dimension id="x">
-                    <lowerLimit>
-                        <math xmlns="http://www.w3.org/1998/Math/MathML">
-                            <cn> 0 </cn>
-                        </math>
-                    </lowerLimit>
-                    <upperLimit>
-                        <math xmlns="http://www.w3.org/1998/Math/MathML">
-                            <cn> 9 </cn>
-                        </math>
-                    </upperLimit>
-                </dimension>
-            </listOfDimensions>
-        </species>
-    </listOfSpecies>
-    <listOfRules>
-        <assignmentRule variable="s" type="rate">
-            <listOfDimensions>
-                <dimension id="x">
-                    <lowerLimit>
-                        <math xmlns="http://www.w3.org/1998/Math/MathML">
-                            <cn> 0 </cn>
-                        </math>
-                    </lowerLimit>
-                    <upperLimit>
-                        <math xmlns="http://www.w3.org/1998/Math/MathML">
-                            <cn> 4 </cn>
-                        </math>
-                    </upperLimit>
-                </dimension>
-            </listOfDimensions>
-            <math xmlns="http://www.w3.org/1998/Math/MathML">
-                <cn> 0.1 </cn>
-            </math>
-        </assignmentRule>
-        <assignmentRule variable="s" type="rate">
-            <listOfDimensions>
-                <dimension id="x">
-                    <lowerLimit>
-                        <math xmlns="http://www.w3.org/1998/Math/MathML">
-                            <cn> 5 </cn>
-                        </math>
-                    </lowerLimit>
-                    <upperLimit>
-                        <math xmlns="http://www.w3.org/1998/Math/MathML">
-                            <cn> 9 </cn>
-                        </math>
-                    </upperLimit>
-                </dimension>
-            </listOfDimensions>
-            <math xmlns="http://www.w3.org/1998/Math/MathML">
-                <cn> 0.2 </cn>
-            </math>
-        </assignmentRule>
-    </listOfRules>
-</model>
-\end{example}
-
-It is not possible to define more than one rate or assignment rules that applies
-to a single array cell.
-
 \subsection{Implied Arrays of Rules}
 
 If the the \attrib{dimension} field
@@ -850,7 +944,7 @@ same dimensions as the reference variable object.  For example the example
         </species>
     </listOfSpecies>
     <listOfRules>
-        <assignmentRule variable="s" type="rate">
+        <rateRule>
             <listOfDimensions>
                 <dimension id="x">
                     <lowerLimit>
@@ -865,10 +959,17 @@ same dimensions as the reference variable object.  For example the example
                     </upperLimit>
                 </dimension>
             </listOfDimensions>
+            <variableLink object="s">
+                <listOfIndices>
+                    <math xmlns="http://www.w3.org/1998/Math/MathML">
+                        <ci> x </ci>
+                    </math>
+                </listOfIndices>
+            </variableLink>
             <math xmlns="http://www.w3.org/1998/Math/MathML">
                 <cn> 0.1 </cn>
             </math>
-        </assignmentRule>
+        </rateRule>
     </listOfRules>
 </model>
 \end{example}
@@ -899,16 +1000,16 @@ is equivalent to:
         </species>
     </listOfSpecies>
     <listOfRules>
-        <assignmentRule variable="s" type="rate">
+        <rateRule variable="s">
             <math xmlns="http://www.w3.org/1998/Math/MathML">
                 <cn> 0.1 </cn>
             </math>
-        </assignmentRule>
+        </rateRule>
     </listOfRules>
 </model>
 \end{example}
 
-\subsection{Rules which supply a matrix result}
+\section{Rules which supply a matrix result}
 
 Rules can be defined 
 in which the formula expression returns a whole
@@ -966,7 +1067,7 @@ model:
         </species>
     </listOfSpecies>
     <listOfRules>
-        <assignmentRule matrixResult="true" variable="s1" type="rate"/>
+        <rateRule matrixResult="true" variable="s1"/>
             <math xmlns="http://www.w3.org/1998/Math/MathML">
                 <apply>
                     <plus/>
@@ -974,74 +1075,14 @@ model:
                     <ci> s2 </ci>
                 </apply>
             </math>
-        </assignmentRule>
+        </rateRule>
     </listOfRules>
 </model>
 \end{example}
 
 The rule for \texttt{s1} defines that the rate of change of the
-values of the array of \texttt{s1} is the product of the concentration vectors
+values of the array of \texttt{s1} is the sum of the concentration vectors
 \texttt{s1} and \texttt{s2}.
-
-\subsection{Initial Assignment Rules}
-
-One of the limitations of the previously described structures is that there is no way to 
-specify that initial conditions vary across elements of an array.  We describe a new feature
-in this section to overcome this limitation.
-
-In this proposal we introduce a new subtype of \class{Rule} \class{InitialAssignmentRule} in addition
-to the existing \class{AssignmentRule} and \class{RateRule} types.  (These are values of the \attrib{type} field.)
-\class{InitialAssignmentRule} and \class{AssignmentRule} structures are evaluated at the beginning of a simulation to establish
-initial values for variables.  \class{AssignmentRule} structures constrain the model for all time
-whereas \class{InitialAssignmentRule} structures only constrain the model at time zero. 
-An \class{InitialAssignmentRule} structure and an \class{AssignmentRule} structure cannot have the same
-\attrib{variable} attribute value.  An \class{InitialAssignmentRule} structure and a \class{RateRule} structure can have the same
-\attrib{variable} attribute value.  The combined \class{InitialAssignmentRule} and \class{AssignmentRule} structures
-set must not contain algebraic loops.  The behavior of variables assigned values by an
-\class{InitialAssignmentRule} structure can be determined either by a reaction  or a \class{RateRule} structure (this is not
-true of \class{AssignmentRule} structures ).
-
-This feature could be considered separately from the rest of the arrays proposal.
-
-For example a model which wished to vary the initial concentration of a species
-across a 1 dimensional array of species would be encoded as follows:
-
-\begin{example}
-<model id="varying">
-    <listOfCompartments>
-        <compartment id="cell"/>
-    </listOfCompartment>
-    <listOfSpecies>
-        <species id="s">
-            <listOfDimensions>
-                <dimension id="x">
-                    <lowerLimit>
-                        <math xmlns="http://www.w3.org/1998/Math/MathML">
-                            <cn> 0 </cn>
-                        </math>
-                    <lowerLimit>
-                    <upperLimit>
-                        <math xmlns="http://www.w3.org/1998/Math/MathML">
-                            <cn> 9 </cn>
-                        </math>
-                    <upperLimit>
-                </dimension>
-            </listOfDimensions>
-        </species>
-    </listOfSpecies>
-    <listOfRules>
-        <assignmentRule type="initialScalar" variable="s">
-            <math xmlns="http://www.w3.org/1998/Math/MathML">
-                <apply>
-                    <times/>
-                    <ci> x </ci>
-                    <cn> 0.1 </cn>
-                </apply>
-            </math>
-        </assignmentRule>
-    </listOfRules>
-</model>
-\end{example}
 
 \section{Sparse Arrays and Connections}
 \label{sec:sparseandconnections}

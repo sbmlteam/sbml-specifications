@@ -65,7 +65,7 @@
 % and thus increased the vertical needs over what they were in the L1v1 doc.
 
 \date{\vspace*{-1ex}SBML Level 1, \changed{Version 2 (Final Draft)}\\[3pt]
-  \changed{7 May 2003}\vspace*{-10pt}}
+  \changed{8 May 2003}\vspace*{-10pt}}
 
 \renewcommand{\baselinestretch}{0.96}
 \maketitlepage
@@ -117,7 +117,7 @@ that defines SBML Level~1.
   clarify the language of the specification and to correct typographical
   and other small errors.  The following list is an overview of the actual
   changes to SBML:
-\vspace*{-0.75ex}\begin{itemize}\setlength{\parskip}{0.6ex}
+\vspace*{-0.85ex}\begin{itemize}\setlength{\parskip}{0.55ex}
   
 \item SBML Level 1 Version 2 deprecates the spelling \emph{specie} 
   in favor of \emph{species}.
@@ -133,6 +133,11 @@ that defines SBML Level~1.
 
 \item The default scale of units is now correctly defined as zero.
   (Section~\ref{sec:unitdefinitions}.)
+  
+\item Compartments are now optional (Section~\ref{sec:compartments});
+  however, each species in a model is still required to be located in a
+  compartment, which means that for all meaningful models, compartments are
+  mandatory.
 
 \item Species are now optional.  (Section~\ref{sec:species}.)
 
@@ -740,26 +745,27 @@ Section~\ref{sec:xml-rep}.
 %-----------------------------------------------------------------------------
 
 The \class{Model} structure is the highest-level construct in an SBML data
-stream or document.  The UML definition of the \class{Model} structure is
-shown in Figure~\vref{fig:model}.  Only one component of type \class{Model}
-is allowed per instance of an SBML document or data stream, although it
-does not necessarily need to represent a single biological entity.
+stream or document.  The UML definition of \class{Model} is shown in
+Figure~\vref{fig:model}.  Only one component of type \class{Model} is
+allowed per instance of an SBML document or data stream, although it does
+not necessarily need to represent a single biological entity.
 
 \begin{figure}[htb]
   \centering
-  \vspace*{-0.5ex}
   \includegraphics[scale = 0.65]{model}
   \caption{The definition of \class{Model}.  Additional fields are
     inherited from \class{SBase}.}
-  \vspace*{-0.5ex}
+  \vspace*{-0.7ex}
   \label{fig:model}
 \end{figure}
 
 \changed{\class{Model} serves as a container for \class{UnitDefinition},
   \class{Compartment}, \class{Species}, \class{Parameter}, \class{Rule},
-  and \class{Reaction} components.  All of these components except
-  compartments are optional (that is, the lists in each of the respective
-  fields are permitted to have zero length).}  An instance of a
+  and \class{Reaction} components.  All of these components are optional;
+  that is, the lists in each of the respective fields are permitted to have
+  zero length.  (However, there are dependencies between components, such
+  that defining some requires defining others.  See in particular
+  Section~\ref{sec:species} on \class{Species}.)}  An instance of a
 \class{Model} may also have an optional \attrib{name} field that can be
 used to give the model a name.  The name must be a text string conforming
 to the syntax permitted by the \class{SName} data type described in
@@ -1073,9 +1079,9 @@ these entities.  Its definition is shown in Figure~\vref{fig:species}.
   \label{fig:species}
 \end{figure}
 
-\class{Species} has a \attrib{name} field of type \class{SName}.  The field
-\attrib{compartment}, also of type \class{SName}, is used to identify the
-compartment in which the specie is located.  The field
+\class{Species} has a required \attrib{name} field of type \class{SName}.
+The required field \attrib{compartment}, also of type \class{SName}, is
+used to identify the compartment in which the specie is located.  The field
 \attrib{initialAmount}, of type \class{double}, is used to set the initial
 amount of the specie in the named compartment.  The units of \changed{this
   quantity may be set explicitly using the optional field \attrib{units}.
@@ -1115,13 +1121,13 @@ listed under the heading \attrib{listOfSpecies} in the model:
 </model>
 \end{example}
 
-Note that the compartment's name is used instead of an identifier, because
-simulation systems typically enable users to locate species using
-compartment names rather than machine-generated identifiers.  Since a
-compartment's name must be unique among all the compartments in a model
-(see the discussion of namespaces in Section~\ref{sec:namespaces}), there
-is no danger of ambiguity and no compelling reason to introduce identifiers
-on compartments.
+%Note that the compartment's name is used instead of an identifier, because
+%simulation systems typically enable users to locate species using
+%compartment names rather than machine-generated identifiers.  Since a
+%compartment's name must be unique among all the compartments in a model
+%(see the discussion of namespaces in Section~\ref{sec:namespaces}), there
+%is no danger of ambiguity and no compelling reason to introduce identifiers
+%on compartments.
 
 \begin{blockChanged}
   In SBML Level 1 Version~2, the term \emph{specie} (used in SBML Level~1
@@ -1135,6 +1141,15 @@ on compartments.
   \emph{species} will be used.
 \end{blockChanged}
 
+\begin{blockChanged}
+  Finally, note that the definition of \class{Species} in SBML requires a
+  species in a model to be located within a compartment.  This means that
+  at least one compartment must be defined in an SBML model that defines
+  any species.  The only exception to this is the case of degenerate models
+  that have no species or reactions.
+\end{blockChanged}
+
+\vspace*{1ex}                           % HACK TO GET BETTER PAGE SPACING
 
 %-----------------------------------------------------------------------------
 \subsection{Parameters}
@@ -1148,7 +1163,7 @@ Figure~\vref{fig:parameter}.
 
 \begin{figure}[htb]
   \centering
-  \vspace*{5pt}
+  \vspace*{8pt}
   \includegraphics[scale = 0.65]{parameter}
   \caption{The definition of \class{Parameter}.}
   \label{fig:parameter}
@@ -1175,6 +1190,8 @@ defined at the top level are \emph{global} to the whole model; parameters
 that are defined within a reaction are local to the particular reaction and
 (within that reaction) \emph{override} any global parameters having the
 same names.  (See Section~\ref{sec:namespaces} for further details.)
+
+\clearpage                           % HACK TO GET BETTER PAGE SPACING
 
 The following is an example of parameters defined at the \class{Model} level:
 
@@ -2132,6 +2149,7 @@ The following is an XML Schema definition (using XML Schema 1.0) for the
 Systems Biology Markup Language Level~1 \changed{Version~2}.  Example
 applications of this XML Schema are presented in Section~\ref{sec:xml-rep}.
 
+\begin{blockChanged}
 \begin{small}
 \tightspacing
 \begin{verbatim}
@@ -2458,7 +2476,7 @@ applications of this XML Schema are presented in Section~\ref{sec:xml-rep}.
 \end{verbatim}
 \regularspacing
 \end{small}
-
+\end{blockChanged}
 
 \newpage
 

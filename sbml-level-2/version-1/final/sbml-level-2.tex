@@ -295,8 +295,8 @@ in Figure~\vref{fig:sbase}.
   \centering
   \includegraphics[scale = 0.68]{sbase}
   \caption{The definition of \class{SBase}.  Text enclosed in braces next
-    to attribute types (e.g., \attribtype{\{minOccurs="0"\}}) indicates
-    constraints on the possible attribute values.  We use XML Schema
+    to field types (e.g., \attribtype{\{minOccurs="0"\}}) indicates
+    constraints on the possible field values.  We use XML Schema
     language to express constraints since we are primarily interested in
     the XML encoding of SBML.  The constraint expression
     \attribtype{use="optional"} means that the indicated field is optional
@@ -764,9 +764,9 @@ containing structure in which the \class{ci} is used:
   \begin{itemize}
         
   \item \emph{Species identifier}: When a species identifier occurs in a
-    \class{ci} element, it represents the quantity of that species in terms
-    of its concentration (where ``concentration'' is meant somewhat
-    broadly).  The units associated with a species identifier are
+    \class{ci} element, it represents the quantity (\quantity{amount of substance}
+    or \quantity{concentration}) of that species.
+    The units associated with a species identifier are
     \emph{the units of the species} which are defined in
     Section~\ref{sec:species-units}.
     
@@ -1354,7 +1354,7 @@ Level~1.)  The \attrib{size} field must not be present if the
 \attrib{spatialDimensions} field is has a value of ``\texttt{0}''.
 When the \attrib{spatialDimensions} field does not have a value of ``\texttt{0}'',
 a missing value for \attrib{size} for a given compartment signifies that the value is
-either unknown, is determined by an assignment rule, not required for analysis,
+either unknown, is determined by an assignment rule, not required for analysis
 or available from an external data source.  
 
 \subsubsection{The \attrib{units} Field}
@@ -1374,14 +1374,14 @@ they must be units of area if the value of \attrib{spatialDimensions} is
 \attrib{spatialDimensions} is ``\attribvalue{1}''; and they must be
 ``\unit{dimensionless}'' if the value of \attrib{spatialDimensions} is
 ``\attribvalue{0}''.  The default units depends on the value of the
-compartment's \attrib{spatialDimensions} attribute according to the
+compartment's \attrib{spatialDimensions} field according to the
 following rule: for spatial dimensions of 3, 2, 1 or 0, the
 compartment has the default units of \unit{volume}, \unit{area},
 \unit{length} and \unit{dimensionless}, respectively.  (See
 Table~\vref{tab:builtin} and Table~\vref{tab:unitkind}.)
 
-The units of the compartment size, as defined by the \attrib{units} attribute,
-are used in the following ways.
+The units of the compartment size, as defined by the \attrib{units} field,
+are used in the following ways:
 \begin{itemize}
 
 \item The value of the \attrib{units} field is used as the units of the \attrib{size}
@@ -1493,9 +1493,9 @@ in Figure~\vref{fig:species}.
   \label{fig:species}
 \end{figure}
 
-\subsubsection{The \attrib{id} and \attrib{name} attributes}
+\subsubsection{The \attrib{id} and \attrib{name} Fields}
 
-As with other major structures in SBML, \class{Species} has an mandatory
+As with other major structures in SBML, \class{Species} has a mandatory
 field, \attrib{id}, used to give the species an identifier.  The identifier
 must be a text string conforming to the syntax permitted by the \class{SId}
 data type described in Section~\ref{sec:id}.  \class{Species} also has an
@@ -1510,7 +1510,7 @@ The required field
 compartment in which the species is located.  The field's value must be the
 identifier of an existing \class{Compartment} structure.  It is important
 to note that there is no default value for the \attrib{compartment} field
-on \class{Species}: every species in an SBML model must be assigned a
+on \class{Species}; every species in an SBML model must be assigned a
 compartment, and consequently, a model must define at least one compartment
 if that model contains any species.
 
@@ -1523,9 +1523,9 @@ are used to set the initial quantity of the species in the named
 compartment.  These fields are mutually exclusive i.e. \emph{only one} can
 have a value on any given instance of a \class{Species} structure.  Also,
 \attrib{initialConcentration} must not have a value if the species'
-compartment has a \attrib{spatialDimensions} value of ``\texttt{0}''.  (The
-reason is simply that there cannot be a concentration defined when the
-compartment has no spatial extent.)  Missing \attrib{initialAmount} or
+compartment has a \attrib{spatialDimensions} value of ``\texttt{0}'' or if
+the value of \attrib{hasOnlySubstanceUnits} is ``\attribvalue{true}''.
+Missing \attrib{initialAmount} or
 \attrib{initialConcentration} values implies that their values are either
 unknown, set by an assignment rule, not required for analysis or available from
 an external data source.
@@ -1535,22 +1535,29 @@ the \attrib{substanceUnits} field of the species structure.  The units of the va
 in the \attrib{initialConcentration} field are the \emph{units of the species}
 see Section~\ref{sec:species-units}.
 
-\subsubsection{The \attrib{substanceUnits} and \attrib{spatialSizeUnits} Fields}
+\subsubsection{The \attrib{substanceUnits}, \attrib{spatialSizeUnits} and
+    \attrib{hasOnlySubstanceUnits} Fields}
 \label{sec:species-units}
 
 The units associated with species, referred to as the \emph{units of the species},
 are determined via the
-optional fields \attrib{substanceUnits} and \attrib{spatialSizeUnits}.
-The \emph{units of the species} can be thought of as the concentration
-units of the species if one adopts a broad definition of concentration.
+optional fields \attrib{substanceUnits}, \attrib{spatialSizeUnits} and
+\attrib{hasOnlySubstanceUnits}.
+\attrib{hasOnlySubstanceUnits} is a boolean field which defaults to
+``\attribvalue{false}''.
 The \emph{units of the species} are of the form
-\quantity{substance}/\quantity{size} units if the compartment's
-\attrib{spatialDimensions} are non-zero or are of the form \quantity{substance} if 
-\attrib{spatialDimensions} are zero.
+\quantity{substance}/\quantity{size} units
+(i.e. \quantity{concentration} units given a broad definition of concentration)
+if the compartment's
+\attrib{spatialDimensions} is non-zero and \attrib{hasOnlySubstanceUnits} has
+the value ``\attribvalue{false}''.
+The \emph{units of the species} are of the form \quantity{substance} if 
+\attrib{spatialDimensions} is zero or \attrib{hasOnlySubstanceUnits} has
+the value ``\attribvalue{true}''.
 The units of
 \quantity{substance} are those defined in the \attrib{substanceUnits}, and
 the \quantity{size} units are those given
-in the \attrib{spatialSizeUnits} attribute.
+in the \attrib{spatialSizeUnits} field.
 
 In the case of both \attrib{substanceUnits} and \attrib{spatialSizeUnits} fields
 the value chosen must be either
@@ -1573,16 +1580,17 @@ they must be units of area if the value of \attrib{spatialDimensions} is
 ``\attribvalue{2}''; and they must be units of length if the value of
 \attrib{spatialDimensions} is ``\attribvalue{1}''.
 The \attrib{spatialSizeUnits} must not have a value if the value of
-\attrib{spatialDimensions} is ``\texttt{0}''.
+\attrib{spatialDimensions} is ``\attribvalue{0}'' or if the value of
+\attrib{hasOnlySubstanceUnits} is ``\attribvalue{true}''.
 The default value of the \attrib{spatialSizeUnits} is the value of
 the \attrib{units} field of the species' compartment.
 
 The \emph{units of the species} are used in the
-following ways.
+following ways:
 
 \begin{itemize}
 
-\item The species \attrib{initialConcentration} field has these units.
+\item The species \attrib{initialConcentration} field has these units
   (see Section~\ref{sec:initialAmount}).
 
 \item The 
@@ -1592,7 +1600,7 @@ following ways.
 
 \item The
    \attrib{math} field of the
-  class{AssignmentRule} structures determining the species' concentration
+  \class{AssignmentRule} structure determining the species' concentration
   (see Section~\ref{sec:assignmentrule}) has these units.
 
 \item In \class{RateRule} structures that
@@ -1621,17 +1629,16 @@ that species occurs as a product or reactant; i.e., the species is on the
 \emph{boundary} of the reaction system but is a component of the rest of
 the model.  The boolean field \attrib{boundaryCondition} can be used to
 indicate this.  The value of the field defaults to ``\attribvalue{false}'',
-indicating that by default, the species \emph{is} part of the reaction
+indicating that the species \emph{is} part of the reaction
 system.  Table~\ref{tab:specieattrib} shows how to interpret the combined
 values of the \attrib{boundaryCondition} and \attrib{constant} fields.  In
 practice, a \attrib{boundaryCondition} value of ``\attribvalue{true}''
 means that a differential equation derived from the reaction definitions
 should not be generated for the species.  The example model in
 section~\ref{sec:constantspecieseg} contains all four possible combinations
-of the \attrib{boundaryCondition} and \attrib{constant} attributes on
+of the \attrib{boundaryCondition} and \attrib{constant} fields on
 \class{species} elements.  Section~\ref{sec:odeeg} contains a translation into
-ODEs of a model which uses \attrib{boundaryCondition} and \attrib{constant}
-attributes.
+ODEs of a model which uses \attrib{boundaryCondition} and \attrib{constant} fields.
 
 \begin{table}[ht]
   \vspace*{10pt}
@@ -1658,7 +1665,7 @@ attributes.
 
 Finally, the optional field \attrib{charge} on \class{Species} takes an
 integer indicating the charge on the species (in terms of electrons, not
-the SI unit Coulombs). This may be useful when the species involved is a
+the SI unit coulombs). This may be useful when the species is a
 charged ion such as calcium ($\text{Ca}^{2+}$).
 
 \subsubsection{Example}
@@ -1686,7 +1693,7 @@ are listed under the heading \attrib{listOfSpecies} in the model:
 %-----------------------------------------------------------------------------
 
 A \class{Parameter} structure is used to declare a variable for use in
-mathematical formulas in an SBML model definition.  By default, parameters
+mathematical formulae in an SBML model definition.  By default, parameters
 have constant value for the duration of a simulation and for this reason
 are called ``parameters'' instead of variables in SBML.  The definition of
 \class{Parameter} is shown in Figure~\vref{fig:parameter}.
@@ -1728,10 +1735,10 @@ setting the value of the parameter.  A \class{RateRule} structure which may
 determine the value of the parameter has units \quantity{parameter
   units}/\quantity{time}, where \quantity{parameter units} are the units
 assigned to the parameter and \quantity{time} is the built-in \unit{time}
-units.  The value assigned to the parameter's \attrib{units} attribute must
+units.  The value assigned to the parameter's \attrib{units} field must
 be chosen from one of the following possibilities: one of the base unit
 names from Table~\vref{tab:unitkind}; one of the built-in unit names
-appearing in first column of Table~\vref{tab:builtin}); or the name of a
+appearing in first column of Table~\vref{tab:builtin}; or the name of a
 new unit defined in the list of unit definitions in the enclosing
 \class{Model} structure.  There are no constraints on which units can be
 chosen from these sets.  There are no default units for parameters.
@@ -1749,16 +1756,16 @@ parameter.
 \subsubsection{Local and Global Parameters}
 
 Parameters can be defined in two places in SBML: in lists of parameters
-defined at the top level in a \class{Model}-type structure, and within
+defined at the top level in a \class{Model} structure and within
 individual reaction definitions (as described in
 Section~\ref{sec:reactions}).  Parameters defined at the top level are
 \emph{global} to the whole model; parameters that are defined within a
 reaction are local to the particular reaction and (within that reaction)
-\emph{override} any global parameters having the same names.  (See
-Section~\ref{sec:namespaces} for further details.)  Parameters local to a
+\emph{override} any global parameters having the same names (See
+Section~\ref{sec:namespaces} for further details).  Parameters local to a
 reaction cannot be changed by rules and therefore are implicitly always
 constant; thus, parameter definitions within \class{Reaction} structures
-should not have a \attrib{constant} attribute value.
+should not have their \attrib{constant} field set.
 
 \subsubsection{Example}
 
@@ -1825,7 +1832,7 @@ the right-hand side expression, then to derive subtypes of \class{Rule}
 that add fields to distinguish the cases of algebraic, assignment and rate
 rules.  Figure~\vref{fig:rules} gives the definitions of \class{Rule} and
 the subtypes derived from it.  The figure shows there are three subtypes,
-\class{AlgebraicRule}, \class{AssignmentRule} and \class{RateRule} defined
+\class{AlgebraicRule}, \class{AssignmentRule} and \class{RateRule} derived
 directly from \class{Rule}.  These correspond to the cases
 \emph{Algebraic}, \emph{Assignment} and \emph{Rate} described above
 respectively.
@@ -1851,35 +1858,37 @@ Section~\ref{sec:algeraiceg}.
 \label{sec:assignmentrule}
 
 The rule type \class{AssignmentRule} is used to express equations that set
-the values of variables.  The left-hand side (the \attrib{variable} field
-of an assignment rule) of a rule can refer to the identifier of a species,
+the values of variables.  The left-hand side (the \attrib{variable} field) of an
+assignment rule can refer to the identifier of a species,
 compartment, or parameter.  Two or
 more \class{RateRule} or \class{AssignmentRule} structures cannot have the
-same left-hand side or \attrib{variable} attribute value in an SBML model definition.
+same left-hand side or \attrib{variable} field value in an SBML model definition.
 In all cases, as would be expected, the units of the formula representing the
 right hand side, the \attrib{math} field, are identical to the units associated with the
 left hand side, the \attrib{variable} field, when that variable appears in other
 formulae.
 
 The effects of an \class{AssignmentRule} structure are in general terms
-the same, but differ in the precise details depending on which variable is being set:
+the same, but differ in the precise details depending on the type of variable
+being set:
 
 \begin{itemize}
   
 \item \emph{In the case of a species}, an \class{AssignmentRule} sets the
-  referenced species' concentration to the value determined by the formula
+  referenced species' quantity (\quantity{concentration} or
+  \quantity{amount of substance})
+  to the value determined by the formula
   in \attrib{math}.  The units of the formula are the \emph{units of the species} as
-  defined in Section~\ref{sec:species-units}. (These units can be thought of
-  as concentration units if a broad definition of concentration is adopted.)
+  defined in Section~\ref{sec:species-units}.
 
   \emph{Restrictions}: In a given SBML model, there cannot be both a
-  \class{AssignmentRule} \attrib{variable} attribute and a \class{SpeciesReference}
-  \attrib{species} attribute that have the same
+  \class{AssignmentRule} \attrib{variable} field and a \class{SpeciesReference}
+  \attrib{species} field that have the same
   value. (See Section~\ref{sec:reactions} for the definition of
   \class{SpeciesReference}.)  This means that an assignment rule cannot be
   defined for a species that is created or destroyed in a reaction.  The
   only exception is when the given species is a boundary condition; i.e.,
-  on the \class{Species} structure that defines the species the
+  on the \class{Species} structure the
   \attrib{boundaryCondition} field is set to ``\attribvalue{true}''.  
   
 \item \emph{In the case of a compartment}, an \class{AssignmentRule} sets
@@ -1909,7 +1918,7 @@ the rates of change of variables.  The left-hand side (the
 \attrib{variable} of a rate rule) can refer to the identifier of a species,
 compartment, or parameter.  Two or
 more \class{RateRule} or \class{AssignmentRule} structures cannot have the
-same left-hand side or \attrib{variable} attribute value in an SBML model definition.
+same left-hand side or \attrib{variable} field value in an SBML model definition.
 In all cases, as would be expected, the units of the formula representing the
 right hand side, in the \attrib{math} field, are of the form \quantity{x}/\quantity{time} where
 \quantity{x} are the same units as associated with the symbol 
@@ -1921,18 +1930,17 @@ differ in the precise details depending on which variable is being set:
 \begin{itemize}
   
 \item \emph{In the case of a species}, a \class{RateRule} sets the rate of
-  change of the species's concentration to the value determined by the
+  change of the species' quantity to the value determined by the
   formula in \attrib{math}.  The overall units of the formula must be
-  \quantity{concentration}/\quantity{time}, where the \quantity{time} units
+  \quantity{species quantity}/\quantity{time}, where the \quantity{time} units
   are the built-in units of time described in
-  Section~\ref{sec:unitdefinitions} and the \quantity{concentration} units
+  Section~\ref{sec:unitdefinitions} and the \quantity{species quantity} units
   are the \emph{units of the species} as
-  defined in Section~\ref{sec:species-units}. (A broad definition of concentration
-  is used here.)
+  defined in Section~\ref{sec:species-units}.
   
   \emph{Restrictions}: In a given SBML model, there cannot be both a
-  \class{RateRule} \attrib{variable} attribute and a \class{SpeciesReference}
-  \attrib{species} attribute that have the same
+  \class{RateRule} \attrib{variable} field and a \class{SpeciesReference}
+  \attrib{species} field that have the same
   value. (See Section~\ref{sec:reactions} for the definition of
   \class{SpeciesReference}.)  This means that an assignment rule cannot be
   defined for a species that is created or destroyed in a reaction.  The
@@ -2161,11 +2169,11 @@ These fields are optional lists of \class{SpeciesReference} and
 Figure~\vref{fig:reaction}.  They are described in more detail in
 Sections~\ref{subsec:speciesreference} and~\ref{subsec:modifierreference}
 below.  The abstract type \class{SimpleSpeciesReference} is shown
-simply to demonstrate the common attribute, \attrib{species},
+simply to demonstrate the common field, \attrib{species},
 of the \class{SpeciesReference} and
 \class{ModifierSpeciesReference} structures.  In future levels of SBML
 it is anticipated that \class{SimpleSpeciesReference} will have additional
-attributes.
+fields.
 
 \subsubsection{The \attrib{reversible} Field}
 
@@ -2186,7 +2194,7 @@ in the definitions of reactions.
 
 \subsubsection{The \attrib{fast} Field}
 
-The optional boolean field \attrib{fast} is another boolean attribute in the
+The optional boolean field \attrib{fast} is another boolean field in the
 \class{Reaction} data structure; a value of ``\attribvalue{true}''
 signifies that the given reaction is a ``fast'' one compared to others in
 the system being modeled.  This may be relevant when computing equilibrium
@@ -2194,12 +2202,12 @@ concentrations of rapidly equilibrating reactions.  Simulation/analysis
 packages may chose to use this information to reduce the number of ODEs
 required and thereby optimize such computations.  (A simulator/analysis package
 that has no facilities for dealing with fast reactions can ignore this
-attribute. In theory, if the choice of which reactions are fast is
+field. In theory, if the choice of which reactions are fast is
 correctly made, then a simulation performed with them should give the same
 results as a simulation performed without fast reactions.  However,
 currently there appears to be no single unambiguous method for designating
 which reactions should be considered fast, and some users may designate a
-reaction as fast when in fact it is not.)  The \attrib{fast} attribute
+reaction as fast when in fact it is not.)  The \attrib{fast} field
 does not have a default value: a missing value indicates that the
 modeller doesn't know or doesn't wish to specify the rate of the
 reaction relative to other reactions in the model.
@@ -2228,7 +2236,7 @@ greater than 0. The \attrib{stoichiometryMath} field is implemented as an
 element containing a MathML math expression in dimensionless units.  Only
 one of the \attrib{stoichiometry} and \attrib{stoichiometryMath} fields 
 should be used on a given \class{SpeciesReference} structure.  When neither 
-attribute is present then the stoichiometry associated with the 
+field is present then the stoichiometry associated with the 
 \class{SpeciesReference} structure is ``\attribvalue{1}''.
 
 When generating SBML Level 2, it is \emph{recommended} for maximal
@@ -2562,10 +2570,11 @@ structures, depend on which variable is being set:
 \begin{itemize}
   
 \item \emph{In the case of a species}, an \class{EventAssignment} sets the
-  referenced species' concentration to the value determined by the formula
+  referenced species' quantity (\quantity{concentration} or
+  \quantity{amount of substance})
+  to the value determined by the formula
   in \attrib{math}.  The units of the formula are the \emph{units of the species} as
-  defined in Section~\ref{sec:species-units}. (These units can be thought of
-  as concentration units if a broad definition of concentration is adopted.)
+  defined in Section~\ref{sec:species-units}.
 
 \item \emph{In the case of a compartment}, an \class{EventAssignment} sets
   the referenced compartment's size to the size determined by the formula
@@ -3191,7 +3200,7 @@ The following example SBML model encodes this approximate form.
 
 This section contains a model which includes four species each with a
 different combination of values of for the \attrib{boundaryCondition} and
-\attrib{constant} attributes.
+\attrib{constant} fields.
 
 Consider the following hypothetical system:
 \begin{equation*}
@@ -3226,14 +3235,14 @@ and initial values are:
 \end{equation*}
 
 The value of $S_1$ varies over time so in SBML $S_1$
-has a \attrib{constant} attribute with a default value of
+has a \attrib{constant} field with a default value of
 ``\attribvalue{false}''.  The values of $S_2$ and $S_3$ are fixed so in
-SBML they have a \attrib{constant} attribute values of
+SBML they have a \attrib{constant} field values of
 ``\attribvalue{true}''.  $S_3$ only occurs as a modifier so the value of
-its \attrib{boundaryCondition} attribute can default to false.  $S_4$ is a
+its \attrib{boundaryCondition} field can default to false.  $S_4$ is a
 product whose value is determined by a kinetic law and therefore in the
 SBML representation has false values, the default values, for both
-\attrib{boundaryCondition} and \attrib{constant} attributes.
+\attrib{boundaryCondition} and \attrib{constant} fields.
 
 The following is the XML document that encodes the model shown
 above:
@@ -4088,7 +4097,7 @@ where $s$ is not determined by the rule when $s \leq 0$.
   very first instance of simulation.
   
 \item \emph{Tie-breaking algorithm}.  This will include a controlled
-  vocabulary and associated attributes on models to indicate the
+  vocabulary and associated fields on models to indicate the
   simultaneous event tie-breaking algorithm required to correctly simulate
   the model.
   
@@ -4263,7 +4272,7 @@ document, the following types of expressions are used many times:
 
 The symbols \attrib{field1}, \attrib{field2}, etc., represents fields in a
 data structure.  The colon immediately after the name separates the name of
-the attribute from the type of data that it stores.
+the field from the type of data that it stores.
 
 More complex specifications use square brackets (\texttt{[]}) just after a
 type name.  This is used to indicate that the field contains a list of
@@ -4281,9 +4290,9 @@ a missing \class{listOf}\rule{0.5in}{0.5pt} element indicates that the list
 is empty.  \class{listOf}\rule{0.5in}{0.5pt} elements should always have content.
 
 Expressions in curly braces (\texttt{\{\}}) shown after an
-attribute type indicate additional constraints placed on the
+field type indicate additional constraints placed on the
 field.  We express constraints using XML Schema language.  In the
-examples above, the expression \texttt{\{use="optional"
+examples above, the text \texttt{\{use="optional"
 default="0.0"\}} indicates that the field \attrib{field3} is
 optional and that it has a default value of $0.0$.
 A constraint of the form \texttt{\{namespace="}\emph{X}\texttt{"\}} indicates that the
@@ -4382,7 +4391,7 @@ changes:
   built-in units for area and length.  (Sections~\ref{sec:unitdefinitions}
   and \ref{sec:compartments}.)
 
-\item All attributes representing initial conditions or parameter values,
+\item All fields representing initial conditions or parameter values,
   including compartment sizes and species concentrations, are optional in
   Level~2.  A missing value for one of these fields implies that the value
   is either unknown, not required for analysis, or should be obtained from
@@ -4407,7 +4416,7 @@ changes:
   symbol.  (Section~\ref{sec:species}.)
 
 \item The rule structures are simpler compared to SBML Level~1.  There is
-  no longer a \attrib{type} attribute on \class{Rule}, and new structures
+  no longer a \attrib{type} field on \class{Rule}, and new structures
   \class{AssignmentRule} and \class{RateRule} replace SBML Level~1's
   \class{ParameterRule}, \class{SpeciesConcentrationRule} and
   \class{CompartmentVolumeRule}.  (Section~\ref{sec:rules}.)
@@ -4641,7 +4650,15 @@ necessarily a valid SBML Level 2 document.
                 <xsd:attribute name="substanceUnits" type="SId" use="optional"/>
                 <xsd:attribute name="spatialSizeUnits" type="SId" use="optional"/>
                 <xsd:attribute
-                    name="boundaryCondition" type="xsd:boolean" use="optional" default="false"/>
+                    name="hasOnlySubstanceUnits"
+                    type="xsd:boolean"
+                    use="optional"
+                    default="false"/>
+                <xsd:attribute
+                    name="boundaryCondition"
+                    type="xsd:boolean"
+                    use="optional"
+                    default="false"/>
                 <xsd:attribute name="charge" type="xsd:integer" use="optional"/>
                 <xsd:attribute name="constant" type="xsd:boolean" use="optional" default="false"/>
             </xsd:extension>

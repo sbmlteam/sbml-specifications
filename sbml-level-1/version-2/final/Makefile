@@ -8,13 +8,16 @@
 # $Id$
 
 BASENAME = sbml-level-1
+HTML_DIR = html
+
+.PHONY: dvi pdf ps pdffigs html
 
 default: dvi
 
 dvi:;
 	-@/bin/rm -f $(BASENAME).toc $(BASENAME).aux
 	latex $(BASENAME).tex
-	bibtex $(BASENAME)
+	-bibtex $(BASENAME)
 	latex $(BASENAME).tex
 	latex $(BASENAME).tex
 	latex $(BASENAME).tex
@@ -22,20 +25,24 @@ dvi:;
 ps: dvi
 	dvips -o $(BASENAME).ps $(BASENAME)
 
-pdf:;
-	make eps
+pdf: pdffigs
 	-@/bin/rm -f $(BASENAME).toc $(BASENAME).aux
 	pdflatex $(BASENAME).tex
-	bibtex $(BASENAME)
+	-bibtex $(BASENAME)
 	pdflatex $(BASENAME).tex
 	pdflatex $(BASENAME).tex
 	pdflatex $(BASENAME).tex
 	pdflatex $(BASENAME).tex
 
-eps:;
-	@(for i in *.eps; do echo "converting $$i to PDF"; epstopdf $$i; done)
+pdffigs:;
+	(for i in figs/*.eps; do epstopdf $$i; echo $$i; done)
 
-html:;
+cekarticle.perl:
+	ln -s ../../../../../sbw-cvs/project/tex/cekarticle.perl
+
+html: cekarticle.perl
+	/bin/rm -rf $(HTML_DIR)
+	/bin/mkdir $(HTML_DIR)
 	latex2html -white -split +0 -show_section_numbers -image_type gif \
 		   -no_navigation -local_icons -discard \
 		   -mkdir -dir html $(BASENAME)

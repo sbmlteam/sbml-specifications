@@ -1,0 +1,252 @@
+From: owner-sbml-modularity@symbio.jst.go.jp on behalf of Andrew Finney
+[afinney@cds.caltech.edu]
+Sent: 06 August 2002 14:31
+To: sbml-modularity@symbio.jst.go.jp
+Subject: [sbml-modularity] suggested modification to Modularity proposal
+
+Folks
+
+I have some comments on, and suggested modifications to, Martin's
+Modularity Proposal that he presented at UH this month.
+
+I think this proposal is an important contribution to SBML
+development and will hopefully form an important plank
+of SBML Level 3.
+
+IMHO its possible improve upon the martin's proposal in the following
+ways:
+
+a) More complete interface definitions for sub models
+
+	- the submodel should list what components are
+		modifiable by *spec elements
+
+	- the terminals should have attributes which describe
+		aspects of the terminals which will affect how they
+		might/can be connected at a higher level
+
+b) More strict encapsulation of models
+	restrict access to the internals of a model except through
+	defined interfaces - this tends to simplify the scheme
+
+c) Simplification:
+
+	to facilitate both the use of terminals in MathML and
+	to simplify the scheme I suggest the following:
+
+		i) reactionTerminal identifiers are in the global
+namespace
+			and can be used interchangeably with species
+without
+			requiring special attributes on referencing
+elements
+
+		ii) specieTerminals don't have their 'own' identifiers
+		
+		iii) the terminals of submodel instances are
+			mapped to global names which can be used
+			interchangeably with species without
+			requiring special attributes 
+
+	if we do this we don't need to change speciesReference, we can
+refer to
+	terminals in MathML and we can create rules for terminals
+without changing
+	the original SBML L2 structures.
+
+d) Some minor details need adaptation to be backwards compatible with
+Level 2.
+
+In Detail...
+
+SId
+---
+In Level 2 we propose to use the type SId which is similar to SName
+as the identifier type.  In Level 2 we are proposing to have 'id : SId'
+and 'name : string {optional}' on the objects which previously had
+name : SName. The modularity proposal should follow that scheme.
+I propose that all uses of SNAME and HNAME are replaced
+with SId.
+
+IMHO we don't need a distinct HNAME for 3 reasons:
+
+a) if we restrict access to model internals then we refer to internal
+components
+at only the immediate level.  i.e. names shouldn't need to be
+hierarchal.
+
+b) we can eliminate the use of the 'parent' keyword by carefully
+defining the scope of the SIds used in attributes on the *Specs
+elements.
+
+c) the above simplification (c) eliminates the need for HNAME in
+equations
+
+Use of Species
+--------------
+
+In level 2 all uses of the term 'specie' are replaced by 'species'
+
+listOfTerminals
+---------------
+
+For readability make this list the first list in the model.
+
+listOfInterfaces (NEW)
+----------------
+
+This would be the 2nd list in the model and would contain
+a list of Interface elements (see below) which define
+the set of components that can be affected by *Spec elements.
+
+ModelInstance
+-------------
+A model instance has a new list of TerminalMap elements.
+
+TerminalMap (New)
+-----------
+
+has two attributes:
+
+local : SId
+
+this indicates the terminal on the submodel being mapped
+
+global : SId
+
+the identifier for this terminal to be used within the
+containing model's namespace.
+
+Two TerminalMaps with the same local name cannot exist in the
+same list.  There doesn't have to be TerminalMap element
+for all terminals on the submodel - this implies the terminal
+is unconnected - which may be a problem for reaction terminals.
+
+Terminal
+--------
+
+has new boolean attribute: determined
+
+true value implies that the species is assigned a value by an
+assignment rule.  Internally and externally the speciesTerminal
+cannot be attached to a non-modifier terminal or
+speciesReference.
+
+has new boolean attribute: modifier
+
+true value implies that the terminal is not created or destroyed
+by reactions nor assigned a value by rules.  When true the terminal
+internally can only be connected to modifier species references.
+
+A terminal can't have both 'determined' and 'modifier' true 
+
+The 'terminal' attribute is eliminated:  if the terminal
+is connected to a submodel terminal then the terminal
+has the same identifier as the global identifier for the submodel
+terminal.
+
+Namespace rules for *Spec elements
+----------------------------------
+The fields that refer to a component inside the submodel
+(should correspond to an interface element) are in the
+namespace of the submodel all other attributes
+of the *Spec elements are in the namespace of the
+outer model.  I think that should eliminate the need
+to have the 'parent' reserved word.
+
+Parameter Spec and Specie Spec
+------------------------------
+Both these elements have a new boolean attribute
+isSubstitutedBy : SId which is identical in function
+to the same attribute on CompartmentSpec
+
+SpecieSpec
+----------
+Do we really need this element given that we have the terminal
+structures? 
+
+Rule and Reaction specs
+-----------------------
+IMHO we should think hard as to whether its a good idea
+to allow this degree of 'access' to a submodel.
+Local Parameters should be made global for external access.
+
+Interface (NEW)
+---------
+
+type of objects that can be placed in the interface list
+
+CompartmentInterface (NEW)
+--------------------
+
+derived from Interface, has following attributes:
+
+compartment : SId
+
+indicates that it is permissible to overload this compartment
+with a compartmentSpec element.
+
+determined : boolean { use="default" value="false" }
+
+indicates that the compartment has an associated
+assignment rule.
+
+ParameterInterface (NEW)
+------------------
+
+derived from Interface, has following attributes:
+
+parameter : SId
+
+indicates that it is permissible to overload this parameter
+with a parameterSpec element.  
+
+determined : boolean { use="default" value="false" }
+
+indicates that the parameter has an associated
+assignment rule.
+
+SpeciesInterface (NEW)
+------------------
+
+If we have SpeciesSpecs then we should have this...
+
+derived from Interface, has following attributes:
+
+species : SId
+
+indicates that it is permissible to overload this species
+with a speciesSpec element.  
+
+determined : boolean { use="default" value="false" }
+
+indicates that the species has an associated
+assignment rule.
+
+we can add further interface types as required.
+
+SpeciesReference
+----------------
+remove the terminal attribute - (just refer to terminals
+via the id on the terminal structure or the global
+id  mapped from submodel terminals.) - using the
+'species' attribute.
+
+SpeciesRule
+-----------
+
+the simplified scheme means we can create rules for terminals
+by using a terminal name in place of a species name in the
+'species' attribute.
+
+yours Andrew Finney
+ 
+afinney@cds.caltech.edu
++44 1452 722 487
+UK: 01452 722 487 - US: 011 44 1452 722 487
+
+ERATO Kitano SBW Development Group
+http://www.cds.caltech.edu/erato 
+
+California Institute of Technology / University of Hertfordshire 
+

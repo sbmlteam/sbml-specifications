@@ -69,8 +69,12 @@ A model would have an optional list of
 \texttt{IntegerParameter} structures.
 \class{IntegerParameter} structures declare integer constants with identifiers in the model's global identifier namespace.
 They can be used in any MathML expression where they have an implicit type of \texttt{integer}.
-They are distinct from \class{Parameter} structures: it is not possible to define a rule for an \class{IntegerParameter}.
-Integer parameters are constant.
+They are distinct from \class{Parameter} structures: it is not possible to define an \class{InitialAssignmentRule} or \class{AssignmentRule}
+or \class{RateRule} structure for an \class{IntegerParameter}.  Integer parameters are constant.
+
+An integer parameter contains a MathML expression which is the value of the parameter.  The MathML expression must be a constant integer
+expression (see sections~\ref{sec:constantExpressions} and~\ref{sec:integerExpressions}).  The only symbols allowed
+in these expressions are previously occurring integer parameters.
 
 \section{Constant Expressions}
 \label{sec:constantExpressions}
@@ -80,6 +84,7 @@ The only symbols occurring in constant expressions are those representing intege
 or integer parameters.
 
 \section{Integer Expressions}
+\label{sec:integerExpressions}
 
 In some cases in the proposal a MathML expression is restricted to returning an integer result.
 An integer expression is composed of integer numbers, symbols representing integer variables (declared by \attrib{Dimension} structures)
@@ -679,15 +684,17 @@ is equivalent to
 
 Similar scoping rules for symbols apply here as they do for species structures.
 
-\section{Arrays of Assignment Rules}
+\section{Arrays of Rules}
 
-Declaring arrays of assignment rules is slightly different from other component types.
+Declaring arrays of rules is slightly different from other component types.
 Rule structures don't contain an \texttt{id}
 field that declares a new symbol instead they reference another
-structure via the \texttt{variable} field.  The
-expressions contained in the \attrib{dimension} field
-(\texttt{listOfDimensions} sub-element) operate in the same way as described above except
-that the assignment rule array cells constrain corresponding cells with same indices
+structure via the \texttt{variable} field.  The \attrib{dimension} field
+(\texttt{listOfDimensions} sub-elements) operate in the same way as described in previous sections.
+The integer symbols declared in the \attrib{dimension} field have scope in the rule expression.
+An rule arrays will simply create a set of constraints applied over the range of 
+these integer symbols.
+Assignment and rate rule array cells constrain those cells with same indices
 in the array referenced by the \texttt{variable} field.
 For example the following model has a rule applied to an array of species.
 
@@ -809,6 +816,9 @@ same array:
 </model>
 \end{example}
 
+It is not possible to define more than one rate or assignment rules that applies
+to a single array cell.
+
 \subsection{Implied Arrays of Rules}
 
 If the the \attrib{dimension} field
@@ -900,15 +910,16 @@ is equivalent to:
 
 \subsection{Rules which supply a matrix result}
 
-Assignment Rules can be defined which apply to the whole of an array
+Rules can be defined 
 in which the formula expression returns a whole
-array value rather than a single value to be inserted into each
+array or matrix value rather than a single value to be inserted into each
 array element.  This type of rule is indicated by the \texttt{matrixResult}
 attribute having a \texttt{true} value (default is \texttt{false}).
-The resulting array should have the same dimensions as the assignment variable
+For assignment and rate rules the resulting array should have the same dimensions as the assignment variable
 for which it is declared.  The result of the expression is then mapped onto
 the array referenced in the rules \attrib{variable} field.
-This type of rule must not have any dimension
+Algebraic rules of this form constrain all the elements of the resulting matrix to zero. 
+This type of rule must not have any dimension.
 
 Whole matrix operators are described in
 more detail in section~\ref{sec:math}.  For now assume that we
@@ -974,18 +985,21 @@ values of the array of \texttt{s1} is the product of the concentration vectors
 
 \subsection{Initial Assignment Rules}
 
-One the limitations of the previously described structures is that there is no way to 
+One of the limitations of the previously described structures is that there is no way to 
 specify that initial conditions vary across elements of an array.  We describe a new feature
 in this section to overcome this limitation.
 
-In this proposal we introduce a new type of \class{AssignmentRule} \emph{initialScalar} in addition
-to the existing \emph{scalar} and \emph{rate} types.  (These are values of the \attrib{type} field.)
-\emph{initialScalar} and \emph{scalar} rules are evaluated at the beginning of a simulation to establish
-initial values for variables.  However \emph{scalar} rules are evaluated throughout the simulation
-where as \emph{initialScalar} rules are not.  The combined \emph{scalar} and \emph{initialScalar} rule
+In this proposal we introduce a new subtype of \class{Rule} \class{InitialAssignmentRule} in addition
+to the existing \class{AssignmentRule} and \class{RateRule} types.  (These are values of the \attrib{type} field.)
+\class{InitialAssignmentRule} and \class{AssignmentRule} structures are evaluated at the beginning of a simulation to establish
+initial values for variables.  \class{AssignmentRule} structures constrain the model for all time
+whereas \class{InitialAssignmentRule} structures only constrain the model at time zero. 
+An \class{InitialAssignmentRule} structure and an \class{AssignmentRule} structure cannot have the same
+\attrib{variable} attribute value.  An \class{InitialAssignmentRule} structure and a \class{RateRule} structure can have the same
+\attrib{variable} attribute value.  The combined \class{InitialAssignmentRule} and \class{AssignmentRule} structures
 set must not contain algebraic loops.  The behavior of variables assigned values by an
-\emph{initialScalar} rule can be determined either by a reaction  or a \emph{rate} rule (this is not
-true of \emph{scalar} rules).
+\class{InitialAssignmentRule} structure can be determined either by a reaction  or a \class{RateRule} structure (this is not
+true of \class{AssignmentRule} structures ).
 
 This feature could be considered separately from the rest of the arrays proposal.
 

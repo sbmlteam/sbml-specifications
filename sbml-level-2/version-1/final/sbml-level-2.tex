@@ -75,7 +75,7 @@ Level~1.  However, the levels remain distinct; a valid SBML Level~1
 document is not a valid SBML Level~2 document, and likewise, a valid SBML
 Level~2 document is not a valid SBML Level~1 document.
 
-SBML was originally created partly by studying the modeling facilities in
+The Systems Biology Markup Language was originally created partly by studying the modeling facilities in
 the following systems: \emph{BioSpice}~\citep{arkin:2001},
 \emph{Cellerator}~\citep{shapiro:2001,shapiro:2003b},
 \emph{COPASI}~\citep{mendes:2000},
@@ -830,29 +830,27 @@ containing structure in which the \class{ci} is used:
   the model.  The following are the only possible interpretations of using
   such an identifier in SBML:
   \begin{itemize}
-    
-%%%%%%%%% FIXME: is this saying it's the global units of substance? what about
-%%%%%%%%% the units on the species definition?
-    
+        
   \item \emph{Species identifier}: When a species identifier occurs in a
     \class{ci} element, it represents the quantity of that species in terms
     of its concentration (where ``concentration'' is meant somewhat
-    broadly).  The units of the species' concentration is
-    \quantity{substance}/\quantity{size} where \quantity{size} is either
-    \quantity{volume}, \quantity{area} or \quantity{length} when the value
-    of the containing compartment's \attrib{spatialDimensions} is
-    ``\attribvalue{3}'', ``\attribvalue{2}'', or ``\attribvalue{1}'',
-    respectively.  If the compartment's \attrib{spatialDimensions} has a
-    value of ``\attribvalue{0}'', then the species' units is
-    \quantity{substance}.
+    broadly).  The units of concentration of a specific species symbol depends
+    on how the species is declared on a \class{Species} structure (see
+    Section~\ref{sec:species}).  If the \class{Species} structure has an
+    \attrib{initialConcentration} attribute value then the concentration units of the
+    species symbol is exactly those given on the \class{Species} structure.
+    If the \class{Species} structure has an \attrib{initialAmount}
+    attribute value then the concentration units of the species symbol is
+    ${species substance}/{compartment volume}$ units where $species substance$
+    units those given on the \class{Species} structure and $compartment volume$
+    units are those given on the \class{Compartment} structure associated with the
+    species.
     
   \item \emph{Compartment identifier}: When a compartment identifier occurs
     in a \class{ci} element, it represents the size of the compartment.
-    The units associated with the size can only be one of
-    \quantity{volume}, \quantity{area}, \quantity{length}, or
-    \quantity{dimensionless} when the value of the compartment's
-    \attrib{spatialDimensions} is ``\attribvalue{3}'', ``\attribvalue{2}'',
-    ``\attribvalue{1}'', or ``\attribvalue{0}'' respectively.
+    The units of size of a specific volume symbol are those given on the
+    \class{Compartment} structure that declares the symbol (see
+    Section~\ref{sec:compartments})
     
   \item \emph{Parameter identifier}: When a parameter identifier occurs in
     a \class{ci} element, it represents the value assigned to that
@@ -868,11 +866,6 @@ containing structure in which the \class{ci} is used:
 
   \end{itemize}
   
-  The units of \quantity{substance}, \quantity{volume}, \quantity{area} and
-  \quantity{length} are determined from the built-ins \unit{substance},
-  \unit{volume}, \unit{area} and \unit{length}, respectively, of
-  Table~\vref{tab:builtin}.
-
 \end{itemize}
 
 SBML Level 2 uses the MathML \class{csymbol} element to denote certain
@@ -1281,15 +1274,15 @@ used should be the designated defaults.
   \centering
   \small
   \setlength{\tabcolsep}{4.5pt}
-  \begin{tabular}{ll>{\ttfamily}l}
+  \begin{tabular}{lll>{\ttfamily}l}
     \toprule
-    \textbf{Name} & \textbf{Default Units}\\
+    \textbf{Name} & \textbf{Possible Scalable Units} & \textbf{Default Units}\\
     \midrule
-    \unit{substance}  & mole\\
-    \unit{volume} & litre\\
-    \unit{area}   & square metre\\
-    \unit{length} & metre\\
-    \unit{time}   & second\\
+    \unit{substance} & mole, item & mole\\
+    \unit{volume} & litre, cubic metre & litre\\
+    \unit{area}   & square metre & square metre\\
+    \unit{length} & metre & metre\\
+    \unit{time}   & second & second\\
     \bottomrule
   \end{tabular}
   \caption{SBML's built-in quantities.  Each of these units has a default
@@ -1301,7 +1294,11 @@ A model may change the default scales by reassigning the keywords
 ``\unit{substance}'', ``\unit{length}'',
 ``\unit{area}'', ``\unit{time}'', and ``\unit{volume}'' in a
 unit definition.  This takes advantage of the \class{UnitDefinition}
-structure's facility for defining scales on units.  The following example
+structure's facility for defining scales on units.
+The column ``Possible Scalable Units'' in Table~\ref{tab:builtin} defines the set of
+units that can be used to re-define the built-in quantities.  \attrib{multiplier} and
+\attrib{scale} attributes can be used when re-defining the built-in quantities.
+The following example
 changes the default units of volume to be milliliters:
 
 \begin{example}
@@ -1322,7 +1319,6 @@ If the definition above appeared in a model, the volume scale on all
 components that did not explicitly use different units would be changed to
 milliliters.
 
-
 %-----------------------------------------------------------------------------
 \subsection{Compartments}
 \label{sec:compartments}
@@ -1342,12 +1338,16 @@ Figure~\vref{fig:compartment}.
   \label{fig:compartment}
 \end{figure}
 
+\subsubsection{\attrib{id} and \attrib{name} Fields}
+
 \class{Compartment} has one required field, \attrib{id}, of type
 \class{SId}, to give the compartment a unique identifier by which other
 parts of an SBML model definition can refer to it.  A compartment can also
 have an optional \attrib{name} field of type \class{string}.  Identifiers
 and names should be used according to the guidelines described in
 Section~\ref{sec:idnameattribs}.
+
+\subsubsection{\attrib{spatialDimensions} Field}
 
 A \class{Compartment} structure has an optional field
 \attrib{spatialDimensions}, whose value must be a positive integer
@@ -1358,29 +1358,46 @@ a three-dimensional structure (a volume).  Other permissible values are
 one-dimensional line), and ``\texttt{0}'' (for a point).  The default value
 is ``\texttt{3}''.
 
-A compartment also has an optional floating-point field named
+\subsubsection{\attrib{size} Field}
+
+A compartment has an optional floating-point field named
 \attrib{size}, representing the total size of the compartment.  The
 \attrib{size} field enables concentrations of species to be calculated in
-the absence of geometry information.  The default units of \attrib{size}
-depends on the value of the \attrib{spatialDimensions} attribute according
-to the following rule: for spatial dimensions of 3, 2, 1 or 0,
-\attrib{size} has the default units of \unit{volume}, \unit{area},
-\unit{length} and \unit{dimensionless}, respectively.  (See
-Table~\vref{tab:builtin} and Table~\vref{tab:unitkind}.)  A missing value
+the absence of geometry information.  A missing value
 for \attrib{size} for a given compartment signifies that the value is
 either unknown, not required for analysis, or available from an external
 data source.  Note in particular that in SBML Level~2, a missing
 \attrib{size} value does \emph{not} imply that the compartment size is 1.
 (This is unlike the definition of compartment \attrib{volume} in SBML
-Level~1.)
+Level~1.).
 
-The units of compartment size (i.e., the units of the \attrib{size} field),
-may be explicitly set using the optional field \attrib{units} in
-\class{Compartment}.  The named units must be either one of the base units
+\subsubsection{\attrib{units} Field}
+
+The units of a compartment's size may be explicitly set using the optional field
+\attrib{units} in \class{Compartment}.  These are the units of the \attrib{size}
+field, the units of the compartment's symbol in MathML expressions and the units of
+\class{AssignmentRule} structures determining the compartment's size.
+\class{RateRule} structures determining the compartment's size have units
+${compartment size}/time$ where $compartment size$ is determined by the \attrib{size}
+attribute and $time$ is the built-in unit for time.
+The named units in the \attrib{unit} attribute on \class{compartment} structures
+must be either one of the base units
 from Table~\vref{tab:unitkind}, the built-in defaults named \unit{volume},
 \unit{area}, \unit{length}, or a new unit defined by a unit definition in
 the enclosing model.  The units chosen must agree with the number of
-spatial dimensions of the compartment.
+spatial dimensions of the compartment i.e. the chosen units must be multiplied and/or
+scaled variants of litre or cubic metres if \attrib{spatialDimensions} is 3; squared
+metres if \attrib{spatialDimensions} is 2 and metres if \attrib{spatialDimesions} is
+1.
+
+The default units for a compartment
+depends on the value of the \attrib{spatialDimensions} attribute according
+to the following rule: for spatial dimensions of 3, 2, 1 or 0,
+the compartment has the default units of \unit{volume}, \unit{area},
+\unit{length} and \unit{dimensionless}, respectively.  (See
+Table~\vref{tab:builtin} and Table~\vref{tab:unitkind}.)  
+
+\subsubsection{\attrib{constant} Field}
 
 A \class{Compartment} also has an optional boolean field called
 \attrib{constant} which indicates whether the compartment's size stays
@@ -1391,6 +1408,8 @@ determined by rules (see Section~\ref{sec:rules}), and the value of the
 compartment.  The default value for the \attrib{constant} field is
 ``\attribvalue{true}'' because in the most common modeling scenarios at
 the time of this writing, compartment sizes remain constant.
+
+\subsubsection{\attrib{outside} Field}
 
 The optional field \attrib{outside} of type \class{SId} can be used to
 express containment relationships between compartments.  If present, the
@@ -1411,10 +1430,18 @@ relationships between the compartments.  (As discussed in
 Section~\ref{sec:level-3}, we expect that SBML Level~3 will introduce the
 ability to define geometries and spatial qualities.)
 
+\subsubsection{\class{Compartment} Structures in \class{Model} Structures}
+
 In an XML data stream containing an SBML model, compartments are listed
 inside an XML element called \attrib{listOfCompartments} within a
 \class{Model}-type data structure.  (See the discussion of \class{Model} in
-Section~\ref{sec:model}.)  The following example illustrates two
+Section~\ref{sec:model}.)  Species are required to be located in a compartment
+in an SBML model.  Thus, a \class{Compartment} structure must be present in a
+model if that model contains a \class{Species} structure.
+
+\subsubsection{Examples}
+
+The following example illustrates two
 compartments in an abbreviated SBML example of a model definition:
 \begin{example}
 <model>
@@ -1443,12 +1470,6 @@ compartment A, one would write:
 </model>
 \end{example}
 
-A final note concerning the dependency between species and compartments:
-species are required to be located in a compartment in an SBML model.
-Thus, a \class{Compartment} structure must be present in a model if that
-model contains a \class{Species} structure.
-
-
 %-----------------------------------------------------------------------------
 \subsection{Species}
 \label{sec:species}
@@ -1470,8 +1491,14 @@ in Figure~\vref{fig:species}.
   \label{fig:species}
 \end{figure}
 
+\subsubsection{\attrib{id} and \attrib{name} attributes}
+
 \class{Species} has an \attrib{id} field of type \class{SId} and optional
-\attrib{name} field of type \class{string}.  The required field
+\attrib{name} field of type \class{string}.
+
+\subsubsection{\attrib{compartment} Field}
+
+The required field
 \attrib{compartment}, also of type \class{SId}, is used to identify the
 compartment in which the species is located.  The field's value must be the
 identifier of an existing \class{Compartment} structure.  It is important
@@ -1479,6 +1506,8 @@ to note that there is no default value for the \attrib{compartment} field
 on \class{Species}: every species in an SBML model must be assigned a
 compartment, and consequently, a model must define at least one compartment
 if that model contains any species.
+
+\subsubsection{\attrib{initialAmount} and \attrib{initialConcentration} Fields}
 
 The optional fields \attrib{initialAmount} and
 \attrib{initialConcentration}, both having a data type of \class{double},
@@ -1493,34 +1522,48 @@ concentration defined when the compartment has no spatial extent.)  Missing
 their values are either unknown, not required for analysis or available
 from an external data source.
 
-The units of \attrib{initialAmount} or \attrib{initialConcentration} may be
-set explicitly using the optional field \attrib{units}.  The units that can
-be used depend on whether amounts or concentrations are being used for a
-given species:
+\subsubsection{\attrib{units} Field}
+
+The units of a species may be
+set explicitly using the optional field \attrib{units}.  These units are
+the units of the \attrib{initialAmount} or \attrib{initialConcentration} attributes.
+The units of the species symbol in MathML expressions and the units
+of \class{AssignmentRule} and \class{RateRule} structures that determine the
+value of the species concentration are derived from those specified in
+the \attrib{units} attribute of the \class{Species} structure.
+
+The units that can be used in the \attrib{units} attribute depend on whether
+amounts or concentrations are being used for a given species:
 \begin{itemize}
   
 \item \emph{Case of \attrib{initialAmount} being used}. The value assigned
   to \attrib{units} must be chosen from one of the following possibilities:
   one of the unit names from Table~\vref{tab:unitkind}, the name
   ``\attrib{substance}'', or a new unit name defined by a unit definition
-  in the enclosing model.  If absent, the units default to the value set by
-  the built-in ``\attrib{substance}'' of Table~\vref{tab:builtin}.
+  in the enclosing model.  The chosen units must be scaled variants of
+  \unit{mole} or \unit{item} units.  If absent, the units default to the value
+  set by the built-in ``\attrib{substance}'' of Table~\vref{tab:builtin}.
   
 \item \emph{Case of \attrib{initialConcentration} being used}.  The value
   assigned to \attrib{units} must be chosen from one of the following
   possibilities: one of the unit names from Table~\vref{tab:unitkind}, or a
-  new unit name defined by a unit definition in the enclosing model.  If
-  absent, the units default to \unit{substance}/\unit{volume},
-  \unit{substance}/\unit{area} or \unit{substance}/\unit{length} units,
-  depending on whether the species' compartment has spatial dimensions of
-  3, 2 or 1, respectively.  \unit{substance}, \unit{volume}, \unit{area}
-  and \unit{length} are taken from Table~\vref{tab:builtin}.  (As noted
+  new unit name defined by a unit definition in the enclosing model.  The chosen units
+  must be scaled variants of \unit{mole} or \unit{item} units per $size$ where $size$
+  is a scaled variant of litre or cubic metres if \attrib{spatialDimensions} is 3;
+  squared metres if \attrib{spatialDimensions} is 2 and metres if
+  \attrib{spatialDimesions} is 1.  \attrib{spatialDimensions} here is the attribute
+  value on the containing compartment.
+  If absent, the units default to $substance$/$size$ where $substance$ is the built-in
+  unit \unit{substance} (see Table~\ref{tab:builtin}) and $size$ is units assigned
+  to the compartment containing the species.  (As noted
   above, \attrib{initialConcentration} cannot be used if the compartment
   where the species is located has a \attrib{spatialDimensions} value of
   ``\attribvalue{0}''.)
 \end{itemize}
 
-The \class{Species} structure has another optional boolean field named
+\subsubsection{\attrib{constant} and \attrib{boundaryCondition} Fields}
+
+The \class{Species} structure has optional boolean field named
 \attrib{constant} which is used to indicate whether the concentration of
 that species can vary during a simulation.  The default value is
 ``\attribvalue{false}'', indicating that the species' concentration can be
@@ -1566,10 +1609,14 @@ of the \attrib{boundaryCondition} and \attrib{constant} attributes on
   \label{tab:specieattrib}
 \end{table}
 
+\subsubsection{\attrib{charge} Field}
+
 Finally, the optional field \attrib{charge} on \class{Species} takes an
 integer indicating the charge on the species (in terms of electrons, not
 the SI unit Coulombs). This may be useful when the species involved is a
 charged ion such as calcium ($\text{Ca}^{2+}$).
+
+\subsubsection{Example}
 
 The following example shows two species definitions within an
 abbreviated SBML model definition.  The example shows that species
@@ -1607,19 +1654,37 @@ are called ``parameters'' instead of variables in SBML.  The definition of
   \label{fig:parameter}
 \end{figure}
 
+\subsubsection{\attrib{id} and \attrib{name} Fields}
+
 \class{Parameter} has an \attrib{id} field of type \class{SId} and an
 optional \attrib{name} field of type \class{string}.  The symbol in the
-\attrib{id} field identifies the parameter.  The optional field
+\attrib{id} field identifies the parameter.  
+
+\subsubsection{\attrib{value} Field}
+
+The optional field
 \attrib{value} determines the value (of type \class{double}) assigned to
 the identifer.  A missing \attrib{value} implies that the \attrib{value} is
 either unknown, not required for analysis or available from an external
-data source.  The units of the parameter \attrib{value} are specified by
-the field \attrib{units}.  The value assigned to \attrib{units} must be
+data source.
+
+\subsubsection{\attrib{units} Field}
+
+The units of the parameter are specified by
+the field \attrib{units}.  These units are the units of the \attrib{value} field,
+the parameter symbol in MathML expressions and a \class{AssignmentRule} structure
+which may determine the value of the parameter.  A \class{RateRule} structure which
+may determine the value of the parameter has units ${parameter units}/time$ where
+$parameter units$ are the units assigned to the parameter and $time$ is the built-in
+\quantity{time} units.
+The value assigned to the parameter's \attrib{units} attribute must be
 chosen from one of the following possibilities: one of the base
 unit names from Table~\vref{tab:unitkind}; one of the built-in unit names
 appearing in first column of Table~\vref{tab:builtin}); or the name of a new
 unit defined in the list of unit definitions in the enclosing \class{Model}
-structure.
+structure.  There are no constraints on which units can be chosen from these sets.
+
+\subsubsection{\attrib{constant} Field}
 
 The \class{Parameter} structure has an optional boolean field named
 \attrib{constant} which indicates whether the parameter's value can vary
@@ -1628,6 +1693,8 @@ a value of ``\attribvalue{false}'' indicates that the parameter's value can
 be changed by rules (see Section~\ref{sec:rules}) and that the
 \attrib{value} is actually intended to be the initial value of the
 parameter.
+
+\subsubsection{Local and Global Parameters}
 
 Parameters can be defined in two places in SBML: in lists of parameters
 defined at the top level in a \class{Model}-type structure, and within
@@ -1640,6 +1707,8 @@ Section~\ref{sec:namespaces} for further details.)  Parameters local to a
 reaction cannot be changed by rules and therefore are implicitly always
 constant; thus, parameter definitions within \class{Reaction} structures
 should not have a \attrib{constant} attribute value.
+
+\subsubsection{Example}
 
 The following is an example of parameters defined at the \class{Model} level:
 \begin{example}
@@ -1729,24 +1798,25 @@ Section~\ref{sec:algeraiceg}.
 The rule type \class{AssignmentRule} is used to express equations that set
 the values of variables.  The left-hand side (the \attrib{variable} field
 of an assignment rule) can refer to the identifier of a species,
-compartment, or parameter.  The effects are in general terms the same, but
-differ in the precise details depending on which variable is being set:
+compartment, or parameter.  
+The effects of an \class{AssignmentRule} structure are in general terms the same,
+but differ in the precise details depending on which variable is being set:
 
 \begin{itemize}
   
 \item \emph{In the case of a species}, an \class{AssignmentRule} sets the
   referenced species' concentration to the value determined by the formula
-  in \attrib{math}.  The overall units of the formula must work out to be
-  species concentration, as \quantity{substance/size}, where the
-  \quantity{size} units are either \quantity{volume}, \quantity{area} or
-  \quantity{length} when the species' compartment
-  \attrib{spatialDimensions} field has a value of ``\attribvalue{3}'',
-  ``\attribvalue{2}'' or ``\attribvalue{1}'', respectively.  If the
-  compartment's \attrib{spatialDimensions} field has a value of
-  ``\attribvalue{0}'', then the rule's units are \quantity{substance}.
-  (The term ``concentration'' is admittedly being used somewhat loosely,
-  because of the different possible spatial characteristics of
-  compartments.)
+  in \attrib{math}.  The units of the expression depends
+    on how the species is declared on a \class{Species} structure (see
+    Section~\ref{sec:species}).  If the \class{Species} structure has an
+    \attrib{initialConcentration} attribute value then the units of the
+    the rule is exactly those given on the \class{Species} structure.
+    If the \class{Species} structure has an \attrib{initialAmount}
+    attribute value then the units of the rule are
+    ${amount}/{size}$ units where $amount$
+    units those given on the \class{Species} structure and $size$
+    units are those given on the \class{Compartment} structure associated with the
+    species. 
   
   \emph{Restrictions}: In a given SBML model, there cannot be both an
   \class{AssignmentRule} structure and a \class{SpeciesReference} structure that refer to
@@ -1761,31 +1831,23 @@ differ in the precise details depending on which variable is being set:
   
 \item \emph{In the case of a compartment}, an \class{AssignmentRule} sets
   the referenced compartment's size to the size determined by the formula
-  in \attrib{math}.  The overall units of the formula must be appropriate
-  for the compartment; that is, they
-  must be either \quantity{volume}, \quantity{area}, \quantity{length}, or
-  \quantity{dimensionless}, depending on whether the compartment's
-  \attrib{spatialDimensions} field has value ``\attribvalue{3}'',
-  ``\attribvalue{2}'', ``\attribvalue{1}'' or ``\attribvalue{0}'',
-  respectively.
-  
+  in \attrib{math}. The units of the \class{AssignmentRule} expression
+  is exactly that given by the \attrib{units} attribute (or its default) on the
+  \class{Compartment} structure associated with the \attrib{variable} field.
+
   \emph{Restrictions}: No more than one \class{AssignmentRule} or \class{RateRule} can refer to
   a given compartment in an SBML model definition.
   
 \item \emph{In the case of a parameter}, an \class{AssignmentRule} sets the
   referenced parameter's value to that determined by the formula in
-  \attrib{math}.  The units of the formula must work out to be the same as
-  those defined for the parameter's initial value (see
-  Section~\ref{sec:parameters}).
+  \attrib{math}.  The units of the \class{AssignmentRule} expression
+  is exactly that given by the \attrib{units} attribute (or its default) on the
+  \class{Parameter} structure associated with the \attrib{variable} field. 
   
   \emph{Restrictions}: No more than one \class{AssignmentRule} or \class{RateRule}can refer to
   a given parameter.
 
 \end{itemize}
-
-\quantity{substance}, \quantity{volume}, \quantity{area} and
-\quantity{length} are built-in unit types (see Table~\vref{tab:builtin}).
-
 
 \subsubsection{\class{RateRule}}
 
@@ -1799,15 +1861,18 @@ differ in the precise details depending on which variable is being set:
   
 \item \emph{In the case of a species}, a \class{RateRule} sets the rate of
   change of the species's concentration to the value determined by the
-  formula in \attrib{math}.  The overall units of the formula must work out
-  to be species concentration per time, as \quantity{substance/size/time},
-  where the \quantity{size} units are either \quantity{volume},
-  \quantity{area} or \quantity{length} when the species' compartment
-  \attrib{spatialDimensions} field has a value of ``\attribvalue{3}'',
-  ``\attribvalue{2}'' or ``\attribvalue{1}'', respectively.  If the
-  compartment's \attrib{spatialDimensions} field has a value of
-  ``\attribvalue{0}'', then the rule's units are \quantity{substance/time}.
-  (Once again, the term ``concentration'' is being used somewhat loosely.)
+  formula in \attrib{math}.  The units of the expression is $concentration/time$
+    where the $concentration$ units depends
+    on how the species is declared on a \class{Species} structure (see
+    Section~\ref{sec:species}).  If the \class{Species} structure has an
+    \attrib{initialConcentration} attribute value then the $concentration$ units are
+    exactly those given on the \class{Species} structure.
+    If the \class{Species} structure has an \attrib{initialAmount}
+    attribute value then the concentration units are 
+    ${amount}/{size}$ units where $amount$
+    units those given on the \class{Species} structure and $size$
+    units are those given on the \class{Compartment} structure associated with the
+    species.
   
   \emph{Restrictions}: In a given SBML model, there cannot be both a rate
   rule and a \class{SpeciesReference} structure that refer to the same
@@ -1821,18 +1886,14 @@ differ in the precise details depending on which variable is being set:
   given species in an SBML model definition.
   
 \item \emph{In the case of a compartment}, a \class{RateRule} sets the rate
-  of change of the compartment's volume to the volume determined by the
-  formula in \attrib{math}.  The overall units of the formula must be 
-  appropriate for the compartment;
-  that is, they must be either \quantity{volume/time},
-  \quantity{area/time}, \quantity{length/time}, or
-  \quantity{dimensionless/time}, depending on whether the compartment's
-  \attrib{spatialDimensions} field has value ``\attribvalue{3}'',
-  ``\attribvalue{2}'', ``\attribvalue{1}'' or ``\attribvalue{0}'',
-  respectively.
+  of change of the compartment's size to the value determined by the
+  formula in \attrib{math}.  The units of the \class{RateRule} expression
+  is $size/time$.  The $size$ units are exactly that given by the
+  \attrib{units} attribute (or its default) on the
+  \class{Compartment} structure associated with the \attrib{variable} field.
 
-  \emph{Restrictions}: No more than one \class{RateRule} or \class{AssignmentRule} can refer to a
-  given compartment in an SBML model definition.
+  \emph{Restrictions}: No more than one \class{RateRule} or \class{AssignmentRule}
+  can refer to a given compartment in an SBML model definition.
   
 \item \emph{In the case of a parameter}, a \class{RateRule} sets the rate
   of change of the parameter's value to that determined by the formula in
@@ -1840,15 +1901,12 @@ differ in the precise details depending on which variable is being set:
   those defined for the parameter's initial value, per time (see
   Section~\ref{sec:parameters}).
   
-  \emph{Restrictions}: No more than one \class{RateRule} pr \class{AssignmentRule} can refer to a
-  given parameter.
+  \emph{Restrictions}: No more than one \class{RateRule} or \class{AssignmentRule}
+  can refer to a given parameter.
 
 \end{itemize}
 
-\quantity{time}, \quantity{substance}, \quantity{volume}, \quantity{area}
-and \quantity{length} are built-in unit types (see
-Table~\vref{tab:builtin}).
-
+\quantity{time} is a built-in unit type (see Table~\vref{tab:builtin}).
 
 \subsubsection{Constraints on rules}
 \label{sec:ruleconstraints}
@@ -2034,7 +2092,9 @@ Figure~\vref{fig:reaction}.
 As with most other main structures in SBML, the \class{Reaction} data
 structure includes a required \attrib{id} and an optional
 \class{name}.  These must be used according to the guidelines described in
-Section~\ref{sec:idnameattribs}.  The reactant species, product species and
+Section~\ref{sec:idnameattribs}.
+
+The reactant species, product species and
 modifier species in a reaction are described using the fields
 \attrib{reactant}, \attrib{product} and \attrib{modifiers}, respectively.
 These fields are optional lists of \class{SpeciesReference} and
@@ -2181,10 +2241,22 @@ field called \attrib{math}; this is a MathML expression that defines the
 rate of the reaction.  The overall rate expression in \attrib{math} must
 have the units of \quantity{substance/time}.  The optional fields
 \attrib{substanceUnits} and \attrib{timeUnits} determine the units of
-substance and time for the reaction.  If these fields are not set in a
+substance and time for the reaction.
+The values of these fields must be
+chosen from one of the following possibilities: one of the base
+unit names from Table~\vref{tab:unitkind}; one of the built-in unit names
+appearing in first column of Table~\vref{tab:builtin}); or the name of a new
+unit defined in the list of unit definitions in the enclosing \class{Model}
+structure.  In the case of \attrib{substanceUnits} the value chosen must be a
+scaled and/or multiplied variant of \unit{moles} or \unit{item}.
+In the case of \attrib{timeUnits} the value chosen must be a scaled and/or multiplied
+variant of \unit{seconds}.
+If these fields are not set in a
 given \class{KineticLaw} instance, the units are taken from the defaults
 defined by the built-in ``\unit{substance}'' and ``\unit{time}'' of
-Table~\vref{tab:builtin}.  The expression in \attrib{math} may refer to
+Table~\vref{tab:builtin}.  
+
+The expression in \attrib{math} may refer to
 species identifiers; in that case, as discussed in
 Section~\ref{sec:mathmltokens}, the units of each species reference are
 those of \quantity{concentration}.  The only species identifiers that can
@@ -2288,15 +2360,12 @@ given below.
   \label{fig:event}
 \end{figure}
 
-The following sections describe the fields of the \class{Event}
-structure.
-
-\subsubsection{\attrib{id} and \attrib{name}}
+\subsubsection{\attrib{id} and \attrib{name} Fields}
 These optional fields are available to enable to support external references 
 to event structures.  These fields operate in the manner described in
 Section~\ref{sec:idnameattribs} except that the \attrib{id} field is optional.
 
-\subsubsection{\attrib{trigger}}
+\subsubsection{\attrib{trigger} Field}
 The \attrib{trigger} field defines when the \class{Event} structure has an
 effect on the model.  The \attrib{trigger} field contains a MathML boolean
 expression.  The exact instant that the expression evaluates to true is the
@@ -2305,7 +2374,7 @@ when the \attrib{trigger} makes the transition from false to true.  The
 event will fire at any further time points when the \attrib{trigger} make
 this transition.
 
-\subsubsection{\attrib{delay}}
+\subsubsection{\attrib{delay} Field}
 The optional \attrib{delay} field defines the length of time after
 the event has \emph{fired} that the event is \emph{executed}. The
 \attrib{delay} field is another MathML expression.  This
@@ -2313,13 +2382,13 @@ expression should be evaluated when the rule is \emph{fired}.  The
 default value for the \attrib{delay} field is 0.  The value of the
 \attrib{delay} field should always be positive.
 
-\subsubsection{\attrib{timeUnits}}
+\subsubsection{\attrib{timeUnits} Field}
 The optional field \attrib{timeUnits} determines the units of time
 that apply to the \attrib{delay} field. If not set, the units are
 taken from the defaults defined by the built-in ``\unit{time}''
 of Table~\vref{tab:builtin}.
 
-\subsubsection{\attrib{eventAssignment}}
+\subsubsection{\attrib{eventAssignment} Field}
 The \attrib{eventAssignment} field consists of a non-empty list of
 \class{eventAssignment} structures.  This field is implemented as a
 \class{listOfEventAssignments} element containing one or more
@@ -2940,8 +3009,9 @@ The following example SBML model encodes this approximate form.
 \end{example}
 
 %-----------------------------------------------------------------------------
-\subsection{Example Involving \class{RateRule} and Combinations of
-  \attrib{boundaryCondition} and \attrib{constant} Values on \class{Species}}
+\subsection{Example Involving Combinations of
+  \attrib{boundaryCondition} and \attrib{constant} Values on \class{Species}
+  with \class{RateRule} structures}
 \label{sec:constantspecieseg}
 %-----------------------------------------------------------------------------
 
@@ -3325,10 +3395,14 @@ The model also includes two cytosolic proteins that buffer calcium via the
 <sbml xmlns="http://www.sbml.org/sbml/level2" level="2" version="1">
     <model id="facilitated_ca_diffusion">
         <listOfUnitDefinitions>
-            <unitDefinition id="micromolar">
+            <unitDefinition id="substance">
                 <listOfUnits>
                     <unit kind="mole" scale="-6"/>
-                    <unit kind="litre" exponent="-1"/>
+                </listOfUnits>
+            </unitDefinition>
+            <unitDefinition name="area">
+                <listOfUnits>
+                    <unit kind="meter" scale="-6" exponent="-2" />
                 </listOfUnits>
             </unitDefinition>
         </listOfUnitDefinitions>
@@ -3341,43 +3415,35 @@ The model also includes two cytosolic proteins that buffer calcium via the
             <species
               id="CaBPB_C"
               compartment="Cytosol"
-              initialConcentration="47.17"
-              units="micromolar"/>
+              initialConcentration="47.17"/>
             <species
               id="B_C"
               compartment="Cytosol"
-              initialConcentration="396.04"
-              units="micromolar"/>
+              initialConcentration="396.04"/>
             <species
               id="CaB_C"
               compartment="Cytosol"
-              initialConcentration="3.96"
-              units="micromolar"/>
+              initialConcentration="3.96"/>
             <species
               id="Ca_EC"
               compartment="Extracellular"
-              initialConcentration="1000"
-              units="micromolar"/>
+              initialConcentration="1000"/>
             <species
               id="Ca_C"
               compartment="Cytosol"
-              initialConcentration="0.1"
-              units="micromolar"/>
+              initialConcentration="0.1"/>
             <species
               id="CaCh_PM"
               compartment="PlasmaMembrane"
-              initialConcentration="1"
-              units="micromolar"/>
+              initialConcentration="1"/>
             <species
               id="CaPump_PM"
               compartment="PlasmaMembrane"
-              initialConcentration="1"
-              units="micromolar"/>
+              initialConcentration="1"/>
             <species
               id="CaBP_C"
               compartment="Cytosol"
-              initialConcentration="202.83"
-              units="micromolar"/>
+              initialConcentration="202.83"/>
         </listOfSpecies>
         <listOfReactions>
             <reaction id="CalciumCalbindin_gt_BoundCytosol" fast="true">
@@ -3641,8 +3707,9 @@ will describe the SBML features used by the model.
 \item \emph{Diagrams}.  This feature will allow components to be
   annotated with data to enable the display of the model in a diagram.  
 
-\item \emph{Conditional rules}.  This will enable rules and reactions to have
-their effect conditional on the state of the model system.  For example in
+\item \emph{Dynamic Structure}.  This will enable model structure to vary during simulation.
+One aspect of aspect of this allowing 
+rules and reactions to have their effect conditional on the state of the model system.  For example in
 SBML Level 2 it is possible to create a rule with the effect:
 \begin{equation*}
 \frac{d s}{d t} =
@@ -3653,7 +3720,7 @@ SBML Level 2 it is possible to create a rule with the effect:
 \end{array}
 \right.
 \end{equation*}
-Conditional rules would enable the expression of the following example:
+Dynamic restructuring would enable the expression of the following example:
 \begin{equation*}
 \begin{array}{ll}
 \mbox{if $s>0$} & \D\frac{d s}{d t} = y 
@@ -3905,8 +3972,6 @@ Language, using the W3C Recommendation for XML Schema version 1.0 of 2 May
       Description : XML Schema for the Systems Biology Markup Language Level 2.  
                     This is designed for XML Schema version 1.0.
       Version : 1
-      Modified : $Date$
-      Revision: $Id$
 
       Copyright 2003 California Institute of Technology and Japan Science and 
       Technology Corporation.

@@ -1,0 +1,397 @@
+\documentclass{article}
+
+
+\title{{\scshape XML Standard for Cellular \\ Models (MML)} \\ \  \\ First Release}
+\author{ERATO \\}
+
+\newcommand{\versionno}{1.0}
+\newcommand{\docdate}{10~May~2000}
+\date{Version \versionno\\Last revised \docdate}
+
+\let\App=\appendix
+\def\appendix{\App\small} % tighten up the ending pages of the standard.
+
+\hbadness=9999 % Cut down the amount of annoying messages generated...
+\parindent=0pt
+\setlength{\parskip}{4pt}
+
+\begin{document}
+\maketitle
+
+\begin{quotation}
+\begin{center}
+Intended audience
+\end{center}
+
+\medskip\noindent
+This specification is intended for use by implementors of software to
+interconvert specific storage schemes for metabolic simulation data
+into a portable common format.
+
+\medskip\noindent
+The text of the specification assumes a basic background in XML and XML
+Schemas.
+\end{quotation}
+
+\section*{Introduction}
+
+There are a number of excellent cellular modelling packages now available over
+the internet. One of the main problems with these packages is that it is not
+possible to exchange models developed by one application for use in another,
+for example Gepasi cannot read SCAMP files and visa versa. A number of
+independent research groups have suggested developing a common specification
+for the storage of metabolic models.  The BTK group set up a discussion
+mailing list to discuss the possibility of a portable format early in 1999,
+and more recently the ERATO project has made similar moves.
+
+The advent of the Extensible Markup Language (XML) has made it possible to
+develop a portable format based on an industry standard.
+
+XML provides a number of distinct advantages:
+
+\begin{itemize}
+\item XML is a world-wide data exchange standard developed and standardised by
+the World Wide Wed Consortium, W3C (http://www.w3.org).
+\item Standard parsers, validators and rendering engines are now widely available on all
+the major computer platforms.
+\item XML files are human readable and in principal can be entered using any
+basic ASCII editor.
+\end{itemize}
+
+It has been decided therefore to develop an XML standard for exchanging
+metabolic models.
+
+\section*{Information for the Format}
+
+Here is a list of the sorts information that we should consider in the format:
+
+\begin{verbatim}
+  Version Number
+  Model Label Name
+  Header Information
+     eg Title
+        Author
+        Date and Time
+        Notes
+  Species List
+        Identification Label (eg Glucose), db reference?
+        Fixed or Float Status
+        Compartment (?)
+        Initial Concentration
+  Reaction List
+        Identification Label (eg BranchFlux)
+        Reference to data base entry if applicable
+        List of Reactants
+           Reactant Identification Label (eg Glucose)
+           Stoichiometry, ratio of two integers
+        List of Products
+           Product Identification Label (eg Glucose_6_Phosphate)
+           Stoichiometry, ratio of two integers
+        Rate Law
+           Rate Expression
+           Parameter Values
+  Forcing Function List (?)
+\end{verbatim}
+
+Note that there is no process specification, eg the types of algorithm to use
+and specific things like time start, time stop, or the number of points and so
+on.
+
+\section*{Suggestion for a File Structure}
+
+A metabolic XML file (hence abbreviated to MML) could have the following basic
+structure:
+
+\begin{verbatim}
+  <?xml version="1.0"?>
+  <MMLFILE xmlns="cell:mml.xml" version = "1.0">
+    <NETWORK NAME="YeastModel">
+     ....Header Information
+     ....Species List
+     ....Reaction List
+     ....Forcing Function List (Optional)
+    </NETWORK>
+  </MMLFILE>
+\end{verbatim}
+
+{\tt MMLFILE} is the root element and the file {\tt mml.xml} is the MML schema
+definition (or alternatively a DTD specification if this is more desirable).
+Note the version number, this will be required if we intend doing a second
+level specification of the format at a later date.
+
+
+\section*{Header Information - Optional ?}
+
+{\footnotesize
+\begin{verbatim}
+  <TITLE>Martian Life</TITLE>
+  <AUTHOR>A Gladiator</AUTHOR>
+  <DATE>12 June 2009</DATE>
+  <NOTES>Model of Martian Organism v3.4 as published in Journal
+       of Alien Life, vol 1, pp1-24, 2009</NOTES>
+\end{verbatim} }
+
+The sorts of information that should go in the header is debatable and the
+example above simply gives an idea of the sort of things one might wish it to
+contain. The entire header should probably be optional. Note that there is no
+organism specific information, again this needs discussion but we should not
+limit the format to only `real' models since a lot of research is also carried
+out using hypothetical models. One reason why the header should be optional is
+that not all simulators specifically store this type of information, if the
+header is compulsory then applications must have the option to ignore it.
+
+One other thing that probably needs looking at is whether we need to supply
+information on the units for mass, length and time since the various kinetic
+constants and concentrations will have units which should be made explicit.
+However again this information should perhaps be optional or at least
+ignorable by the application if the model is simply a hypothetical model where
+the units in such cases will be of no interest.
+
+The next two levels, the species and the reaction list must be present in
+all MML files.
+
+\section*{Species List}
+
+The species list stores a list of species in the model, by species I include
+entities such as simple ions (protons, calcium etc), simple molecules such as
+glucose, ATP etc, large molecules such a RNA, polysaccharides and of course
+proteins, be they single monomers or complexes.
+
+The most basic type of information required to define a species include, its
+name (possibly a reference to a data base entry might be useful here), it's
+initial concentration and whether, within the model, it is a floating species
+or a fixed boundary species. Distinguishing between fixed or floating species
+is important and the mix of types in a model has a significant impact on the
+structural properties of the model, which includes conservation and flux
+constraints.
+
+{\bf Compartmentation}
+
+One aspect I've not mentioned is compartmentation. A living cell is not a
+homogeneous bag of chemicals but is divided into a number of distinct
+compartmental volumes. An obvious example being the cytoplasmic and
+mitochondria spaces. A potential problem arises when mass (in the form of
+molecular entities) moves from one compartment to another. If the volumes in
+the two compartments are different then the concentration changes in the two
+compartments will change by differing amounts when a unit of mass moves from
+one compartment to another. Although this might seem a straight forward
+problem to deal with, on closer inspection it turns out to be non-trivial. I
+realize that a number of existing simulators `support' compartmentation but I
+know for certain that at least one of them gets it wrong. As for the others I
+don't know since I've not tested them. SCAMP takes a more cautious approach
+and relies on the modeller to make some decisions on how compartmentation
+should be dealt with.
+
+For these reasons I have left out any mention of compartments even though they
+are clearly an important aspect to modelling metabolic systems. I would instead
+wait for further discussion on this problem before we decide on what should be
+done. If we need to do something now then the simplest is to add a compartment
+list before the species list where all the compartments in the model are
+listed together with their volumes; then in the species list we indicate for
+each species which compartment it is associated with and leave the rest to the
+simulators to sort out.
+
+For example:
+
+{\footnotesize
+\begin{verbatim}
+   <COMPARTMENTLIST
+     <COMPARTMENT NAME="BLOODVOLUME" VOLUME="0.5" </COMPARTMENT>
+   </COMPARTMENTLIST>
+\end{verbatim} }
+
+{\footnotesize
+\begin{verbatim}
+   <SPECIES STATUS="Fixed" COMPARTMENT="BLOODVOLUME"
+            VALUE="0.5"> Glucose </SPECIES>
+\end{verbatim} }
+
+
+If we leave out the issue of compartmentation for the moment then we could
+write the species list in the following format:
+
+{\footnotesize
+\begin{verbatim}
+  <SPECIESLIST>
+     <SPECIES STATUS="Fixed" VALUE="0.5"> Glucose </SPECIES>
+     <SPECIES STATUS="Float" VALUE="5.5"> ATP     </SPECIES>
+     <SPECIES STATUS="Float" VALUE="0.0"> Glucose_6_P </SPECIES>
+     <SPECIES STATUS="Float" VALUE="0.1"> ADP     </SPECIES>
+  </SPECIESLIST>
+\end{verbatim} }
+
+
+Should the status and value fields be optional and if so what should be their
+agreed defaults?
+
+
+\subsection*{Naming Species}
+
+We should agree on what constitutes a legal name for a molecular species. I
+have tended to follow the rule that molecular species must start with a letter
+or an underscore character. Some people would like to relax this rule and
+allow digits at the start of a name, eg 3PG and even to allow spaces and others
+characters within a name, eg 2,3 DPG. I think this is a bit of a Pandora's box
+and would play havoc with language parsing algorithms.But it needs thinking
+about.
+
+\begin{verbatim}
+ Species Name   ::= Letter | `_' { Letter | Digit | `_' }
+\end{verbatim}
+
+
+\section*{Reaction List}
+
+The reaction list is the main body of the file and contains all the structural
+and kinetic information. One question is whether we should in fact mix
+structural with kinetic information and perhaps kinetic information should have
+its own separate section. Some models are purely structural and don't need
+kinetic data, on the other hand it is an easy matter simply to put in a dummy
+kinetic law if the kinetic and structural information share the same section and
+specific kinetic data is note available.
+
+A possible structure for a reaction list could be a list of one or more
+reaction elements where a reaction element gives details on a particular
+reaction.
+
+{\footnotesize
+\begin{verbatim}
+  <REACTIONLIST>
+     <REACTION>
+
+     </REACTION>
+
+     .
+     .
+     .
+  </REACTIONLIST>
+\end{verbatim} }
+
+
+\subsection*{Reaction}
+
+For a particular reaction the minimal information includes, an identification
+label, the names of all the reactants and products together with their
+stoichiometries, that is the number of molecular species that take part in a
+single transformation.
+
+An unbelievable reaction might be:
+
+\begin{verbatim} Glucose + 2ATP -> Glucose-6-P + 3ADP  Rate Law: k1*Glucose*ATP \end{verbatim}
+
+and could be represented using:
+
+{\footnotesize
+\begin{verbatim}
+  <REACTION NAME="BranchFlux" TYPE="Reversible" COMMENT="Some suitable comment here">
+
+     <!-- The following element should be optional and could possibly be -->
+     <!-- better represented with a simple data base reference -->
+     <BIOLOGICALINFO ORGANISM="EColi"
+                     COMPARTMENT="CYTOPLASM">
+                     ECNUMBER="1.2.3.4">
+     </BIOLOGICALINFO>
+
+     <REACTANTLIST>
+       <REACTANT STOICHIOMETRY="1/1"> Glucose </REACTANT>
+       <REACTANT STOICHIOMETRY="2/1"> ATP </REACTANT>
+     </REACTANTLIST>
+
+     <PRODUCTLIST>
+       <PRODUCT STOICHIOMETRY="1/1"> Glucose_6_P </REACTANT>
+       <PRODUCT STOICHIOMETRY="3/1"> ADP </REACTANT>
+     <\PRODUCTLIST>
+
+     <!-- The following Element could be Optional -->
+     <KINETICLAW>
+        k1*Glucose*ATP
+        <PARAMETERLIST>
+           <P VALUE="3.4"> k1 </P>
+        </PARAMETERLIST>
+     </KINETICLAW>
+
+  </REACTION>
+\end{verbatim} }
+
+All reactions must have an identification label attached to them and we need
+to indicate whether they are reversible or not. Strictly speaking all
+reactions are reversible so the designation seems pointless and for the
+majority of models this is indeed the case, however certain structural
+analyses, in particular elementary mode analysis requires this information in
+order to carry out its computation. Since this information is quite
+specialised and adds nothing to the models other than in the case when
+elementary modes need to be computed, the information should be optional. I've
+also added a specific reaction (but optional) comment field.
+
+
+I've also indicated a separate section within a specific reaction which I
+called BioliogicalInfo (for want of a better word, perhaps Source would be
+better) which would be useful for `real-world' models. Again this needs some
+discussion, for example do we need it, if so what information should we
+include. We could of course simply make a reference to a remote data base
+entry.
+
+We then come to the reactant and product lists. Both of these are structured
+in the same way except one refers to the reactants and other the products. The
+only point worth making here is the form of the stoichiometry matrix. Note
+that we could use a simple integer here but I would recommend a ratio of
+integers here because structural analyses such as elementary modes (and any
+arithmetic manipulation of the stoichiometry matrix) would benefit from this.
+
+
+The last section is the kinetic law. At the moment there is only two types of
+information here, an infix expression representing the kinetic law (this
+assumes that applications that read these files can parse expressions in infix
+notation) and the values for any kinetic constants that appear in the rate
+expression.
+
+\section*{Forcing Functions}
+
+One thing that might be worth including is a section for forcing functions. I
+know quite a few models that employ these, in particular they are very useful
+for computing the equilibrium concentrations of rapidly equilibrating
+reactions. Useful because it means you can take these fast reactions away from
+the integrator and this makes life easier for the integrator.
+
+This probably needs discussion.
+
+
+\section*{DTD or XML Schema}
+
+There is probably little point to even start defining a DTD or XML scheme
+until we've decided on the basic structure. But when that time arrives we then
+have to decide whether to go for a DTD or an XML Schema approach.
+
+\section*{Implementation}
+
+As an experiment I have implemented most of the ideas in this document into
+Jarnac. Programming on the Windows platform makes life a bit easier for XMLers
+because IE5 comes with a built-in XML parser with a fully implemented DOM
+interface so its quite straight forward to read XML. Jarnac itself has built
+into it what I call a NOM (Network Object Model) from which it is easy to
+write out an XML file.
+
+\section*{What's to be done?}
+
+Here are some things that I think need to be considered, there are bound to be
+other issues I've not even considered.
+
+\begin{itemize}
+\item Distribute an initial document to participating parties to collect
+opinions and suggestions on the spec so far.
+\item Ideas that need sorting out or require more discussion include:
+\begin{itemize}
+\item Versioning
+\item Header information
+\item DTD or XML Schema
+\item Compartmentation
+\item An agreement on what consitutes a legal species name
+\item Structural info separate from kinetic?
+\item Forcing Functions
+\item Format for kinetic rate laws, infix, reverse-polish etc?
+\item Other things I've not thought of
+\end{itemize}
+\end{itemize}
+
+
+\end{document}

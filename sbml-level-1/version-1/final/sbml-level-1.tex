@@ -1,0 +1,2632 @@
+\documentclass[10pt]{cekarticle}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{array}
+\latexhtml{
+  \usepackage[american]{varioref}
+}{
+  \newcommand{\vref}[1]{\ref{#1}}
+}
+
+% Miscellaneous macros.
+
+\newcommand{\D}{\displaystyle}
+\newcommand{\tm}{\textsuperscript{\tiny{\texttrademark}}}
+
+\begin{document}
+
+%=============================================================================
+% Title page
+%=============================================================================
+
+\title{Systems Biology Markup Language (SBML) Level 1:\\
+  Structures and Facilities for Basic Model Definitions}
+
+\author{Michael Hucka, Andrew Finney, Herbert Sauro, Hamid Bolouri}
+
+\authoremail{\{mhucka,afinney,hsauro,hbolouri\}@cds.caltech.edu}
+
+\address{Systems Biology Workbench Development Group\\
+  ERATO Kitano Systems Biology Project\\
+  Control and Dynamical Systems, MC 107-81\\
+  California Institute of Technology, Pasadena, CA 91125, USA\\[3pt]
+  \url{http://www.cds.caltech.edu/erato}}
+
+\acknowledge{Principal Investigators: John Doyle and Hiroaki Kitano}
+
+\date{SBML Level 1, Version 1 (Final), 2 March 2001}
+
+\maketitlepage
+
+
+%=============================================================================
+\section{Introduction}
+\label{sec:introduction}
+%=============================================================================
+
+We present the \textbf{S}ystems \textbf{B}iology \textbf{M}arkup
+\textbf{L}anguage (SBML) Level~1, a description language for simulations in
+systems biology.  SBML is oriented towards representing biochemical
+networks common in research on a number of topics, including cell signaling
+pathways, metabolic pathways, biochemical reactions, gene regulation, and
+many others.  A recent conference~\citep{kitano:2001} highlights the range
+of topics that fall under the umbrella of \emph{systems biology} and are in
+the domain of the description language defined here.  Many contemporary
+research initiatives demonstrate the growing popularity of this kind of
+multidisciplinary
+work~\cite[e.g.,][]{abbott:1999,gilman:2000,popel:1998,smaglik:2000,smaglik:2000b}.
+
+SBML Level~1 is the result of merging modeling-language features from the
+following simulation systems: \emph{BioSpice}~\citep{arkin:2001},
+\emph{DBSolve}~\citep{goryanin:2001,goryanin:1999},
+\emph{E-Cell}~\citep{tomita:1999,tomita:2001},
+\emph{Gepasi}~\citep{mendes:1997,mendes:2001},
+\emph{Jarnac}~\citep{sauro:2000,sauro:1991},
+\emph{StochSim}~\citep{bray:2001,morton-firth:1998}, and \emph{Virtual
+  Cell}~\citep{schaff:2000,schaff:2001}.  SBML was developed with the help
+of the authors of these packages.  As a result of being based on actual
+working simulation software, it is a practical and functional description
+language.  Our goal in creating it has been to provide an open standard
+that will enable simulation software to exchange models, something that is
+currently impossible because there is no standard model exchange language.
+We expect SBML models to be encoded using XML, the eXtensible Markup
+Language~\citep{bosak:1999,bray:1998}, and we include here an XML Schema
+that defines SBML Level~1.
+
+
+%-----------------------------------------------------------------------------
+\subsection{Scope and Limitations}
+%-----------------------------------------------------------------------------
+
+SBML Level 1 is meant to support non-spatial biochemical models and the
+kinds of operations that are possible in existing analysis/simulation
+tools.  A number of potentially desirable features have been intentionally
+omitted from the language definition.  Future software tools will
+undoubtedly require the evolution of SBML; we expect that subsequent
+releases of SBML (termed \emph{levels}) will add additional structures and
+facilities currently missing from Level~1, once the simulation community
+gains experience with the current language definition.  In
+Section~\ref{sec:level-2}, we discuss extensions that will likely be
+included in SBML Level~2.
+
+The definition of the model description language presented here does not
+specify \emph{how} programs should communicate or read/write SBML.  We
+assume that for a simulation program to communicate a model encoded in
+SBML, the program will have to translate its internal data structures to
+and from SBML, use a suitable transmission medium and protocol, etc., but
+these issues are outside of the scope of this document.
+
+
+%-----------------------------------------------------------------------------
+\subsection{Notational Conventions}
+%-----------------------------------------------------------------------------
+
+SBML is intended to be a common XML-based format for encoding systems
+biology models in a simple form that software tools can use as an exchange
+format.  However, for easier communication to human readers, we define SBML
+using a graphical notation based upon UML, the Unified Modeling
+Language~\citep{eriksson:1998,oestereich:1999}.  This UML-based definition
+in turn is used to define an XML
+Schema~\citep{biron:2000,fallside:2000,thompson:2000} for SBML.  There are
+three main advantages to using UML as a basis for defining SBML data
+structures.  First, compared to using other notations or a programming
+language, the UML visual representations are generally easier to grasp by
+readers who are not computer scientists.  Second, the visual notation is
+implementation-neutral: the defined structures can be encoded in any
+concrete implementation language---not just XML, but C or Java as well.
+Third, UML is a de facto industry standard that is documented in many
+sources.  Readers are therefore more likely to be familiar with it than
+other notations.
+
+Our notation and our approach for mapping UML to XML Schemas is explained
+in a separate document~\citep{hucka:2000b}.  A summary of the essential
+points is presented in Appendix~\ref{apdx:notation}, and examples
+throughout this document illustrate the approach.  We also follow certain
+naming and typographical conventions throughout this document.
+Specifically, the names of data structure attributes or fields begin with a
+lowercase letter, and the names of data structures and types begin with an
+uppercase letter.  Keywords (names of types, XML elements, etc.) are
+written in a typewriter-style font; for example, \class{Compartment} is a
+type name and \class{compartment} is a field name.  Likewise, literal XML
+examples are also written in a typewriter-style font.
+
+
+%=============================================================================
+\section{Overview of SBML}
+\label{sec:overview}
+%=============================================================================
+
+The following is an example of a simple, hypothetical biochemical network that
+can be represented in SBML:
+\begin{equation*}
+  \begin{array}{@{}ccc@{}}
+    X_0 & \underrightarrow{k_1 X_0} & S_1 \\ \\[-4pt]
+    S_1 & \underrightarrow{k_2 S_1} & X_1 \\ \\[-4pt]
+    S_1 & \underrightarrow{k_3 S_1} & X_2
+  \end{array}
+\end{equation*}
+
+Broken down into its constituents, this model contains a number of
+components: reactant species, product species, reactions, rate laws, and
+parameters in the rate laws.  To analyze or simulate this network,
+additional components must be made explicit, including compartments for the
+species, and units on the various quantities.  The top level of an SBML
+model definition simply consists of lists of these components:
+\begin{center}
+  \slshape
+  \begin{tabular}{c}
+    \begin{minipage}{3in}
+      \begin{tabbing}
+        xxxx\=xxxx\=xxxx\=xxxx\=\kill
+        beginning of model definition\\
+        \>list of unit definitions (optional)\\
+        \>list of compartments\\
+        \>list of species\\
+        \>list of parameters (optional)\\
+        \>list of rules (optional)\\
+        \>list of reactions\\
+        end of model definition
+      \end{tabbing}
+    \end{minipage}
+  \end{tabular}
+\end{center}
+The meaning of each component is as follows:
+\begin{description}
+  
+\item \emph{Unit definition}: A name for a unit used in the expression of
+  quantities in a model.  Units may be supplied in a number of contexts in
+  an SBML model, and it is convenient to have a facility for both setting
+  default units and for allowing combinations of units to be given
+  abbreviated names.
+
+\item \emph{Compartment}: A container of finite volume for substances.  In
+  SBML Level~1, a compartment is primarily a topological structure with a
+  volume but no geometric qualities.
+  
+\item \emph{Specie}: A substance or entity that takes part in a reaction.
+  Some example species are ions such as $\text{Ca}^{2++}$ and molecules
+  such as glucose or ATP.  The primary qualities associated with a specie
+  in SBML Level~1 are its initial amount and the compartment in which it is
+  located.
+  
+\item \emph{Reaction}: A statement describing some transformation,
+  transport or binding process that can change the amount of one or more
+  species.  For example, a reaction may describe how certain entities
+  (reactants) are transformed into certain other entities (products).
+  Reactions have associated rate laws describing how quickly they take
+  place.
+  
+\item \emph{Parameter}: A quantity that has a symbolic name.  SBML Level~1
+  provides the ability to define parameters that are global to a model as
+  well as parameters that are local to a single reaction.
+  
+\item \emph{Rule}: In SBML, a mathematical expression that is added
+  to the differential equations constructed from the set of reactions and
+  can be used to set parameter values, establish constraints between
+  quantities, etc.
+
+\end{description}
+
+A software package can read an SBML model description and translate it
+into its own internal format for model analysis.  For example, a package
+might provide the ability to simulate the model, by constructing
+differential equations representing the network and then performing
+numerical time integration on the equations to explore the model's dynamic
+behavior.  
+
+SBML allows models of arbitrary complexity to be represented.  Each type of
+component in a model is described using a specific type of data structure
+that organizes the relevant information.  The data structures determine how
+the resulting model is encoded in XML.
+
+In the sections that follow, the various constructs in SBML and their uses
+are described in detail.  Section~\ref{sec:general} first introduces a few
+basic structures that are used throughout SBML, then
+Section~\ref{sec:elements} provides details on each of the main components
+of SBML.  Section~\ref{sec:xml-rep} provides several complete examples of
+models encoded in XML using SBML.
+
+
+%=============================================================================
+\section{Preliminary Definitions}
+\label{sec:general}
+%=============================================================================
+
+This section covers certain constructs that are used repeatedly in the rest
+of SBML and are useful to discuss before diving into the details of the
+components provided in SBML.
+
+%-----------------------------------------------------------------------------
+\subsection{Type \class{SBase}}
+\label{sec:sbase}
+%-----------------------------------------------------------------------------
+
+Each of the main components composing an SBML model definition has a
+specific data type that is derived directly or indirectly from a single
+base type called \class{SBase}.  This inheritance hierarchy is depicted in
+Figure~\vref{fig:top-level}.
+
+\begin{figure}[h]
+  \vspace*{8pt}
+  \centering
+  \includegraphics[scale = 0.7]{top-level}
+  \caption{A UML diagram of the inheritance hierarchy of major data types
+    in SBML.  Open arrows indicate inheritance, pointing from inheritors to 
+    their parents~\citep{eriksson:1998,oestereich:1999}.}
+  \label{fig:top-level}
+\end{figure}
+
+The type \class{SBase} is designed to allow a modeler or a software package
+to attach information to each component in an SBML model.  The definition
+of \class{SBase} is presented in Figure~\vref{fig:identified}.
+\class{SBase} contains two fields, both of which are optional:
+\attrib{notes} and \attrib{annotations}.  The field \attrib{notes} is a
+container for XHTML content.  It is intended for recording optional
+user-visible annotations.  Every data object derived directly or indirectly
+from type \class{SBase} can have a separate value for \attrib{notes},
+allowing users considerable freedom for annotating their models.  The
+second field, \attrib{annotations}, is provided for software-generated
+annotations.  It is a container for arbitrary data (XML type \class{any})
+and is intended to store information not intended for human viewing.  As
+with the user-visible \attrib{notes} field, every data object can have its
+own \attrib{annotations} value.
+
+\begin{figure}[b]
+  \centering
+  \includegraphics[scale = 0.68]{identified}
+  \caption{The definition of \class{SBase}.  Text enclosed in braces next
+    to attribute types (i.e., \attribtype{\{minOccurs="1"\}}) indicates
+    constraints on the possible attribute values; we use XML Schema
+    language to express constraints since we are primarily interested in
+    the XML encoding of SBML.}
+  \label{fig:identified}
+\end{figure}
+
+In other type definitions presented below, we follow the UML convention of
+eliding the attributes derived from a parent type such as \class{SBase}.
+It should be kept in mind that these attributes are always available.
+
+
+%-----------------------------------------------------------------------------
+\subsection{Guidelines for the Use of the \attrib{annotations} Field in
+  \class{SBase}} 
+%-----------------------------------------------------------------------------
+
+The \attrib{annotations} field in the definition of \class{SBase} is
+formally unconstrained in order that software developers may attach any
+information they need to different components in an SBML model.  However,
+it is important that this facility not be misused accidentally.  In
+particular, it is critical that information essential to a model definition
+is \emph{not} stored in \attrib{annotations}.  Parameter values, functional
+dependencies between model components, etc., should not be recorded as
+annotations.
+
+Here are examples of the kinds of data that may be appropriately stored in
+\attrib{annotations}: (a) Information about graphical layout of model
+components; (b) application-specific processing instructions that do not
+change the essence of a model; (c) bibliographic information pertaining to
+a given model; and (d) identification information for cross-referencing
+components in a model with items in a database.  (We expect to introduce an
+explicit scheme for recording bibliographic information and making database
+references in SBML Level~2, at which time using annotations for these
+purposes will become unnecessary.)
+
+Different applications may use XML Namespaces~\citep{bray:1999} to specify
+the intended vocabulary of a particular annotation.  Here is an example of
+this kind of usage.  Suppose that a particular application wants to
+annotate data structures in an SBML model definition with screen layout
+information and a time stamp.  The application developers should choose a
+URI (\emph{Universal Resource Identifier}; \citealt{harold:2001,w3c:2000})
+reference that uniquely identifies the vocabulary that the
+application will use for such annotations, and a prefix string to be used
+in the annotations.  For illustration purposes, let us say the URI
+reference is ``\texttt{http://www.mysim.org/ns}'' and the prefix is
+\texttt{mysim}.  An example of an annotation might then be as follows:
+
+\begin{example}
+...
+<annotations xmlns:mysim="http://www.mysim.org/ns">
+    <mysim:nodecolors mysim:bgcolor="green" mysim:fgcolor="white"/>
+    <mysim:timestamp>2000-12-18 18:31 PST</mysim:timestamp>
+</annotations>
+...
+\end{example}
+
+The namespace prefix \texttt{mysim} is used to qualify the XML elements
+\texttt{mysim:nodecolors} and \texttt{mysim:timestamp}; presumably these
+symbols have meaning to the application.  This example places the XML
+Namespace information on \attrib{annotations} itself rather than on a
+higher-level enclosing construct or the enclosing document level, but other
+placements would be valid as well~\citep{bray:1999}.
+
+The use of XML Namespaces permits multiple applications to place
+annotations on XML elements of a model without risking interference or
+element name collisions.  Annotations stored by different simulation
+packages can thus coexist in the same model definition.  Although XML
+Namespace names (``\texttt{http://www.mysim.org/}'' in the example above)
+must be URIs references, an XML Namespace name is \emph{not required} to be
+directly usable in the sense of identifying an actual, retrieval document
+or resource on the Internet~\citep{bray:1999}.  The name is simply intended
+to enable unique identification of constructs, and using URIs is a common
+and simple way of creating a unique name string.  For the convenience of
+the simulation tools developer community, we reserve certain namespace
+names for use with annotations in SBML.  These reserved names are listed in
+Table~\vref{tab:reserved-urls}.
+
+\begin{table}[b]
+  \vspace*{5pt}
+  \centering
+  \begin{tabular}{l}
+    \toprule
+    \texttt{http://www.sbml.org/2001/ns/biospice}\\
+    \texttt{http://www.sbml.org/2001/ns/dbsolve}\\
+    \texttt{http://www.sbml.org/2001/ns/ecell}\\
+    \texttt{http://www.sbml.org/2001/ns/gepasi}\\
+    \texttt{http://www.sbml.org/2001/ns/jarnac}\\
+    \texttt{http://www.sbml.org/2001/ns/jdesigner}\\
+    \texttt{http://www.sbml.org/2001/ns/stochsim}\\
+    \texttt{http://www.sbml.org/2001/ns/vcell}\\
+    \bottomrule
+  \end{tabular}
+  \caption{Reserved XML Namespace names in SBML Level 1.}
+  \label{tab:reserved-urls}
+\end{table}
+
+Note that the namespaces being referred to here are XML Namespaces
+specifically in the context of the \attrib{annotations} field on
+\class{SBase}.  The namespace issue here is unrelated to the namespaces
+discussed in Section~\ref{sec:namespaces} below in the context of
+\class{SName} and symbols in SBML.
+
+
+%-----------------------------------------------------------------------------
+\subsection{Type \class{SName}}
+\label{sec:name}
+%-----------------------------------------------------------------------------
+
+The type \class{SName} is used in many places in SBML for expressing names
+of components in a model.  \class{SName} is is a data type derived from the
+basic XML type \class{string}, but with restrictions about the types of
+characters permitted and the sequence in which they may appear.  Its 
+definition is shown in Figure~\vref{fig:name}.
+
+\begin{figure}[th]
+  \vspace*{10pt}
+  \centering
+  \begin{minipage}{3.8in}
+\begin{verbatim}
+  letter ::= 'a'..'z','A'..'Z'
+  digit  ::= '0'..'9'
+  SName  ::= { '_' } letter { letter | '_' | digit }
+\end{verbatim}
+  \end{minipage}
+  \caption{The definition of the type \class{SName}, expressed in conventional
+    Backus-Naur Form~\protect\citep{naur:1960}.  The meta symbols \{ and \} signify
+    ``zero or more times'' the items they enclose.  Note that although XML
+    permits the use of Unicode characters~\protect\citep{unicode:1996}, SBML
+    limits the allowable characters in \class{SName} to plain ASCII text
+    characters for compatibility with existing simulation software.}
+  \label{fig:name}
+\end{figure}    
+
+The need to define a constrained data type for names stems from the fact
+that many existing simulation packages allow only a limited set of
+characters in symbol names.  SBML codifies this limitation in the form of a
+lowest-common-denominator data type (\class{SName}), to prevent the
+creation of models with symbol names that might confuse some simulation
+software packages.  This is important for facilitating model exchange
+between tools.
+
+
+%-----------------------------------------------------------------------------
+\subsection{Component Names and Namespaces in SBML}
+\label{sec:namespaces}
+%-----------------------------------------------------------------------------
+
+A biochemical network model can contain a large number of named components
+representing different parts of a model.  This leads to a problem in
+deciding the scope of a symbol: in what contexts does a given symbol
+\emph{X} represent the same thing?  The approaches used in existing
+simulation packages tend to fall into two categories that we may call
+global and local.  The \emph{global} approach places all symbols into a
+single global namespace, so that a symbol \emph{X} represents the same
+thing wherever it appears in a given model definition.  The \emph{local}
+approach places symbols in different namespaces depending on the context,
+where the context may be, for example, individual rate laws.  The latter
+approach means that a user may use the same symbol \emph{X} in different
+rate laws and have each instance represent a different quantity.
+
+The fact that different simulation programs may use different rules for
+name resolution poses a problem for the exchange of models between
+simulation tools.  Without careful consideration, a model written out in
+SBML format by one program may be misinterpreted by another program.  SBML
+must therefore include a specific set of rules for treating symbols and
+namespaces.
+
+The namespace rules in SBML Level 1 are relatively straightforward and are
+intended to avoid this problem with a minimum of requirements on the
+implementation of software tools:
+\begin{itemize}
+  
+\item All model-level component names (compartments, species, reactions,
+  parameters, parameter rules, and units) reside in the same global
+  namespace.  This means, for example, that a reaction and a specie
+  definition cannot both have the same name.
+  
+\item Each reaction definition (see Section~\ref{sec:reactions})
+  establishes a private local namespace for parameter names.  Within the
+  definition of a given reaction, parameter names introduced in that
+  reaction override (shadow) identical names in the global namespace.
+  
+\item Certain names in SBML Level 1 are reserved or otherwise have special
+  meaning.  Table~\ref{tab:reserved-names} on the following page lists
+  these reserved names.  They are comprised of predefined mathematical
+  functions, certain operators (present and expected in the future), and
+  rate law functions.  In order to prevent name collisions, these reserved
+  names cannot be used as names for any component of a model.
+
+\end{itemize}  
+
+\begin{table}[tbh]
+  \vspace*{5pt}
+  \centering
+  \ttfamily
+  \begin{tabular}{llllllllll}
+    \toprule
+    abs	   & cos	& hillr   & not     & ppbr	& tan	& ucii & umar  & usii  & volume\\
+    acos   & exp	& isouur  & or 	    & sin	& umai	& ucir & umi   & usir  & xor\\
+    and    & floor	& log	  & ordbbr  & sqr	& umar	& ucti & unii  & uuci \\
+    asin   & hilli	& log10	  & ordbur  & sqrt	& uai	& uctr & unir  & uucr \\
+    atan   & hillmmr	& massi	  & ordubr  & substance	& ualii	& uhmi & uuhr  & uui \\
+    ceil   & hillmr	& massr	  & pow     & time	& uar	& uhmr & umr   & uur \\
+    \bottomrule
+  \end{tabular}
+  \caption{The reserved names in SBML Level 1.}
+  \label{tab:reserved-names}
+\end{table}
+
+The set of rules above can enable software packages using either local or
+global namespaces to exchange SBML model definitions.  In particular,
+software environments using local namespaces internally should be able to
+accept SBML model definitions without needing to change component names.
+Environments using a global namespace internally can perform a simple
+manipulation of the names of elements within reaction definitions to avoid
+name collisions.  (An example approach for the latter would be the
+following: when receiving an SBML-encoded model, prefix each name inside
+each reaction with a string constructed from the reaction's name; when
+writing an SBML-encoded model, strip off the prefix.)
+
+The namespace rules described here provide a clean transition path to
+future levels of SBML, when submodels are introduced
+(Section~\ref{sec:level-2}).  Submodels will provide the ability to compose
+one model from a collection of other models.  This capability will have to
+be built on top of SBML Level~1's namespace organization.  A
+straightforward approach to handling namespaces is to make each submodel's
+space be private.  The rules governing namespaces within a submodel can
+simply be the Level~1 namespace rule described here, with each submodel
+having its own (to itself, global) namespace.
+
+
+%-----------------------------------------------------------------------------
+\subsection{Formulas}
+\label{sec:formulas}
+%-----------------------------------------------------------------------------
+
+Formulas in SBML Level 1 are expressed in text string form.  They are used
+in the definitions of kinetic laws (Section~\ref{subsec:kinetic-law}) and
+in rules (Section~\ref{sec:rules}).  The formula strings are interpreted as
+expressions that evaluate to a floating-point value of type \class{double}.
+The formula strings may contain operators, function calls, and symbols.
+Table~\vref{tab:operators} presents the precedence rules
+for the different entities that may appear in formula strings.  All
+operators in formulas return \class{double} values.
+
+\begin{table}[tbh]
+  \vspace*{8pt}
+  \begin{center}
+    \begin{tabular}{lllcl}
+      \toprule
+      \textbf{Tokens} & \textbf{Operation} & \textbf{Class} & \textbf{Precedence} & \textbf{Associates} \\
+      \midrule
+      \emph{name} & symbol reference & operand & 8 & n/a \\
+      (\emph{expression}) & expression grouping & operand & 8 & n/a\\
+      \emph{f}(\emph{...}) & function call & prefix & 8 & left\\
+      $-$ & negation & unary & 6 & right\\
+      \verb|^| & power & binary & 5 & left \\
+      $*$ & multiplication & binary & 4 & left\\
+      $/$ & division & binary & 4 & left\\
+      $+$ & addition & binary & 3 & left\\
+      $-$ & subtraction & binary & 3 & left\\
+      \bottomrule
+    \end{tabular}
+  \end{center}
+  \caption{A table of the expression operators available in SBML.  In the
+    \textbf{\textrm{Class}} column, ``operand'' implies the construct is an
+    operand, ``prefix'' implies the operation is applied to the following
+    arguments, ``unary'' implies there is one argument, and ``binary''
+    implies there are two arguments.  The values in the
+    \textbf{\textrm{Precedence}} column show how the order of different
+    types of operation are determined.  For example, the expression $a * b
+    + c$ is evaluated as $(a * b) + c$ because the \texttt{*} operator has
+    higher precedence.  The \textbf{\textrm{Associates}} column shows how
+    the order of similar precedence operations is determined; for example,
+    $a - b + c$ is evaluated as $(a - b) + c$ because the $+$ and $-$
+    operators are left-associative.  The precedence and associativity rules
+    are taken from the C programming language~\protect\citep{harbison:1995},
+    except for the symbol \texttt{\^}, which is used in C for a different
+    purpose.}
+  \label{tab:operators}
+\end{table}
+
+The function call syntax consists of a function name, followed by optional
+white space, followed by an opening parenthesis token (`('), followed by a
+sequence of zero or more arguments separated by commas, followed by a
+closing parenthesis (`)') token.  The function name must be chosen from one
+of the functions available in SBML.  Table~\ref{tab:simplemath} in
+Appendix~\ref{apdx:predefined-functions} lists the basic mathematical
+functions that are defined in SBML at this time, while
+Table~\ref{tab:ratelaws} lists a large number of common rate law functions
+defined in SBML.  The names of these predefined functions are reserved and
+make up the bulk of the list of names in
+Table~\vref{tab:reserved-names}.
+
+A program parsing a formula in an SBML model should assume that name tokens
+other than function names are names of parameters, parameter rules,
+compartments or species.  When a specie name occurs in a formula, it
+represents the concentration (i.e., $substance/volume$) of the specie.
+When a compartment name occurs in a formula, it represents the volume of
+the compartment.  The units of substance and volume are determined from the
+built-in \texttt{substance} and \texttt{volume} of Table~\vref{tab:builtin}.
+
+Readers may wonder why mathematical formulas in SBML are not expressed
+using MathML~\citep{w3c:2000b}, an XML-based mathematical formula language.
+Although using MathML would be more in the spirit of using XML and would in
+some ways be a more forward-looking choice, it would require simulation
+software to use fairly complex parsers to read and write the resulting
+SBML.  Most contemporary systems biology simulation software simply
+represent mathematical formulas using text strings.  To keep SBML Level~1
+simple and compatible with known simulation software, we chose to represent
+formulas as strings.  This does not preclude a later level of SBML from
+introducing the ability to use MathML as an extension.
+
+
+%=============================================================================
+\section{SBML Components}
+\label{sec:elements}
+%=============================================================================
+
+In this section, we define each of the major data structures in SBML.  To
+provide illustrations of their use, we give partial XML encodings of SBML
+model components, but we leave full XML examples to
+Section~\ref{sec:xml-rep}.
+
+
+%-----------------------------------------------------------------------------
+\subsection{Models}
+\label{sec:model}
+%-----------------------------------------------------------------------------
+
+The \class{Model} structure is the highest-level construct in an SBML data
+stream or document.  It defines a grouping of components---the list of
+compartments, species, reactions, parameters, rules and unit definitions
+that define a given model.  Only one component of type \class{Model} is
+allowed per instance of an SBML document or data stream, although it does
+not necessarily need to represent a single biological entity.  The UML
+definition of the \class{Model} structure is shown in
+Figure~\vref{fig:model}.
+
+\begin{figure}[htb]
+  \centering
+  \includegraphics[scale = 0.68]{model}
+  \caption{The definition of \class{Model}.  Additional fields are
+    inherited from \class{SBase}.}
+  \label{fig:model}
+\end{figure}
+
+A model must contain at least one \class{Specie}, one \class{Reaction} and
+one \class{Compartment} data element, but SBML does not impose restrictions
+on the total number of these.  A \class{Model} data object may optionally
+have lists of \class{UnitDefinition}, \class{Parameter} and \class{Rule}
+components (they are optional because the lists in fields
+\attrib{unitDefinition}, \attrib{compartment}, and \attrib{rule}
+are permitted to have zero length).  It may also have an optional
+\attrib{name} field that can be used to give the model a name.  The name
+must be a text string conforming to the syntax permitted by the
+\class{SName} data type described in Section~\ref{sec:name}.
+
+In the XML encoding of an SBML model, the lists of species, reactions,
+compartments, and optional unit definitions, parameters and rules, are
+translated into lists of XML elements that each have headings of the form
+\class{listOf}\rule{0.5in}{0.5pt}\class{s}, where the blank is replaced by
+the name of the component type (e.g., ``\texttt{Reaction}'').  The
+resulting XML data object has the form illustrated by the following
+skeletal model:
+
+\begin{example}
+<model name="My_Model">
+    <listOfUnitDefinitions>
+        ...
+    </listOfUnitDefinitions>
+    <listOfCompartments>
+        ...
+    </listOfCompartments>
+    <listOfSpecies>
+        ...
+    </listOfSpecies>
+    <listOfParameters>
+        ...
+    </listOfParameters>
+    <listOfRules>
+        ...
+    </listOfRules>
+    <listOfReactions>
+        ...
+    </listOfReactions>
+</model>
+\end{example}
+
+Readers may wonder about the motivations for the
+\class{listOf}\rule{0.5in}{0.5pt}\class{s} notation.  A simpler approach to
+creating the lists of components would be to place them all directly
+at the top level under \texttt{<model> ... </model>}.  We chose instead to
+group them within XML elements named after
+\class{listOf}\rule{0.5in}{0.5pt}\class{s}, because we believe this helps
+organize the components and makes visual reading of model definitions
+easier.
+
+
+%-----------------------------------------------------------------------------
+\subsection{Unit Definitions}
+\label{sec:unitdefinitions}
+%-----------------------------------------------------------------------------
+
+Units may be supplied in a number of contexts in an SBML model.  A facility
+for defining units is convenient to have so that combinations of units can
+be given abbreviated names.  This is the motivation behind the
+\class{UnitDefinition} data structure, whose definition is shown in
+Figure~\vref{fig:unitdefinition}.
+
+\begin{figure}[htb]
+  \centering
+  \includegraphics[scale = 0.68]{unitdefinition}
+  \caption{The definition of \class{UnitDefinition}.}
+  \label{fig:unitdefinition}
+\end{figure}
+
+A unit definition consists of a \attrib{name} field of type \class{SName}
+and an optional list of structures of type \class{Unit}.  The approach to
+defining units in SBML is compositional; for example, $meter\ 
+second^{\,-2}$ is constructed by combining a \class{Unit}-type element
+representing $meter$ with a \class{Unit}-type element representing
+$second^{\,-2}$.  The \class{Unit} data structure has a \attrib{kind} field
+whose value must be taken from \class{UnitKind}, an enumeration of SI
+units.  The possible values of \class{UnitKind} are listed in
+Table~\vref{tab:unitkind}.  The \attrib{exponent} field on \class{Unit}
+represents an exponent on the unit.  Its default value is
+``\attribvalue{1}'' (one).  In the example just mentioned, $second^{\,-2}$
+is obtained by using \texttt{kind="second"} and \texttt{exponent="-2"}.
+Finally, the \attrib{scale} field in \class{Unit} is an integer attribute
+that scales the unit.  For example, a unit that has a \attrib{kind} value
+of ``\texttt{gram}'' and a \attrib{scale} value of ``\texttt{$-3$}''
+signifies $10^{-3} * gram$, or milligrams.
+
+\begin{table}[thb]
+  \centering
+%  \vspace*{5pt}
+  \ttfamily
+  \begin{tabular}{llllll}
+    \toprule
+    ampere      & farad	& joule		& lumen		& ohm     & steradian\\
+    becquerel   & gram	& katal		& lux		& pascal  & tesla\\
+    candela	& gray	& kelvin	& meter		& radian  & volt\\
+    celsius     & henry	& kilogram	& metre		& second  & watt\\
+    coulomb	& hertz	& liter		& mole		& siemens & weber\\
+    \underline{dimensionless} & \underline{item} & litre	& newton	& sievert\\
+    \bottomrule
+  \end{tabular}
+  \caption{The possible values of \attrib{kind} in a \class{UnitKind}
+    structure.  All are names of base or derived SI units, except for
+    ``\texttt{dimensionless}'' and ``\texttt{item}'', which are 
+    SBML additions important for handling certain common cases.
+    ``\texttt{Dimensionless}'' is intended for cases where a quantity does not
+    have units, and ``\texttt{item}'' is  needed in certain contexts to express
+    such things as ``N items'' (e.g., ``100 molecules'').
+    Strictly speaking, ``\texttt{celsius}'' should be capitalized; however,
+    for simplicity, SBML requires that the values of \class{UnitKind} be
+    treated in a case-insensitive manner by software reading and writing SBML.
+    Also, note that the gram and liter/litre are not
+    strictly part of SI~\protect\citep{taylor:1995}; however, they are so
+    useful in SBML's areas of application that they are included in the
+    \class{UnitKind} enumeration of unit names.  (The standard SI unit of
+    mass is in fact the kilogram, and volume is
+    defined in terms of cubic meters.)}
+  \label{tab:unitkind}
+\end{table}
+
+Unit combinations are constructed by listing several \class{Unit}
+structures inside a \class{UnitDefinition}-type structure.  The following
+example illustrates the definition of an abbreviation named
+``\texttt{mmls}'' for the units $mmol\ l^{-1}\ s^{-1}$:
+
+\begin{example}
+<listOfUnitDefinitions>
+    <unitDefinition name="mmls">
+        <listOfUnits>
+            <unit kind="mole"   scale="-3"/>
+            <unit kind="litre"  exponent="-1"/>
+            <unit kind="second" exponent="-1"/>
+        </listOfUnits>                
+    </unitDefinition>
+</listOfUnitDefinitions>
+\end{example}
+
+Many of the components in a model refer to quantities that have associated
+units.  SMBL Level~1 has three predefined quantity types: amount of
+substance, time, and volume.  SBML defines default units and scales for
+these quantities.  The defaults are summarized in Table~\vref{tab:builtin}.
+
+\begin{table}[htb]
+  \vspace*{8pt}
+  \centering
+  \begin{tabular}{lllc}
+    \toprule
+    \textbf{Name} & \textbf{Allowable Units} & \textbf{Default Units} & \textbf{Default Scale} \\
+    \midrule
+    \texttt{substance} & moles or no. of molecules & moles            & 1 \\
+    \texttt{time}      & seconds                   & seconds          & 1 \\
+    \texttt{volume}    & liters                    & liters           & 1 \\
+    \bottomrule
+  \end{tabular}
+  \caption{SBML's built-in quantities and their default
+    scale values.  The names in the left-hand column are reserved.  These
+    names may be used wherever
+    units may be supplied in a model component.}
+  \label{tab:builtin}
+\end{table}
+
+% FIXME the caption above says the units are in tab:unitkind, but aren't.
+
+Wherever unit specifications are permitted in a model (for example, for the
+volume in a compartment), the relevant built-in name from
+Table~\vref{tab:builtin} may be used.  Such usage signifies that the units
+to be used for the quantity should be the designated defaults.  A model may
+change the default scales by reassigning the keywords
+``\texttt{substance}'', ``\texttt{time}'', and ``\texttt{volume}'' in a
+unit definition.  This takes advantage of the \class{UnitDefinition}
+structure's facility for defining scales on units.  The following example
+changes the default units of volume to be milliliters:
+
+\begin{example}
+<model>
+    ...
+    <listOfUnitDefinitions>
+        <unitDefinition name="volume">
+            <listOfUnits>
+                <unit kind="liters" scale="-3"/>
+            </listOfUnits>                
+        </unitDefinition>
+    </listOfUnitDefinitions>
+    ...
+</model>
+\end{example}
+
+If the definition above appeared in a model, the volume scale on all
+components that did not explicitly use different units would be changed to
+milliliters.  
+
+The list of unit definitions in a \class{Model}-type structure is the only
+place where new units can be defined.  The new unit names may be used
+anywhere in a model where unit specifications are permitted.  The various
+components of a model, such as reaction parameters and rules, can only use
+the base units from Table~\ref{tab:unitkind}, the global unit definitions
+in the model, or the three predefined keywords ``\texttt{substance}'',
+``\texttt{time}'', and ``\texttt{volume}''.
+
+
+
+%-----------------------------------------------------------------------------
+\subsection{Compartments}
+\label{sec:compartments}
+%-----------------------------------------------------------------------------
+
+A \class{Compartment} represents a bounded container in which species are
+located.  The definition of \class{Compartment} is shown in
+Figure~\vref{fig:compartment}.  
+
+\begin{figure}[htb]
+  \vspace*{8pt}
+  \centering
+  \includegraphics[scale = 0.68]{compartment}
+  \caption{The definition of \class{Compartment}.  
+    Fields inherited from \class{SBase} are omitted here but are assumed.}
+  \label{fig:compartment}
+\end{figure}
+
+A \class{Compartment} data object has a \attrib{name} field of type
+\class{SName}.  A compartment also has a floating-point field called
+\attrib{volume}, representing the total volume of the compartment in the
+default units of volume.  (See Table~\vref{tab:builtin}.)  This enables
+concentrations of species to be calculated in the absence of geometry
+information.  The \attrib{volume} field is optional and defaults to a value
+of ``\texttt{1}'' (one).
+
+The units of volume may be explicitly set using the optional field
+\attrib{units} in \class{Compartment}; the named units must be either one
+of the base units from Table~\vref{tab:unitkind}, the built-in default
+named \attrib{volume}, or a new unit defined by a unit definition in the
+enclosing model.  If absent, the units default to the value set by the
+built-in \attrib{volume} of Table~\ref{tab:builtin}.
+
+The optional field \attrib{outside} of type \class{SName} can be used to
+express containment relationships between compartments.  If present, the
+value of \attrib{outside} for a given compartment should be the name of the
+compartment enclosing it, or in other words, the compartment that is
+``outside'' of it.  This facility can be used to model cell membranes.  For
+example, to express that a compartment named B has a membrane that is
+modeled as another compartment M, which in turn is located within another
+compartment A, one would write:
+\begin{example}
+<model>
+    ...
+    <listOfCompartments>
+        <compartment name="A"/>
+        <compartment name="M" outside="A"/>
+        <compartment name="B" outside="M"/>
+    </listOfCompartments>
+    ...
+</model>
+\end{example}
+
+In the absence of a value for \attrib{outside}, compartment definitions in
+SBML Level~1 do not have any implied spatial relationships between each
+other.  Thus, compartments may be adjacent to each other or have other
+spatial relationships.  For many modeling applications, the transfer of
+substances described by the reactions in a model sufficiently express the
+relationships between the compartments.  (SBML Level~1 currently does not
+provide for spatial characteristics aside from compartment volume and
+containment.  As discussed in Section~\ref{sec:level-2}, we expect that
+SBML Level~2 will introduce the ability to define geometries and spatial
+qualities.)
+
+In an XML data stream containing an SBML model, compartments are listed
+inside an XML element called \attrib{listOfCompartments} within a
+\class{Model}-type data structure.  (See the discussion of \class{Model} in
+Section~\ref{sec:model}.)  The following example illustrates two
+compartments in an abbreviated SBML example of a model definition:
+
+\begin{example}
+<model>
+    ...
+    <listOfCompartments>
+        <compartment name="cytosol" volume="2.5"/>
+        <compartment name="mitochondria" volume="0.3"/>
+    </listOfCompartments>
+    ...
+</model>
+\end{example}
+
+
+%-----------------------------------------------------------------------------
+\subsection{Species}
+\label{sec:species}
+%-----------------------------------------------------------------------------
+
+The term \emph{species} refers to entities that take part in reactions.
+These include simple ions (e.g., protons, calcium), simple molecules (e.g.,
+glucose, ATP), and large molecules (e.g., RNA, polysaccharides, and
+proteins).  The \class{Specie} data structure is intended to represent
+these entities.  Its definition is shown in Figure~\vref{fig:specie}.
+
+\begin{figure}[htb]
+  \centering
+  \includegraphics[scale = 0.68]{specie}
+  \caption{The definition of \class{Specie}.  As usual, fields inherited from
+    \class{SBase} are omitted here but are assumed.}
+  \label{fig:specie}
+\end{figure}
+
+\class{Specie} has a \attrib{name} field of type \class{SName}.  The field
+\attrib{compartment}, also of type \class{SName}, is used to identify the
+compartment in which the specie is located.  The field
+\attrib{initialAmount}, of type \class{double}, is used to set the initial
+amount of the specie in the named compartment.  The units of the substance
+quantity may be explicitly set using the optional field \attrib{units}.
+The value assigned to \attrib{units} must be chosen from one of the
+following possibilities: one of base unit names from
+Table~\vref{tab:unitkind}, the name ``\attrib{volume}'', or a new unit name
+defined by a unit definition in the enclosing model.  If absent, the units
+default to the value set by the built-in ``\attrib{substance}'' of
+Table~\vref{tab:builtin}.
+
+The optional boolean field \attrib{boundaryCondition} determines whether
+the amount of the specie is fixed or variable over the course of a
+simulation.  \attrib{boundaryCondition} defaults to a value of
+``\texttt{false}'', indicating that by default, the amount is not fixed.
+The optional field \attrib{charge} is an integer indicating the charge on
+the species (in terms of electrons, not the SI unit Coulombs).  This may be
+useful when the specie involved is a charged ion such as calcium
+($\text{Ca}^{2++}$).
+
+The following example shows two specie definitions within an abbreviated
+SBML model definition.  The example shows that species are listed under the
+heading \attrib{listOfSpecies} in the model:
+
+\begin{example}
+<model>
+    ...
+    <listOfSpecies>
+        <specie name="Glucose" compartment="cell" initialAmount="4"/>
+        <specie name="Glucose_6_P" compartment="cell" initialAmount="0.75"/>
+    </listOfSpecies>
+    ...
+</model>
+
+\end{example}
+
+Note that the compartment's name is used instead of an identifier, because
+simulation systems typically enable users to locate species using
+compartment names rather than machine-generated identifiers.  Since a
+compartment's name must be unique among all the compartments in a model
+(see the discussion of namespaces in Section~\ref{sec:namespaces}), there
+is no danger of ambiguity and no compelling reason to introduce identifiers
+on compartments.
+
+
+%-----------------------------------------------------------------------------
+\subsection{Parameters}
+\label{sec:parameters}
+%-----------------------------------------------------------------------------
+
+A \class{Parameter} structure is used to associate a symbol with a
+floating-point value so that the symbol can be used in formulas in place of
+the value.  The definition of \class{Parameter} is shown in
+Figure~\vref{fig:parameter}.
+
+\begin{figure}[htb]
+  \centering
+  \includegraphics[scale = 0.68]{parameter}
+  \caption{The definition of \class{Parameter}.}
+  \label{fig:parameter}
+\end{figure}
+
+\class{Parameter} has a \attrib{name} field of type \class{SName}.  This
+name represents the symbol.  The field \attrib{value} determines the value
+(of type \class{double}) assigned to the symbol.  The units of the
+parameter \attrib{value} are specified by the field \attrib{units}.  The
+value assigned to \attrib{units} must be chosen from one of the following
+possibilities: one of base unit names from Table~\vref{tab:unitkind}; one of
+the three names ``\attribvalue{substance}'', ``\attribvalue{time}'', or
+``\attrib{volume}'' (see Table~\ref{tab:builtin}); or the name of a new
+unit defined in the list of unit definitions in the enclosing \class{Model}
+structure.
+
+Parameters are used in two places in SBML: in lists of parameters defined
+at the top level in a \class{Model}-type structure, and within individual
+reaction definitions.  Parameters defined at the top level are
+\emph{global} to the whole model; parameters that are defined within
+a reaction are local to the particular reaction and (within that reaction)
+\emph{override} any global parameters having the same names.  (See
+Section~\ref{sec:namespaces} for further details.)
+
+The following is an example of parameters defined at the \class{Model} level:
+
+\begin{example}
+<model>
+    ...
+    <listOfSpecies>
+        ...
+    </listOfSpecies>
+    <listOfParameters>
+        <parameter name="Km1" value="2.3" units="second"/>
+        <parameter name="Km2" value="10.7" units="second"/>
+    </listOfParameters>
+    <listOfReactions>
+        ...
+    </listOfReactions>
+    ...
+</model>
+\end{example}
+
+An example of a full model that uses parameters is presented in
+Section~\ref{subsection:ruleseg}.
+
+
+%-----------------------------------------------------------------------------
+\subsection{Rules}
+\label{sec:rules}
+%-----------------------------------------------------------------------------
+
+In SBML, \emph{rules} provide a way to create constraints on variables for
+cases in which the constraints cannot be expressed using the reaction
+components (Section~\ref{sec:reactions}).  There are two orthogonal
+dimensions by which rules can be described.  First, there are three
+different possible functional forms, corresponding to the following three
+general cases (where $x$ and $y$ are variables, $f$ is some arbitrary
+function, and $P$ is a vector of parameters):
+
+\begin{center}
+\begin{tabular}{ll}
+  Case 1, left-hand side is zero:             & $0 = f(x, P)$\\
+  Case 2, left-hand side is a scalar:         & $x = f(P)$\\
+  Case 3, left-hand side is a rate-of-change: & $dx/dt = f(x, P)$
+\end{tabular}
+\end{center}
+
+The second dimension concerns the role of the variable $x$ in the equations
+above: $x$ can be the name of a compartment (to set its volume), the name
+of a specie (to set its concentration), or a parameter name (to set its
+value).
+
+The approach taken to covering these cases in SBML is to define an abstract
+\class{Rule} structure that contains just one field, \attrib{formula}, to
+hold the right-hand side expression, then to derive subtypes of
+\class{Rule} that add fields to cover the various cases above.
+Figure~\vref{fig:rules} gives the definitions of \class{Rule} and the
+subtypes derived from it.  The figure shows that \class{AlgebraicRule} is
+defined directly from \class{Rule}, whereas \class{CompartmentVolumeRule},
+\class{SpecieConcentrationRule}, and \class{ParameterRule} are all derived
+from an intermediate abstract structure called \class{AssignmentRule}.
+
+\begin{figure}[htb]
+  \centering
+  \includegraphics[scale = 0.68]{rule}
+  \caption{The definition of \class{Rule} and derived types.}
+  \label{fig:rules}
+\end{figure}
+
+The \attrib{type} field introduced in \class{AssignmentRule} is an
+enumeration of type \class{RuleType} that determines whether a rule
+falls into category 2 or 3 in the list of cases above.  In SBML Level~1,
+the enumeration has two possible values: ``\class{scalar}'' and
+``\class{rate}''.  The former means that the expression has a scalar value
+on the left-hand side [i.e., $x = f(x, P)$, as in case 2 in the list
+above]; the latter means that the expression has a rate of change
+differential on the left-hand side (as in case 3 in the list above).
+Future releases of SBML may add to the possible values of
+\class{RuleType}.
+
+
+\subsubsection{\class{AlgebraicRule}}
+
+The rule type \class{AlgebraicRule} is used to express equations whose
+left-hand sides are zero.  \class{AlgebraicRule} does not add any fields to
+the basic \class{Rule}; its role is simply to distinguish this case from
+the other cases.
+
+
+\subsubsection{\class{SpeciesConcentrationRule}}
+
+The \class{SpeciesConcentrationRule} structure adds one field,
+\attrib{specie}, to the basic \class{AssignmentRule} type.  The field
+\attrib{specie} has type \class{SName} and is used to identify the specie
+affected by the rule.  The effect of the rule depends on the value of
+\attrib{type}: if the value is ``\class{scalar}'', the rule sets the
+referenced specie's concentration to the value determined by the formula;
+if the value is ``\class{rate}'', the rule sets the rate of change of the
+specie's concentration to the value determined by the formula.  The units
+are in terms of $substance/volume$, where the $substance$ units are those
+that are declared on the referenced \class{Specie} element, and the
+$volume$ units are those declared on the \class{compartment} element that
+contains the \class{Specie}.
+
+
+\subsubsection{\class{CompartmentVolumeRule}}
+
+The \class{CompartmentRule} structure adds one field, \attrib{compartment},
+to the basic \class{AssignmentRule} type.  The field \attrib{compartment}
+has type \class{SName} and is used to identify the compartment affected by
+the assignment.  The effect of the rule depends on the value of
+\attrib{type}: if the type is ``\class{scalar}'', the rule sets the
+referenced compartment's volume to the volume determined by the formula; if
+the type is ``\class{rate}'', the rule sets the rate of change of the
+compartment's volume to the volume determined by the formula.
+
+
+\subsubsection{\class{ParameterRule}}
+
+The \class{ParameterRule} structure adds two fields, \attrib{name} and
+\attrib{units}, to the basic \class{AssignmentRule} type.  The
+\attrib{name} attribute has type \class{SName} and identifies the
+parameter.  The \attrib{units} field acts in the same way as in the case of
+the \class{Parameter} structure (Section~\ref{sec:parameters}).  The value
+assigned to \attrib{units} must be chosen from one of the following
+possibilities: one of base unit names from table~\ref{tab:unitkind}; one of
+the three names ``\attribvalue{substance}'', ``\attribvalue{time}'', or
+``\attrib{volume}'' (see Table~\ref{tab:builtin}); or the name of a new
+unit defined in the list of unit definitions in the enclosing \class{model}
+structure.  The effect of this rule is to give a value to a parameter that
+can be used in subsequent formulas.  This parameter has the value returned
+by the expression in the \attrib{formula} attribute.
+
+
+\subsubsection{Guidelines for Evaluating Rules}
+
+Rules of type ``\class{scalar}'' should be evaluated first in the order
+given in the SBML model definition, followed by the rules of type
+``\class{rate}'' in the order given.  Following this, the ``\class{rate}''
+type rules can be evaluated any number of times before the
+``\class{scalar}'' type rules are re-evaluated.
+
+
+\subsubsection{Example of Rule Use}
+
+The following is an example use of rules:
+
+\begin{example}
+<model>
+    ...
+    <listOfRules>
+        <parameterRule name="k" formula="k3/k2"/>
+        <specieConcentrationRule specie="s2" formula="k * t/(1 + k)"/>
+        <compartmentVolumeRule compartment="A" formula="0.10 * t"/>
+    </listOfRules>
+    ...
+</model> 
+\end{example}
+
+
+%-----------------------------------------------------------------------------
+\subsection{Reactions}
+\label{sec:reactions}
+%-----------------------------------------------------------------------------
+
+A \emph{reaction} represents some transformation, transport or binding
+process, typically a chemical reaction, that can change the amount of one
+or more species.  The \class{Reaction} type is defined in
+Figure~\vref{fig:reaction}.  
+
+\begin{figure}[htb]
+  \centering
+  \includegraphics[scale = 0.68]{reaction}
+  \caption{The definitions of \class{Reaction}, \class{KineticLaw} and
+    \class{SpecieReference}.} 
+  \label{fig:reaction}
+\end{figure}
+
+In SBML, reactions are defined using lists of reactant species, products,
+and their stoichiometries, and by parameter values for separately-defined
+kinetic laws.  These various quantities are recorded in the fields
+\attrib{reactant}, \attrib{product}, and \attrib{kineticLaw}.  Both
+\attrib{reactant} and \attrib{product} are references to species
+implemented using lists of \class{SpecieReference} structures (defined in
+Section~\ref{subsec:speciesreference} below).  The \class{SpecieReference}
+structure contains fields for recording the names of species and their
+stoichiometries.  \attrib{kineticLaw} is an optional field of type
+\class{KineticLaw} (defined in Section~\ref{subsec:kinetic-law} below),
+used to provide a mathematical formula describing the rate of the reaction.
+
+In addition to these fields, the \class{Reaction} structure also has a
+boolean field, \attrib{reversible}, that indicates whether the reaction is
+reversible.  The field is optional, and if left unspecified in a model, it
+defaults to a value of ``\attribvalue{true}''.  Information about
+reversibility is useful in certain kinds of structural analyses such as
+elementary mode analysis.
+
+The field \attrib{fast} is another boolean attribute in the
+\class{Reaction} data structure; a value of ``\attribvalue{true}''
+signifies that the given reaction is a ``fast'' one.  This may be relevant
+when computing equilibrium concentrations of rapidly equilibrating
+reactions.  Simulation/analysis packages may chose to use this information
+to reduce the number of ODEs required and thereby optimize such
+computations.  The default value of \attrib{fast} is
+``\attribvalue{false}''.  (A simulator/analysis package that has no
+facilities for dealing with fast reactions can ignore this attribute.  In
+theory, if the choice of which reactions are fast is correctly made, then a
+simulation performed with them should give the same results as a simulation
+performed without fast reactions.  However, currently there appears to be
+no single unambiguous method for designating which reactions should be
+considered fast, and some users may designate a reaction as fast when in
+fact it is not.  Caveat developer.)
+
+
+\subsubsection{\class{SpecieReference}}
+\label{subsec:speciesreference}
+
+Each unique specie involved in a reaction is listed once in a model, in a
+list contained in the \attrib{specie} field of the \class{Model} data
+structure discussed in Section~\ref{sec:model}.  Lists of products and
+reactants in \class{Reaction} type structures refer to those species.  The
+connection between the products and reactants in a reaction definition and
+the specie names listed in the enclosing \class{Model} definition is
+achieved using the \class{SpecieReference} type data structure defined in
+Figure~\vref{fig:reaction}.
+
+The field \attrib{specie} of type \class{SName} in \class{SpecieReference}
+must refer to the name of a specie defined in the enclosing
+\class{Model}-type structure.  The two fields \attrib{stoichiometry} and
+\attrib{denominator} together set the stoichiometry value for a specie in a
+reaction.  Both are integers, and both have default values of
+``\attribvalue{1}'' (one).  The use of these separate terms allows a
+simulator to employ rational arithmetic computations on the stoichiometry
+matrix, potentially reducing round-off errors and other problems during
+computations.  Such computations are particularly important when working
+with large matrices and calculating such things as elementary modes.
+
+The following is a simple example of a specie reference in a list of
+reactants within a reaction named ``J1'':
+\begin{example}
+<model>
+    ...
+    <listOfReactions>
+        <reaction name="J1">
+            <listOfReactants>
+                <specieReference specie="X0" stoichiometry="2"/>
+            </listOfReactants>
+            ...
+        </reaction>
+        ...
+    </listOfReactions>
+    ...
+</model>
+\end{example}
+
+
+\subsubsection{\class{KineticLaw}}
+\label{subsec:kinetic-law}
+
+A \class{kineticLaw} structure describes the rate of the enclosing
+reaction.  The use of a \class{KineticLaw} structure in a \class{Reaction}
+component is optional; however, in general there is no useful default that
+can be substituted in place of a missing kinetic law definition in a
+reaction.
+
+The field \attrib{formula}, of type \class{string}, expresses the rate in
+$substance/time$ units.  (Section~\ref{sec:formulas} discusses formulas.)
+The optional fields \attrib{substanceUnits} and \attrib{timeUnits}
+determine the units of substance and time.  If not set, the units are taken
+from the defaults defined by the built-in ``\texttt{substance}'' and
+``\texttt{time}'' of Table~\vref{tab:builtin}.
+
+A \class{KineticLaw} type structure can contain zero or more
+\class{Parameter} structures (Section~\ref{sec:parameters}) that define
+symbols that can be used in the \attrib{formula} string.  As discussed in
+Section~\ref{sec:namespaces}, reactions introduce local namespaces for
+parameter names.  Within a \class{KineticLaw} structure inside a reaction
+definition, a parameter whose name is identical to a global parameter
+defined in the enclosing \class{Model}-type structure takes precedence over
+that global parameter.
+
+The following is an example of a \class{Reaction} structure that defines
+the reaction $J_1: \ X_0 \longrightarrow S_1; \ k_1 X_0$.  It demonstrates
+the use of specie references and the \class{KineticLaw} structure:
+\begin{example}
+<model>
+    ...
+    <listOfReactions>
+        <reaction name="J1">
+            <listOfReactants>
+                <specieReference specie="X0" stoichiometry="1"/>
+            </listOfReactants>
+            <listOfProducts>
+                <specieReference specie="S1" stoichiometry="1"/>
+            </listOfProducts>
+            <kineticLaw formula="k1*X0">
+                <listOfParameters>
+                    <parameter name="k1" value="0"/>
+                </listOfParameters>
+            </kineticLaw>
+        </reaction>
+    </listOfReactions>
+    ...
+</model>
+\end{example}
+
+
+%=============================================================================
+\section{Examples of Full Models Encoded in XML Using SBML}
+\label{sec:xml-rep}
+%=============================================================================
+
+In this section, we present several examples of complete models encoded in
+XML using SBML Level~1.  Our approach to translating the UML-based
+structure definitions presented in the previous sections is described
+elsewhere~\citep{hucka:2000b}.  Appendix~\ref{apdx:schemas} gives the full
+listing of an XML Schema corresponding to SBML Level~1.
+
+
+%-----------------------------------------------------------------------------
+\subsection{A Simple Example Application of SBML}
+%-----------------------------------------------------------------------------
+
+Consider the following hypothetical branched system:
+\begin{equation*}
+  \begin{array}{@{}ccc@{}}
+    X_0 & \underrightarrow{k_1 X_0} & S_1 \\ \\[-4pt]
+    S_1 & \underrightarrow{k_2 S_1} & X_1 \\ \\[-4pt]
+    S_1 & \underrightarrow{k_3 S_1} & X_2
+  \end{array}
+\end{equation*}
+
+The following is the main portion of an XML document that encodes the model
+shown above:
+
+\begin{example}
+<sbml level="1" version="1">
+    <model name="Branch">
+        <notes>
+            <body xmlns="http://www.w3.org/1999/xhtml">
+                <p>Simple branch system.</p>
+                <p>The reaction looks like this:</p>
+                <p>reaction-1:   X0 -> S1; k1*X0;</p>
+                <p>reaction-2:   S1 -> X1; k2*S1;</p>
+                <p>reaction-3:   S1 -> X2; k3*S1;</p>
+            </body>
+        </notes>
+        <listOfCompartments>
+            <compartment name="compartmentOne" volume="1"/>
+        </listOfCompartments>
+        <listOfSpecies>
+            <specie name="S1" initialAmount="0" compartment="compartmentOne"
+                    boundaryCondition="false"/>
+            <specie name="X0" initialAmount="0" compartment="compartmentOne"
+                    boundaryCondition="true"/>
+            <specie name="X1" initialAmount="0" compartment="compartmentOne"
+                    boundaryCondition="true"/>
+            <specie name="X2" initialAmount="0" compartment="compartmentOne"
+                    boundaryCondition="true"/>
+        </listOfSpecies>
+        <listOfReactions>
+            <reaction name="reaction_1" reversible="false">
+                <listOfReactants>
+                    <specieReference specie="X0" stoichiometry="1"/>
+                </listOfReactants>
+                <listOfProducts>
+                    <specieReference specie="S1" stoichiometry="1"/>
+                </listOfProducts>
+                <kineticLaw formula="k1 * X0">
+                    <listOfParameters>
+                        <parameter name="k1" value="0"/>
+                    </listOfParameters>
+                </kineticLaw>
+            </reaction>
+            <reaction name="reaction_2" reversible="false">
+                <listOfReactants>
+                    <specieReference specie="S1" stoichiometry="1"/>
+                </listOfReactants>
+                <listOfProducts>
+                    <specieReference specie="X1" stoichiometry="1"/>
+                </listOfProducts>
+                <kineticLaw formula="k2 * S1">
+                    <listOfParameters>
+                        <parameter name="k2" value="0"/>
+                    </listOfParameters>
+                </kineticLaw>
+            </reaction>
+            <reaction name="reaction_3" reversible="false">
+                <listOfReactants>
+                    <specieReference specie="S1" stoichiometry="1"/>
+                </listOfReactants>
+                <listOfProducts>
+                    <specieReference specie="X2" stoichiometry="1"/>
+                </listOfProducts>
+                <kineticLaw formula="k3 * S1">
+                    <listOfParameters>
+                        <parameter name="k3" value="0"/>
+                    </listOfParameters>
+                </kineticLaw>
+            </reaction>
+        </listOfReactions>
+    </model>
+</sbml>
+\end{example}
+
+The XML encoding shown above is quite straightforward. The outermost
+container is a tag, \texttt{<smbl>}, that identifies the contents as being
+\underline{S}ystems \underline{B}iology \underline{M}arkup
+\underline{L}anguage.  The attributes \texttt{level} and \texttt{version}
+indicate that the content is formatted according to version~1 of the
+Level~1 definition of SBML.  The \texttt{version} attribute is present in
+case SBML Level~1 must be revised in the future to correct errors.
+
+The next-inner container is a single \texttt{<model>} element that serves as
+the highest-level object in the model.  The model has a name, ``Branch''.
+The model contains one compartment, four species, and three reactions.  The
+elements in the \texttt{<listOfReactants>} and \texttt{<listOfProducts>} in
+each reaction refer to the names of elements listed in the
+\texttt{<listOfSpecies>}.  The correspondences between the various elements
+is explicitly stated by the \texttt{<specieReference>} elements.
+
+The model includes a \texttt{<notes>} annotation that summarizes the model
+in text form, with formatting based on XHTML.  This may be useful for a
+software package that is able to read such annotations and, for example,
+render them in HTML in a graphical user interface.
+
+
+%-----------------------------------------------------------------------------
+\subsection{Simple Use of Units Feature in a Model}
+\label{apdx:units-eg}
+%-----------------------------------------------------------------------------
+
+The following model uses the units features of SBML Level~1.  In this
+model, the default value of \texttt{substance} is changed in the list of
+unit definitions to be mole units with a scale factor of $-3$, or
+millimoles.  This sets the default substance units in the model; components
+can override this scale locally.  The \attrib{volume} and \attrib{time}
+built-ins are left to their defaults, ensuring that volume is in liters and
+time is in seconds.  The result is that, in this model, kinetic law
+formulas define rates in millimoles per second and the specie symbols in
+them represent concentration values in millimoles per liter.  All the
+\class{specie} elements set the initial amount of every given specie to $1$
+millimole.  The parameters \texttt{Vm} and \texttt{Km} are defined to be in
+millimoles per liter per second, and milliMolar, respectively.
+
+\begin{example}
+<sbml level="1" version="1">
+    <model>
+        <listOfUnitDefinitions>
+            <unitDefinition name="substance">
+                <listOfUnits>
+                    <unit kind="mole" scale="-3"/>
+                </listOfUnits>
+            </unitDefinition>
+            <unitDefinition name="mls">
+                <listOfUnits>
+                    <unit kind="mole"   scale="-3"/>
+                    <unit kind="liter"  exponent="-1"/>
+                    <unit kind="second" exponent="-1"/>
+                </listOfUnits>
+            </unitDefinition>
+        </listOfUnitDefinitions>
+        <listOfCompartments>
+            <compartment name="cell"/>
+        </listOfCompartments>
+        <listOfSpecies>
+            <specie name="x0" compartment="cell" initialAmount="1"/>
+            <specie name="x1" compartment="cell" initialAmount="1"/>
+            <specie name="s1" compartment="cell" initialAmount="1"/>
+            <specie name="s2" compartment="cell" initialAmount="1"/>
+        </listOfSpecies>
+        <listOfParameters>
+            <parameter name="vm" value="2" units="mls"/>
+            <parameter name="km" value="2"/>
+        </listOfParameters>
+        <listOfReactions>
+            <reaction name="v1">
+                <listOfReactants>
+                    <specieReference specie="x0"/>
+                </listOfReactants>
+                <listOfProducts>
+                    <specieReference specie="s1"/>
+                </listOfProducts>
+                <kineticLaw formula="(vm * s1)/(km + s1)"/>
+            </reaction>
+            <reaction name="v2">
+                <listOfReactants>
+                    <specieReference specie="s1"/>
+                </listOfReactants>
+                <listOfProducts>
+                    <specieReference specie="s2"/>
+                </listOfProducts>
+                <kineticLaw formula="(vm * s2)/(km + s2)"/>
+            </reaction>
+            <reaction name="v3">
+                <listOfReactants>
+                    <specieReference specie="s2"/>
+                </listOfReactants>
+                <listOfProducts>
+                    <specieReference specie="x1"/>
+                </listOfProducts>
+                <kineticLaw formula="(vm * s1)/(km + s1)"/>
+            </reaction>
+        </listOfReactions>
+    </model>
+</sbml>
+\end{example}
+
+
+%-----------------------------------------------------------------------------
+\subsection{A Simple Example Application Using Rules}
+\label{subsection:ruleseg}
+%-----------------------------------------------------------------------------
+
+The following model represents the pathway $X_0 \to S_1 \to
+S_2 \to X_1$, where $S_1 \to S_2$ is a fast reaction.  The
+reaction $S_1 \to S_2$ is not modeled explicitly; instead, the
+effect of the reaction is encapsulated in rules.
+
+\begin{example}
+<sbml level="1" version="1">
+    <model>
+        <listOfCompartments>
+            <compartment name="cell" volume="1"/>
+        </listOfCompartments>
+        <listOfSpecies>
+            <specie name="s1" compartment="cell" initialAmount="4"/>
+            <specie name="s2" compartment="cell" initialAmount="2"/>
+            <specie name="x0" compartment="cell" initialAmount="1"/>
+            <specie name="x1" compartment="cell" initialAmount="0"/>
+        </listOfSpecies>
+        <listOfParameters>
+            <parameter name="k1" value="1.2"/>
+            <parameter name="k2" value="1000"/>
+            <parameter name="k3" value="3000"/>
+            <parameter name="k4" value="4.5"/>
+        </listOfParameters>
+        <listOfRules>
+            <parameterRule name="t" formula="s1 + s2"/>
+            <parameterRule name="k" formula="k3/k2"/>
+            <specieConcentrationRule specie="s2" formula="k * t/(1 + k)"/>
+            <specieConcentrationRule specie="s1" formula="t - s2"/>
+        </listOfRules>
+        <listOfReactions>
+            <reaction name="j1">
+                <listOfReactants>
+                    <specieReference specie="x0"/>
+                </listOfReactants>
+                <listOfProducts>
+                    <specieReference specie="s1"/>
+                </listOfProducts>
+                <kineticLaw formula="k1 * x0"/>
+            </reaction>
+            <reaction name="j3">
+                <listOfReactants>
+                    <specieReference specie="s2"/>
+                </listOfReactants>
+                <listOfProducts>
+                    <specieReference specie="x1"/>
+                </listOfProducts>
+                <kineticLaw formula="k4 * s2"/>
+            </reaction>
+        </listOfReactions>
+    </model>
+</sbml>
+\end{example}
+
+
+%=============================================================================
+\section{Discussion}
+\label{sec:discussion}
+%=============================================================================
+
+The volume of data now emerging from molecular biotechnology
+leave little doubt that extensive computer-based modeling, simulation and
+analysis will be critical to understanding and interpreting the
+data~\citep{abbott:1999,gilman:2000,popel:1998,smaglik:2000}.  This
+has lead to an explosion in the development of computer tools by many
+research groups across the world.  The explosive rate of progress is
+exciting, but the rapid growth of the field is accompanied by problems and
+pressing needs.
+
+One problem is that simulation models and results often cannot be directly
+compared, shared or re-used, because the tools developed by different
+groups often are not compatible with each other.  As the field of systems
+biology matures, researchers increasingly need to communicate their results
+as computational models rather than box-and-arrow diagrams.  They also need
+to reuse published and curated models as library components in order to
+succeed with large-scale efforts~\cite[e.g., the Alliance for Cellular
+Signaling;][]{gilman:2000,smaglik:2000}.  These needs require that models
+implemented in one software package be portable to other software packages,
+to maximize public understanding and to allow building up libraries of
+curated computational models.
+
+We offer SBML to the systems biology community as a suggested format for
+exchanging models between simulation/analysis tools.  SBML is an open model
+representation language oriented specifically towards representing
+biochemical network models.  SBML Level~1 provides the most basic
+facilities that are necessary for expressing these kinds of models in terms
+of compartments, species, reactions, parameters, rules and units.
+
+Our vision for SBML is to create an open standard that will enable
+simulation software to exchange models.  SBML is not static; we continue to
+develop and experiment with it, and we interact with other groups who seek
+to develop similar markup languages.  We plan on continuing to evolve SBML
+with the help of the systems biology community to make SBML increasingly
+more powerful, flexible and useful.
+
+
+%=============================================================================
+\subsection{Future Enhancements to SBML: Level 2 and Beyond}
+\label{sec:level-2}
+%=============================================================================
+
+As mentioned above, SBML Level 1 is intended to provide the most basic
+foundations for modeling biochemical networks.  A number of significant
+capabilities are lacking from Level~1; these will be introduced in
+higher-level definitions of SBML.  The following summarizes additional
+features that will likely be included in SBML Level~2:
+\begin{itemize}  
+  
+\item \emph{Arrays}.  This will enable the creation of arrays of components
+  (species, reactions, compartments and submodels).
+   
+\item \emph{Connections}.  This will be a mechanism for describing the
+  connections between items in an array.  For example, it should be
+  possible to create a 2-D array of compartments and then a 3-D array of
+  reactions which transport species between the compartments, where the
+  third dimension is the connections between the compartments.  Two
+  possible ways of describing a connection scheme are: (1) sparse/explicit,
+  simply listing the relative co-coordinates of connected objects for
+  patterns of points; (2) algebraic, where a conditional equation describes
+  whether two objects are connected.
+  
+\item \emph{Database Interoperability}.  In order to store models in a
+  database, it will be necessary to add additional header information that
+  provides information about authors, version numbers, revision dates, etc.
+
+\item \emph{Geometry}.  We will develop a scheme for representing the 3-D
+  structure of compartments.
+  
+\item \emph{Submodels}.  This will enable a large model to be built up out
+  of instances of other models.  It will also allow the reuse of model
+  components and the creation of several instances of the same model.
+  
+\item \emph{Component Identification}.  This will enable components to be
+  described using some stable universal identification scheme.
+  
+\item \emph{References}.  This will enable literature/authors to be cited
+  for any component.
+  
+\item \emph{Diagrams}.  This feature will allow components to be annotated
+  with data to enable the display of the model in a diagram.  It will also
+  enable multistate representations.
+
+\end{itemize}
+
+
+%=============================================================================
+\subsection{Relationships to Other Efforts}
+\label{sec:other-efforts}
+%=============================================================================
+
+% FIXME mention we also had simplicity in mind
+
+There are a number of ongoing efforts with similar goals as those of SBML.
+Many of them are oriented more specifically toward describing protein
+sequences, genes and related entities for database storage and search.
+These are generally not intended to be computational models, in the sense
+that they do not describe entities and behavioral rules in such a way that
+a simulation package could ``run'' the models.
+
+The effort perhaps closest in spirit to SBML is
+CellML\tm~\citep{physiome:2001}.  CellML is an XML-based markup language
+designed for storing and exchanging computer-based biological models.  It
+includes facilities for representing model structure, mathematics and
+additional information for database storage and search.  Models are
+described in terms of networks of connections between discrete components,
+where a component is a functional unit that may correspond to a physical
+compartment or simply a convenient modeling abstraction.  Components
+contain variables and connections contain mappings between the variables of
+connected components.  CellML provides facilities for grouping components
+and specifying the kinds of relationships that may exist between
+components.  It also uses MathML~\citep{w3c:2000b} for expressing mathematical
+relationships between components and provides the ability to use ECMAScript
+(formerly known as JavaScript) to define functions.
+
+The constructs in CellML tend to be at a more abstract and general level
+than those in SBML Level~1, and describes the structure and underlying
+mathematics of cellular models in a very general way.  By contrast, SBML is
+closer to the internal object model used in model analysis software.
+Because SBML Level~1 is being developed in the context of interacting with
+a number of existing simulation packages, it is a more concrete language
+than CellML and may be better suited to its purpose of enabling
+interoperability with existing simulation tools.  However, CellML offers
+viable alternative ideas and the developers of SBML and CellML are actively
+engaged in ensuring that the two representations can be translated between
+each other.
+
+
+%=============================================================================
+\subsection{Tracking the XML Schema Standard}
+\label{sec:tracking-xml}
+%=============================================================================
+
+One of the problems in attempting to define an XML Schema for SBML is that,
+at the time of this writing, the XML Schema
+specification~\citep{biron:2000,thompson:2000} has not actually been
+finalized.  This has been another motivation for defining SBML in terms of
+abstract data structures in a UML-based notation rather than directly as an
+XML Schema.
+
+The moving-target status of the XML Schema standard definition requires
+that we plan to update the Schema corresponding to SBML.  The following
+is our planned approach for handling changes in the Schema standard:
+\begin{enumerate}
+  
+\item The definition of SBML Level~1 in this document is independent of XML
+  Schema.  Therefore, the definition of SBML Level~1 expressed here can
+  remain the same regardless of what happens to the exact form of XML
+  Schema.  Among other benefits, this allows developers to leave their
+  programs' internal data structures unchanged in the face of possible
+  revisions in the Schema standard.
+  
+\item In Appendix~\ref{apdx:schemas}, we provide an XML Schema
+  corresponding to SBML Level~1 that has been created using the current
+  definition of XML Schema from the W3C
+  Organization~\citep{biron:2000,thompson:2000}.
+  
+\item Whenever the definition of XML Schema is updated by the W3C in the
+  future, we will issue a revised version of the XML Schema for SBML
+  Level~1 that conform to the updated standard.  We will leave the previous
+  versions still available for reference.  The updated XML Schemas for SBML
+  Level~1 will be identical to the previous versions except where changes
+  in XML Schema force a change in the definition of the Schema for SBML
+  Level~1.
+
+\end{enumerate}
+
+
+%=============================================================================
+\subsection{Availability}
+\label{sec:availability}
+%=============================================================================
+
+The SBML Level 1 definition, the XML Schema corresponding to SBML Level~1,
+and other related documents are openly available from the Caltech ERATO web
+site, \url{http://www.cds.caltech.edu/erato/}.
+
+
+
+%=============================================================================
+\setcounter{secnumdepth}{-1}
+\section{Acknowledgments}
+\label{sec:acknowledgements}
+%=============================================================================
+
+SBML was first conceived at the JST/ERATO-sponsored \emph{First Workshop on
+  Software Platforms for Molecular Biology}, held in April, 2000, at the
+California Institute of Technology in Pasadena, California, USA.  The
+participants collectively decided to begin developing a common XML-based
+declarative language for representing models.  A draft version of the
+Systems Biology Markup Language was developed by the Caltech ERATO team and
+delivered to all collaborators in August, 2000.  This draft version
+underwent extensive discussion over mailing lists and then again during the
+\emph{Second Workshop on Software Platforms for Molecular Biology} held in
+Tokyo, Japan, November 2000.  A revised version of SBML was issued by the
+Caltech ERATO team in December, 2000, and after further discussions over
+mailing lists and in meetings, we produced the final version of SBML
+Level~1 described in this document.
+
+SBML Level 1 was developed with the help of many people, especially the
+authors of BioSpice, DBSolve, E-Cell, Gepasi, StochSim, and Virtual Cell,
+and members of the \texttt{sysbio} mailing list.  We are particularly
+grateful to the following people for discussions and knowledge: Dennis
+Bray, Athel Cornish-Bowden, David Fell, Carl Firth, Warren Hedley, Martin
+Ginkel, Igor Goryanin, Jay Kaserger, Andreas Kremling, Nicolas Le
+Nov\`{e}re, Les Loew, Daniel Lucio, Pedro Mendes, Eric Mjolsness, James
+Schaff, Bruce Shapiro, Tom Shimizu, Hugh Spence, Joerg Stelling, Kouichi
+Takahashi, Masaru Tomita, and John Wagner.
+
+We are indebted to Daniel Lucio of the Virtual Cell group for generating
+the XML Schema of SBML Level~1 presented in Appendix~\ref{apdx:schemas}.
+
+
+\newpage
+\section{Appendix}
+\setcounter{secnumdepth}{2}
+\appendix
+%=============================================================================
+\section{Summary of Notation}
+\label{apdx:notation}
+%=============================================================================
+
+The definitive explanation for the notation used in this document can be
+found in the companion notation document~(Hucka, 2000).  Here we briefly
+summarize some of the main components of the notations used in describing
+SBML.
+
+Within the definitions of the various object classes introduced in this
+document, the following types of expressions are used many times:
+
+\begin{example}
+  field1 : float
+  field2 : integer[0..*]
+  field3 : (XHTML)
+  field4 : float \{use = "default" value = "0.0"\}
+\end{example}
+
+The symbols \attrib{field1}, \attrib{field2}, etc., represents fields in a
+data structure.  The colon immediately after the name separates the name of
+the attribute from the type of data that it stores.
+
+More complex specifications use square brackets (\texttt{[]}) just after a
+type name.  This is used to indicate that the field contains a list of
+elements.  Specifically, the notation \texttt{[0..*]} signifies a list
+containing zero or more elements; the notation \texttt{[1..*]} signifies a
+list containing at least one element; and so on.  The approach used here to
+translate from a list form into XML is, first, create a subelement named
+\class{listOf}\rule{0.5in}{0.5pt}\class{s}, where the blank indicates the
+capitalized name of the field, and then put a list of elements named after
+the field as the content of the \class{listOf}\rule{0.5in}{0.5pt}\class{s}
+element.
+
+A field whose type is shown in parentheses is implemented as as an XML
+subelement rather than an XML attribute.  The parentheses indicate that the
+type refers to the type of the subelement value.
+
+Expressions in curly braces (\texttt{\{\}}) shown after an attribute type
+indicate additional constraints placed on the field.  We express constraints
+using XML Schema language.  In the examples above, the expression
+\texttt{\{use="default" value="0.0"\}} indicates that the field \attrib{field4}
+is optional and that it has a default value of $0.0$.
+
+
+
+%=============================================================================
+\section{XML Schema for SBML}
+\label{apdx:schemas}
+%=============================================================================
+
+The following is an XML Schema definition for the Systems Biology Markup
+Language.  Example applications of this XML Schema are presented in
+Section~\ref{sec:xml-rep}.
+
+\begin{small}
+\tightspacing
+\begin{verbatim}
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2000/10/XMLSchema">
+  <xsd:annotation>
+    <xsd:documentation> 
+      File name : sbml.xsd
+      Author : Daniel Lucio, James Schaff, Andrew Finney, Michael Hucka
+      Description : XML Schema for the Systems Biology Markup Language
+      Organization: Caltech ERATO Kitano
+      Version : 1
+      Modified : 2001-03-02 22:29 PST
+    </xsd:documentation>
+  </xsd:annotation>
+  <!-- SName -->
+  <xsd:simpleType name="SName">
+    <xsd:annotation>
+      <xsd:documentation>
+         SName type used for expressing
+         names of components in a model
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:restriction base="xsd:string">
+      <xsd:pattern value="(_|[a-z]|[A-Z])(_|[a-z]|[A-Z]|[0-9])*"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+  <!-- SBase -->
+  <xsd:complexType name="SBase" abstract="true">
+    <xsd:annotation>
+      <xsd:documentation>
+        Designed to allow a modeler or a pacckage to attach
+        information to each component.
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:sequence>
+      <xsd:element name="notes" minOccurs="0">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:any namespace="http://www.w3.org/1999/xhtml"
+                     processContents="skip" maxOccurs="unbounded"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="annotations" minOccurs="0">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:any processContents="skip" maxOccurs="unbounded"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+  <!-- LisOfParameter  -->
+  <xsd:element name="listOfParameters">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element name="parameter" type="Parameter"
+                     maxOccurs="unbounded"/>
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+  <!-- Model -->
+  <xsd:complexType name="Model">
+    <xsd:complexContent>
+      <xsd:extension base="SBase">
+        <xsd:sequence>
+          <xsd:element name="listOfUnitDefinitions" minOccurs="0">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="unitDefinition" type="UnitDefinition"
+                             maxOccurs="unbounded"/>
+              </xsd:sequence>
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="listOfCompartments">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="compartment" type="Compartment" maxOccurs="unbounded"/>
+              </xsd:sequence>
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="listOfSpecies">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="specie" type="Specie" maxOccurs="unbounded"/>
+              </xsd:sequence>
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element ref="listOfParameters" minOccurs="0"/>
+          <xsd:element name="listOfRules" minOccurs="0">
+            <xsd:complexType>
+              <xsd:choice maxOccurs="unbounded">
+                <xsd:element name="algebraicRule" type="AlgebraicRule" minOccurs="0"/>
+                <xsd:element name="compartmentVolumeRule" type="CompartmentVolumeRule"
+                             minOccurs="0"/>
+                <xsd:element name="specieConcentrationRule" type="SpecieConcentrationRule" 
+                             minOccurs="0"/>
+                <xsd:element name="parameterRule" type="ParameterRule" minOccurs="0"/>
+              </xsd:choice>
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="listOfReactions">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="reaction" type="Reaction" maxOccurs="unbounded"/>
+              </xsd:sequence>
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:sequence>
+        <xsd:attribute name="name" type="SName" use="optional"/>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <!-- UnitDefinition -->
+  <xsd:complexType name="UnitDefinition">
+    <xsd:complexContent>
+      <xsd:extension base="SBase">
+        <xsd:sequence>
+          <xsd:element name="listOfUnits" minOccurs="0">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="unit" type="Unit" maxOccurs="unbounded"/>
+              </xsd:sequence>
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:sequence>
+        <xsd:attribute name="name" type="SName" use="required"/>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <!-- Compartment -->
+  <xsd:complexType name="Compartment">
+    <xsd:complexContent>
+      <xsd:extension base="SBase">
+        <xsd:attribute name="name" type="SName" use="required"/>
+        <xsd:attribute name="volume" type="xsd:double" use="default" value="1"/>
+        <xsd:attribute name="units" type="SName" use="optional"/>
+        <xsd:attribute name="outside" type="SName" use="optional"/>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <!-- Specie -->
+  <xsd:complexType name="Specie">
+    <xsd:complexContent>
+      <xsd:extension base="SBase">
+        <xsd:attribute name="name" type="SName" use="required"/>
+        <xsd:attribute name="compartment" type="SName" use="required"/>
+        <xsd:attribute name="initialAmount" type="xsd:double" use="required"/>
+        <xsd:attribute name="units" type="SName" use="optional"/>
+        <xsd:attribute name="boundaryCondition" type="xsd:boolean" 
+                       use="default" value="false"/>
+        <xsd:attribute name="charge" type="xsd:integer" use="optional"/>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <!-- Parameter -->
+  <xsd:complexType name="Parameter">
+    <xsd:complexContent>
+      <xsd:extension base="SBase">
+        <xsd:attribute name="name" type="SName" use="required"/>
+        <xsd:attribute name="value" type="xsd:double" use="required"/>
+        <xsd:attribute name="units" type="SName" use="optional"/>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <!-- UnitKind -->
+  <xsd:simpleType name="UnitKind">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="ampere"/>
+      <xsd:enumeration value="becquerel"/>
+      <xsd:enumeration value="candela"/>
+      <xsd:enumeration value="celsius"/>
+      <xsd:enumeration value="coulomb"/>
+      <xsd:enumeration value="dimensionless"/>
+      <xsd:enumeration value="farad"/>
+      <xsd:enumeration value="gram"/>
+      <xsd:enumeration value="gray"/>
+      <xsd:enumeration value="henry"/>
+      <xsd:enumeration value="hertz"/>
+      <xsd:enumeration value="item"/>
+      <xsd:enumeration value="joule"/>
+      <xsd:enumeration value="katal"/>
+      <xsd:enumeration value="kelvin"/>
+      <xsd:enumeration value="kilogram"/>
+      <xsd:enumeration value="liter"/>
+      <xsd:enumeration value="litre"/>
+      <xsd:enumeration value="lumen"/>
+      <xsd:enumeration value="lux"/>
+      <xsd:enumeration value="meter"/>
+      <xsd:enumeration value="metre"/>
+      <xsd:enumeration value="mole"/>
+      <xsd:enumeration value="newton"/>
+      <xsd:enumeration value="ohm"/>
+      <xsd:enumeration value="pascal"/>
+      <xsd:enumeration value="radian"/>
+      <xsd:enumeration value="second"/>
+      <xsd:enumeration value="siemens"/>
+      <xsd:enumeration value="sievert"/>
+      <xsd:enumeration value="steradian"/>
+      <xsd:enumeration value="tesla"/>
+      <xsd:enumeration value="volt"/>
+      <xsd:enumeration value="watt"/>
+      <xsd:enumeration value="weber"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+  <!-- Unit -->
+  <xsd:complexType name="Unit">
+    <xsd:complexContent>
+      <xsd:extension base="SBase">
+        <xsd:attribute name="kind" type="UnitKind" use="required"/>
+        <xsd:attribute name="exponent" type="xsd:integer" use="default" value="1"/>
+        <xsd:attribute name="scale" type="xsd:integer" use="default" value="1"/>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <!-- Rule -->
+  <xsd:simpleType name="RuleType">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="scalar"/>
+      <xsd:enumeration value="rate"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+  <xsd:complexType name="Rule" abstract="true">
+    <xsd:complexContent>
+      <xsd:extension base="SBase">
+        <xsd:attribute name="formula" type="xsd:string" use="required"/>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="AlgebraicRule">
+    <xsd:complexContent>
+      <xsd:extension base="Rule"/>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="AssignmentRule" abstract="true">
+    <xsd:complexContent>
+      <xsd:extension base="Rule">
+        <xsd:attribute name="type" type="RuleType" use="default" value="scalar"/>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="CompartmentVolumeRule">
+    <xsd:complexContent>
+      <xsd:extension base="AssignmentRule">
+        <xsd:attribute name="compartment" type="SName" use="required"/>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="SpecieConcentrationRule">
+    <xsd:complexContent>
+      <xsd:extension base="AssignmentRule">
+        <xsd:attribute name="specie" type="SName" use="required"/>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="ParameterRule">
+    <xsd:complexContent>
+      <xsd:extension base="AssignmentRule">
+        <xsd:attribute name="name" type="SName" use="required"/>
+        <xsd:attribute name="units" type="SName" use="optional"/>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <!-- Reaction -->
+  <xsd:element name="specieReference">
+    <xsd:complexType>
+      <xsd:complexContent>
+        <xsd:extension base="SBase">
+          <xsd:attribute name="specie" type="xsd:string" use="required"/>
+          <xsd:attribute name="stoichiometry" type="xsd:integer" use="default" value="1"/>
+          <xsd:attribute name="denominator" type="xsd:integer" use="default" value="1"/>
+        </xsd:extension>
+      </xsd:complexContent>
+    </xsd:complexType>
+  </xsd:element>
+  <xsd:complexType name="Reaction">
+    <xsd:complexContent>
+      <xsd:extension base="SBase">
+        <xsd:sequence>
+          <xsd:element name="listOfReactants">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element ref="specieReference" maxOccurs="unbounded"/>
+              </xsd:sequence>
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="listOfProducts">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element ref="specieReference" maxOccurs="unbounded"/>
+              </xsd:sequence>
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="kineticLaw" type="KineticLaw" minOccurs="0"/>
+        </xsd:sequence>
+        <xsd:attribute name="name" type="SName" use="required"/>
+        <xsd:attribute name="reversible" type="xsd:boolean" use="default" value="true"/>
+        <xsd:attribute name="fast" type="xsd:boolean" use="default" value="false"/>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="KineticLaw">
+    <xsd:complexContent>
+      <xsd:extension base="SBase">
+        <xsd:sequence>
+          <xsd:element ref="listOfParameters" minOccurs="0"/>
+        </xsd:sequence>
+        <xsd:attribute name="formula" type="xsd:string" use="required"/>
+        <xsd:attribute name="timeUnits" type="SName" use="optional"/>
+        <xsd:attribute name="substanceUnits" type="SName" use="optional"/>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <!-- Top-level elements allowed in an SBML document. -->
+  <xsd:complexType name="sbmlDocument">
+    <xsd:sequence>
+      <xsd:element name="model" type="Model"/>
+    </xsd:sequence>
+    <xsd:attribute name="xmlns"/>
+    <xsd:attribute name="level" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="version" type="xsd:positiveInteger" use="required"/>
+  </xsd:complexType>
+  <xsd:element name="sbml" type="sbmlDocument"/>
+  <!-- The end. -->
+</xsd:schema>
+\end{verbatim}
+\regularspacing
+\end{small}
+
+
+\newpage
+
+%=============================================================================
+\section{Predefined Functions in SBML}
+\label{apdx:predefined-functions}
+%=============================================================================
+
+Table~\ref{tab:simplemath} lists the basic mathematical functions that are
+defined in SBML Level~1 at this time.
+
+\begin{table}[hb]
+  \begin{center}
+    \begin{tabular}{@{}p{1cm}p{0.8cm}p{5cm}p{4cm}p{3.8cm}@{}}
+      \toprule
+      &                &                             & \textbf{Argument} \\
+      \textbf{Name} & \textbf{Args.} & \textbf{Formula or Meaning} & \textbf{Constraints} & \textbf{Result Constraints} \\
+      \midrule
+      abs   & $x$ & absolute value of $x$\\
+      acos  & $x$ & arc cosine of $x$ in radians & $-1.0 \leq x \leq 1.0$ & $0 \leq acos(x) \leq \pi$ \\
+      asin  & $x$ & arc sine of $x$ in radians & $-1.0 \leq x \leq 1.0$ & $-\pi/2 \leq asin(x) \leq \pi/2$ \\
+      atan  & $x$ & arc tangent of $x$ in radians & & $-\pi/2 \leq atan(x) \leq \pi/2$ \\
+      ceil  & $x$ & smallest number not less than $x$ whose value is an exact integer \\
+      cos   & $x$ & cosine of $x$ \\
+      exp   & $x$ & $e^x$, where $e$ is the base of the natural logarithm\\
+      floor & $x$ & the largest number not greater than $x$ whose value is an exact integer \\
+      log   & $x$ & natural logarithm of $x$ & $x > 0$ \\
+      log10 & $x$ & base 10 logarithm of $x$ & $x > 0$ \\
+      pow   & $x, y$ & $x^y$ \\
+      sqr   & $x$ & $x^2$ \\
+      sqrt  & $x$ & $\sqrt{x}$ & $x \geq 0$ & $sqrt(x) \geq 0$ \\
+      sin   & $x$ & sine of $x$ \\
+      tan   & $x$ & tangent of $x$ & $x \neq n \frac{\pi}{2}$, for odd integer n\\
+      \bottomrule
+    \end{tabular}
+  \end{center}
+  \caption{Basic mathematical functions defined in SBML.}
+  \label{tab:simplemath}
+\end{table}
+
+
+Table~\ref{tab:ratelaws} defines the rate law functions available in
+formula expressions in SBML.  These were extracted from the Gepasi help
+file (3.21).  \citet{segel:1993} provides more information;
+\citet{hofmeyr:1997} provide specific details on the reversible Hill
+equations.
+
+\begin{table}[ht]
+\setlength{\abovedisplayskip}{-2pt}
+\setlength{\belowdisplayskip}{1pt}
+\begin{tabular}{|m{0.5in}|>{\raggedright}m{0.77in}|>{\raggedright}m{1.5in}|m{3.03in}|}
+\hline
+\textbf{Name} & \textbf{Arguments} & \textbf{Meaning} &
+\textbf{Formula} \\
+\hline
+
+massi & $S_i$, $k$ & Irreversible Mass Action Kinetics &
+$v = k \prod_i S_i$
+\\ \hline
+
+massr & $S_i$, $P_j$, $k_1$, $k_2$ & Reversible Mass Action Kinetics  &
+$v = k_1 \prod_i S_i - k_2 \prod_j P_j$
+\\ \hline
+
+uui & $S$, $V_m$, $K_m$ & Irreversible Simple Michaelis-Menten  &
+\begin{gather*}
+v = \frac{V_m S}{K_m + S}
+\end{gather*}
+\\ \hline
+
+uur & $S$, $P$, $V_f$, $V_r$, $K_{ms}$, $K_{mp}$ & Uni-Uni Reversible Simple
+Michaelis-Menten &
+\begin{gather*}
+v = \frac{V_f \frac{\D S}{\D
+K_{ms}} - V_r \frac{\D P}{\D K_{mp}}}{1 + \frac{\D S}{\D K_{ms}} +
+\frac{\D P}{\D K_{mp}} }
+\end{gather*}
+\\ \hline
+
+uuhr & $S$, $P$, $V_f$, $K_{m1}$, $K_{m2}$, $K_{eq}$ & Uni-Uni
+Reversible Simple Michaelis-Menten with Haldane adjustment &
+\begin{gather*}
+v = \frac{\frac{V_f}{K_{m1}} \left(S -
+\frac{P}{K_{eq}} \right)}{1 + \frac{S}{K_{m1}} + \frac{P}{K_{m2}}}
+\end{gather*}
+\\ \hline
+
+isouur & $S$, $P$, $V_f$, $K_{ms}$, $K_{mp}$, $K_{ii}$, $K_{eq}$ & Iso Uni-Uni &
+\begin{gather*}
+v = \frac{V_f \left(S - \frac{P}{K_{eq}}\right)}{S \left(1
++ \frac{P}{K_{ii}}\right) + K_{ms} \left(1 + \frac{P}{K_{mp}}\right)}
+\end{gather*}
+\\ \hline
+
+hilli & $S$, $V$, $S_{0.5}$, $h$ & Hill Kinetics &
+\begin{gather*}
+v = \frac{V S^h}{S_{0.5}^h + S^h}
+\end{gather*}
+\\ \hline
+
+hillr & $S$, $P$, $V_f$, $S_{0.5}$, $P_{0.5}$, $h$, $K_{eq}$ & Reversible
+Hill Kinetics &
+\begin{gather*}
+v = \frac{\left(V_f \frac{S}{S_{0.5}}
+\right) \left(1 - \frac{P}{S K_{eq}} \right)
+\left(\frac{S}{S_{0.5}} + \frac{P}{P_{0.5}}\right)^{h-1}}{1 +
+\left(\frac{S}{S_{0.5}} + \frac{P}{P_{0.5}}\right)^h}
+\end{gather*}
+\\ \hline
+
+hillmr & $S$, $M$, $P$, $V_f$, $K_{eq}$, $k$, $h$, $\alpha$ & Reversible Hill
+Kinetics with One Modifier &
+\begin{gather*}
+v = \frac{\left(V_f
+\frac{S}{S_{0.5}} \right) \left(1 - \frac{P}{S K_{eq}} \right)
+\left(\frac{S}{S_{0.5}} + \frac{P}{P_{0.5}}\right)^{h-1}} {K_1 +
+K_2} \\
+\intertext{where}
+K_1 = \left(\frac{S}{S_{0.5}} +
+\frac{P}{P_{0.5}}\right)^h, \quad K_2 = \frac{1 + \left(\frac{M}{M_{0.5}}\right)^h}{1
+  + \alpha \left(\frac{M}{M_{0.5}}\right)^h}
+\end{gather*}
+\\ \hline
+
+hillmmr & $S$, $P$, $M$, $V_f$, $K_{eq}$, $k$, $h$, $a$, $b$, $\alpha_1$, $\alpha_2$, $\alpha_{12}$ &
+Reversible Hill Kinetics with Two Modifiers &
+\begin{gather*}
+v = \frac{\left(V_f
+\frac{S}{S_{0.5}} \right) \left(1 - \frac{P}{S K_{eq}} \right)
+\left(\frac{S}{S_{0.5}} + \frac{P}{P_{0.5}}\right)^{h-1}} {K_1 +
+K_2} \\
+\intertext{where}
+K_1 = \left(\frac{S}{S_{0.5}} + \frac{P}{P_{0.5}}\right)^h ,\\
+K_2 = \frac{1 + \left(\frac{Ma}{Ma_{0.5}}\right)^h + \left( \frac{Mb}{Mb_{0.5}}
+\right)^h }{\begin{split}
+\biggl[ 1 + \alpha_1 \left(\frac{Ma}{Ma_{0.5}}\right)^h +
+\alpha_2 \left(\frac{Mb}{Mb_{0.5}}\right)^h \\
++\; \alpha_1 \alpha_2
+\alpha_{12} \left( \frac{Ma}{Ma_{0.5}} \right)^h \left(
+  \frac{Mb}{Mb_{0.5}} \right)^h \biggr] \end{split} }
+\end{gather*}
+\\ \hline
+
+\end{tabular}
+\caption{Table of rate law functions in SBML.  In all cases, $K_m > 0$, $V_x \geq 0$, $S
+  \geq 0$ and $P \geq 0$.}
+\label{tab:ratelaws}
+\end{table}
+
+\addtocounter{table}{-1}
+\begin{table}[ht]
+\setlength{\abovedisplayskip}{-2pt}
+\setlength{\belowdisplayskip}{1pt}
+\begin{tabular}{|p{0.5in}|>{\raggedright}m{0.77in}|>{\raggedright}m{1.5in}|m{3.1in}|}
+\hline
+\textbf{Name} & \textbf{Arguments} & \textbf{Meaning} &
+\textbf{Formula} \\
+\hline
+
+usii & $S$, $V$, $K_m$, $K_i$ & Substrate Inhibition Kinetics
+(Irreversible) &
+\begin{gather*}
+v = V \frac{S/K_m}{1 + S/K_m + S^2/K_i}
+\end{gather*}
+\\ \hline
+
+usir & $S$, $P$, $V_f$, $V_r$, $K_{ms}$, $K_{mp}$, $K_i$ & Substrate
+Inhibition Kinetics (Reversible) &
+\begin{gather*}
+v = \frac{V_f S/K_{ms} + V_r
+P/K_{mp}}{1 + S/K_{ms} + P/K_{mp} + S^2/K_i}
+\end{gather*}
+\\ \hline
+
+uai & $S$, $V$, $K_{sa}$, $K_{sc}$ & Substrate Activation &
+\begin{gather*}
+v = \frac{V \left( S/K_{sa} \right)^2}{1 + S/K_{sc} + \left( S/K_{sa}\right)^2
+  + S/K_{sa}}
+\end{gather*}
+\\ \hline
+
+ucii & $S$, $V$, $K_m$, $K_i$ & Competitive Inhibition (Irreversible) &
+\begin{gather*}
+v = \frac{V S/K_m}{1 + S/K_m + I/K_i}
+\end{gather*}
+\\ \hline
+
+ucir & $S$, $P$, $V_f$, $V_r$, $K_{ms}$, $K_{mp}$, $K_i$ & Competitive Inhibition
+(Reversible) &
+\begin{gather*}
+v = \frac{V_f S/K_{ms} - V_r P/K_{mp}}{1 +
+  S/K_{ms} + P/K_{mp} + I/K_i}
+\end{gather*}
+\\ \hline
+
+unii & $S$, $I$, $V$, $K_m$, $K_i$ & Noncompetitive Inhibition
+(Irreversible) &
+\begin{gather*}
+v = \frac{V S/K_m}{1 + I/K_i + S/K_m \left( 1 + I/K_i\right) }
+\end{gather*}
+\\ \hline
+
+unir & $S$, $P$, $I$, $V_f$, $K_{ms}$, $K_{mp}$, $K_i$ & Noncompetitive
+Inhibition (Reversible) &
+\begin{gather*}
+v = \frac{V_f S/K_{ms} - V_r P/K_{mp}}{1 +
+  I/K_i + \left( S/K_{ms} + P/K_{mp} \right) \left( 1 + I/K_i\right) }
+\end{gather*}
+\\ \hline
+
+uuci & $S$, $I$, $V$, $K_m$, $K_i$ & Uncompetitive Inhibition
+(Irreversible) &
+\begin{gather*}
+v = \frac{V S/K_m}{1 + S/K_m \left( 1 + I/K_i\right)}
+\end{gather*}
+\\ \hline
+
+uucr & $S$, $P$, $I$, $V_f$, $V_r$, $K_{ms}$, $K_{mp}$, $K_i$ &
+Uncompetitive Inhibition (Reversible) &
+\begin{gather*}
+v = \frac{V_f S/K_{ms} - V_r
+P/K_{mp}}{1 + \left( S/K_{ms} + P/K_{mp} \right) \left( 1 + I/K_i\right) }
+\end{gather*}
+\\ \hline
+
+umi & $S$, $I$, $V$, $K_m$, $K_{is}$, $K_{ic}$ & Mixed Inhibition
+Kinetics (Irreversible) &
+\begin{gather*}
+v = \frac{V S/K_m}{1 + I/K_{is} + S/K_m \left( 1 + I/K_{ic} \right) }
+\end{gather*}
+\\ \hline
+
+umr & $ S, P, I,$ $ V_f, V_r, $ $ K_{ms}, K_{mp}, $ $ K_{is}, K_{ic} $ & Mixed
+Inhibition Kinetics (Reversible) &
+\begin{gather*}
+v = \frac{V_f S/K_{ms} - V_r
+P/K_{mp}}{1 + I/K_{is} + \left( S/K_{ms} + P/K_{mp} \right) \left( 1 + I/K_{ic}
+\right) }
+\end{gather*}
+\\ \hline
+
+uai & $S$, $A_c$, $V$, $K_m$, $K_a$ & Specific Activation Kinetics -
+irreversible &
+\begin{gather*}
+v = \frac{V S/K_m}{1 + S/K_m + K_a/A_c}
+\end{gather*}
+\\ \hline
+
+uar & $S$, $P$, $A_c$, $V_f$, $V_r$, $K_{ms}$, $K_{mp}$, $K_a$ & Specific
+Activation Kinetics (Reversible) &
+\begin{gather*}
+v = \frac{V_f S/K_{ms} - V_r P/K_{mp}}{1 + S/K_{ms} + P/K_{mp} + K_a/A_c}
+\end{gather*}
+\\ \hline
+
+ucti & $S$, $A_c$, $V$, $K_m$, $K_a$ & Catalytic Activation
+(Irreversible) &
+\begin{gather*}
+v = \frac{V S/K_m}{1 + K_a/A_c + S/K_m \left( 1 + K_a/A_c\right)}
+\end{gather*}
+\\ \hline
+
+\end{tabular}
+\caption{Table of rate law functions in SBML (continued).  In all cases, $K_m > 0$, $V_x \geq 0$, $S
+  \geq 0$ and $P \geq 0$.}
+\end{table}
+
+\addtocounter{table}{-1}
+\begin{table}[ht]
+\setlength{\abovedisplayskip}{-2pt}
+\setlength{\belowdisplayskip}{1pt}
+\begin{tabular}{|p{0.45in}|>{\raggedright}m{0.77in}|>{\raggedright}m{1.2in}|m{3.46in}|}
+\hline
+\textbf{Name} & \textbf{Arguments} & \textbf{Meaning} & \textbf{Formula} \\
+\hline
+
+uctr & $S$, $P$, $A_c$, $V_f$, $V_r$, $K_{ms}$, $K_{mp}$, $K_a$ &
+Catalytic Activation (Reversible) &
+\begin{gather*}
+v = \frac{V_f S/K_{ms} - V_r P/K_{mp}}{1 +
+K_a/A_c + \left( S/K_{ms} + P/K_{mp}\right) \left( 1 + K_a/A_c\right)}
+\end{gather*}
+\\ \hline
+
+umai & $S$, $A_c$, $V$, $K_m$, $Kas$, $Kac$ & Mixed Activation
+Kinetics (Irreversible) &
+\begin{gather*}
+v = \frac{V S/K_m}{1 + Kas/A_c + S/K_m \left( 1 + Kac/A_c\right)}
+\end{gather*}
+\\ \hline
+
+umar & $S$, $P$, $A_c$, $V_f$, $V_r$, $K_{ms}$, $K_{mp}$, $K_{as}$, $K_{ac}$ &
+Mixed Activation Kinetics (Reversible) &
+\begin{gather*}
+v = \frac{V_f S/K_{ms} - V_r P/K_{mp}}{1 + K_{as}/A_c + \left( S/K_{ms} +
+    P/K_{mp}\right) \left( 1 + K_{ac}/A_c\right)}
+\end{gather*}
+\\ \hline
+
+uhmi & $S$, $M$, $V$, $K_m$, $K_d$, $a$, $b$ & General Hyperbolic
+Modifier Kinetics (Irreversible) &
+\begin{gather*}
+v = \frac{V S/K_m \left( 1 + b
+M / (a K_d)\right) }{1 + M/K_d + S/K_m \left( 1 + M/(a K_d)\right)}
+\end{gather*}
+\\ \hline
+
+uhmr & $S$, $P$, $M$, $V_f$, $V_r$, $K_{ms}$, $K_{mp}$, $K_d$, $a$, $b$ &
+General Hyperbolic Modifier Kinetics (Reversible) &
+\begin{gather*}
+v = \frac{\left( V_f S/K_{ms} - V_r P/K_{mp}\right) \left( 1 + b M / (a
+K_d)\right) }{1 + M/K_d + \left( S/K_{ms} + P/K_{mp} \right) \left( 1 +
+M/(a K_d)\right)}
+\end{gather*}
+\\ \hline
+
+ualii & $S$, $I$, $V$, $K_s$, $K_{ii}$, $n$, $L$ & Allosteric inhibition
+(Irreversible) &
+\begin{gather*}
+v = \frac{V \left( 1 + S/K_s\right)^{n-1}}{L \left(
+1 + I/K_{ii}\right)^n + \left( 1 + S/K_s \right)^n}
+\end{gather*}
+\\ \hline
+
+ordubr & $A$, $P$, $Q$, $V_f$, $V_r$, $K_{ma}$, $K_{mq}$, $K_{mp}$, $K_{ip}$,
+$K_{eq}$ & Ordered Uni Bi Kinetics &
+\begin{gather*}
+v = \frac{V_f \left( A - P Q/K_{eq}\right)}{\begin{split}
+\biggl[ K_{ma} + A \left( 1 + P/K_{ip}\right) \\
++\; V_f/(V_r K_{eq})
+\left( K_{mq} P + K_{mp} Q + P Q\right) \biggr]
+\end{split}}
+\end{gather*}
+\\ \hline
+
+ordbur & $A$, $B$, $P$, $V_f$, $V_r$, $K_{ma}$, $Kmb$, $K_{mp}$, $K_{ia}$,
+$K_{eq}$ & Ordered Bi Uni Kinetics &
+\begin{gather*}
+v = \frac{V_f \left( A B -
+P/K_{eq}\right)}{\begin{split}
+\biggl[ A B + K_{ma} B + Kmb A \\
++\; V_f/(V_r K_{eq}) \left( K_{mp} + P
+\left( 1 + A/K_{ia}\right) \right) \biggr]
+\end{split}}
+\end{gather*}
+\\ \hline
+
+ordbbr & $A$, $B$, $P$, $Q$, $V_f$, $K_{ma}$, $K_{mb}$, $K_{mp}$, $K_{ia}$,
+$K_{ib}$, $K_{ip}$, $K_{eq}$ & Ordered Bi Bi Kinetics &
+\begin{gather*}
+v = \frac{V_f
+\left( A B - P Q/K_{eq}\right) }{A B \left( 1 + P/K_{ip}\right) + K_{mb}
+(A + K_{ia}) + K_{ma} B + K_1} \\
+\intertext{where}
+K_1 = V_f / (V_r K_{eq}) \left( K_{mq} P \left( 1 + A/K_{ia}\right) + Q k_2 \right) ,\\
+K_2 = K_{mp} \left( 1 + K_{ma} B /(K_{ia} K_{mb}) + P \left( 1 + B/K_{ib} \right) \right)
+\end{gather*}
+\\ \hline
+
+ppbr & $A$, $B$, $P$, $Q$, $V_f$, $V_r$, $K_{ma}$, $K_{mb}$, $K_{mp}$, $K_{mq}$,
+$K_{ia}$, $K_{iq}$, $K_{eq}$ & Ping Pong Bi Bi Kinetics &
+\begin{gather*}
+v = \frac{V_f
+\left( A B - P Q /K_{eq} \right) }{A B + K_{mb} A + K_{ma} B \left( 1 +
+  Q/K_{iq}\right)+ K_1 } \\
+\intertext{where}
+K_1 = V_f/(V_r K_{eq})
+\left( K_{mq} P \left( 1 + A/K_{ia} \right) + Q (K_{mp} + P) \right)
+\end{gather*}
+\\ \hline
+
+\end{tabular}
+\caption{Table of rate law functions in SBML (continued).  In all cases, $K_m > 0$, $V_x \geq 0$, $S
+  \geq 0$ and $P \geq 0$.}
+\end{table}
+
+
+\renewcommand{\arraystretch}{1}
+\begin{table}[ht]
+  \begin{tabular}{lp{5.5in}}
+    \toprule
+    \textbf{Symbol} & \textbf{Meaning} \\
+    \midrule
+    $\alpha$	& Effect of $S$ and $P$ on binding of $M$ (if $M<1$, $M$ is inhibitor; if $M>1$, $M$ is activator) \\
+    $A$		& First substrate in two substrate reaction \\
+    $A_c$	& Activator \\
+    $B$		& Second substrate in two substrate reaction \\
+    $I$		& Inhibitor \\
+    $K_1$	& Forward Rate Constant \\
+    $K_2$	& Reverse Rate Constant \\
+    $K_a$	& Activation Constant \\
+    $K_{ac}$	& Catalytic Activation Constant \\
+    $K_{as}$	& Specific Activation Constant \\
+    $K_d$	& Dissociation constant of the elementary step $E + M = EM$ \\
+    $K_{eq}$	& Equilibrium Constant \\
+    $K_{ii}$	& Dissociation constant of the inhibitor from the inactive form of the enzyme \\
+    $K_i$	& Inhibition constant for the substrate. \\
+    $K_{ia}$	& Product inhibition constant of $A$ acting on the reverse reaction \\
+    $K_{ib}$	& Product inhibition constant of $B$ acting on the reverse reaction \\
+    $K_{ic}$	& Catalytic (noncompetitive) inhibition constant \\
+    $K_{ip}$	& Product inhibition constant of $P$ acting on the forward reaction \\
+    $K_{iq}$	& Product inhibition constant of $Q$ acting on the forward reaction \\
+    $K_{is}$	& Specific (competitive) inhibition constant \\
+    $K_m$	& Forward Michaelis-Menten Constant \\
+    $K_{ma}$	& Concentration of $A$ such that $v = V_f/2$  (Michaelis constant) at zero $P$ and zero $Q$ \\
+    $K_{mb}$	& Concentration of $B$ such that $v = V_f/2$  (Michaelis constant) at saturating $A$ and zero $P$ \\
+    $K_{mp}$	& Concentration of $P$ such that $v = -V_r/2$  (Michaelis constant) at zero $A$ and $B$ \\
+    $K_{mp}$	& Product Michaelis-Menten Constant \\
+    $K_{mq}$	& Concentration of $Q$ such that $v = -V_r/2$  (Michaelis constant) at zero $A$ and saturating $P$ \\
+    $K_{ms}$	& Substrate Michaelis-Menten Constant \\
+    $K_s$	& Dissociation constant of the substrate from the active form of the enzyme \\
+    $K_{sa}$	& Dissociation constant of substrate-activation site \\
+    $K_{sc}$	& Dissociation constant of substrate-active site \\
+    $L$		& Equilibrium constant between the active and inactive forms of the enzyme \\
+    $M$		& Modifier \\
+    $M_{0.5}$	& Concentration of $M$ that half-saturates its binding site when $S = 0$, $P=0$ \\
+    $P$		& First product in two product reaction \\
+    $P_{0.05}$	& Product concent. s.t.\ $v = - V_r/2$ when $P = M = 0$ ($V_r$ is limiting rate of reverse reaction) \\
+    $Q$		& Second product in two product reaction \\
+    $S_{0.05}$	& Irreversible rate laws: Substrate concentration such that $v = V_f/2$ when $P = 0, M=0$ \\
+    $V$		& Forward Maximum Velocity \\
+    $V_f$	& Forward Maximum Velocity \\
+    $V_m$	& Forward Maximum Velocity \\
+    $V_r$	& Reverse Maximum Velocity \\
+    $a$		& Ratio of dissociation constant of elementary step $ES + M = ESM$ over that of $E + M = EM$ \\
+    $b$		& Ratio of rate constant of elementary step $ESM \to EM + P$ over that of $ES \to E + P$. \\
+    $h$		& Hill Coefficient \\
+    $n$		& No. binding sites for substrate \& inhibitor (typically the number of monomers in the enzyme) \\
+    \bottomrule
+  \end{tabular}
+  \caption{Table of symbols used in Table~\ref{tab:ratelaws}.}
+\end{table}
+
+
+
+
+\clearpage
+
+%=============================================================================
+% References
+%=============================================================================
+
+\bibliographystyle{apalike}
+\bibliography{strings,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z}
+
+%=============================================================================
+% The end.
+%=============================================================================
+
+\end{document}

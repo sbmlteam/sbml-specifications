@@ -70,8 +70,9 @@ Major releases of SBML are termed \emph{levels}.  SBML Level 2 evolved out
 of SBML Level 1~\citep{hucka:2001}.  All of the structures of Level 1 can
 be mapped in a straightforward fashion to Level~2.  In addition, a large
 subset of the structures in Level~2 can be mapped to Level~1.  However, a
-valid SBML Level~1 document is not a valid SBML Level~2 document or vice
-versa.
+valid SBML Level~1 document is not a valid SBML Level~2 document and a
+valid SBML Level~2 document is not a valid SBML Level~1 document.
+ 
 
 SBML Level 2 was originally created in part by studying the modeling
 facilities provided by the following software systems:
@@ -151,6 +152,16 @@ changes:
   allowing for more flexibility in defining reactions.
   (Sections~\ref{sec:formulas}, \ref{sec:rules} and~\ref{sec:reactions}.)
 
+\item The namespace for identifiers in a model does not contain any
+  built-in symbols; gone, for example, are the predefined rate laws of SBML
+  Level~1.  The approach taken in SBML Level~2 is that each model must
+  itself define whatever functions it needs using the new
+  \class{FunctionDefinition} mechanism.  Although SBML Level~2 \emph{does}
+  define two built-in entities (a symbol representing time and another
+  symbol representing delay functions), these are referenced using a
+  feature of MathML and are not in the same namespace as identifiers
+  defined by a model.  (Section~\ref{sec:mathmltokens}.)
+  
 \item SBML Level~2 makes explicit a previously unstated assumption, that
   the XML encoding of a model uses UTF-8.  SBML documents must refer to the
   UTF-8 encoding in their XML declaration.  (Section~\ref{sec:sbml}.)
@@ -165,16 +176,6 @@ changes:
   define discrete changes in model behavior at specific times during a time
   simulation of the model.  (Section~\ref{sec:model} and \ref{sec:events}.)
   
-\item The namespace for identifiers in a model does not contain any
-  built-in symbols; gone, for example, are the predefined rate laws of SBML
-  Level~1.  The approach taken in SBML Level~2 is that each model must
-  itself define whatever functions it needs using the new
-  \class{FunctionDefinition} mechanism.  Although SBML Level~2 \emph{does}
-  define two built-in entities (a symbol representing time and another
-  symbol representing delay functions), these are referenced using a
-  feature of MathML and are not in the same namespace as identifiers
-  defined by a model.  (Section~\ref{sec:mathmltokens}.)
-  
 \item Unlike in SBML Level~1, unit identifiers in Level~2 are in a separate
   namespace from the namespace used for models, functions, species,
   compartments, reactions and parameters.  Also, the unit names
@@ -183,6 +184,17 @@ changes:
   \class{Unit} structures now have the additional attributes
   \attrib{multiplier} and \attrib{offset} to enable the definition of
   non-SI units.  (Section~\ref{sec:unitdefinitions}.)
+
+\item The \class{Compartment} structure has a new field,
+  \attrib{spatialDimensions}, whose value is a positive integer specifying
+  the number of dimensions in space the compartment possesses.  This
+  enables the definition of such things as two-dimensional membranes.  As a
+  side-effect, the units of species concentration in SBML Level~2 depend on
+  the spatial dimensions of the compartment where the species is located.
+  To support these new capabilities, \attrib{Compartment} now uses a field
+  named \attrib{size} instead of \attrib{volume}, and there are two new
+  built-in units for area and length.  (Sections~\ref{sec:unitdefinitions}
+  and \ref{sec:compartments}.)
 
 \item All attributes representing initial conditions or parameter values,
   including compartment sizes and species concentrations, are optional in
@@ -196,17 +208,6 @@ changes:
   field specifies whether the variables represented by these structures can
   be changed by rules and reactions.  (Sections~\ref{sec:compartments},
   \ref{sec:species} and~\ref{sec:parameters}.)
-  
-\item The \class{Compartment} structure has a new field,
-  \attrib{spatialDimensions}, whose value is a positive integer specifying
-  the number of dimensions in space the compartment possesses.  This
-  enables the definition of such things as two-dimensional membranes.  As a
-  side-effect, the units of species concentration in SBML Level~2 depend on
-  the spatial dimensions of the compartment where the species is located.
-  To support these new capabilities, \attrib{Compartment} now uses a field
-  named \attrib{size} instead of \attrib{volume}, and there are two new
-  built-in units for area and length.  (Sections~\ref{sec:compartments} and
-  \ref{sec:unitdefinitions}.)
   
 \item The \class{Species} structure has a new field,
   \attrib{initialConcentration}, for setting the initial value of a species
@@ -347,7 +348,7 @@ The meaning of each component is as follows:
 A software package can read an SBML model description and translate it
 into its own internal format for model analysis.  For example, a package
 might provide the ability to simulate the model by constructing
-differential equations representing the network and then performing
+differential equations representing the network and then perform
 numerical time integration on the equations to explore the model's dynamic
 behavior.
 
@@ -387,7 +388,7 @@ Every structure composing an SBML Level 2 model definition has a specific
 data type that is derived directly or indirectly from a single abstract
 type called \class{SBase}.  This base type is designed to allow a modeler
 or a software package to attach arbitrary information to each major
-structure in an SBML model.  The definition of \class{SBase} is presented
+structure or list in an SBML model.  The definition of \class{SBase} is presented
 in Figure~\vref{fig:sbase}.
 
 \begin{figure}[ht]
@@ -426,10 +427,8 @@ intended to be seen by humans.  An example of the kind of information that
 would be appropriate to place inside \attrib{notes} is user comments about
 a particular component of the model.  Every data object derived directly or
 indirectly from type \class{SBase} can have a separate value for
-\attrib{notes}, allowing users considerable freedom for annotating their
-models.  A software tool that reads and manipulates SBML is expected to
-provide some mechanism for displaying the contents of \attrib{notes} fields
-in a model.
+\attrib{notes}, allowing users considerable freedom when adding comments to their
+models.
 
 Finally, \class{SBase} includes the field called \attrib{annotation} to
 provide a container for software-generated annotations that are \emph{not}
@@ -516,10 +515,12 @@ The use of XML Namespaces permits multiple applications to place
 annotations on XML elements of a model without risking interference or
 element name collisions.  Annotations stored by different simulation
 packages can thus coexist in the same model definition.  Although XML
-Namespace names (``\texttt{http://www.mysim.org/}'' in the example above)
+Namespace names 
 must be URI references, an XML Namespace name is \emph{not required} to be
 directly usable in the sense of identifying an actual, retrieval document
-or resource on the Internet~\citep{bray:1999}.  The name is simply intended
+or resource on the Internet~\citep{bray:1999}.
+``\texttt{http://www.mysim.org/}'' is a namespace name or URI in the example 
+above.  The name is simply intended
 to enable unique identification of constructs, and using URIs is a common
 and simple way of creating a unique name string.  For the convenience of
 developers of simulation and analysis tools, we reserve certain namespace
@@ -532,20 +533,20 @@ Table~\vref{tab:reserved-urls}.
   \centering
   \begin{tabular}{ll}
     \toprule
-    \texttt{http://www.sbml.org/2001/ns/basis}		& \texttt{http://www.sbml.org/2001/ns/jdesigner}\\
-    \texttt{http://www.sbml.org/2001/ns/biocharon}	& \texttt{http://www.sbml.org/2001/ns/jigcell}\\
-    \texttt{http://www.sbml.org/2001/ns/bioreactor}	& \texttt{http://www.sbml.org/2001/ns/jsim}\\
-    \texttt{http://www.sbml.org/2001/ns/biosketchpad}	& \texttt{http://www.sbml.org/2001/ns/libsbml}\\
-    \texttt{http://www.sbml.org/2001/ns/biospice}	& \texttt{http://www.sbml.org/2001/ns/mathsbml}\\
-    \texttt{http://www.sbml.org/2001/ns/celldesigner}	& \texttt{http://www.sbml.org/2001/ns/mcell}\\
-    \texttt{http://www.sbml.org/2001/ns/cellerator}	& \texttt{http://www.sbml.org/2001/ns/netbuilder}\\
-    \texttt{http://www.sbml.org/2001/ns/copasi}		& \texttt{http://www.sbml.org/2001/ns/pathdb}\\
-    \texttt{http://www.sbml.org/2001/ns/cytoscape}	& \texttt{http://www.sbml.org/2001/ns/promot}\\
-    \texttt{http://www.sbml.org/2001/ns/dbsolve}	& \texttt{http://www.sbml.org/2001/ns/sbedit}\\
-    \texttt{http://www.sbml.org/2001/ns/ecell}		& \texttt{http://www.sbml.org/2001/ns/sigpath}\\
-    \texttt{http://www.sbml.org/2001/ns/gepasi}		& \texttt{http://www.sbml.org/2001/ns/stochsim}\\
-    \texttt{http://www.sbml.org/2001/ns/isys}		& \texttt{http://www.sbml.org/2001/ns/vcell}\\
-    \texttt{http://www.sbml.org/2001/ns/jarnac}		& \texttt{http://www.sbml.org/2001/ns/winscamp}\\
+    \texttt{http://www.sbml.org/2001/ns/basis}      & \texttt{http://www.sbml.org/2001/ns/jdesigner}\\
+    \texttt{http://www.sbml.org/2001/ns/biocharon}  & \texttt{http://www.sbml.org/2001/ns/jigcell}\\
+    \texttt{http://www.sbml.org/2001/ns/bioreactor} & \texttt{http://www.sbml.org/2001/ns/jsim}\\
+    \texttt{http://www.sbml.org/2001/ns/biosketchpad}   & \texttt{http://www.sbml.org/2001/ns/libsbml}\\
+    \texttt{http://www.sbml.org/2001/ns/biospice}   & \texttt{http://www.sbml.org/2001/ns/mathsbml}\\
+    \texttt{http://www.sbml.org/2001/ns/celldesigner}   & \texttt{http://www.sbml.org/2001/ns/mcell}\\
+    \texttt{http://www.sbml.org/2001/ns/cellerator} & \texttt{http://www.sbml.org/2001/ns/netbuilder}\\
+    \texttt{http://www.sbml.org/2001/ns/copasi}     & \texttt{http://www.sbml.org/2001/ns/pathdb}\\
+    \texttt{http://www.sbml.org/2001/ns/cytoscape}  & \texttt{http://www.sbml.org/2001/ns/promot}\\
+    \texttt{http://www.sbml.org/2001/ns/dbsolve}    & \texttt{http://www.sbml.org/2001/ns/sbedit}\\
+    \texttt{http://www.sbml.org/2001/ns/ecell}      & \texttt{http://www.sbml.org/2001/ns/sigpath}\\
+    \texttt{http://www.sbml.org/2001/ns/gepasi}     & \texttt{http://www.sbml.org/2001/ns/stochsim}\\
+    \texttt{http://www.sbml.org/2001/ns/isys}       & \texttt{http://www.sbml.org/2001/ns/vcell}\\
+    \texttt{http://www.sbml.org/2001/ns/jarnac}     & \texttt{http://www.sbml.org/2001/ns/winscamp}\\
     \bottomrule
   \end{tabular}
   \caption{Reserved XML Namespace names in SBML Level 2.}
@@ -570,6 +571,9 @@ model definition.  Other SBML structures can refer to the component using
 this identifier.  Section~\ref{sec:id} defines the data type \class{SId}
 used for the \attrib{id} field, and Section~\ref{sec:namespaces} describes
 the scoping and namespace rules for these identifiers.
+The equality of \class{SId} values is determined by an exact character sequence match, i.e. in a
+case sensitive manner, this applies to all uses of \class{SId} including
+the identification of unit definitions.
 
 In contrast to the \attrib{id} field, the \attrib{name} field is optional
 and is not intended to be used for cross-referencing purposes within a
@@ -601,7 +605,10 @@ for humans to type and read.
 An additional point worth mentioning is although there are restrictions on
 the uniqueness of \attrib{id} values (see Section~\ref{sec:namespaces}
 below), there are no restrictions on the uniqueness of \attrib{name} values
-in a model.  The primary reason is as follows.  A species in an SBML model
+in a model.  This allows a software package to store its component's
+identifiers in an unmodified form in \attrib{name} field even when the
+package's internal schema differs significantly from SBML.
+For example a species in an SBML model
 must be located in a compartment, which means that if the same species
 appears in multiple compartments (e.g., in the context of a transport
 reaction), they must be given different identifiers.  It is currently the
@@ -612,7 +619,6 @@ latter group often want to use the same \attrib{name} but have different
 \attrib{id} values for the differently-localized ``instances'' of the
 species.  The lack of restrictions on \attrib{name} values enables SBML to
 accommodate both philosophies.
-
 
 %-----------------------------------------------------------------------------
 \subsection{Type \class{SId}}
@@ -1196,7 +1202,7 @@ Table~\vref{tab:unitkind}.
 \end{table}
 
 Note that the set of acceptable values for the field \attrib{kind} does not
-include other units defined by \class{UnitDefinition} structures.  This
+include units defined by \class{UnitDefinition} structures.  This
 means that the units definition feature in SBML is not
 hierarchial---user-defined units cannot be built on top of other
 user-defined units, only on top of base units.  SBML differs from CellML in
@@ -1541,7 +1547,7 @@ possible combinations of the \attrib{boundaryCondition} and
     \textbf{\attrib{constant}} & \textbf{\attrib{boundaryCondition}} &
     \textbf{can have} & \textbf{can be} & \textbf{concentration} \\
     \textbf{value} & \textbf{value} & \textbf{assignment} & \textbf{reactant or} & \textbf{is changed by} \\
-    & & \textbf{rule} & \textbf{product}\\
+    & & \textbf{or rate rule} & \textbf{product}\\
     \midrule
     true & true & no & yes & never changes\\
     false & true & yes & yes & rule \\
@@ -1656,9 +1662,9 @@ variable, $f$ is some arbitrary function, and $W$ is a vector of variables
 that may include $x$):
 \begin{center}
 \begin{tabular}{rll}
-(Algebraic rule)    & left-hand side is zero:             & $0 = f(W)$\\
-(Assignment rules)  & left-hand side is a scalar:         & $x = f(W)$\\
-(Rate rule)         & left-hand side is a rate-of-change: & $dx/dt = f(W)$
+\emph{Algebraic}    & left-hand side is zero:             & $0 = f(W)$\\
+\emph{Assignment}  & left-hand side is a scalar:         & $x = f(W)$\\
+\emph{Rate}         & left-hand side is a rate-of-change: & $dx/dt = f(W)$
 \end{tabular}
 \end{center}
 
@@ -1737,27 +1743,27 @@ differ in the precise details depending on which variable is being set:
   compartments.)
   
   \emph{Restrictions}: In a given SBML model, there cannot be both an
-  assignment rule and a \class{SpeciesReference} structure that refer to
+  \class{AssignmentRule} structure and a \class{SpeciesReference} structure that refer to
   the same species.  (See Section~\ref{sec:reactions} for the definition of
   \class{SpeciesReference}.)  This means that an assignment rule cannot be
   defined for a species that is created or destroyed in a reaction.  The
   only exception is when the given species is a boundary condition; i.e.,
   on the \class{Species} structure that defines the species the
   \attrib{boundaryCondition} field is set to ``\attribvalue{true}''.  No
-  more than one \class{AssignmentRule} can refer to a given species in an
+  more than one \class{AssignmentRule} or \class{RateRule} can refer to a given species in an
   SBML model definition.
   
 \item \emph{In the case of a compartment}, an \class{AssignmentRule} sets
   the referenced compartment's size to the size determined by the formula
-  in \attrib{math}.  The overall units of the formula must work out to be
-  the same units as those associated with the compartment; that is, they
+  in \attrib{math}.  The overall units of the formula must be appropriate
+  for the compartment; that is, they
   must be either \quantity{volume}, \quantity{area}, \quantity{length}, or
   \quantity{dimensionless}, depending on whether the compartment's
   \attrib{spatialDimensions} field has value ``\attribvalue{3}'',
   ``\attribvalue{2}'', ``\attribvalue{1}'' or ``\attribvalue{0}'',
   respectively.
   
-  \emph{Restrictions}: No more than one \class{AssignmentRule} can refer to
+  \emph{Restrictions}: No more than one \class{AssignmentRule} or \class{RateRule} can refer to
   a given compartment in an SBML model definition.
   
 \item \emph{In the case of a parameter}, an \class{AssignmentRule} sets the
@@ -1766,7 +1772,7 @@ differ in the precise details depending on which variable is being set:
   those defined for the parameter's initial value (see
   Section~\ref{sec:parameters}).
   
-  \emph{Restrictions}: No more than one \class{AssignmentRule} can refer to
+  \emph{Restrictions}: No more than one \class{AssignmentRule} or \class{RateRule}can refer to
   a given parameter.
 
 \end{itemize}
@@ -1807,13 +1813,13 @@ differ in the precise details depending on which variable is being set:
   only exception is when the given species is a boundary condition; i.e.,
   on the \class{Species} structure that defines the species the
   \attrib{boundaryCondition} field is set to ``\attribvalue{true}''.  No
-  more than one \class{RateRule} can refer to a given species in an SBML
+  more than one \class{RateRule} or \class{AssignmentRule} can refer to a given species in an SBML
   model definition.
   
 \item \emph{In the case of a compartment}, a \class{RateRule} sets the rate
   of change of the compartment's volume to the volume determined by the
-  formula in \attrib{math}.  The overall units of the formula must work out
-  to be the same units as those associated with the compartment, per time;
+  formula in \attrib{math}.  The overall units of the formula must be 
+  appropriate for the compartment;
   that is, they must be either \quantity{volume/time},
   \quantity{area/time}, \quantity{length/time}, or
   \quantity{dimensionless/time}, depending on whether the compartment's
@@ -1821,7 +1827,7 @@ differ in the precise details depending on which variable is being set:
   ``\attribvalue{2}'', ``\attribvalue{1}'' or ``\attribvalue{0}'',
   respectively.
 
-  \emph{Restrictions}: No more than one \class{RateRule} can refer to a
+  \emph{Restrictions}: No more than one \class{RateRule} or \class{AssignmentRule} can refer to a
   given compartment in an SBML model definition.
   
 \item \emph{In the case of a parameter}, a \class{RateRule} sets the rate
@@ -1830,7 +1836,7 @@ differ in the precise details depending on which variable is being set:
   those defined for the parameter's initial value, per time (see
   Section~\ref{sec:parameters}).
   
-  \emph{Restrictions}: No more than one \class{RateRule} can refer to a
+  \emph{Restrictions}: No more than one \class{RateRule} pr \class{AssignmentRule} can refer to a
   given parameter.
 
 \end{itemize}
@@ -2358,12 +2364,15 @@ transitions from false to true.  It is possible for events to \emph{fire} other 
 event assignment can cause an event to \emph{fire}, therefore it is possible for model to be entirely
 encoded in \class{Event} structures.
 
-It is entirely possible for two events to be \emph{executed} simultaneously.  The order in which
-these events are \emph{executed} can be significant. SBML Level 2 does not define the algorithm
-for determining this order (the tie-breaking algorithm).  As a result the results of simulations
-involving events may vary when simultaneous events occur during simulation.  It is anticipated
-that future versions or levels of SBML will define a specific set of tie-breaking algorithms and
-a mechanism for models to indicate which algorithm should be applied during simulation.
+It is entirely possible for two events to be \emph{executed} simultaneously in simulated time.
+It is assumed that, although the precise time at which these events are \emph{executed} is not
+resolved beyond the given point in simulated time, the order in which the events occur is resolved.
+This order can be significant in determining the overall outcome of a given simulation. SBML Level
+2 does not define the algorithm for determining this order (the tie-breaking algorithm).  As a
+result the results of simulations involving events may vary when simultaneous events occur during
+simulation.  It is anticipated that future versions or levels of SBML will define a specific set
+of tie-breaking algorithms and a mechanism for models to indicate which algorithm should be 
+applied during simulation.
 
 Despite the absence of a specific tie-breaking algorithm SBML event simulation is constrained as
 follows. When an event $X$ \emph{fires} another event $Y$ and event $Y$ has zero delay then event
@@ -3287,133 +3296,246 @@ The SBML Level 2 representation of this as follows:
 \subsection{Use of 2 dimensional compartments in a model}
 
 The following example is a model which includes 2 dimensional compartments.
+This model is a fragment of a larger model of
+calcium regulation across the plasma membrane. The
+model includes a calcium influx channel, \texttt{Ca\_channel},
+and a calcium-extruding PMCA pump, \texttt{Ca\_Pump}. The
+model also includes two cytosolic proteins that buffer
+calcium via the \texttt{CalciumCalbindin\_gt\_BoundCytosol}
+and \texttt{CalciumBuffer\_gt\_BoundCytosol} reactions.
 
 \begin{example}
 <?xml version="1.0" encoding="UTF-8"?>
 <sbml xmlns="http://www.sbml.org/sbml/level2" level="2" version="1">
-   <model id="facilitated_ca_diffusion">
-      <listOfCompartments>
-         <compartment id="Extracellular" spatialDimensions="3" />
-         <compartment id="PlasmaMembrane" outside="Extracellular" spatialDimensions="2" />
-         <compartment id="Cytosol" outside="PlasmaMembrane" spatialDimensions="3" />
-         <compartment id="NuclearMembrane" outside="Cytosol" spatialDimensions="2" />
-         <compartment id="Nucleus" outside="NuclearMembrane" spatialDimensions="3" />
-      </listOfCompartments>
-      <listOfSpecies>
-         <species id="CaBPB_C" compartment="Cytosol" initialConcentration="47.17"/>
-         <species id="B_C" compartment="Cytosol" initialConcentration="396.04"/>
-         <species id="CaB_C" compartment="Cytosol" initialConcentration="3.96"/>
-         <species id="Ca_N" compartment="Nucleus" initialConcentration="0.1"/>
-         <species id="Ca_EC" compartment="Extracellular" initialConcentration="1000"/>
-         <species id="CaBP_N" compartment="Nucleus" initialConcentration="202.83"/>
-         <species id="CaBPB_N" compartment="Nucleus" initialConcentration="47.17"/>
-         <species id="Ca_C" compartment="Cytosol" initialConcentration="0.1"/>
-         <species id="CaCh_PM" compartment="PlasmaMembrane" initialConcentration="1"/>
-         <species id="CaPump_PM" compartment="PlasmaMembrane" initialConcentration="1"/>
-         <species id="CaBP_C" compartment="Cytosol" initialConcentration="202.83"/>
-      </listOfSpecies>
-      <listOfRules>
-         <parameterRule type="scalar" id="J_Calbindin" formula="(Pcalbindin * (CaBP_C - CaBP_N))"/>
-         <parameterRule type="scalar" id="J_Ca_Pump" formula="((Vmax * kP * ((Ca_C - Ca_Rest) / (Ca_C + kP)) / (Ca_Rest + kP)) * CaPump_PM)"/>
-         <parameterRule type="scalar" id="Vmax" formula=" - 4000.0"/>
-         <parameterRule type="scalar" id="J_CalbindinBound" formula="(Pcalbindin_bound * (CaBPB_C - CaBPB_N))"/>
-         <parameterRule type="scalar" id="J_Ca_channel" formula="(J0 * Kc * (Ca_EC - Ca_C) / (Kc + Ca_C) * CaCh_PM)"/>
-      </listOfRules>
-      <listOfReactions>
-         <reaction id="CalciumCalbindin_gt_BoundCytosol" fast="true">
-            <listOfReactants>
-               <speciesReference specie="CaBP_C"/>
-               <speciesReference specie="Ca_C"/>
-            </listOfReactants>
-            <listOfProducts>
-               <speciesReference specie="CaBPB_C"/>
-            </listOfProducts>
-            <kineticLaw formula="(((Kf_CalciumCalbindin_BoundCytosol * CaBP_C) * Ca_C) - (Kr_CalciumCalbindin_BoundCytosol * CaBPB_C))">
-               <listOfParameters>
-                  <parameter id="Kf_CalciumCalbindin_BoundCytosol" value="20.0"/>
-                  <parameter id="Kr_CalciumCalbindin_BoundCytosol" value="8.6"/>
-               </listOfParameters>
-            </kineticLaw>
-         </reaction>
-         <reaction id="CaciumCalbindin_gt_BoundNucleus" fast="true">
-            <listOfReactants>
-               <speciesReference specie="Ca_N"/>
-               <speciesReference specie="CaBP_N"/>
-            </listOfReactants>
-            <listOfProducts>
-               <speciesReference specie="CaBPB_N"/>
-            </listOfProducts>
-            <kineticLaw formula="(((Kf_CaciumCalbindin_BoundNucleus * Ca_N) * CaBP_N) - (Kr_CaciumCalbindin_BoundNucleus * CaBPB_N))">
-               <listOfParameters>
-                  <parameter id="Kf_CaciumCalbindin_BoundNucleus" value="20.0"/>
-                  <parameter id="Kr_CaciumCalbindin_BoundNucleus" value="8.6"/>
-               </listOfParameters>
-            </kineticLaw>
-         </reaction>
-         <reaction id="CalciumBuffer_gt_BoundCytosol" fast="true">
-            <listOfReactants>
-               <speciesReference specie="Ca_C"/>
-               <speciesReference specie="B_C"/>
-            </listOfReactants>
-            <listOfProducts>
-               <speciesReference specie="CaB_C"/>
-            </listOfProducts>
-            <kineticLaw formula="(((Kf_CalciumBuffer_BoundCytosol * Ca_C) * B_C) - (Kr_CalciumBuffer_BoundCytosol * CaB_C))">
-               <listOfParameters>
-                  <parameter id="Kf_CalciumBuffer_BoundCytosol" value="0.1"/>
-                  <parameter id="Kr_CalciumBuffer_BoundCytosol" value="1.0"/>
-               </listOfParameters>
-            </kineticLaw>
-         </reaction>
-         <reaction id="Calcium">
-            <listOfReactants />
-            <listOfProducts />
-            <kineticLaw formula="(Pcalcium * (Ca_C - Ca_N))">
-               <listOfParameters>
-                  <parameter id="Pcalcium" value="150.0"/>
-               </listOfParameters>
-            </kineticLaw>
-         </reaction>
-         <reaction id="Calbindin">
-            <listOfReactants />
-            <listOfProducts />
-            <kineticLaw formula="J_Calbindin">
-               <listOfParameters>
-                  <parameter id="Pcalbindin" value="30.0"/>
-               </listOfParameters>
-            </kineticLaw>
-         </reaction>
-         <reaction id="Ca_Pump">
-            <listOfReactants />
-            <listOfProducts />
-            <kineticLaw formula="J_Ca_Pump">
-               <listOfParameters>
-                  <parameter id="kP" value="0.25"/>
-                  <parameter id="Ca_Rest" value="0.1"/>
-               </listOfParameters>
-            </kineticLaw>
-         </reaction>
-         <reaction id="CalbindinBound">
-            <listOfReactants />
-            <listOfProducts />
-            <kineticLaw formula="J_CalbindinBound">
-               <listOfParameters>
-                  <parameter id="Pcalbindin_bound" value="30.0"/>
-               </listOfParameters>
-            </kineticLaw>
-         </reaction>
-         <reaction id="Ca_channel">
-            <listOfReactants />
-            <listOfProducts />
-            <kineticLaw formula="J_Ca_channel">
-               <listOfParameters>
-                  <parameter id="J0" value="0.014"/>
-                  <parameter id="Kc" value="0.5"/>
-               </listOfParameters>
-            </kineticLaw>
-         </reaction>
-      </listOfReactions>
-   </model>
+    <model id="facilitated_ca_diffusion">
+        <listOfUnitDefinitions>
+            <unitDefinition id="micromolar">
+                <listOfUnits>
+                    <unit kind="mole" scale="-6"/>
+                    <unit kind="litre" exponent="-1"/>
+                </listOfUnits>
+            </unitDefinition>
+        </listOfUnitDefinitions>
+        <listOfCompartments>
+            <compartment id="Extracellular" spatialDimensions="3"/>
+            <compartment id="PlasmaMembrane" outside="Extracellular" spatialDimensions="2"/>
+            <compartment id="Cytosol" outside="PlasmaMembrane" spatialDimensions="3"/>
+        </listOfCompartments>
+        <listOfSpecies>
+            <species
+              id="CaBPB_C"
+              compartment="Cytosol"
+              initialConcentration="47.17"
+              units="micromolar"/>
+            <species
+              id="B_C"
+              compartment="Cytosol"
+              initialConcentration="396.04"
+              units="micromolar"/>
+            <species
+              id="CaB_C"
+              compartment="Cytosol"
+              initialConcentration="3.96"
+              units="micromolar"/>
+            <species
+              id="Ca_EC"
+              compartment="Extracellular"
+              initialConcentration="1000"
+              units="micromolar"/>
+            <species
+              id="Ca_C"
+              compartment="Cytosol"
+              initialConcentration="0.1"
+              units="micromolar"/>
+            <species
+              id="CaCh_PM"
+              compartment="PlasmaMembrane"
+              initialConcentration="1"
+              units="micromolar"/>
+            <species
+              id="CaPump_PM"
+              compartment="PlasmaMembrane"
+              initialConcentration="1"
+              units="micromolar"/>
+            <species
+              id="CaBP_C"
+              compartment="Cytosol"
+              initialConcentration="202.83"
+              units="micromolar"/>
+        </listOfSpecies>
+        <listOfReactions>
+            <reaction id="CalciumCalbindin_gt_BoundCytosol" fast="true">
+                <listOfReactants>
+                    <speciesReference species="CaBP_C"/>
+                    <speciesReference species="Ca_C"/>
+                </listOfReactants>
+                <listOfProducts>
+                    <speciesReference species="CaBPB_C"/>
+                </listOfProducts>
+                <kineticLaw>
+                           <notes>
+                           <p xmlns="http://www.w3.org/1999/xhtml">
+                               (((Kf_CalciumCalbindin_BoundCytosol * CaBP_C) * Ca_C) -
+                                  (Kr_CalciumCalbindin_BoundCytosol * CaBPB_C))
+                           </p>
+                           </notes>
+                    <math xmlns="http://www.w3.org/1998/Math/MathML">
+                        <apply>
+                            <minus/>
+                            <apply>
+                                <times/>
+                                <ci> Kf_CalciumCalbindin_BoundCytosol </ci>
+                                <ci> CaBP_C </ci>
+                                <ci> Ca_C </ci>
+                            </apply>
+                            <apply>
+                                <times/>
+                                <ci> Kr_CalciumCalbindin_BoundCytosol </ci>
+                                <ci> CaBPB_C </ci>
+                            </apply>
+                        </apply>
+                    </math>
+                         <listOfParameters>
+                            <parameter id="Kf_CalciumCalbindin_BoundCytosol" value="20.0"/>
+                            <parameter id="Kr_CalciumCalbindin_BoundCytosol" value="8.6"/>
+                         </listOfParameters>
+                </kineticLaw>
+            </reaction>
+            <reaction id="CalciumBuffer_gt_BoundCytosol" fast="true">
+                <listOfReactants>
+                    <speciesReference species="Ca_C"/>
+                    <speciesReference species="B_C"/>
+                </listOfReactants>
+                <listOfProducts>
+                    <speciesReference species="CaB_C"/>
+                </listOfProducts>
+                <kineticLaw>
+                    <notes>
+                      <p xmlns="http://www.w3.org/1999/xhtml">
+                        (((Kf_CalciumBuffer_BoundCytosol * Ca_C) * B_C) -
+                            (Kr_CalciumBuffer_BoundCytosol * CaB_C))
+                      </p>
+                    </notes>
+                    <math xmlns="http://www.w3.org/1998/Math/MathML">
+                        <apply>
+                            <minus/>
+                            <apply>
+                                <times/>
+                                <ci> Kf_CalciumBuffer_BoundCytosol </ci>
+                                <ci> Ca_C </ci>
+                                <ci> B_C </ci>
+                            </apply>
+                            <apply>
+                                <times/>
+                                <ci> Kr_CalciumBuffer_BoundCytosol </ci>
+                                <ci> CaB_C </ci>
+                            </apply>
+                        </apply>
+                    </math>
+                    <listOfParameters>
+                        <parameter id="Kf_CalciumBuffer_BoundCytosol" value="0.1"/>
+                        <parameter id="Kr_CalciumBuffer_BoundCytosol" value="1.0"/>
+                    </listOfParameters>
+                </kineticLaw>
+            </reaction>
+            <reaction id="Ca_Pump">
+                <listOfReactants>
+                    <speciesReference species="Ca_C"/>
+                </listOfReactants>
+                <listOfProducts>
+                    <speciesReference species="Ca_EC"/>
+                </listOfProducts>
+                <listOfModifiers>
+                    <modifierSpeciesReference species="CaPump_PM"/>
+                </listOfModifiers>
+                <kineticLaw>
+                    <notes>
+                      <p xmlns="http://www.w3.org/1999/xhtml">
+                        ((Vmax * kP * ((Ca_C - Ca_Rest) / (Ca_C + kP)) / (Ca_Rest + kP)) *
+                            CaPump_PM)
+                      </p>
+                    </notes>
+                    <math xmlns="http://www.w3.org/1998/Math/MathML">
+                        <apply>
+                            <divide/>
+                            <apply>
+                                <times/>
+                                <ci> Vmax </ci>
+                                <ci> kP </ci>
+                                <ci> CaPump_PM </ci>
+                                <apply>
+                                    <minus/>
+                                    <ci> Ca_C </ci>
+                                    <ci> Ca_Rest </ci>
+                                </apply>
+                            </apply>
+                            <apply>
+                                <times/>
+                                <apply>
+                                    <plus/>
+                                    <ci> Ca_C </ci>
+                                    <ci> kP </ci>
+                                </apply>
+                                <apply>
+                                    <plus/>
+                                    <ci> Ca_Rest </ci>
+                                    <ci> kP </ci>
+                                </apply>
+                            </apply>
+                        </apply>
+                    </math>
+                    <listOfParameters>
+                        <parameter id="Vmax" value="-4000"/>
+                        <parameter id="kP" value="0.25"/>
+                        <parameter id="Ca_Rest" value="0.1"/>
+                    </listOfParameters>
+                </kineticLaw>
+            </reaction>
+            <reaction id="Ca_channel">
+                <listOfReactants>
+                    <speciesReference species="Ca_EC"/>
+                </listOfReactants>
+                <listOfProducts>
+                    <speciesReference species="Ca_C"/>
+                </listOfProducts>
+                <listOfModifiers>
+                    <modifierSpeciesReference species="CaCh_PM"/>
+                </listOfModifiers>
+                <kineticLaw>
+                    <notes>
+                      <p xmlns="http://www.w3.org/1999/xhtml">
+                        (J0 * Kc * (Ca_EC - Ca_C) / (Kc + Ca_C) * CaCh_PM)
+                      </p>
+                    </notes>
+                    <math xmlns="http://www.w3.org/1998/Math/MathML">
+                        <apply>
+                            <divide/>
+                            <apply>
+                                <times/>
+                                <ci> CaCh_PM </ci>
+                                <ci> JO </ci>
+                                <ci> Kc </ci>
+                                <apply>
+                                    <minus/>
+                                    <ci> Ca_EC </ci>
+                                    <ci> Ca_C </ci>
+                                </apply>
+                            </apply>
+                            <apply>
+                                <plus/>
+                                <ci> Kc </ci>
+                                <ci> Ca_C </ci>
+                            </apply>
+                        </apply>
+                    </math>
+                    <listOfParameters>
+                        <parameter id="J0" value="0.014"/>
+                        <parameter id="Kc" value="0.5"/>
+                    </listOfParameters>
+                </kineticLaw>
+            </reaction>
+        </listOfReactions>
+    </model>
 </sbml>
 \end{example}
 
@@ -3472,7 +3594,7 @@ features that are under consideration to be included in SBML Level~3:
 
 \item \emph{Connections}.  This will be a mechanism for describing the
   connections between items in an array.  For example, it should be
-  possible to create a 2-D array of compartments and then a 3-D array of
+  possible to create a 2-D array of compartments and then a 4-D array of
   reactions which transport species between the compartments, where the
   third dimension is the connections between the compartments.  Two
   possible ways of describing a connection scheme are: (1) sparse/explicit,
@@ -3480,8 +3602,11 @@ features that are under consideration to be included in SBML Level~3:
   patterns of points; (2) algebraic, where a conditional equation describes
   whether two objects are connected.
 
-\item \emph{Geometry}.  We will develop a scheme for representing the 3-D
-  structure of compartments.
+\item \emph{Geometry}.  
+This will enable the encoding of the spatial characteristics of models
+including the geometry of compartments, the diffusion properties of species
+and the specification of different species concentrations across different
+regions of a cell.
 
 \item \emph{Model Composition}.  This will enable a large model to be built up out
   of instances of other models.  It will also allow the reuse of model
@@ -3493,8 +3618,9 @@ features that are under consideration to be included in SBML Level~3:
     to contain the combinatorial explosion of objects that often results from these
     types of models. 
 
-\item \emph{Component Identification}.  This will enable components to be
-  described using some stable universal identification scheme.
+\item \emph{Controlled Vocabularies}.  This will enable models and model components
+to be labelled with instances of controlled vocabularies.  The model vocabulary
+will describe the SBML features used by the model.
 
 \item \emph{Diagrams}.  This feature will allow components to be
   annotated with data to enable the display of the model in a diagram.  
@@ -3519,6 +3645,14 @@ Conditional rules would enable the expression of the following example:
 \end{equation*}
 where $s$ is not determined by the rule when $s \leq 0$.
 
+\item \emph{Rules for Initial Conditions}.
+This will enable the encoding of rules that are only executed at the start of a simulation
+i.e. set initial conditions.  These rules will be similar to assignment rules and are evaluated
+in the same sequence as assignment rules but only in the very first instance of simulation.
+
+\item \emph{Tie-breaking algorithm}
+This will include a controlled vocabulary and associated attribute on a model that indicates
+the simultaneous event tie-breaking algorithm that is required to correctly simulate the model.
 \end{itemize}
 
 

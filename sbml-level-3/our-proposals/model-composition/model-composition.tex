@@ -38,7 +38,7 @@ community and to provoke alternative proposals.
 This proposal is designed to provide an alternative permutation of ideas
 proposed by Martin Ginkel~\citep{ginkel:2002} and Jonathan Webb~\citep{webb:2003}.
 This proposal is designed with a proposal for arrays~\citep{finney:2003} in mind
-and that is one important motivations for the creation of this proposal.
+and is one important motivations for the creation of this proposal.
 
 Throughout this
 document issues that the author believes will require further
@@ -53,7 +53,6 @@ attributes are meant to be present in SBML Level 3.
 All types proposed in this document will be derived from the
 \texttt{SBase} type.
 
-Complete examples of models using the proposed structures are given in section~\ref{sec:examples}.
 
 \section{Acknowledgements}
 
@@ -62,24 +61,30 @@ This proposal has benefitted from discussions the author had with Martin and Jon
 
 \section{Overview}
 
-A UML diagram for the whole proposal is shown in~\ref{fig:model-composition}.
+A UML diagram for the proposal is shown in figure~\ref{fig:model-composition-uml}.
 
 \begin{figure}[h]
   \vspace*{8pt}
   \centering
-  \includegraphics[scale = 0.7]{model-composition}
+  \includegraphics[scale = 0.7]{model-composition-uml}
   \caption{The types and attributes introduced into SBML by this proposal}
-  \label{fig:model-composition}
+  \label{fig:model-composition-uml}
 \end{figure}
 
-A model would have an optional lists of
+A under this proposal a \class{Model} structure would have an optional lists of
 \class{Model} (see section~\ref{sec:submodels}),
-\class{Instance} (see section~\ref{sec:instances})
+\class{Instance} (see section~\ref{sec:instances}),
 \class{Link} (see section~\ref{sec:links})
 and \class{Port} (see section~\ref{sec:ports}) structures.
 Section~\ref{sec:objectreferences} describes the
 generic mechanism for referring to objects in models that is used in this
 proposal.
+Complete examples of models using these proposed structures is given in section~\ref{sec:linkexamples}.
+
+The new structures attached to \class{Model} structures are sufficient for model composition however section~\ref{sec:directlinks}
+describes modifications to existing SBML Level 2 components like \class{SimpleSpeciesReference}
+which enables this proposal to be more flexible.  An example is given in section~\ref{sec:egdirectlinks} which
+demonstrates this feature.
 
 \section{Submodels}
 \label{sec:submodels}
@@ -95,6 +100,8 @@ composed model (see section~\ref{sec:instances}).
 
 The following example shows a submodel enclosed in another model.  The submodel \texttt{inner} is redundant as no instance
 of it exists in the \texttt{outer} model.
+
+\pagebreak
 
 \begin{example}
 <?xml version="1.0"?>
@@ -157,7 +164,7 @@ of it exists in the \texttt{outer} model.
 
 \subsection{Libraries of models}
 
-A SBML stream can be interpreted as a library of models if the top-level \texttt{Model} structure only contains a list of sub-models.  The previous
+A SBML stream can be interpreted as a library of models if the top level \texttt{Model} structure only contains a list of submodels.  The previous
 example would not be considered a library.
 
 \section{Instances}
@@ -165,7 +172,7 @@ example would not be considered a library.
 
 Under this proposal a model can be composed of instances of submodels through the use
 of \class{Instance} structures.  An \class{Instance} structure refers to a
-\class{Model} structure.  A \class{Instance} structure simply represents a copy of
+\class{Model} structure.  An \class{Instance} structure simply represents a copy of
 that \class{Model} structure within the current model.
 
 An \texttt{Instance} structure uses XLink~\citep{derose:2001} attributes to refer to
@@ -258,14 +265,13 @@ Consider a \class{ObjectRef} structure enclosed inside another \class{ObjectRef}
 structure where the enclosing structure refers to an instance.
 The enclosed structure can refer to a component in the
 submodel referenced by that instance.  If this referenced component is an
-instance then the process continues recursively building up a path to a component
-in the tree of instances.
+instance then the process continues recursively building up a path to a component.
 
 Consider a \class{ObjectRef} structure enclosed inside another \class{ObjectRef}
 structure where the enclosing structure refers to a reaction.
 The enclosed structure can refer only to parameters defined within the reaction.
 
-This scheme deliberately cannot create references to models or reactions.
+This scheme deliberately cannot create references to instances, models or reactions.
 
 In the following examples the outer \class{ObjectRef} is contained in arbitrarily
 named field \attrib{test}.  All these examples are located in the top level model
@@ -313,7 +319,7 @@ Level 3 features such as arrays.
 \label{sec:links}
 
 To enable models to be meaningfully composed linkages between instances need to be
-created.  A model can contain a set of \class{Link} elements which contain 2
+created.  A model can contain a set of \class{Link} elements each of which contain 2
 \class{ObjectRef}
 fields: \attrib{from} and \attrib{to}.
 These fields can only refer to ports, species, parameter and compartment components
@@ -326,8 +332,8 @@ merges with the object referenced by the \attrib{to} field (\emph{to object}) to
 become the same entity.  These objects are called the referenced objects. 
 The attribute values 
 of the \emph{to object}
-are replaced by those of the \emph{from object}.  An attribute value without a default
-value (e.g. \attrib{initialAmount} on
+are replaced by those of the \emph{from object}.  The value of an optional attribute without a default
+ (e.g. \attrib{initialAmount} on
 \class{Species}) is either taken from the referenced object on which the attribute value is
 supplied or from the \emph{from object} if it is supplied
 by both objects.  Structures (e.g. \class{SpeciesReference}) that refer to either
@@ -410,7 +416,7 @@ of the networks.  A modeler can't anticipate all the connections that may be dis
 networks.  What works in software forward engineering may not work in biochemical network reverse engineering.
 
 This proposal doesn't enforce the use of interfaces but does allow the definition of model interfaces and
-the linking to/from objects on an interface.  Under this proposal it is valid to use and ignore model interfaces.
+the linking to/from objects on an interface.  Under this proposal it is valid to simultaneously use and ignore model interfaces.
 
 Under this proposal a model's interface is defined by the list of \class{Port} structures contained in the model.
 A \class{Port} structure has an object reference field which refers to a given component within the model (including
@@ -428,10 +434,10 @@ The \attrib{abstract} field has only a documentation function: tools may or may 
 A \class{Link} structure references a port by using the port's \attrib{id} field value.
 The semantics of such a link are identical to a link that references the object referenced by the port.
 
-\section{Examples}
-\label{sec:examples}
+\section{Examples using Links}
+\label{sec:linkexamples}
 
-This section contains complete model examples.
+This section contains complete model examples using links.
 
 \subsection{Model Composition Without Ports}
 \label{sec:eg}
@@ -441,12 +447,14 @@ Figure~\ref{fig:eg} shows the important components and relationships of the foll
   \vspace*{8pt}
   \centering
   \includegraphics[scale = 0.7]{eg}
-  \caption{The structure of the \texttt{outer} model}.
+  \caption{The structure of the \texttt{outer} model.
   The rounded rectangles are compartments.
-  The rectangles are model instances. Dashed arrows are links.
-  Arrows are reactions.
+  The proper rectangles are model instances. Dashed arrows are links.
+  Solid arrows are reactions.}
   \label{fig:eg}
 \end{figure}
+
+\pagebreak
 
 \begin{example}
 <?xml version="1.0"?>
@@ -527,7 +535,8 @@ Figure~\ref{fig:eg-implied} shows the structure implied by the \texttt{outer} ex
 \subsection{Model Composition with Ports}
 \label{sec:egwithports}
 
-Figure~\ref{fig:egwithports} shows the important components and relationships of the following example model
+Figure~\ref{fig:egwithports} shows the important components and relationships of the following example model.
+The implied structure of this model is the same as that shown in figure~\ref{fig:eg-implied}.
 \begin{figure}[h]
   \vspace*{8pt}
   \centering
@@ -607,6 +616,264 @@ Figure~\ref{fig:egwithports} shows the important components and relationships of
 \end{example}
 
 %-----------------------------------------------------------------------
+
+\section{Direct Links}
+\label{sec:directlinks}
+
+One of the problems with the proposal as described in the previous sections
+is that some forms of model composition that ought to be simple are less than
+straightforward.  For example consider the composition of two models together
+simply by creating a reaction between them (an outer model contains two instances
+and a reaction).  Using the above form we would have to create new species
+for all the reaction's products, reactants and modifiers.  These species would be linked
+to the appropriate species inside the instances.  A more appropriate approach
+would be to enable the \class{SimpleSpeciesReference} structures of the reaction
+to reference the species inside the instances directly.
+This section proposed some modifications to existing structures of SBML
+to facilitate this kind of direct link.
+
+Under this proposal, as shown in figure~\ref{fig:model-composition}, types like
+\class{Species} have an additional field of type 
+\class{ObjectRef} which can refer to objects inside instances.  This field is an
+alternative to an existing \class{SId} field.
+
+On \class{Compartment} the \class{ObjectRef} field \attrib{outsideLink}
+is an alternative to the \class{SId} field \attrib{outside}.  Similarly on \class{Species} \attrib{compartmentLink} is an
+alternative to \attrib{compartment} and on \class{SpeciesReference} \attrib{speciesLink} is
+an alternative to \attrib{species}.
+In each of the types one and only one of
+these fields (\class{SId} or \class{ObjectRef}) can have a value.
+For example \class{Species} structures can contain
+a value for \attrib{compartment} or \attrib{compartmentLink} but not both.
+It is possible for both the \class{SId} or \class{ObjectRef} fields to be
+omitted.  The semantics of this case are described in detail in section~\ref{sec:missinglinks}.
+For the moment the case where one of the fields is present is considered.
+
+In each case the \class{ObjectRef} field
+can refer to an object of the appropriate type inside any instance: \class{Compartment}
+in the case of \attrib{compartmentLink} and \attrib{outsideLink}, \class{Species} in the case
+of \attrib{speciesLink}. Section~\ref{sec:egdirectlinks} has an examples of a complete model using these fields.
+
+
+The following example fragment is of a reaction transforming species \texttt{f} in instance \texttt{a} 
+into species \texttt{e} in instance \texttt{b}.
+\begin{example}
+<reaction id="reaction_1" reversible="false">
+    <listOfReactants>
+        <speciesReference stoichiometry="1">
+            <speciesLink object="a">
+                <objectRef object="f"/>
+            </speciesLink>
+        </speciesReference>
+    </listOfReactants>
+    <listOfProducts>
+        <speciesReference stoichiometry="1">
+            <speciesLink object="b">
+                <objectRef object="e"/>
+            </speciesLink>
+        </speciesReference>
+    </listOfProducts>
+</reaction>
+\end{example}
+
+\subsection{Direct links using ports}
+
+These new \class{ObjectRef} fields can reference port objects of the appropriate type in which
+case the direct link is equivalent to a direct link to the object referenced by the port structure.
+
+\subsection{Direct links in math expressions}
+
+To support direct links in math expressions we we
+use a SBML specific operator via the the MathML \texttt{csymbol} element.
+This SBML operator has the URI, \texttt{http://www.sbml.org/symbols/instanceselector}.
+The \texttt{instanceselector} that takes an 2 arguments: the first is an instance of a submodel
+the second argument is an object inside that instance.
+
+For example we can extend the previous fragment to contain a simple kinetic law referring to the reactant.
+
+\begin{example}
+<reaction id="reaction_1" reversible="false">
+    <listOfReactants>
+        <speciesReference stoichiometry="1">
+            <speciesLink object="a">
+                <objectRef object="f"/>
+            </speciesLink>
+        </speciesReference>
+    </listOfReactants>
+    <listOfProducts>
+        <speciesReference stoichiometry="1">
+            <speciesLink object="b">
+                <objectRef object="e"/>
+            </speciesLink>
+        </speciesReference>
+    </listOfProducts>
+    <kineticLaw>
+        <math 
+            <apply>
+                <times/>
+                <cn>0.1</cn>
+                <apply>
+                    <csymbol
+                        encoding="SBML"
+                        definitionURL="http://www.sbml.org/symbols/instanceselector">
+                        .
+                    </csymbol>
+                    <ci>a</ci>
+                    <ci>f</ci>
+                </apply>
+            </apply>    
+        </math>
+    </kienticLaw>
+</reaction>
+\end{example}
+
+\subsection{Semantics of Missing Links}
+\label{sec:missinglinks}
+
+\subsubsection{Species}
+
+The figure~\ref{fig:model-composition} shows that the attributes \attrib{compartment} and \attrib{compartmentLink}
+on the \class{Species} type are optional.  Thus it is possible to create a model containing species which are not
+located in a given compartment.  Model composition enables such a model to be used in a submodel so that located
+species are linked to or from the unlocated species.  The result is model in which all the species are correctly located.
+A model which is composed in such a way that species are left unlocated is incomplete.  This feature should
+be used with care.  All unlocated species have eventually to be located by links which limits the utility of this feature.
+There is no concept of a default compartment.  This feature is useful if we wish to use model composition to implement
+parameter sets.
+
+\emph{issue}
+
+Do we really want this?
+
+\subsubsection{SimpleSpeciesReference}
+
+Although figure~\ref{fig:model-composition} shows that the attributes \attrib{species} and \attrib{speciesLink}
+on the \class{SimpleSpeciesReference} type are optional one of these attributes must always be present on
+\class{SimpleSpeciesReference}
+structures.  (There is no mechanism by which these structures can be linked together to ensure that the species
+is referenced correctly).
+
+\subsubsection{Compartment}
+
+The figure~\ref{fig:model-composition} shows that the attributes \attrib{outside} and \attrib{outsideLink}
+on the \class{Compartment} type are optional.  In SBML Level 2 \attrib{outside} is optional and thus
+this attribute's semantics do not change in this proposal
+
+\section{Example of Direct links}
+\label{sec:egdirectlinks}
+
+The following model consists of two instances of a simple submodel.
+The submodel contains two species with a reaction between them.
+The top level model contains a reaction which links the two submodels
+together.  Figure~\ref{fig:egdirectlinks} shows the important components and relationships 
+of the model.
+\begin{figure}[h]
+  \vspace*{8pt}
+  \centering
+  \includegraphics[scale = 0.7]{egdirectlinks}
+  \caption{The structure of the \texttt{outer2} model}.
+  \label{fig:egdirectlinks}
+\end{figure}
+
+\pagebreak
+
+\begin{example}
+<?xml version="1.0"?>
+<sbml xmlns="http://www.sbml.org/sbml/level3" version="1" level="3">
+    <model id="outer2">
+        <listOfReactions>
+            <reaction id="reaction_1" reversible="false">
+                <listOfReactants>
+                    <speciesReference stoichiometry="1">
+                        <speciesLink object="a">
+                            <objectRef object="f"/>
+                        </speciesLink>
+                    </speciesReference>
+                </listOfReactants>
+                <listOfProducts>
+                    <speciesReference stoichiometry="1">
+                        <speciesLink object="b">
+                            <objectRef object="e"/>
+                        </speciesLink>
+                    </speciesReference>
+                </listOfProducts>
+                <kineticLaw>
+                    <math 
+                        <apply>
+                            <times/>
+                            <cn>0.1</cn>
+                            <apply>
+                                <csymbol
+                                    encoding="SBML" 
+                                    definitionURL=
+                                        "http://www.sbml.org/symbols/instanceselector">
+                                    .
+                                </csymbol>
+                                <ci>a</ci>
+                                <ci>f</ci>
+                            </apply>
+                        </apply>    
+                    </math>
+                </kienticLaw>
+            </reaction>
+        </listOfReactions>
+        <listOfSubmodels>
+            <model id="X">
+                <listOfCompartments>
+                    <compartment id="compartmentOne" volume="1"/>
+                </listOfCompartments>
+                <listOfSpecies>
+                    <species id="e" initialAmount="0" compartment="compartmentOne">
+                    <species id="f" initialAmount="0" compartment="compartmentOne">
+                </listOfSpecies>
+                <listOfReactions>
+                    <reaction id="reaction_1" reversible="false">
+                        <listOfReactants>
+                            <speciesReference species="e" stoichiometry="1"/>
+                        </listOfReactants>
+                        <listOfProducts>
+                            <speciesReference species="f" stoichiometry="1"/>
+                        </listOfProducts>
+                    </reaction>
+                </listOfReactions>
+            </model>
+        </listOfSubModels>
+        <listOfInstances>
+            <instance
+                id="a" 
+                xlink:type="simple"
+                xlink:href="#xpointer(/sbml/model/listOfSubmodels/model[@id=\%22X\%22])"/>
+            <instance
+                id="b" 
+                xlink:type="simple"
+                xlink:href="#xpointer(/sbml/model/listOfSubmodels/model[@id=\%22X\%22])"/>
+        </listOfInstances>
+        <listOfLinks>
+            <link>
+                <from object="a">
+                    <subobject object="compartmentOne"/>
+                </from>
+                <to object="b">
+                    <subobject object="compartmentOne"/>
+                </to>
+            </link>
+        </listOfLinks>
+    </model>
+</sbml>
+\end{example}
+
+Figure~\ref{fig:egdirectlinks-implied} shows the model implied by \texttt{outer2}.
+\begin{figure}[h]
+  \vspace*{8pt}
+  \centering
+  \includegraphics[scale = 0.7]{egdirectlinks-implied}
+  \caption{The structure implied by the \texttt{outer2} model}.
+  \label{fig:egdirectlinks-implied}
+\end{figure}
+
+The array proposal contains a more extensive model that combines
+array and model composition features.
+
 %=============================================================================
 % References
 %=============================================================================

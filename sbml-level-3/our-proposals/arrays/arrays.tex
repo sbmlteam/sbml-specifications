@@ -43,46 +43,42 @@ document issues that the authors believe will require further
 discussion have been highlighted.
 
 For brevity the text of this document is with reference to SBML
-Level 2~\citep{finney:2002f} i.e. features are described in terms
-of changes to SBML Level 2.  
-This document
-also refers to another Level 3 proposal on model composition~\citep{finney:2003b}.
-In addition for brevity the UML diagrams in this proposal
-show only new attributes and types for SBML Level 3.  For SBML Level 2 types Level 2
+Level 2~\citep{finney:2002f} and a model composition proposal~\citep{finney:2003b}  i.e. features are described in terms
+of changes to SBML Level 2 combined with the model composition proposal.  
+All the changes proposed in this document are shown in the UML diagram in figure~\ref{fig:model}.
+For brevity this diagram
+shows only new attributes and types for SBML Level 3.  For SBML Level 2 types Level 2
 attributes are meant to be present in SBML Level 3.  All the types and attributes
 proposed in the model composition are assumed to be present.
 All types proposed in this document will be derived from the
 \texttt{SBase} type.
 
-\section{Models}
-
-The proposed structure of the \texttt{Model} type is shown in
-figure~\ref{fig:model}. A model would have an optional list of
-\texttt{IntegerParameter} structures.
 
 \begin{figure}[h]
   \vspace*{8pt}
   \centering
   \includegraphics[scale = 0.7]{model}
-  \caption{The definition of the Model and IntegerParameter types}
+  \caption{proposed structures and proposed changes to existing SBML Level 2 and model composition structures}
   \label{fig:model}
 \end{figure}
-
-The \class{IntegerParameter} type is described in section~\ref{sec:integerParameters}.
 
 \section{Integer Parameters}
 \label{sec:integerParameters}
 
-The \class{IntegerParameter} type is shown in figure~\ref{fig:model}.
+A model would have an optional list of
+\texttt{IntegerParameter} structures.
+The \class{IntegerParameter} type is described in section~\ref{sec:integerParameters}.
+
 \class{IntegerParameter} structures declare integer constants with identifiers in the model's global identifier namespace.
 They can be used in any MathML expression where they have an implicit type of \texttt{integer}.
 They are distinct from \class{Parameter} structures: it is not possible to define a rule for an \class{IntegerParameter}.
+Integer parameters are constant.
 
 \section{Constant Expressions}
 \label{sec:constantExpressions}
 
 A constant expression is an expression whose result doesn't vary during simulation.
-The only symbols occurring constant expression are those representing integer variables (declared by \attrib{Dimension} structures)
+The only symbols occurring in constant expressions are those representing integer variables (declared by \attrib{Dimension} structures)
 or integer parameters.  A constant expression is required in the \attrib{elementExists} field.
 
 \section{Integer Expressions}
@@ -91,7 +87,7 @@ In some cases in the proposal a MathML expression is restricted to returning an 
 An integer expression is composed of integer numbers, symbols representing integer variables (declared by \attrib{Dimension} structures)
 or integer parameters and
 operators that return integer values given integer arguments.  Integer expressions are required in the
-\attrib{dimension} and \rule{0.5in}{0.5pt}\attrib{Index} fields in this proposal. In addition the arguments for the
+\attrib{upperLimit}, \attrib{lowerLimit} and \attrib{index} fields in this proposal. In addition the arguments for the
 MathML \texttt{selector} operator should be integer expressions.
 
 Because none of the symbols in integer expressions vary at simulation time an integer expression can be considered constant.
@@ -101,19 +97,10 @@ Because none of the symbols in integer expressions vary at simulation time an in
 
 The core of this proposal is the idea that almost all the
 structures in SBML can be defined as arrays as well as single
-named objects.  We propose that following SBML types,
+named objects.  We propose that the SBML types
 \texttt{Instance}, \texttt{Link}, \texttt{Species}, \texttt{Compartment}, \texttt{Reaction},
 \texttt{Parameter} and \texttt{Rule} can be defined as arrays of
-objects.  Figure~\ref{fig:arrays} summarizes the changes made
-to these structures.
-
-\begin{figure}[htb]
-  \centering
-  \includegraphics[scale = 0.68]{arrays}
-  \caption{Changes made to existing SBML Level 2 structures with related additional structures}
-  \label{fig:arrays}
-\end{figure}
-
+objects. 
 
 \subsection{Array Declaration}
 \label{sec:arraydec}
@@ -128,6 +115,7 @@ is defined by the inclusive range between the results of the \texttt{upperLimit}
 MathML expressions.  These expressions must return an integer result.  The integer symbol iteratively takes on the
 value in the range and has scope within the other MathML expression contained by the SBML component element
 except for \class{Dimension} structures preceding the given \class{Dimension} structure in \texttt{listOfDimensions}.
+The integer symbol will overload symbols declared elsewhere in the model.
 
 All the objects in the
 array have the properties described by the structures's
@@ -164,15 +152,12 @@ a cells located in the array from a positions 0 to 9 inclusive.
 
 \subsection{Array Element Object Reference}
 
-As shown in figure~\ref{fig:arrays} it is proposed that structures
-which refer to other structures have \rule{0.5in}{0.5pt}\attrib{Index} fields
-(\texttt{listOf}\rule{0.5in}{0.5pt}\attrib{Indices} sub-elements) for example the type \class{SimpleSpeciesReference}
-has a \attrib{speciesIndex} field.  These fields provide the index of
-the relevant referenced object with in an array. 
+Elements of an array can be referenced from objects using \class{ObjectRef} structures introduced by the model composition proposal.
+The \class{ObjectRef} type is extended in this proposal to have an \attrib{index} field (the XML encoding for this field is a \texttt{listOfIndices} element).
+This field consists of a set of math expressions which index into the array referenced by the \attrib{object} field.  There should be
+as many expressions as there dimensions in the referenced array.
 
-These index fields should contain one integer expression for each dimension of the array being accessed.
-
-We can use the \attrib{containerIndex} field on a \class{Species} structure to create an array of species
+We can use the \attrib{compartmentLink} field on a \class{Species} structure to create an array of species
 distributed across an array of compartments:
 \begin{example}
 <model id="ref">
@@ -195,7 +180,7 @@ distributed across an array of compartments:
         </compartment>
     </listOfCompartments>
     <listOfSpecies>
-        <species id="s" compartment="cell"/>
+        <species id="s">
             <listOfDimensions>
                 <dimension id="x">
                     <lowerLimit>
@@ -210,11 +195,13 @@ distributed across an array of compartments:
                     </upperLimit>
                 </dimension>
             </listOfDimensions>
-            <listOfContainerIndices>
-                <math xmlns="http://www.w3.org/1998/Math/MathML">
-                    <ci> x </ci>
-                </math>
-            </listOfContainerIndices>
+            <compartmentLink object="cell">
+                <listOfIndices>
+                    <math xmlns="http://www.w3.org/1998/Math/MathML">
+                        <ci> x </ci>
+                    </math>
+                </listOfIndices>
+            </compartmentLink>
         </species>
     </listOfSpecies>
 </model>
@@ -223,8 +210,8 @@ In this example each species array element is placed in a
 corresponding compartment array element.
 
 \subsection{Array Element Reference In MathML}
-In this section mechanisms within a a math expression, for accessing specific elements of an
-array, are described.
+This section describes mechanisms within a a math expression, for accessing specific elements of an
+array.
 
 In MathML expressions components declared as arrays can be referenced using \texttt{ci} elements.
 However this will represent an matrix or vector of the values of the component's elements as opposed
@@ -314,21 +301,25 @@ for this set of reactions uses the \texttt{selector} element to reference the re
                 </dimension>
             </listOfDimensions>
             <listOfReactants>
-                <speciesReference species= "s1">
-                    <listOfSpeciesIndices>
-                        <math xmlns="http://www.w3.org/1998/Math/MathML">
-                            <ci> x </ci>
-                        </math>
-                    </listOfSpeciesIndices>
+                <speciesReference>
+                    <speciesLink object="s1">
+                        <listOfIndices>
+                            <math xmlns="http://www.w3.org/1998/Math/MathML">
+                                <ci> x </ci>
+                            </math>
+                        </listOfIndices>
+                    </speciesLink>
                 </speciesReference>
             </listOfReactants>
             <listOfProducts>
-                <speciesReference species= "s2"/>
-                    <listOfSpeciesIndices>
-                        <math xmlns="http://www.w3.org/1998/Math/MathML">
-                            <ci> x </ci>
-                        </math>
-                    </listOfSpeciesIndices>
+                <speciesReference>
+                    <speciesLink object="s2">
+                        <listOfIndices>
+                            <math xmlns="http://www.w3.org/1998/Math/MathML">
+                                <ci> x </ci>
+                            </math>
+                        </listOfIndices>
+                    </speciesLink>
                 </speciesReference>
              </listofProducts>
             <kineticLaw>
@@ -356,11 +347,35 @@ for this set of reactions uses the \texttt{selector} element to reference the re
 
 Unfortunately MathML is not designed to represent matrices with more than 2 dimensions.
 So that it is possible to access elements of arrays with more than 3 dimensions we
-define a new URI, \texttt{http://www.sbml.org/symbols/selector}, for use with the MathML \texttt{csymbol} element
-to define a selector operator that takes an arbitrary number of arguments.
-This operator can be used in place of a the \texttt{selector} element.
+define a new URI for use with the MathML \texttt{csymbol} element which represents a selector
+operator that takes an arbitrary number of arguments.  The URI is
+\texttt{http://www.sbml.org/symbols/arrayselector}. This operator can be used in place 
+of the \texttt{selector} element.
 
-\subsubsection{issue}
+The following example fragment shows how the array operator can be used in
+a numeric expression.  
+
+\begin{example}
+<math xmlns="http://www.w3.org/1998/Math/MathML">
+    <apply>
+        <times/>
+        <apply>
+            <csymbol
+                encoding="SBML" 
+                definitionURL="http://www.sbml.org/symbols/arrayselector">
+                ?
+            </csymbol>
+            <ci> s1 </ci>
+            <ci> x </ci>
+            <ci> y </ci>
+            <ci> z </ci>
+        </apply>
+        <cn> 0.1 </cn>
+    </apply>
+</math>
+\end{example}
+
+\subsubsection{Issue}
 
 Do we want to support these two operators simultaneously? 
 
@@ -375,10 +390,17 @@ elements of those arrays.
 
 In this proposal when the \texttt{compartment} field of a
 \texttt{Species} structure contains the identifier of an array of
-compartments the \attrib{containerIndex} field (\texttt{listOfContainerIndices} element) can be omitted.
+compartments the \attrib{compartmentLink} field has to be omitted.
 A structure configured in this fashion
 represents an array of species with the same specification as the
-given compartment array.  Each element of the species array is
+given compartment array.
+
+Alternatively the \attrib{index} field enclosed in the \attrib{compartmentLink} field
+may be missing.  Again a structure configured in this fashion
+represents an array of species with the same specification as the
+given compartment array.
+
+In these cases each element of the species array is
 located in a corresponding compartment element.  The species array
 is not explicitly declared i.e. the \attrib{dimension} field (\texttt{listOfDimensions} element)
 has alternative semantics.  For the moment in our examples it is omitted as well.
@@ -404,7 +426,7 @@ For example given
 \end{example}
 the structure
 \begin{example}
-<species id="s" compartment="cell" initialAmount="0">
+<species id="s" initialAmount="0">
     <listOfDimensions>
         <dimension id="x">
             <lowerLimit>
@@ -419,20 +441,28 @@ the structure
             <upperLimit>
         </dimension>
     </listOfDimensions>
-    <listOfContainerIndices>
-        <math xmlns="http://www.w3.org/1998/Math/MathML">
-            <ci> x </ci>
-        </math>
-    </listOfContainerIndices>
+    <compartmentLink object="cell">
+        <listOfIndices>
+            <math xmlns="http://www.w3.org/1998/Math/MathML">
+                <ci> x </ci>
+            </math>
+        </listOfIndices>
+    </compartmentLink>
 </species>
 \end{example}
-can be replaced with the equivalent structure:
+can be replaced with the equivalent structures:
 \begin{example}
 <species id="s" compartment="cell" initialAmount="0"/>
 \end{example}
+or
+\begin{example}
+<species id="s" initialAmount="0">
+    <compartmentLink object="cell"/>
+</species>
+\end{example}
 
 If the species \texttt{dimension} field (\texttt{listOfDimensions} sub-element) is present but
-the \attrib{containerIndex} field (\texttt{listOfContainerIndices} sub-element)is not present
+the \attrib{compartmentLink} field is not present or the enclosed \attrib{index} field is not present
 the resulting species array created has the combined dimensions
 of the compartment array and the dimensions enclosed in the \texttt{dimension} field.
 The compartment dimensions are implied in the sequence before the species dimensions.
@@ -474,10 +504,9 @@ dimension array of species where the first dimension is mapped across a row of c
 </species>
 \end{example}
 
-On a species element which omits the \attrib{containerIndex} field (\texttt{listOfContainerIndices} sub-element)
-then the symbols declared in the referenced compartment's \attrib{dimension} field (\texttt{listOfDimensions} sub-element)
+In these cases the symbols declared in the referenced compartment's \attrib{dimension} field (\texttt{listOfDimensions} sub-element)
 are in scope in all the MathML expressions contained within the species structure.  For example a species structure
-could omit the \attrib{containerIndex} field yet still use symbols from the compartment's \attrib{dimension} field
+could omit the \attrib{compartmentLink} field yet still use symbols from the compartment's \attrib{dimension} field
 in the species' \attrib{elementExists} field (see section~\ref{sec:sparse} for more details on this field).
 
 \subsection{Implied Compartment Arrays}
@@ -539,7 +568,7 @@ is equivalent to
             </dimension>
         </listOfDimensions>
     </compartment>
-    <compartment id="b" outside="a"/>
+    <compartment id="b">
         <listOfDimensions>
             <dimension id="x">
                 <lowerLimit>
@@ -554,11 +583,13 @@ is equivalent to
                 </upperLimit>
             </dimension>
         </listOfDimensions>
-        <listOfContainerIndices>
-            <math xmlns="http://www.w3.org/1998/Math/MathML">
-                <ci> x </ci>
-            </math>
-        </listOfContainerIndices>
+        <outsideLink object="a">
+            <listOfIndices>
+                <math xmlns="http://www.w3.org/1998/Math/MathML">
+                    <ci> x </ci>
+                </math>
+            </listOfIndices>
+        </outsideLink>
     </compartment>
 </listOfCompartments>
 \end{example}
@@ -568,7 +599,7 @@ Similar scoping rules for symbols apply here as they do for species structures.
 \subsection{Implied Parameter Arrays}
 
 We can apply the above concept to parameters if we introduce a
-new \texttt{SId} field, \texttt{foreach}, to the parameter
+new \texttt{SId} field, \texttt{foreach} and corresponding \class{ObjectLink} field, \attrib{foreachLink}, to the parameter
 structure. This field allows us to reference any other symbol
 from this structure and thus attach a parameter to each element
 of the referenced array.
@@ -622,7 +653,7 @@ Similar scoping rules for symbols apply here as they do for species structures.
 \section{Arrays of Assignment Rules}
 
 Declaring arrays of assignment rules is slightly different from other component types.
-Rule structures don't contain a \texttt{id}
+Rule structures don't contain an \texttt{id}
 field that declares a new symbol instead they reference another
 structure via the \texttt{variable} field.  The
 expressions contained in the \attrib{dimension} field
@@ -678,49 +709,10 @@ For example the following model has a rule applied to an array of species.
 </model>
 \end{example}
 
-\subsection{Implied Arrays of Rules}
-
-If the the \attrib{dimension} field
-(\texttt{listOfDimensions} sub-element) is omitted and if the variable reference by the
-assignment rule is an array then the assignment rule implicitly consists of an array with the
-same dimensions as the reference variable object.  For example the previous example is equivalent to:
-
-\begin{example}
-<model id="rules">
-    <listOfCompartments>
-        <compartment id="cell"/>
-    </listOfCompartments>
-    <listOfSpecies>
-        <species id="s" initialAmount="0.1" compartment="cell">
-            <listOfDimensions>
-                <dimension id="x">
-                    <lowerLimit>
-                        <math xmlns="http://www.w3.org/1998/Math/MathML">
-                            <cn> 0 </cn>
-                        </math>
-                    </lowerLimit>
-                    <upperLimit>
-                        <math xmlns="http://www.w3.org/1998/Math/MathML">
-                            <cn> 9 </cn>
-                        </math>
-                    </upperLimit>
-                </dimension>
-            </listOfDimensions>
-        </species>
-    </listOfSpecies>
-    <listOfRules>
-        <assignmentRule variable="s" type="rate">
-            <math xmlns="http://www.w3.org/1998/Math/MathML">
-                <cn> 0.1 </cn>
-            </math>
-        </assignmentRule>
-    </listOfRules>
-</model>
-\end{example}
-
 As rules do not declare symbols it is possible for more than one
 rule to be applied to the same array. For example consider the
-following example:
+following example in which two different rules are applied to different halves of the
+same array:
 
 \begin{example}
 <model id="rules">
@@ -788,17 +780,106 @@ following example:
 </model>
 \end{example}
 
+\subsection{Implied Arrays of Rules}
+
+If the the \attrib{dimension} field
+(\texttt{listOfDimensions} sub-element) is omitted and if the variable reference by the
+assignment rule is an array then the assignment rule implicitly consists of an array with the
+same dimensions as the reference variable object.  For example the example
+
+\begin{example}
+<model id="rules">
+    <listOfCompartments>
+        <compartment id="cell"/>
+    </listOfCompartments>
+    <listOfSpecies>
+        <species id="s" initialAmount="0.1" compartment="cell">
+            <listOfDimensions>
+                <dimension id="x">
+                    <lowerLimit>
+                        <math xmlns="http://www.w3.org/1998/Math/MathML">
+                            <cn> 0 </cn>
+                        </math>
+                    </lowerLimit>
+                    <upperLimit>
+                        <math xmlns="http://www.w3.org/1998/Math/MathML">
+                            <cn> 9 </cn>
+                        </math>
+                    </upperLimit>
+                </dimension>
+            </listOfDimensions>
+        </species>
+    </listOfSpecies>
+    <listOfRules>
+        <assignmentRule variable="s" type="rate">
+            <listOfDimensions>
+                <dimension id="x">
+                    <lowerLimit>
+                        <math xmlns="http://www.w3.org/1998/Math/MathML">
+                            <cn> 0 </cn>
+                        </math>
+                    </lowerLimit>
+                    <upperLimit>
+                        <math xmlns="http://www.w3.org/1998/Math/MathML">
+                            <cn> 9 </cn>
+                        </math>
+                    </upperLimit>
+                </dimension>
+            </listOfDimensions>
+            <math xmlns="http://www.w3.org/1998/Math/MathML">
+                <cn> 0.1 </cn>
+            </math>
+        </assignmentRule>
+    </listOfRules>
+</model>
+\end{example}
+
+is equivalent to:
+
+\begin{example}
+<model id="rules">
+    <listOfCompartments>
+        <compartment id="cell"/>
+    </listOfCompartments>
+    <listOfSpecies>
+        <species id="s" initialAmount="0.1" compartment="cell">
+            <listOfDimensions>
+                <dimension id="x">
+                    <lowerLimit>
+                        <math xmlns="http://www.w3.org/1998/Math/MathML">
+                            <cn> 0 </cn>
+                        </math>
+                    </lowerLimit>
+                    <upperLimit>
+                        <math xmlns="http://www.w3.org/1998/Math/MathML">
+                            <cn> 9 </cn>
+                        </math>
+                    </upperLimit>
+                </dimension>
+            </listOfDimensions>
+        </species>
+    </listOfSpecies>
+    <listOfRules>
+        <assignmentRule variable="s" type="rate">
+            <math xmlns="http://www.w3.org/1998/Math/MathML">
+                <cn> 0.1 </cn>
+            </math>
+        </assignmentRule>
+    </listOfRules>
+</model>
+\end{example}
+
 \subsection{Rules which supply a matrix result}
 
-Assignment Rules can be defined which apply to the whole of an array, or
-slices of arrays, in which the formula expression returns a whole
+Assignment Rules can be defined which apply to the whole of an array
+in which the formula expression returns a whole
 array value rather than a single value to be inserted into each
 array element.  This type of rule is indicated by the \texttt{matrixResult}
 attribute having a \texttt{true} value (default is \texttt{false}).
 The resulting array should have the same dimensions as the assignment variable
 for which it is declared.  The result of the expression is then mapped onto
 the array referenced in the rules \attrib{variable} field.
-This type of rule must not have a any dimension
+This type of rule must not have any dimension
 
 Whole matrix operators are described in
 more detail in section~\ref{sec:math}.  For now assume that we
@@ -862,9 +943,67 @@ The rule for \texttt{s1} defines that the rate of change of the
 values of the array of \texttt{s1} is the product of the concentration vectors
 \texttt{s1} and \texttt{s2}.
 
+\subsection{Initial Assignment Rules}
+
+One the limitations of the previously described structures is that there is no way to 
+specify that initial conditions vary across elements of an array.  We describe a new feature
+in this section to overcome this limitation.
+
+In this proposal we introduce a new type of \class{AssignmentRule} \emph{initialScalar} in addition
+to the existing \emph{scalar} and \emph{rate} types.  (These are values of the \attrib{type} field.)
+\emph{initialScalar} and \emph{scalar} rules are evaluated at the beginning of a simulation to establish
+initial values for variables.  However \emph{scalar} rules are evaluated throughout the simulation
+where as \emph{initialScalar} rules are not.  The combined \emph{scalar} and \emph{initialScalar} rule
+set must not contain algebraic loops.  The behavior of variables assigned values by an
+\emph{initialScalar} rule can be determined either by a reaction  or a \emph{rate} rule (this is not
+true of \emph{scalar} rules).
+
+This feature could be considered separately from the rest of the arrays proposal.
+
+For example a model which wished to vary the initial concentration of a species
+across a 1 dimensional array of species would be encoded as follows:
+
+\begin{example}
+<model id="varying">
+    <listOfCompartments>
+        <compartment id="cell"/>
+    </listOfCompartment>
+    <listOfSpecies>
+        <species id="s">
+            <listOfDimensions>
+                <dimension id="x">
+                    <lowerLimit>
+                        <math xmlns="http://www.w3.org/1998/Math/MathML">
+                            <cn> 0 </cn>
+                        </math>
+                    <lowerLimit>
+                    <upperLimit>
+                        <math xmlns="http://www.w3.org/1998/Math/MathML">
+                            <cn> 9 </cn>
+                        </math>
+                    <upperLimit>
+                </dimension>
+            </listOfDimensions>
+        </species>
+    </listOfSpecies>
+    <listOfRules>
+        <assignmentRule type="initialScalar" variable="s">
+            <math xmlns="http://www.w3.org/1998/Math/MathML">
+                <apply>
+                    <times/>
+                    <ci> x </ci>
+                    <cn> 0.1 </cn>
+                </apply>
+            </math>
+        </assignmentRule>
+    </listOfRules>
+</model>
+\end{example}
+
 \section{Sparse Arrays and Connections}
 
 \subsection{Sparse Arrays}
+\label{sec:sparse}
 
 In practice arrays are not very useful for modelling unless its
 possible to describe connection schemes between elements of the
@@ -874,8 +1013,7 @@ interesting until the interactions between the cells are
 incorporated.  This section begins the process of proposing
 structures which allow interconnection schemes to be defined.
 
-In this proposal the structures \texttt{Species},
-\texttt{Compartment}, \texttt{Reaction} etc. include an additional \texttt{elementExists}
+In this proposal \class{Array} structure include an additional \texttt{elementExists}
 MathML field.  This field should only occur when the structure is
 declared as an array.  \texttt{elementExists} contains a constant
 expression which defines whether an array element actually occurs
@@ -1003,7 +1141,7 @@ which exists in an array.
 \label{sec:connections}
 
 We can use a proposed sparse array feature to represent the connections
-between elements of another array.  If we have a $n$dimensional array of
+between elements of another array.  If we have a $n$ dimensional array of
 components we can represent connections between those components as a $2 n$ dimensional 
 sparse array.  In the sparse array elements only occur where connections are to be modelled.
 Thus components that exist as connections are thus defined as sparse $2 n$ dimensional arrays.
@@ -1106,7 +1244,9 @@ away from each other.
             </listOfDimensions>
             <elementExists>
                 <note>
-                    <p xmlns="http://www.w3.org/1999/xhtml">abs(x2 - x1) == 1 || abs(y2 - y1) == 1</p>
+                    <p xmlns="http://www.w3.org/1999/xhtml">
+                        abs(x2 - x1) == 1 || abs(y2 - y1) == 1
+                    </p>
                 </note>                
                 <math xmlns="http://www.w3.org/1998/Math/MathML">
                     <apply>
@@ -1139,27 +1279,31 @@ away from each other.
                 </math>
             </elementExists>
             <listOfReactants>
-                <speciesReference species= "s">
-                    <listOfSpeciesIndices>
-                        <math xmlns="http://www.w3.org/1998/Math/MathML">
-                            <ci> x1 </ci>
-                        </math>
-                        <math xmlns="http://www.w3.org/1998/Math/MathML">
-                            <ci> y1 </ci>
-                        </math>
-                    </listOfSpeciesIndices>
+                <speciesReference>
+                    <speciesLink object="s">
+                        <listOfIndices>
+                            <math xmlns="http://www.w3.org/1998/Math/MathML">
+                                <ci> x1 </ci>
+                            </math>
+                            <math xmlns="http://www.w3.org/1998/Math/MathML">
+                                <ci> y1 </ci>
+                            </math>
+                        </listOfIndices>
+                    </speciesLink>
                 </speciesReference>
             </listOfReactants>
             <listOfProducts>
-                <speciesReference species= "s"/>
-                    <listOfSpeciesIndices>
-                        <math xmlns="http://www.w3.org/1998/Math/MathML">
-                            <ci> x2 </ci>
-                        </math>
-                        <math xmlns="http://www.w3.org/1998/Math/MathML">
-                            <ci> y2 </ci>
-                        </math>
-                    </listOfSpeciesIndices>
+                <speciesReference species= "s">
+                    <speciesLink object="s">
+                        <listOfIndices>
+                            <math xmlns="http://www.w3.org/1998/Math/MathML">
+                                <ci> x2 </ci>
+                            </math>
+                            <math xmlns="http://www.w3.org/1998/Math/MathML">
+                                <ci> y2 </ci>
+                            </math>
+                        </listOfIndices>
+                    </speciesLink>
                 </speciesReference>
             </listOfProducts>
             <kineticLaw>
@@ -1217,9 +1361,10 @@ This section contains an example model of the community effect in
 developmental gene regulation~\citep{gurdon:1988}.  This model demonstrates how
 the array proposal can be combined with the model composition proposal.
 
-In the SBML given below the original model is broken into two parts the first SBML model
+In the SBML given below the original model is broken into two parts using model composition.
+The first SBML model
 encodes the biochemical network inside each cell (this model doesn't use any array features).
-The 2nd SBML model defines how this model is assembled into a tissue and uses the array features.
+The second SBML model assembles instances of the first model into a tissue using the proposed array features.
 
 The original model basically contains a
 high abstracted model of gene expression for a single gene as follows:
@@ -1241,24 +1386,21 @@ $waste$ represents the material produced by the degradation of
 active species.  Both $mat$ and $waste$ are modelled as boundary
 conditions.
 
-This model is applied to a rectangular array of compartments. The
+The second model creates a ``tissue'' of these cells: a rectangular array of cells. This
 model contains a positive feedback loop between adjacent cells by
 enabling the gene product of an adjacent cell to be a
 transcription factor of the gene in the current cell. Thus the
-feedback loop is completed by the following reaction for 
+feedback loop is completed by the following reaction in the second model
+between adjacent cells. 
 
 \begin{equation*}
   \begin{array}{@{}ccc@{}}
-    mat_a & \underrightarrow{\frac{k_r p_tot}{k_mr + p_tot}} & mRNA_a
+    mat_a & \underrightarrow{\frac{k_r p_b}{k_mr + p_b}} & mRNA_a
   \end{array}
 \end{equation*}
 
-where $p_tot$ is the total contribution of gene product from the cells
-neighbors. These equations are encoded as reaction in the first model.
-The $p$ and $p_tot$ species are the ports of the first model.
-
-The second model simply creates an array of instances of the first model
-and calculates the value of $p_tot$ for each cell.
+where $mat_a$ and $mRNA_a$ are concentrations in a given cell and
+$p_b$ is the contribution of gene product from an adjacent cell.
 
 The first model:
 \begin{example}
@@ -1269,12 +1411,12 @@ The first model:
         <compartment id="cell"/>
     </listOfCompartments>
     <listOfSpecies>
-        <species id="mat" compartment="cell_compartment" boundaryCondition="true" initialAmount="1.0"/>
+        <species id="mat" compartment="cell_compartment" boundaryCondition="true"
+            initialAmount="1.0"/>
         <species id="mRNA" compartment="cell_compartment" initialAmount="0"/>
         <species id="waste" compartment="cell" boundaryCondition="true" initialAmount="1.0"/>
         <species id="ubiq" compartment="cell" initialAmount="0"/>
-        <species id="p" compartment="cell"/>
-        <species id="pTot" compartment="cell"/>
+        <species id="p" compartment="cell" initialAmount="0"/>
     </listOfSpecies>
     <listOfParameters>
         <parameter id="kmu" value="0.1"/>
@@ -1418,44 +1560,10 @@ The first model:
                 </listOfParameters>
             </kineticLaw>
         </reaction>
-        <reaction id="neighbour_mat2mRNA">
-            <listOfReactants>
-                <speciesReference species= "mat"/>
-            </listOfReactants>
-            <listOfProducts>
-                <speciesReference species= "mRNA"/>
-            </listOfProducts>
-            <listOfModifiers>
-                <modifierSpeciesReference species= "p"/>
-            </listOfModifiers>
-            <kineticLaw>
-                <note>
-                    <p xmlns="http://www.w3.org/1999/xhtml">(kr * pTot)/(kmr + pTot)</p>
-                </note>
-                <math xmlns="http://www.w3.org/1998/Math/MathML">
-                    <apply>
-                        <divide/>
-                        <apply>
-                            <times/>
-                            <ci>kr</ci>
-                            <ci>pTot</ci>
-                        </apply>    
-                        <apply>
-                            <add/>
-                            <ci>kmr</ci>
-                            <ci>pTot</ci>
-                        </apply>    
-                    </apply>
-                </math>   
-                <listOfParameters>
-                    <parameter id="kr" value="0.1"/>
-                    <parameter id="kmr" value="0.07"/>
-                </listOfParameters>
-            </kineticLaw>
-        </reaction>
     </listOfReactions>
     <listOfPorts>
-        <port object="pTot"/>
+        <port object="mat"/>
+        <port object="mRNA"/>
         <port object="p"/>
     </listOfPorts>
 </model>
@@ -1472,10 +1580,10 @@ The second model:
         <integerParameter id="xBound" value = "9"/>
         <integerParameter id="yBound" value = "5"/>
     </listOfIntegerParameters>
-    <listOfCompartments>
-        <compartment id="cell_compartment">
+    <listOfReactions>
+        <reaction id="neighbour_mat2mRNA">
             <listOfDimensions>
-                <dimension id="x">
+                <dimension id="x1">
                     <lowerLimit>
                         <math xmlns="http://www.w3.org/1998/Math/MathML">
                             <cn> 0 </cn>
@@ -1487,7 +1595,31 @@ The second model:
                         </math>
                     </upperLimit>
                 </dimension>
-                <dimension id="y">
+                <dimension id="y1">
+                    <lowerLimit>
+                        <math xmlns="http://www.w3.org/1998/Math/MathML">
+                            <cn> 0 </cn>
+                        </math>
+                    </lowerLimit>
+                    <upperLimit>
+                        <math xmlns="http://www.w3.org/1998/Math/MathML">
+                            <ci> yBound </ci>
+                        </math>
+                    </upperLimit>
+                </dimension>
+                <dimension id="x2">
+                    <lowerLimit>
+                        <math xmlns="http://www.w3.org/1998/Math/MathML">
+                            <cn> 0 </cn>
+                        </math>
+                    </lowerLimit>
+                    <upperLimit>
+                        <math xmlns="http://www.w3.org/1998/Math/MathML">
+                            <ci> xBound </ci>
+                        </math>
+                    </upperLimit>
+                </dimension>
+                <dimension id="y2">
                     <lowerLimit>
                         <math xmlns="http://www.w3.org/1998/Math/MathML">
                             <cn> 0 </cn>
@@ -1500,66 +1632,147 @@ The second model:
                     </upperLimit>
                 </dimension>
             </listOfDimensions>
-        </compartment>
-    </listOfCompartments>
-    <listOfSpecies>
-        <species id="p" compartment="cell_compartment" initialAmount="0"/>
-        <species id="pTot" compartment="cell_compartment" initialAmount="0"/>
-    </listOfSpecies>
-    <listOfRules>
-        <assignmentRule id="pTot">
-            <math xmlns="http://www.w3.org/1998/Math/MathML">
-                <apply>
-                    <sum/>
-                    <bvar><ci type="integer">xa</ci></bvar>
-                    <interval><cn>0</cn><ci>xBound</ci></interval>
+            <elementExists>
+                <note>
+                    <p xmlns="http://www.w3.org/1999/xhtml">
+                        (x1 == x2 or y1 == y2) and (x1 != x2 or y1 != y2)
+                    </p>
+                </note>                
+                <math xmlns="http://www.w3.org/1998/Math/MathML">
                     <apply>
-                        <bvar><ci type="integer">ya</ci></bvar>
-                        <interval><cn>0</cn><ci>yBound</ci></interval>
-                        <condition>
-                            <apply>
-                                <and/>
-                                <apply>
-                                    <or/>
-                                    <apply>
-                                        <eq/>
-                                        <ci> x </ci>
-                                        <ci> xa </ci>
-                                    </apply>
-                                    <apply>
-                                        <eq/>
-                                        <ci> y </ci>
-                                        <ci> ya </ci>
-                                    </apply>
-                                </apply>
-                                <apply>
-                                    <or/>
-                                    <apply>
-                                        <neq/>
-                                        <ci> x </ci>
-                                        <ci> xa </ci>
-                                    </apply>
-                                    <apply>
-                                        <neq/>
-                                        <ci> y </ci>
-                                        <ci> ya </ci>
-                                    </apply>
-                                </apply>
-                            </apply>
-                        </condition>
+                        <and/>
                         <apply>
-                            <selector/>
-                            <ci>p</ci>
-                            <ci>xa</ci>
-                            <ci>xb</ci>
+                            <or/>
+                            <apply>
+                                <eq/>
+                                <ci>x1</ci>
+                                <ci>x2</ci>
+                            </apply>
+                            <apply>
+                                <eq/>
+                                <ci>y1</ci>
+                                <ci>y2</ci>
+                            </apply>
+                        </apply>
+                        <apply>
+                            <or/>
+                            <apply>
+                                <neq/>
+                                <ci>x1</ci>
+                                <ci>x2</ci>
+                            </apply>
+                            <apply>
+                                <neq/>
+                                <ci>y1</ci>
+                                <ci>y2</ci>
+                            </apply>
                         </apply>
                     </apply>
-                </apply>
-            </math>
-        </assignmentRule>
-    </listOfRules>
+                </math>
+            </elementExists>
+            <listOfReactants>
+                <speciesReference>
+                    <speciesLink object="cell">
+                        <objectLink object="mat"/>
+                        <listOfIndices>
+                            <math xmlns="http://www.w3.org/1998/Math/MathML">
+                                <ci> x1 </ci>
+                            </math>
+                            <math xmlns="http://www.w3.org/1998/Math/MathML">
+                                <ci> y1 </ci>
+                            </math>
+                        </listOfIndices>
+                    </speciesLink>
+                </speciesReference>
+            </listOfReactants>
+            <listOfProducts>
+                <speciesReference>
+                    <speciesLink object="cell">
+                        <objectLink object="mRNA"/>
+                        <listOfIndices>
+                            <math xmlns="http://www.w3.org/1998/Math/MathML">
+                                <ci> x1 </ci>
+                            </math>
+                            <math xmlns="http://www.w3.org/1998/Math/MathML">
+                                <ci> y1 </ci>
+                            </math>
+                        </listOfIndices>
+                    </speciesLink>
+                </speciesReference>
+            </listOfProducts>
+            <listOfModifiers>
+                <modifierSpeciesReference>
+                    <speciesLink object="cell">
+                        <objectLink object="p"/>
+                        <listOfIndices>
+                            <math xmlns="http://www.w3.org/1998/Math/MathML">
+                                <ci> x2 </ci>
+                            </math>
+                            <math xmlns="http://www.w3.org/1998/Math/MathML">
+                                <ci> y2 </ci>
+                            </math>
+                        </listOfIndices>
+                    </speciesLink>
+                </modifierSpeciesReference>
+            </listOfModifiers>
+            <kineticLaw>
+                <note>
+                    <p xmlns="http://www.w3.org/1999/xhtml">
+                        (kr * cell[x2][y2].p)/(kmr + cell[x2][y2].p)
+                    </p>
+                </note>
+                <math xmlns="http://www.w3.org/1998/Math/MathML">
+                    <apply>
+                        <divide/>
+                        <apply>
+                            <times/>
+                            <ci>kr</ci>
+                            <apply>
+                                <csymbol
+                                    encoding="SBML"
+                                    definitionURL=
+                                        "http://www.sbml.org/symbols/instanceselector">
+                                    .
+                                </csymbol>
+                                <apply>
+                                    <selector/>
+                                    <ci> cell </ci>
+                                    <ci> x2 </ci>
+                                    <ci> y2 </ci>
+                                </apply>
+                                <ci>p</ci>
+                            </apply>
+                        </apply>    
+                        <apply>
+                            <add/>
+                            <ci>kmr</ci>
+                            <apply>
+                                <csymbol
+                                    encoding="SBML"
+                                    definitionURL=
+                                        "http://www.sbml.org/symbols/instanceselector">
+                                    .
+                                </csymbol>
+                                <apply>
+                                    <selector/>
+                                    <ci> cell </ci>
+                                    <ci> x2 </ci>
+                                    <ci> y2 </ci>
+                                </apply>
+                                <ci>p</ci>
+                            </apply>
+                        </apply>    
+                    </apply>
+                </math>   
+                <listOfParameters>
+                    <parameter id="kr" value="0.1"/>
+                    <parameter id="kmr" value="0.07"/>
+                </listOfParameters>
+            </kineticLaw>
+        </reaction>
+    </listOfReactions>
     <listOfInstances>
-        <instance id="cell_instance" xlink:type="simple" xlink:href="cellModel.xml">
+        <instance id="cell" xlink:type="simple" xlink:href="cellModel.xml">
             <listOfDimensions>
                 <dimension id="x">
                     <lowerLimit>
@@ -1588,158 +1801,8 @@ The second model:
             </listOfDimensions>
         </instance>
     </listOfInstances>
-    <listOfLinks>
-        <link>
-            <listOfDimensions>
-                <dimension id="x">
-                    <lowerLimit>
-                        <math xmlns="http://www.w3.org/1998/Math/MathML">
-                            <cn> 0 </cn>
-                        </math>
-                    </lowerLimit>
-                    <upperLimit>
-                        <math xmlns="http://www.w3.org/1998/Math/MathML">
-                            <ci> xBound </ci>
-                        </math>
-                    </upperLimit>
-                </dimension>
-                <dimension id="y">
-                    <lowerLimit>
-                        <math xmlns="http://www.w3.org/1998/Math/MathML">
-                            <cn> 0 </cn>
-                        </math>
-                    </lowerLimit>
-                    <upperLimit>
-                        <math xmlns="http://www.w3.org/1998/Math/MathML">
-                            <ci> yBound </ci>
-                        </math>
-                    </upperLimit>
-                </dimension>
-            </listOfDimensions>
-            <from object="cell_compartment">
-                <listOfObjectIndices>
-                    <math xmlns="http://www.w3.org/1998/Math/MathML">
-                        <ci> x </ci>
-                    </math>
-                    <math xmlns="http://www.w3.org/1998/Math/MathML">
-                        <ci> y </ci>            
-                    </math>
-                </listOfObjectIndices>
-            </from>
-            <to object="cell_instance">
-                <listOfObjectIndices>
-                    <math xmlns="http://www.w3.org/1998/Math/MathML">
-                        <ci> x </ci>
-                    </math>
-                    <math xmlns="http://www.w3.org/1998/Math/MathML">
-                        <ci> y </ci>            
-                    </math>
-                </listOfObjectIndices>
-                <subobject object="cell"/>
-            </to>
-        </link>
-        <link>
-            <listOfDimensions>
-                <dimension id="x">
-                    <lowerLimit>
-                        <math xmlns="http://www.w3.org/1998/Math/MathML">
-                            <cn> 0 </cn>
-                        </math>
-                    </lowerLimit>
-                    <upperLimit>
-                        <math xmlns="http://www.w3.org/1998/Math/MathML">
-                            <ci> xBound </ci>
-                        </math>
-                    </upperLimit>
-                </dimension>
-                <dimension id="y">
-                    <lowerLimit>
-                        <math xmlns="http://www.w3.org/1998/Math/MathML">
-                            <cn> 0 </cn>
-                        </math>
-                    </lowerLimit>
-                    <upperLimit>
-                        <math xmlns="http://www.w3.org/1998/Math/MathML">
-                            <ci> yBound </ci>
-                        </math>
-                    </upperLimit>
-                </dimension>
-            </listOfDimensions>
-            <from object="p">
-                <listOfObjectIndices>
-                    <math xmlns="http://www.w3.org/1998/Math/MathML">
-                        <ci> x </ci>
-                    </math>
-                    <math xmlns="http://www.w3.org/1998/Math/MathML">
-                        <ci> y </ci>            
-                    </math>
-                </listOfObjectIndices>
-            </from>
-            <to object="cell_instance">
-                <listOfObjectIndices>
-                    <math xmlns="http://www.w3.org/1998/Math/MathML">
-                        <ci> x </ci>
-                    </math>
-                    <math xmlns="http://www.w3.org/1998/Math/MathML">
-                        <ci> y </ci>            
-                    </math>
-                </listOfObjectIndices>
-                <subobject object="p"/>
-            </to>
-        </link>
-        <link>
-            <listOfDimensions>
-                <dimension id="x">
-                    <lowerLimit>
-                        <math xmlns="http://www.w3.org/1998/Math/MathML">
-                            <cn> 0 </cn>
-                        </math>
-                    </lowerLimit>
-                    <upperLimit>
-                        <math xmlns="http://www.w3.org/1998/Math/MathML">
-                            <ci> xBound </ci>
-                        </math>
-                    </upperLimit>
-                </dimension>
-                <dimension id="y">
-                    <lowerLimit>
-                        <math xmlns="http://www.w3.org/1998/Math/MathML">
-                            <cn> 0 </cn>
-                        </math>
-                    </lowerLimit>
-                    <upperLimit>
-                        <math xmlns="http://www.w3.org/1998/Math/MathML">
-                            <ci> yBound </ci>
-                        </math>
-                    </upperLimit>
-                </dimension>
-            </listOfDimensions>
-            <from object="pTot">
-                <listOfObjectIndices>
-                    <math xmlns="http://www.w3.org/1998/Math/MathML">
-                        <ci> x </ci>
-                    </math>
-                    <math xmlns="http://www.w3.org/1998/Math/MathML">
-                        <ci> y </ci>            
-                    </math>
-                </listOfObjectIndices>
-            </from>
-            <to object="cell_instance">
-                <listOfObjectIndices>
-                    <math xmlns="http://www.w3.org/1998/Math/MathML">
-                        <ci> x </ci>
-                    </math>
-                    <math xmlns="http://www.w3.org/1998/Math/MathML">
-                        <ci> y </ci>            
-                    </math>
-                </listOfObjectIndices>
-                <subobject object="pTot"/>
-            </to>
-        </link>
-    </listOfLinks>
 </model>
 </sbml>
-
 \end{example}
 
 \section{Acknowledgements}

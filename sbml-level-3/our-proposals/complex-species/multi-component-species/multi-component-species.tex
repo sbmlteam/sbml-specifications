@@ -41,8 +41,8 @@ incorporated into SBML Level 3 as the Systems Biology community
 wishes.  This document is intended for detailed review by that
 community and to provoke alternative proposals.  
 
-This document is not the first proposal to support multi-component species~\citep{lenovere:2002} and supersedes
-a previous proposal by the author~\citep{finney:2001f}.
+This document is not the first proposal to support multi-component species~\citep{lenovere:2002}
+and supersedes a previous proposal by the author~\citep{finney:2001f}.
 
 Throughout this
 document issues that the author believes will require further
@@ -91,27 +91,1224 @@ complexes of these proteins and models of signalling pathways which contain thes
 \section{Overview of Proposal}
 
 A UML diagram for the proposed new classes is shown in
-figure~\ref{fig:multi-component-species-uml}.
-These classes are defined in detail in section~\ref{sec:definitions}.
-Section~\ref{sec:definitions} can be considered as a reference section and some readers may wish
-to skip it.
-
-Sections~\ref{sec:commonspecies} through~\ref{sec:generalizedreactions}
-demonstrate with examples how the described classes can be assembled to
+figures~\ref{fig:multi-component-species-uml} and~ref{fig:multi-component-species-uml2}.
+Section~\ref{sec:tutorial}
+demonstrates with examples how the described classes can be assembled to
 achieve the aims of the proposal.  These section effectively define a roadmap
 of how the feature described in this proposal could be added in to SBML in stages.
 
 \begin{figure}[h]
   \vspace*{8pt}
   \centering
-  \includegraphics[scale = 0.7]{multi-component-species.eps}
-  \caption{The types and attributes introduced into SBML by this proposal.  This diagram
+  \includegraphics[scale = 0.7]{multi-component-species-uml.eps}
+  \caption{The types and attributes introduced into SBML by this proposal, part 1.  This diagram
   only shows new classes and fields: all SBML Level 2 structures are assumed to be present.}
   \label{fig:multi-component-species-uml}
 \end{figure}
+\begin{figure}[h]
+  \vspace*{8pt}
+  \centering
+  \includegraphics[scale = 0.7]{multi-component-species-uml2.eps}
+  \caption{The types and attributes introduced into SBML by this proposal, part 2.  This diagram
+  only shows new classes and fields: all SBML Level 2 structures are assumed to be present.}
+  \label{fig:multi-component-species-uml2s}
+\end{figure}
 
-\section{Proposed Classes in Detail}
+The proposal is described more formally in section~\ref{sec:definitions}.
+Section~\ref{sec:definitions} can be considered as a reference section.
+The Appendix includes tables which summarize the new XML components that
+are introduced by this proposal to the XML encoding of SBML.
+
+\clearpage
+
+\section{Tutorial on the Proposed Features}
+\label{sec:tutorial}
+\subsection{The Definition of Chemical Entities across Compartments}
+\label{sec:commonspecies}
+
+Consider a model where we have a chemical entity which exists in more than one compartment.
+for example we might wish to model Aspartate in a Cytosol compartment and in the Mitochondrial Matrix.
+In SBML Level 2 we have represent each pool of Aspartate located in a separate compartment, using a
+\class{Species} structure as shown in Figure~\ref{fig:malate_aspartate_shuttle1-xml}
+
+\begin{figure}[h]
+\begin{example}
+<model id="malate_aspartate_shuttle1">
+    <listOfCompartments>
+        <compartment id="Cytosol"/>
+        <compartment id="Mitochondrial_Matrix"/>
+    </listOfCompartments>
+    <listOfSpecies>
+        <species id="Aspartate_in_Cytosol" compartment="Cytosol"/>
+        <species id="Aspartate_in_Mitochondrial_Matrix" compartment="Mitochondrial_Matrix"/>
+    </listOfSpecies>
+</model>
+\end{example}
+\caption{\texttt{malate\_aspartate\_shuttle1} Model with the same type of chemical entity located in
+different compartments.} 
+\label{fig:malate_aspartate_shuttle1-xml}
+\end{figure}
+
+In SBML Level 2 there is no formal way to relate these species together.  Under this proposal
+we do this by representing the Aspartate with a \class{SpeciesType} structure and then
+referring to the \class{SpeciesType} from the \class{Species} structures.  We can thus transform the 
+\texttt{malate\_aspartate\_shuttle1} Model in Figure~\ref{fig:malate_aspartate_shuttle1-xml} to that
+shown in Figure~\ref{fig:malate_aspartate_shuttle2-xml}.
+
+\begin{figure}[h]
+\begin{example}
+<model id="malate_aspartate_shuttle2">
+    <listOfCompartments>
+        <compartment id="Cytosol"/>
+        <compartment id="Mitochondrial_Matrix"/>
+    </listOfCompartments>
+    <listOfSpeciesTypes>
+        <speciesType id="Aspartate"/>
+    </listOfSpeciesTypes>
+    <listOfSpecies>
+        <species
+            id="Aspartate_in_Cytosol"
+            speciesType="Aspartate"
+            compartment="Cytosol"/>
+        <species
+            id="Aspartate_in_Mitochondrial_Matrix"
+            speciesType="Aspartate"
+            compartment="Mitochondrial_Matrix"/>
+    </listOfSpecies>
+</model>
+\end{example}
+\caption{\texttt{malate\_aspartate\_shuttle2} Model which uses a \class{SpeciesType} to link species of
+the same type of chemical entity that are located in different compartments.} 
+\label{fig:malate_aspartate_shuttle2-xml}
+\end{figure}
+
+This model does not introduce any new variables that are not present in
+\texttt{malate\_aspartate\_shuttle1} it simply identifies \texttt{Aspartate\_in\_Cytosol}
+and \texttt{Aspartate\_in\_Mitochondrial\_Matrix} as being separate pools of the same chemical entity.
+You cannot refer to \class{SpeciesType} structures from MathML structures under this proposal.
+
+The \texttt{malate\_aspartate\_shuttle1} example is still a valid model under this proposal.
+For backwards compatibility the \attrib{speciesType} attribute on \class{Species} is not
+mandatory.
+
+It is not possible to locate a \class{SpeciesType} in a \class{Compartment} more than once
+i.e. it is not possible for two \class{Species} structures to have the same
+\attrib{speciesType} and \attrib{compartment} values.
+
+\subsection{Generalized Reactions: The Definition of Reactions across Compartments}
+\label{sec:commonreaction}
+
+Just as we would wish to give a common identify to chemical entities distributed across several
+compartments we would wish to have some common object describing reactions between those chemical
+entities that is independent of the compartments in which the reactions occur.
+
+For example consider the representation of the transamination reaction, a reversible reaction
+that converts Aspartate to Oxaloacetate in both the Cytosol and Mitochondrial Matrix.
+
+We could extend \texttt{malate\_aspartate\_shuttle2} using the SBML Level 2 form as shown in
+Figure~\ref{fig:malate_aspartate_shuttle3-xml}
+
+\begin{figure}[h]
+\begin{example}
+<model id="malate_aspartate_shuttle3">
+    <listOfCompartments>
+        <compartment id="Cytosol"/>
+        <compartment id="Mitochondrial_Matrix"/>
+    </listOfCompartments>
+    <listOfSpeciesTypes>
+        <speciesType id="Aspartate"/>
+        <speciesType id="Oxaloacetate"/>
+    </listOfSpeciesTypes>
+    <listOfSpecies>
+        <species
+            id="Aspartate_in_Cytosol"
+            speciesType="Aspartate"
+            compartment="Cytosol"/>
+        <species
+            id="Aspartate_in_Mitochondrial_Matrix"
+            speciesType="Aspartate"
+            compartment="Mitochondrial_Matrix"/>
+        <species
+            id="Oxaloacetate_in_Cytosol"
+            speciesType="Oxaloacetate"
+            compartment="Cytosol"/>
+        <species
+            id="Oxaloacetate_in_Mitochondrial_Matrix"
+            speciesType="Oxaloacetate"
+            compartment="Mitochondrial_Matrix"/>
+    </listOfSpecies>
+    <listOfReactions>
+        <reaction id="Transamination_in_Cytosol" reversible="true">
+            <listOfReactants>
+                <speciesReference species="Aspartate_in_Cytosol"/>
+            </listOfReactants>
+            <listOfProducts>
+                <speciesReference species="Oxaloacetate_in_Cytosol"/>
+            </listOfProducts>
+        </reaction>
+        <reaction id="Transamination_in_Mitochondrial_Matrix" reversible="true">
+            <listOfReactants>
+                <speciesReference species="Aspartate_in_Mitochondrial_Matrix"/>
+            </listOfReactants>
+            <listOfProducts>
+                <speciesReference species="Oxaloacetate_in_Mitochondrial_Matrix"/>
+            </listOfProducts>
+        </reaction>
+    </listOfReactions>
+</model>
+\end{example}
+\caption{The \texttt{malate\_aspartate\_shuttle3} model which has duplicate reactions for each compartment.} 
+\label{fig:malate_aspartate_shuttle3-xml}
+\end{figure}
+
+Under this proposal we can replace the 2 reactions in Figure~\ref{fig:malate_aspartate_shuttle3-xml} with a single reaction structure as shown in Figure~\ref{fig:malate_aspartate_shuttle4-xml}
+
+\begin{figure}[h]
+\begin{example}
+<model id="malate_aspartate_shuttle4">
+    <listOfCompartments>
+        <compartment id="Cytosol"/>
+        <compartment id="Mitochondrial_Matrix"/>
+    </listOfCompartments>
+    <listOfSpeciesTypes>
+        <speciesType id="Aspartate"/>
+        <speciesType id="Oxaloacetate"/>
+    </listOfSpeciesTypes>
+    <listOfSpecies>
+        <species
+            id="Aspartate_in_Cytosol"
+            speciesType="Aspartate"
+            compartment="Cytosol"/>
+        <species
+            id="Aspartate_in_Mitochondrial_Matrix"
+            speciesType="Aspartate"
+            compartment="Mitochondrial_Matrix"/>
+        <species
+            id="Oxaloacetate_in_Cytosol"
+            speciesType="Oxaloacetate"
+            compartment="Cytosol"/>
+        <species
+            id="Oxaloacetate_in_Mitochondrial_Matrix"
+            speciesType="Oxaloacetate"
+            compartment="Mitochondrial_Matrix"/>
+    </listOfSpecies>
+    <listOfReactions>
+        <reaction id="Transamination" reversible="true">
+            <listOfReactants>
+                <speciesReference speciesType="Aspartate"/>
+            </listOfReactants>
+            <listOfProducts>
+                <speciesReference speciesType="Oxaloacetate"/>
+            </listOfProducts>
+        </reaction>
+    </listOfReactions>
+</model>
+\end{example}
+\caption{The \texttt{malate\_aspartate\_shuttle4} model which has a single reaction which is potentially
+located in all compartments.} 
+\label{fig:malate_aspartate_shuttle4-xml}
+\end{figure}
+
+The reaction structure represents the set of reactions which occurs in all compartments where 
+the reactant or product are located.  This reaction would only occur where the reactant is located
+if the reaction was not reversible.  All the \class{SimpleSpeciesReference} structures refer to 
+species in the same compartment.  This means that, under this proposal, it is not possible to define
+a transport reaction, that is a reaction which moves chemical entities between compartments,
+using this simple form.  However a variant form is described in
+section~\ref{sec:locatedspeciesreferences} which employs a similar form to transport reactions.
+
+\subsubsection{Defining the explicit location of a \class{SimpleSpeciesReference}}
+\label{sec:locatedspeciesreferences}
+
+The location of a species pool can be made explicit in a \class{SimpleSpeciesReference} structure
+without referring to a \class{Species} structure.  This can be achieved by using the proposed optional
+\attrib{compartment} field which refers to a \class{Compartment} structure to indicate the 
+location of the given \class{SpeciesType}.
+
+For example consider the transport reaction shown in Figure~\ref{fig:Malate_Transport-xml}
+can be added to model \texttt{malate\_aspartate\_shuttle4}
+(see Figure~\ref{fig:malate_aspartate_shuttle4-xml}).
+
+\begin{figure}[h]
+\begin{example}
+<reaction id="Malate_Transport" reversible="false">
+    <listOfReactants>
+        <speciesReference speciesType="Malate" compartment="Cytosol"/>
+    </listOfReactants>
+    <listOfProducts>
+        <speciesReference speciesType="Malate" compartment="Mitochondrial_Matrix"/>
+    </listOfProducts>
+</reaction>
+\end{example}
+\caption{The \texttt{Malate\_Transport} model a transport reaction which refers to \class{SpeciesType}
+structures in specific compartments.} 
+\label{fig:Malate_Transport-xml}
+\end{figure}
+
+
+\emph{This feature could be introduced later in the SBML development road map.
+It is however an essential component of features introduced later.}
+
+All the \class{SimpleSpeciesReference} structures of a reaction should simultaneously either
+(a) be located (i.e. have values for the \attrib{species} or \attrib{compartment} attributes);
+or (b) apply to any compartment (i.e. not have values for the \attrib{species} and \attrib{compartment}
+attributes). \emph{This restriction is not essential but simplifies the interpretation of
+the proposed format}.
+
+\subsubsection{Defining Kinetic Laws for Generalized Reactions}
+
+As defined in the examples above it is not possible to compose the kinetic law of these generalized
+reactions since there is no symbol that refers to either the modifiers, reactants or products or the
+reaction species pools.  However under this proposal the \attrib{id} field of a
+\class{SimpleSpeciesReference} becomes a symbol that can be used in the \class{KineticLaw} of the 
+enclosing \class{Reaction}.
+
+\emph{Here I am assuming that the \attrib{id} field on \class{SimpleSpeciesReference} is introduced by a
+new version of SBML Level 2 as proposed by ??? in ???. This \attrib{id} field is in the global symbol
+namespace despite, for the purposes of this proposal, only having scope in the enclosing
+\class{Reaction}.  If this is problematic then perhaps we could consider an additional attribute to
+declare the symbol.}
+
+As example Figure~\ref{fig:Transamination-xml} shows the \texttt{Transamination} reaction, from model
+\texttt{malate\_aspartate\_shuttle4}, modified to include a rate law.
+
+\begin{figure}[h]
+\begin{example}
+<reaction id="Transamination" reversible="true">
+    <listOfReactants>
+        <speciesReference id="S1" speciesType="Aspartate"/>
+    </listOfReactants>
+    <listOfProducts>
+        <speciesReference speciesType="Oxaloacetate"/>
+    </listOfProducts>
+    <kineticLaw>
+        <math xmlns="http://www.w3.org/1998/MathMathML">
+            <apply>
+                <times/>
+                <cn>1.1</cn>
+                <ci>S1</ci>
+            </apply> 
+        </math>
+    </kineticLaw>
+</reaction>
+\end{example}
+\caption{The \texttt{Transamination} reaction from
+Figure~\ref{fig:malate_aspartate_shuttle4-xml} modified to include a kinetic law.} 
+\label{fig:Transamination-xml}
+\end{figure}
+
+\subsubsection{The Unit Attributes of \class{SimpleSpeciesReference}}
+
+To make the units of species explicit in kinetic laws under this proposal 
+\class{SimpleSpeciesReference} structures have the attributes \attrib{substanceUnits},
+\attrib{spatialSizeUnits} and \attrib{hasOnlySubstanceUnits}.  These have the same semantics as
+the corresponding attributes on \class{Species}.  The unit attributes of a
+\class{SimpleSpeciesReference} structure that match with a \class{Species} structure should
+default to the \class{Species} attributes and/or be exactly equivalent to them.  
+
+EXAMPLE HERE
+
+\subsection{Inferring Species}
+
+Under this proposal \class{Species} structures are used to indicate the initial conditions
+and/or attributes of specific pools of chemical entities (species) and don't represent the complete
+set of pools.  In SBML Level 2 the model's \attrib{species} list is a complete enumeration of the
+pools of chemical entities.  Instead, in this proposal, the set of \class{Species} structures
+which have an undefined or non-zero initial amount or concentration, \emph{initial species}, are used 
+as a starting point to infer the complete set of species in the model.  The complete set of species
+located in a given compartment can be inferred by traversing the reaction
+network, defined by the set of \class{Reaction} structures, from the initial species that are located
+in the compartment.
+
+So if we consider the model \texttt{malate\_aspartate\_shuttle4} the existence of
+\texttt{Oxaloacetate} in the compartment \texttt{Cytosol} can be inferred given the reaction
+\texttt{Transamination} and the species \texttt{Aspartate\_in\_Cytosol}.  This means we can omit
+the species \texttt{Oxaloacetate\_in\_Cytosol} from the \texttt{malate\_aspartate\_shuttle4} as shown
+in Figure~\ref{fig:malate_aspartate_shuttle5-xml}.
+
+\begin{figure}[h]
+\begin{example}
+<model id="malate_aspartate_shuttle5">
+    <listOfCompartments>
+        <compartment id="Cytosol"/>
+        <compartment id="Mitochondrial_Matrix"/>
+    </listOfCompartments>
+    <listOfSpeciesTypes>
+        <speciesType id="Aspartate"/>
+        <speciesType id="Oxaloacetate"/>
+    </listOfSpeciesTypes>
+    <listOfSpecies>
+        <species
+            id="Aspartate_in_Cytosol"
+            speciesType="Aspartate"
+            compartment="Cytosol"/>
+        <species
+            id="Aspartate_in_Mitochondrial_Matrix"
+            speciesType="Aspartate"
+            compartment="Mitochondrial_Matrix"/>
+    </listOfSpecies>
+    <listOfReactions>
+        <reaction id="Transamination" reversible="true">
+            <listOfReactants>
+                <speciesReference speciesType="Aspartate"/>
+            </listOfReactants>
+            <listOfProducts>
+                <speciesReference speciesType="Oxaloacetate"/>
+            </listOfProducts>
+        </reaction>
+    </listOfReactions>
+</model>
+\end{example}
+\caption{The \texttt{malate\_aspartate\_shuttle5} model with a reduced set of initial \texttt{Species}
+structures.} 
+\label{fig:malate_aspartate_shuttle5-xml}
+\end{figure}
+
+
+\emph{The inference of species could be introduced later in the SBML development road map.
+It is however an essential component of features introduced later.}
+
+Just as it is not possible to locate a \class{SpeciesType} in \class{Compartment} more than
+once the process of inferring the complete set of species may start from the initial species
+set and match with other \class{Species} that have for example a initial concentration of zero.
+The inference process does not create duplicate species.
+
+Inferred species, which don't match any \class{Species} structures, always have an initial
+concentration or substance amount of zero and are never
+constant nor boundary conditions.  This means that constant or boundary condition pools or pools
+with any initial concentration must be made explicit using a \class{Species} structure.
+Two 
+\class{SimpleSpecisReference} structures that refer to the same inferred species should have
+the same units.
+
+\emph{The above definition implies that the units of \class{SimpleSpeciesReference} can vary
+depending on the inferred species that is being matched with.  It is open question whether this
+condition is actually a problem or not}
+
+Reactions of the form used in the example reaction \texttt{Malate\_Transport} fit in with the
+inference scheme: if \texttt{Malate} exists in the
+\texttt{Cytosol} then we can infer the existence of a pool of \texttt{Malate} in the
+\texttt{Mitochondrial\_Matrix}.  Given this form of reaction \class{Species} structures are only
+required to define the initial conditions of a model.
+
+\subsection{Simple Multi-Component Chemical Entities}
+\label{sec:multicomponentspecies}
+
+In this proposal \class{SpeciesType} structures can be composed from instances of other chemical
+entities.  For example see model, shown with XML and diagramtic form in
+Figure~\ref{fig:pheromone_response}.
+
+\begin{figure}[h]
+\begin{example}
+<model "Pheromone_response">
+    <listOfSpeciesTypes>
+        <speciesType id="Ste5"/>
+        <speciesType id="Ste11"/>
+        <speciesType id="Ste7"/>
+        <speciesType id="Fus3"/>
+        <speciesType id="SteComplex">
+            <listOfSpeciesTypeInstances>
+                <speciesTypeInstance id="iSte5" speciesType="Ste5"/>
+                <speciesTypeInstance id="iSte11" speciesType="Ste11"/>
+                <speciesTypeInstance id="iSte7" speciesType="Ste7"/>
+                <speciesTypeInstance id="iFus3" speciesType="Fus3"/>
+            </listOfSpeciesTypeInstances>
+        </speciesType>
+    </listOfSpeciesTypes>
+</model>
+\end{example}
+  \vspace*{8pt}
+  \centering
+  \includegraphics[scale = 0.7]{pheromone_response.eps}
+  \caption{The \texttt{Pheromone\_response} model}
+  \label{fig:pheromone_response}
+\end{figure}
+
+This indicates that \texttt{SteComplex}
+is a complex made up of one instance each of the proteins \texttt{Ste5}, \texttt{Ste11}, \texttt{Ste7}
+and \texttt{Fus3}.
+
+We can also describe reactions in using this form on \class{SpeciesReference} structures.  For example
+we can describe the binding of \texttt{Ste11} to \texttt{Ste5} with the \class{Reaction}
+structure shown in Figure~\ref{fig:binding_Ste5_Ste11}.
+
+\begin{figure}[h]
+\begin{example}
+<reaction id="binding_Ste5_Ste11">
+    <listOfReactants>
+        <speciesReference speciesType="Ste11"/>
+        <speciesReference speciesType="Ste5"/>
+    </listOfReactants>
+    <listOfProducts>
+        <speciesReference>
+            <listOfSpeciesTypeInstances>
+                <speciesTypeInstance id="iSte5" speciesType="Ste5"/>
+                <speciesTypeInstance id="iSte11" speciesType="Ste11"/>
+            </listOfSpeciesTypeInstances>
+        </speciesReference>
+    </listOfProducts>
+</reaction>
+\end{example}
+  \vspace*{8pt}
+  \centering
+  \includegraphics[scale = 0.7]{binding_Ste5_Ste11.eps}
+  \caption{The \texttt{binding\_Ste5\_Ste11} reaction, operating in the context of the species types
+  defined in Figure~\ref{fig:pheromone_response}}
+  \label{fig:binding_Ste5_Ste11}
+\end{figure}
+
+Although the the identity of \class{SpeciesTypeInstance} structures is declared in each
+\class{SimpleSpeciesReference} structure these identities have scope throughout a reaction.
+The \class{SpeciesTypeInstance} \attrib{id} fields with the same value in the same reaction refer
+to the same chemical entity.  By giving \class{SpeciesTypeInstance} \attrib{id} fields the same values
+in the reactants and products of a reaction we indicate that the entity is only modified by the reaction
+rather than being created or destroyed by the reaction.  For example the reaction
+\texttt{binding\_Ste5\_Ste11} could be encoded as shown in Figure~\ref{fig:binding_Ste5_Ste11_v2}.
+
+\begin{figure}[h]
+\begin{example}
+<reaction id="binding_Ste5_Ste11_v2">
+    <listOfReactants>
+        <speciesReference>
+            <listOfSpeciesTypeInstances>
+                <speciesTypeInstance id="iSte5" speciesType="Ste5"/>
+            </listOfSpeciesTypeInstances>
+        </speciesReference>
+        <speciesReference>
+            <listOfSpeciesTypeInstances>
+                <speciesTypeInstance id="iSte11" speciesType="Ste11"/>
+            </listOfSpeciesTypeInstances>
+        </speciesReference>
+    </listOfReactants>
+    <listOfProducts>
+        <speciesReference>
+            <listOfSpeciesTypeInstances>
+                <speciesTypeInstance id="iSte5" speciesType="Ste5"/>
+                <speciesTypeInstance id="iSte11" speciesType="Ste11"/>
+            </listOfSpeciesTypeInstances>
+        </speciesReference>
+    </listOfProducts>
+</reaction>
+\end{example}
+  \vspace*{8pt}
+  \centering
+  \includegraphics[scale = 0.7]{binding_Ste5_Ste11_v2.eps}
+  \caption{The \texttt{binding\_Ste5\_Ste11\_v2} reaction}
+  \label{fig:binding_Ste5_Ste11_v2}
+\end{figure}
+
+This encoding indicates that, for the purposes of the model, \texttt{Ste5} and \texttt{Ste11}
+are not modified when they bond.  The distinction between \texttt{binding\_Ste5\_Ste11}
+and \texttt{binding\_Ste5\_Ste11\_v2} is only descriptive however the latter form
+is used as the basis for more complex semantics later. 
+
+A model like \texttt{pheromone\_response} with or without characterized reaction including kinetic laws
+doesn't encapsulate a model that can be simulated because it does not specify the initial concentration
+or location of pools of the defined chemical entities.
+
+\subsection{Multi-component Chemical Entities with explicit bonds}
+\label{sec:explicitbonds}
+
+The forms described in section~\ref{sec:multicomponentspecies} capture some but not all
+the relevant knowledge of chemical entities that we might wish to model.  In this section I
+describe how chemical bond information is captured.
+The bond information on a \class{SimpleSpeciesReference} or a \class{SpeciesType} turns into a
+graph linking the \class{SpeciesTypeInstance} structures together.
+The description of a structures using chemical
+bonds requires the identification of binding sites on \class{SpeciesType} structures and
+then the enumeration of the bonds on those binding sites.  We can redefine the model
+\texttt{pheromone\_response} along these lines as shown in Figure~\ref{fig:pheromone_response_v2-xml}.
+A diagram of this model is shown in Figure~\ref{fig:pheromone_response_v2} on
+page~\pageref{fig:pheromone_response_v2}.
+
+\begin{figure}[h]
+\begin{example}
+<model "pheromone_response_v2">
+    <listOfSpeciesTypes>
+        <speciesType id="Ste5">
+            <listOfBindingSites>
+                <bindingSite id="r_241_to_336">
+                <bindingSite id="r_463_to_514">
+                <bindingSite id="r_744_to_895">
+            </listOfBindingSites>
+        </speciesType>
+        <speciesType id="Ste11"/>
+            <listOfBindingSites>
+                <bindingSite id="site">
+            </listOfBindingSites>
+        </speciesType>
+        <speciesType id="Ste7"/>
+            <listOfBindingSites>
+                <bindingSite id="site">
+            </listOfBindingSites>
+        </speciesType>
+        <speciesType id="Fus3"/>
+            <listOfBindingSites>
+                <bindingSite id="site">
+            </listOfBindingSites>
+        </speciesType>
+        <speciesType id="SteComplex">
+            <listOfSpeciesTypeInstances>
+                <speciesTypeInstance id="iSte5" speciesType="Ste5"/>
+                <speciesTypeInstance id="iSte11" speciesType="Ste11"/>
+                <speciesTypeInstance id="iSte7" speciesType="Ste7"/>
+                <speciesTypeInstance id="iFus3" speciesType="Fus3"/>
+            </listOfSpeciesTypeInstances>
+            <listOfBonds>
+                <specificBond>
+                    <bindingSiteReference speciesTypeInstance="iSte5" bindingSite="r_241_to_336"/>
+                    <otherBindingSiteReference speciesTypeInstance="iFus3" bindingSite="site"/>
+                </specificBond>
+                <specificBond>
+                    <bindingSiteReference speciesTypeInstance="iSte5" bindingSite="r_463_to_514"/>
+                    <otherBindingSiteReference speciesTypeInstance="iSte11" bindingSite="site"/>
+                </specificBond>
+                <specificBond>
+                    <bindingSiteReference speciesTypeInstance="iSte5" bindingSite="r_744_to_895"/>
+                    <otherBindingSiteReference speciesTypeInstance="iSte7" bindingSite="site"/>
+                </specificBond>
+            </listOfBonds>
+        </speciesType>
+    </listOfSpeciesTypes>
+</model>
+\end{example}
+  \caption{The \texttt{pheromone\_response\_v2} model, a diagram of this model is shown in
+  Figure~\ref{fig:pheromone_response_v2}.}
+  \label{fig:pheromone_response_v2-xml}
+\end{figure}
+
+\begin{figure}[h]
+  \vspace*{8pt}
+  \centering
+  \includegraphics[scale = 0.7]{pheromone_response_v2.eps}
+  \caption{Diagram of the \texttt{pheromone\_response\_v2} model shown in
+  Figure~\ref{fig:pheromone_response_v2-xml}}
+  \label{fig:pheromone_response_v2}
+\end{figure}
+
+The \class{SpecificBond} structures used in the \texttt{pheromone\_response\_v2} model can also be
+used to indicate unbound binding sites as shown the reaction in Figure~\ref{fig:binding_Ste5_Ste11_v3} on
+page~\pageref{fig:binding_Ste5_Ste11_v3}.
+
+\begin{figure}[h]
+\begin{example}
+<reaction id="binding_Ste5_Ste11_v3">
+    <listOfReactants>
+        <speciesReference>
+            <listOfSpeciesTypeInstances>
+                <speciesTypeInstance id="iSte5" speciesType="Ste5"/>
+            </listOfSpeciesTypeInstances>
+            <listOfBonds>
+                <specificBond>
+                    <bindingSiteReference speciesTypeInstance="iSte5" bindingSite="r_241_to_336"/>
+                </specificBond>
+                <specificBond>
+                    <bindingSiteReference speciesTypeInstance="iSte5" bindingSite="r_463_to_514"/>
+                </specificBond>
+                <specificBond>
+                    <bindingSiteReference speciesTypeInstance="iSte5" bindingSite="r_744_to_895"/>
+                </specificBond>
+            </listOfBonds>
+        </speciesReference>
+        <speciesReference>
+            <listOfSpeciesTypeInstances>
+                <speciesTypeInstance id="iSte11" speciesType="Ste11"/>
+            </listOfSpeciesTypeInstances>
+            <listOfBonds>
+                <specificBond>
+                    <bindingSiteReference speciesTypeInstance="iSte11" bindingSite="site"/>
+                </specificBond>
+            </listOfBonds>
+         </speciesReference>
+    </listOfReactants>
+    <listOfProducts>
+        <speciesReference>
+            <listOfSpeciesTypeInstances>
+                <speciesTypeInstance id="iSte5" speciesType="Ste5"/>
+                <speciesTypeInstance id="iSte11" speciesType="Ste11"/>
+            </listOfSpeciesTypeInstances>
+            <listOfBonds>
+                <specificBond>
+                    <bindingSiteReference speciesTypeInstance="iSte5" bindingSite="r_241_to_336"/>
+                </specificBond>
+                <specificBond>
+                    <bindingSiteReference speciesTypeInstance="iSte5" bindingSite="r_463_to_514"/>
+                    <otherBindingSiteReference speciesTypeInstance="iSte11" bindingSite="site"/>
+                </specificBond>
+                <specificBond>
+                    <bindingSiteReference speciesTypeInstance="iSte5" bindingSite="r_744_to_895"/>
+                </specificBond>
+            </listOfBonds>
+        </speciesReference>
+    </listOfProducts>
+</reaction>
+\end{example}
+  \vspace*{8pt}
+  \centering
+  \includegraphics[scale = 0.7]{binding_Ste5_Ste11_v3.eps}
+  \caption{The \texttt{binding\_Ste5\_Ste11\_v3} reaction}
+  \label{fig:binding_Ste5_Ste11_v3}
+\end{figure}
+
+A \class{SpeciesType} structure must not leave the state of a binding site undefined or ambiguous.
+Section~\ref{sec:generalizedreactions} describes how a \class{SimpleSpeciesReference} can refer to 
+several different \class{SpeciesType} structures where the class represents a range of states for one
+or more binding sites.
+
+The level of decomposition of a biochemical system into chemical entities and their binding sites and
+bonds is not defined by this proposal.  This proposal is designed to support arbitrary decomposition
+schemes which capture knowledge at different resolutions in the same model. The
+underlying chemistry represented by a given binding site state is also not defined by this proposal.
+
+An underlying principle of this proposal is that the binding representation described in this section
+can be used to represent the reversible covalent modification of proteins including, for example,
+phosphorylation and dephosphorylation.  The example model shown in
+Figure~\ref{fig:Phosphorylation_model-xml} on page~\pageref{fig:Phosphorylation_model-xml}represents
+the phosphorylation of \texttt{Ste11} by \texttt{Ste20}.  A diagram of this model is shown in
+Figure~\ref{fig:Phosphorylation_model} on page~\pageref{fig:Phosphorylation_model}.
+
+\begin{figure}[h]
+\begin{example}
+<model id="Phosphorylation_model">
+    <listOfSpeciesTypes>
+        <speciesType id="Phosphate_group">
+            <listOfBindingSites>
+                <bindingSite id="site"/>
+            </listOfBindingSites>
+        </speciesType>
+        <speciesType id="Ste20"/>
+        <speciesType id="Ste11">
+            <listOfBindingSites>
+                <bindingSite id="Ser302"/>
+                <bindingSite id="Thr307"/>
+            </listOfBindingSites>
+        </speciesType>
+    </listofSpeciesTypes>
+    <listOfReactions>
+        <reaction id="Phosphorylation">
+            <listOfReactants>
+                <speciesReference>
+                    <listOfSpeciesTypeInstances>
+                        <speciesTypeInstance id="iSte11" speciesType="Ste11"/>
+                    </listOfSpeciesTypeInstances>
+                    <listOfBonds>
+                        <specificBond>
+                            <bindingSiteReference speciesTypeInstance="iSte11" bindingSite="Ser302"/>
+                        </specificBond>
+                        <specificBond>
+                            <bindingSiteReference speciesTypeInstance="iSte11" bindingSite="Thr307"/>
+                        </specificBond>
+                    </listOfBonds>
+                </speciesReference>
+            </listOfReactants>
+            <listOfProducts>
+                <speciesReference>
+                    <listOfSpeciesTypeInstances>
+                        <speciesTypeInstance id="iSte11" speciesType="Ste11"/>
+                        <speciesTypeInstance id="iPhosphate_group_1" speciesType="Phosphate_group"/>
+                        <speciesTypeInstance id="iPhosphate_group_2" speciesType="Phosphate_group"/>
+                    </listOfSpeciesTypeInstances>
+                    <listOfBonds>
+                        <specificBond>
+                            <bindingSiteReference speciesTypeInstance="iSte11" bindingSite="Ser302"/>
+                            <otherBindingSiteReference
+                                speciesTypeInstance="iPhosphate_group_1" bindingSite="site"/>
+                        </specificBond>
+                        <specificBond>
+                            <bindingSiteReference speciesTypeInstance="iSte11" bindingSite="Thr307"/>
+                            <otherBindingSiteReference
+                                speciesTypeInstance="iPhosphate_group_2" bindingSite="site"/>
+                        </specificBond>
+                    </listOfBonds>
+                </speciesReference>
+            </listOfProducts>
+            <listOfModifiers>
+                <modifierSpeciesReference>
+                    <listOfSpeciesTypeInstances>
+                        <speciesTypeInstance id="iSte20" speciesType="Ste20"/>
+                    </listOfSpeciesTypeInstances>
+                </modifierSpeciesReference>
+            </listOfModifiers>
+        </reaction>
+    </listOfReactions>
+<model>
+\end{example}
+  \caption{The \texttt{Phosphorylation\_model} model, a diagram of this model is shown in
+  Figure~\ref{fig:Phosphorylation_model}.}
+  \label{fig:Phosphorylation_model-xml}
+\end{figure}
+
+\begin{figure}[h]
+  \vspace*{8pt}
+  \centering
+  \includegraphics[scale = 0.7]{Phosphorylation-model.eps}
+  \caption{Diagram of the \texttt{Phosphorylation\_model} model}
+  \label{fig:Phosphorylation_model}
+\end{figure}
+
+This model deliberately does not model the involvement of ATP or ADP molecules demonstrating
+how the level of detail of the biological knowledge captured by the proposed standard is arbitrary.
+As a result not all the instances of species types in the list of reactants are present in the
+list of products.  This is valid in this proposal: the structural details of chemical entity
+transformation do not have to be fully elucidated.  In fact the reaction shown in
+Figure~\ref{fig:demo} on page~\pageref{fig:demo} is valid even if it is implausible from a biochemical
+perspective.
+
+\begin{figure}[h]
+
+\begin{example}
+<model id="demo">
+    <listOfSpeciesTypes>
+        <speciesType id="Ste20"/>
+        <speciesType id="Ste11"/>
+    </listofSpeciesTypes>
+    <listOfReactions>
+        <reaction id="Implausible">
+            <listOfReactants>
+                <speciesReference>
+                    <listOfSpeciesTypeInstances>
+                        <speciesTypeInstance id="iSte11" speciesType="Ste11"/>
+                    </listOfSpeciesTypeInstances>
+                </speciesReference>
+            </listOfReactants>
+            <listOfProducts>
+                <speciesReference>
+                    <listOfSpeciesTypeInstances>
+                        <speciesTypeInstance id="iSte20" speciesType="Ste20"/>
+                    </listOfSpeciesTypeInstances>
+                </speciesReference>
+            </listOfModifiers>
+        </reaction>
+    </listOfReactions>
+</model>
+\end{example}
+  \vspace*{8pt}
+  \centering
+  \includegraphics[scale = 0.7]{demo.eps}
+  \caption{The \texttt{demo} model which shows how a reaction operating on
+  components can transform those components.}
+  \label{fig:demo}
+\end{figure}
+
+\class{SpeciesGraph} structures, i.e. \class{SpeciesType} and \class{SimpleSpeciesReference} structures,
+can contain a number of disconnected components.  In detail this means that a list of \class{Bond}
+structures in a \class{SpeciesGraph} does not have to comprise a connected graph.  As an example the
+consider the model shown in Figure~\ref{fig:disconnected_parts-xml} on
+page~\pageref{fig:disconnected_parts-xml}.  A diagram of this model is shown in
+Figure~\ref{fig:disconnected_parts} on page~\pageref{fig:disconnected_parts}.
+
+\begin{figure}[h]
+\begin{example}
+<model id="disconnected_parts">
+    <listOfSpeciesTypes>
+        <speciesType id="A"/>
+        <speciesType id="B">
+            <listOfBindingSites>
+                <bindingSite id="b">
+            </listOfBidingSites>
+        </speciesType>
+        <speciesType id="C">
+            <listOfBindingSites>
+                <bindingSite id="c">
+            </listOfBidingSites>
+        </speciesType>
+        <speciesType id="D">
+            <listOfSpeciesTypeInstances>
+                <speciesTypeInstance id="iA" speciesType="A"/>                
+                <speciesTypeInstance id="iB" speciesType="B"/>                
+                <speciesTypeInstance id="iC" speciesType="C"/>                
+            </listOfSpeciesTypeInstances>
+            <listOfBonds>
+                <specificBond>
+                    <bindingSiteReference speciesTypeInstance="iB" bindingSite="b"/>
+                    <otherBindingSiteReference speciesTypeInstance="iC" bindingSite="c"/>
+                </specificBond>
+            </listOfBonds
+        </speciesType>
+    </listOfSpeciesTypes>
+    <listOfReactions>
+        <listOfReactants>
+            <speciesReference>
+                <listOfSpeciesTypeInstances>
+                    <speciesTypeInstance id="iA" speciesType="A"/>                
+                 </listOfSpeciesTypeInstances>              
+            </speciesReference>
+            <speciesReference>
+                <listOfSpeciesTypeInstances>
+                    <speciesTypeInstance id="iB" speciesType="B"/>                
+                    <speciesTypeInstance id="iC" speciesType="C"/>                
+                </listOfSpeciesTypeInstances>
+                <listOfBonds>
+                    <specificBond>
+                        <bindingSiteReference speciesTypeInstance="iB" bindingSite="b"/>
+                        <otherBindingSiteReference speciesTypeInstance="iC" bindingSite="c"/>
+                    </specificBond>
+                </listOfBonds
+            </speciesReference>
+        </listOfReactants>
+        <listOfProducts>
+            <speciesReference>
+                <listOfSpeciesTypeInstances>
+                    <speciesTypeInstance id="iA" speciesType="A"/>                
+                    <speciesTypeInstance id="iB" speciesType="B"/>                
+                    <speciesTypeInstance id="iC" speciesType="C"/>                
+                </listOfSpeciesTypeInstances>
+                <listOfBonds>
+                    <specificBond>
+                        <bindingSiteReference speciesTypeInstance="iB" bindingSite="b"/>
+                        <otherBindingSiteReference speciesTypeInstance="iC" bindingSite="c"/>
+                    </specificBond>
+                </listOfBonds
+            </speciesReference>
+        </listOfProducts>
+    </listOfReactions>
+</model>
+\end{example}
+  \caption{The \texttt{disconnected\_parts} model which shows how reactions can operate on
+  disconnected components.}
+  \label{fig:disconnected_parts-xml}
+\end{figure}
+
+\begin{figure}[h]
+  \vspace*{8pt}
+  \centering
+  \includegraphics[scale = 0.7]{disconnected_parts.eps}
+  \caption{A diagram of the \texttt{disconnected\_parts} model.}
+  \label{fig:disconnected_parts}
+\end{figure}
+
+\subsection{Reactions generalized to cover classes of Multi-component Chemical Entities}
+\label{sec:generalizedreactions}
+
+Under this proposal the bonding concept is extended in reactions so that it is possible 
+for a \class{SimpleSpeciesReference} to refer to set of closely related species that have a 
+similar but not identical chemical structure.  
+This is represented using \class{GenericBond} which is an
+alternative \class{Bond} type.  The reactions containing containing a \class{GenericBond} can potentially
+apply to a large set of species thus reducing the number of reactions that need to be enumerated in
+a given system.
+When a reaction is applied to the given state of one or more reactants, a \class{GenericBond} structure
+in the reaction is assigned the state of a binding site to a variable.  The assignment can be to
+an empty entity if the match is to an empty binding site or to a unspecified binding site on
+an unspecified chemical entity.  This binding site state is transferred from the reactants to the
+assigned to a binding site in among the products.
+
+The simple abstract example model shown in Figure~\ref{fig:generalized-xml} on
+page~\pageref{fig:generalized-xml} uses this generalization mechanism redundantly.
+A diagraom of this model is shown in Figure~\ref{fig:generalized} on
+page~\pageref{fig:generalized}.
+The reaction \texttt{generic} defines how entities \texttt{A} and \texttt{B} bind together without
+changing the state of one of the binding sites on \texttt{A}.
+
+\begin{figure}[h]
+\begin{example}
+<model "generalized">
+    <listOfSpeciesTypes>
+        <speciesType id="A">
+            <listOfBindingSites>
+                <bindingSite id="a"/>
+            </listOfBindingSite>
+        </speciesType>
+        <speciesType id="B">
+            <listOfBindingSites>
+                <bindingSite id="b1"/>
+                <bindingSite id="b2"/>
+            </listOfBindingSites>
+        </speciesType>
+    </listOfSpeciesTypes>
+    <listOfReactions>
+        <reaction id="generic">
+            <listOfReactants>
+                <speciesReference>
+                    <listOfSpeciesTypeInstances>
+                        <speciesTypeInstance id="iA" speciesType="A"/>                
+                    </listOfSpeciesTypeInstances>
+                    <listOfBonds>
+                        <specificBond>
+                            <bindingSiteReference speciesTypeInstance="iA" bindingSite="a"/>
+                        </specificBond>
+                    </listOfBonds
+            </speciesReference>
+                <speciesReference>
+                    <listOfSpeciesTypeInstances>
+                        <speciesTypeInstance id="iB" speciesType="B"/>                
+                    </listOfSpeciesTypeInstances>
+                    <listOfBonds>
+                        <specificBond>
+                            <bindingSiteReference speciesTypeInstance="iB" bindingSite="b1"/>
+                        </specificBond>
+                        <genericBond id="X">
+                            <bindingSiteReference speciesTypeInstance="iB" bindingSite="b2"/>
+                        </genericBond>
+                    </listOfBonds
+            </speciesReference>
+            </listOfReactants>
+            <listOfProducts>
+                <speciesReference>
+                    <listOfSpeciesTypeInstances>
+                        <speciesTypeInstance id="iA" speciesType="A"/>                
+                        <speciesTypeInstance id="iB" speciesType="B"/>                
+                    </listOfSpeciesTypeInstances>
+                    <listOfBonds>
+                        <specificBond>
+                            <bindingSiteReference speciesTypeInstance="iA" bindingSite="a"/>
+                            <bindingSiteReference speciesTypeInstance="iB" bindingSite="b1"/>
+                        </specificBond>
+                        <genericBond id="X">
+                            <bindingSiteReference speciesTypeInstance="iB" bindingSite="b2"/>
+                        </genericBond>
+                    </listOfBonds
+            </speciesReference>
+            </listOfProducts>
+        </reaction>
+    </listOfReactions>
+</model>
+\end{example}
+  \caption{The \texttt{generalized} model which shows how a reaction can be applied to a set
+  of chemical entities. A diagram of this model is shown in Figure~\ref{fig:generalized}.}
+  \label{fig:generalized-xml}
+\end{figure}
+
+\begin{figure}[h]
+  \vspace*{8pt}
+  \centering
+  \includegraphics[scale = 0.7]{generalized.eps}
+  \caption{A diagram of the \texttt{generalized} model shown in Figure~\ref{fig:generalized-xml}}
+  \label{fig:generalized}
+\end{figure}
+
+A more concrete example model is shown in fragments in Figures~\ref{fig:non_exclusive_binding_types}
+to~\ref{fig:bind_Ste11_Ste5}
+on pages~\pageref{fig:non_exclusive_binding_types} to~\pageref{fig:bind_Ste11_Ste5}.
+The reactions in Figures~\ref{fig:bind_Ste11_Ste50} and~\ref{fig:bind_Ste11_Ste5}
+(which operate on the species types encoded in Figure~\ref{fig:non_exclusive_binding_types})
+taken together represent the fact that the binding of
+Ste11 to Ste50 is not mutually exclusive to Ste11 binding to Ste5.
+Figure~\ref{fig:bind_Ste11_Ste50} shows reaction \texttt{bind\_Ste11\_Ste50} which binds Ste11 to
+Ste50 and is generalized to cover all states of the Ste11 to Ste5 binding site.
+Figure~\ref{fig:bind_Ste11_Ste5} shows reaction \texttt{bind\_Ste11\_Ste5} binding Ste11 to
+Ste5 and is generalized to cover all states of the Ste11 to Ste50 binding site.
+
+\begin{figure}[h]
+\begin{example}
+<listOfSpeciesTypes>
+    <speciesType id="Ste5">
+        <listOfBindingSites>
+            <bindingSite id="R463_514"/>
+        </listOfBindingSites>
+    </speciesType>
+    <speciesType id="Ste50">
+        <listOfBindingSites>
+            <bindingSite id="SAM"/>
+        </listofBindignSites>
+    </speciesType>
+    <speciesType id="Ste11">
+        <listOfBindingSites>
+            <bindingSite id="N_terminus"/>
+            <bindingSite id="SAM"/>
+        </listOfBindingSites>
+    </speciesType>
+</listOfSpeciesTypes>
+\end{example}
+  \vspace*{8pt}
+  \centering
+  \includegraphics[scale = 0.7]{non_exclusive_binding_types.eps}
+  \caption{The species types used in Figures~\ref{fig:bind_Ste11_Ste50} and~\ref{fig:bind_Ste11_Ste5}.}
+  \label{fig:non_exclusive_binding_types}
+\end{figure}
+
+\begin{figure}[h]
+\begin{example}
+<reaction "bind_Ste11_Ste50">
+    <listOfProducts>
+        <speciesReference>
+            <listOfSpeciesTypeInstances>
+                <speciesTypeInstance id="iSte11" speciesType="Ste11"/>
+            </listOfSpeciesTypeInstances>
+            <listOfBonds>
+                <genericBond id="X">
+                    <bindingSiteReference bindingSite="N_terminus" speciesTypeInstance="iSte11"/>
+                </genericBond>
+                <specificBond>
+                    <bindingSiteReference bindingSite="SAM" speciesTypeInstance="iSte11"/>
+                </specificBond>
+            </listOfBonds>
+        </speciesReference>
+        <speciesReference>
+            <listOfSpeciesTypeInstances>
+                <speciesTypeInstance id="iSte50" speciesType="Ste50"/>
+            </listOfSpeciesTypeInstances>
+            <listOfBonds>
+                <specificBond>
+                    <bindingSiteReference bindingSite="SAM" speciesTypeInstance="iSte50"/>
+                </specificBond>
+            </listOfBonds>
+        </speciesReference>
+    </listOfProducts>
+    <listOfReactants>
+        <speciesReference>
+            <listOfSpeciesTypeInstances>
+                <speciesTypeInstance id="iSte11" speciesType="Ste11"/>
+                <speciesTypeInstance id="iSte50" speciesType="Ste50"/>
+            </listOfSpeciesTypeInstances>
+            <listOfBonds>
+                <genericBond id="X">
+                    <bindingSiteReference bindingSite="N_terminus" speciesTypeInstance="iSte11"/>
+                </genericBond>
+                <specificBond>
+                    <bindingSiteReference bindingSite="SAM" speciesTypeInstance="iSte11"/>
+                    <bindingSiteReference bindingSite="SAM" speciesTypeInstance="iSte50"/>
+                </specificBond>
+            </listOfBonds>
+        </speciesReference>
+    </listOfReactants>
+</reaction>
+\end{example}
+  \vspace*{8pt}
+  \centering
+  \includegraphics[scale = 0.7]{bind_Ste11_Ste50.eps}
+  \caption{The \texttt{bind\_Ste11\_Ste50} binding reaction that operate on the types defined in
+  Figure~\ref{fig:non_exclusive_binding_types}}
+  \label{fig:bind_Ste11_Ste50}
+\end{figure}
+
+\begin{figure}[h]
+\begin{example}
+<reaction "bind_Ste11_Ste5">
+    <listOfProducts>
+        <speciesReference>
+            <listOfSpeciesTypeInstances>
+                <speciesTypeInstance id="iSte11" speciesType="Ste11"/>
+            </listOfSpeciesTypeInstances>
+            <listOfBonds>
+                <genericBond id="X">
+                    <bindingSiteReference bindingSite="SAM" speciesTypeInstance="iSte11"/>
+                </genericBond>
+                <specificBond>
+                    <bindingSiteReference bindingSite="N_terminus" speciesTypeInstance="iSte11"/>
+                </specificBond>
+            </listOfBonds>
+        </speciesReference>
+        <speciesReference>
+            <listOfSpeciesTypeInstances>
+                <speciesTypeInstance id="iSte5" speciesType="Ste5"/>
+            </listOfSpeciesTypeInstances>
+            <listOfBonds>
+                <specificBond>
+                    <bindingSiteReference bindingSite="R463_514" speciesTypeInstance="iSte5"/>
+                </specificBond>
+            </listOfBonds>
+        </speciesReference>
+    </listOfProducts>
+    <listOfReactants>
+        <speciesReference>
+            <listOfSpeciesTypeInstances>
+                <speciesTypeInstance id="iSte11" speciesType="Ste11"/>
+                <speciesTypeInstance id="iSte5" speciesType="Ste5"/>
+            </listOfSpeciesTypeInstances>
+            <listOfBonds>
+                <genericBond id="X">
+                    <bindingSiteReference bindingSite="SAM" speciesTypeInstance="iSte11"/>
+                </genericBond>
+                <specificBond>
+                    <bindingSiteReference bindingSite="N_terminus" speciesTypeInstance="iSte11"/>
+                    <bindingSiteReference bindingSite="R463_514" speciesTypeInstance="iSte5"/>
+                </specificBond>
+            </listOfBonds>
+        </speciesReference>
+    </listOfReactants>
+</reaction>
+\end{example}
+  \vspace*{8pt}
+  \centering
+  \includegraphics[scale = 0.7]{bind_Ste11_Ste5.eps}
+  \caption{The \texttt{bind\_Ste11\_Ste5} reaction that operates on the types defined in
+  Figure~\ref{fig:non_exclusive_binding_types}}
+  \label{fig:bind_Ste11_Ste5}
+\end{figure}
+
+\clearpage
+\subsubsection{Missing Binding Sites Infers Unchanged State}
+
+Labelling the connection point of generic bonds enables the modeler a reaction which move an
+component of unspecified type from one binding site to another.  However in the majority of cases
+the binding site of such a component is not changed by the reaction i.e. the binding site state is
+completely irrelevant to the reaction.  The encoding of these cases is simplified:  if a binding site
+is both unchanged by a reaction \emph{and} the reaction generalized to cover all states of that
+binding site then that binding site is simply omitted from the reaction entirely.  This
+is the case for the binding sites referenced by the \class{GenericBond} structures in the
+\texttt{bind\_Ste11\_Ste5} reaction shown in Figure~\ref{fig:bind_Ste11_Ste5} on
+page~\pageref{fig:bind_Ste11_Ste5} and thus we can
+simplify this reaction by omitting the \class{GenericBond} structures as shown in
+Figure~\ref{fig:bind_Ste11_Ste5_v2} on page~\pageref{fig:bind_Ste11_Ste5_v2}.
+
+\begin{figure}[h]
+\begin{example}
+<reaction "bind_Ste11_Ste5">
+    <listOfProducts>
+        <speciesReference>
+            <listOfSpeciesTypeInstances>
+                <speciesTypeInstance id="iSte11" speciesType="Ste11"/>
+            </listOfSpeciesTypeInstances>
+            <listOfBonds>
+                <specificBond>
+                    <bindingSiteReference bindingSite="N_terminus" speciesTypeInstance="iSte11"/>
+                </specificBond>
+            </listOfBonds>
+        </speciesReference>
+        <speciesReference>
+            <listOfSpeciesTypeInstances>
+                <speciesTypeInstance id="iSte5" speciesType="Ste5"/>
+            </listOfSpeciesTypeInstances>
+            <listOfBonds>
+                <specificBond>
+                    <bindingSiteReference bindingSite="R463_514" speciesTypeInstance="iSte5"/>
+                </specificBond>
+            </listOfBonds>
+        </speciesReference>
+    </listOfProducts>
+    <listOfReactants>
+        <speciesReference>
+            <listOfSpeciesTypeInstances>
+                <speciesTypeInstance id="iSte11" speciesType="Ste11"/>
+                <speciesTypeInstance id="iSte5" speciesType="Ste5"/>
+            </listOfSpeciesTypeInstances>
+            <listOfBonds>
+                <specificBond>
+                    <bindingSiteReference bindingSite="N_terminus" speciesTypeInstance="iSte11"/>
+                    <bindingSiteReference bindingSite="R463_514" speciesTypeInstance="iSte5"/>
+                </specificBond>
+            </listOfBonds>
+        </speciesReference>
+    </listOfReactants>
+</reaction>
+\end{example}
+  \vspace*{8pt}
+  \centering
+  \includegraphics[scale = 0.7]{bind_Ste11_Ste5_v2.eps}
+  
+  \caption{
+  The \texttt{bind\_Ste11\_Ste5\_v2} reaction that operates on the types defined in
+  Figure~\ref{fig:non_exclusive_binding_types} and is a simplification of the \texttt{bind\_Ste11\_Ste5}
+  reaction shown in Figure~\ref{fig:bind_Ste11_Ste5}. The \texttt{SAM} binding site is not changed by
+  this reaction and the reaction is generalized to cover all states of that binding site.  As a result
+  the
+  \texttt{SAM}
+  binding site
+  can and
+  has been omitted from the model.}
+  
+  \label{fig:bind_Ste11_Ste5_v2}
+\end{figure}
+
+\subsection{Hierarchal Species Types and Type Equivalence}
+
+\clearpage
+
+\section{Formal Definition of Proposal}
 \label{sec:definitions}
+
+\subsection{Proposed Classes in Detail}
 This section describes in detail each class in the proposal as shown in
 figure~\ref{fig:multi-component-species-uml}.
 As in the diagram only new or extended classes are described in this section.
@@ -128,7 +1325,7 @@ The definition of \class{species} and \class{speciesType} may not be as one woul
 expect in conventional biochemical terminology because \class{species} retains its definition
 from SBML Level 1 and 2.
 
-\subsection{Bond}
+\subsubsection{Bond}
 
 The abstract base class \class{Bond} represents one or more chemical bonds or forces holding two chemical
 entities together enabling them to form a larger chemical entity.  A \class{bond} can represent
@@ -144,7 +1341,7 @@ A \class{Bond} structure consists of one \class{BindingSiteReference} field,
 The linkage of chemical entities together to form a larger chemical entity can be 
 represented without using \class{bonds}.  See section~\ref{sec:multicomponentspecies}.
 
-\subsection{BindingSite}
+\subsubsection{BindingSite}
 
 A logical site where a bond may form on the chemical entity represented by the
 enclosing \class{SpeciesType} structure.  A \class{BindingSite} may represent a set of
@@ -165,7 +1362,7 @@ exposing an internal binding site on a \class{SpeciesTypeInstance}.
 
 \end{itemize}
 
-\subsection{BindingSiteReference}
+\subsubsection{BindingSiteReference}
 
 A reference to an instance of a \class{BindingSite} in a given \class{SpeciesGraph}.
 A \class{BindingSiteReference} structure consists of
@@ -186,23 +1383,25 @@ The combination of attribute values of a given \class{BindingSiteReference} stru
 occur in any other \class{BindingSiteReference} structure within the same \class{SpeciesGraph}
 structure.  
 
-\subsection{GenericBond}
+\subsubsection{GenericBond}
 
-Represents a chemical bond between a specific binding site and an unspecified chemical entity.
-\class{GenericBond} is a subtype of \class{Bond}.  \class{GenericBond} consists
-of two fields: \attrib{bindingSite}, a \class{BindingSiteReference} structure inherited from
-\class{Bond} and \attrib{subGraph}, a class{SId} field which refers to an unspecified
-chemical entity.
+Represents a chemical bond between a specific binding site and an unspecified chemical entity which is
+unchanged by the reaction.
+\class{GenericBond} is a subtype of \class{Bond} and in turn \class{Sbase}.
 
-\class{GenericBond} structures can only occur within \class{Reactions}. (They can only occur
+On \class{GenericBond} the \attrib{id} field, inherited from \class{SBase}, becomes mandatory and
+identifies a connection to the unspecified chemical entity.
+The \attrib{bindingSiteReference} field represents the binding site that the entity
+is connected to.
+\class{GenericBond} structures can only occur within \class{Reactions}.
+(Specifically they can only occur
 in the \class{bond} array/list field in \class{SimpleSpeciesReference}.)
-
-The values of \attrib{subGraph} fields are specific to one reaction.  All \attrib{subGraph}
+The values of \class{GenericBond} \attrib{id} fields are specific to one reaction. 
+All \class{GenericBond} \attrib{id}
 fields with the same value in the same reaction refer to the same chemical entity.
-\attrib{subGraph} fields in different reactions refer to different chemical entities.
-\attrib{subGraph} fields with different values refer to different chemical entities.
+\class{GenericBond} \attrib{id} fields in different reactions refer to different chemical entities.
 
-\subsection{Model}
+\subsubsection{Model}
 
 See SBML Level 2 for the existing definition of \class{model}.  This proposal adds a
 \attrib{speciesType} field which consists of a list of \class{SpeciesType} structures to
@@ -217,7 +1416,7 @@ compartment can be inferred by traversing the reaction
 network, defined by the set of \class{Reaction}, from the initial species that are located in
 the compartment.
 
-\subsection{Reaction}
+\subsubsection{Reaction}
 
 A reaction
 is either located inside a specific compartment, across more than 2 or more compartments or
@@ -227,7 +1426,16 @@ structures. In this case the \class{SimpleSpeciesReference} structures match wit
 in the same \class{Compartment} across all compartments in the model.
 See section~\ref{sec:commonreaction}
 
-\subsection{SimpleSpeciesReference}
+A \class{SpeciesTypeInstance} \attrib{id} field assignment cannot appear more than once within the set of
+reactant \class{SpeciesReference} structures on a given reaction.
+A \class{SpeciesTypeInstance} \attrib{id} field assignment cannot appear more than once within the set of
+product \class{SpeciesReference} structures on a given reaction.
+
+A \class{BindingSiteReference} \attrib{bindingSite} field assignment must appear in both
+of reactant and product \class{SpeciesReference} sets on a given reaction.  This means that a 
+binding site state determined in the reactants can not be 'lost' from the set of products.
+
+\subsubsection{SimpleSpeciesReference}
 
 See SBML Level 2 for the existing definition of \class{SimpleSpeciesReference}.
 \class{SimpleSpeciesReference} is the base class for: (a) \class{SpeciesReference} the type used
@@ -279,7 +1487,10 @@ structure then it must not be present on any other
 
 \end{itemize}
 
-\subsection{Species}
+\emph{We might want to consider restricting stoichiometry if \class{SpeciesTypeInstance} structures\
+are used.}
+
+\subsubsection{Species}
 \label{sec:species}
 
 See SBML Level 2 for the existing definition of \class{Species}.  In this proposal a 
@@ -298,7 +1509,7 @@ This field would refer to a \class{SpeciesType} that is not referenced anywhere 
 In short a \class{Species} structure without a \attrib{speciesType} field has a
 `hidden' \class{SpeciesType} associated with it.
 
-\subsection{SpeciesGraph}
+\subsubsection{SpeciesGraph}
 
 \class{SpeciesGraph} is an abstract base class.
 A \class{SpeciesGraph} structure represents a chemical entity or a set of chemical entities of
@@ -328,7 +1539,7 @@ This list can include both \class{SpecificBond} and \class{GenericBond} structur
 
 \end{itemize}
 
-\subsection{SpeciesType}
+\subsubsection{SpeciesType}
 
 The class \class{SpeciesType} is derived from \class{SpeciesGraph} and represents a specific
 chemical entity.  A \class{SpeciesType} structure has the following fields:
@@ -346,7 +1557,13 @@ sites that are located on the \class{SpeciesType}.
 
 A simple example of the use \class{SpeciesType} structures is given in section~\ref{sec:commonspecies}.
 
-\subsection{SpeciesTypeInstance}
+Consider all the \class{BindingSite} structures of the \class{SpeciesType}
+structures referenced by the \class{SpeciesTypeInstances} in a single \class{SpeciesType}
+structure.  Each of these \class{BindingSite} structures should be referenced exactly once by a
+\class{Bond} structure enclosed in the \class{SpeciesType} structure.  This means that
+the status of a \class{BindingSite} can't be left undefined or ambiguous by a \class{SpeciesType}.
+
+\subsubsection{SpeciesTypeInstance}
 
 A \class{SpeciesTypeInstance} structure represents the occurrence of a chemical entity of a given
 \class{SpeciesType} within a \class{SpeciesGraph}.  A \class{SpeciesTypeInstance} structure has the
@@ -365,368 +1582,44 @@ that the \class{SpeciesTypeInstance} is an instance of.
 
 \end{itemize}
 
-\subsection{SpecificBond}
+\subsubsection{SpecificBond}
 
-A subtype of \class{Bond}.   \class{SpecificBond} represents one or more chemical bonds between
-two explicitly identified binding sites.  A \class{bond} structure consists of two
+A subtype of \class{Bond}.   \class{SpecificBond} represents either (a) one or more chemical bonds
+between two explicitly identified binding sites or (b) an unoccupied binding site.  A \class{bond}
+structure consists of two
 \class{bindingSiteReference} structures,
 \attrib{bindingSite} (inherited from \class{Bond}) and
-\attrib{otherBindingSite}.
-These fields which represent the 2 binding sites that are linked by the bond.
+\attrib{otherBindingSiteReference}.
+\attrib{otherBindingSiteReference} is optional.
+If \attrib{otherBindingSiteReference} is not present the \class{SpeciesBond} structure represents
+the state where \attrib{bindingSite} is unbound.
+If \attrib{otherBindingSiteReference} is present the \attrib{bindingSite} and
+\attrib{otherBindingSiteReference} fields represent the 2 binding sites that are linked by a bond.
 Neither binding site has privileged semantics.
 See section~\ref{sec:explicitbonds} for examples.
 
-\section{Tutorial on the Proposed Features}
+\subsection{Semantics of Reaction Execution and Species Inference}
 
-\subsection{The Definition of Chemical Entities across Compartments}
-\label{sec:commonspecies}
+\subsubsection{Semantics of Multiple Matching combinations}
 
-Consider a model where we have a chemical entity which exists in more than one compartment.
-for example we might wish to model Aspartate in a Cytosol compartment and in the Mitochondrial Matrix.
-In SBML Level 2 we have represent each pool of Aspartate located in a separate compartment, using a
-\class{Species} structure:
+\clearpage
+\section{Discussion}
 
-\begin{example}
-<model id="malate_aspartate_shuttle1">
-    <listOfCompartments>
-        <compartment id="Cytosol"/>
-        <compartment id="Mitochondrial_Matrix"/>
-    </listOfCompartments>
-    <listOfSpecies>
-        <species id="Aspartate_in_Cytosol" compartment="Cytosol"/>
-        <species id="Aspartate_in_Mitochondrial_Matrix" compartment="Mitochondrial_Matrix"/>
-    </listOfSpecies>
-</model>
-\end{example}
+\subsection{Modifiers and species inference}
 
-In SBML Level 2 there is no formal way to relate these species together.  Under this proposal
-we do this by representing the Aspartate with a \class{SpeciesType} structure and then
-referring to the \class{SpeciesType} from the \class{Species} structures.  We can thus transform the 
-above example to:
+\subsection{Use generic bonds in \class{SpeciesType} structures}
 
-\begin{example}
-<model id="malate_aspartate_shuttle2">
-    <listOfCompartments>
-        <compartment id="Cytosol"/>
-        <compartment id="Mitochondrial_Matrix"/>
-    </listOfCompartments>
-    <listOfSpeciesTypes>
-        <speciesType id="Aspartate"/>
-    </listOfSpeciesTypes>
-    <listOfSpecies>
-        <species
-            id="Aspartate_in_Cytosol"
-            speciesType="Aspartate"
-            compartment="Cytosol"/>
-        <species
-            id="Aspartate_in_Mitochondrial_Matrix"
-            speciesType="Aspartate"
-            compartment="Mitochondrial_Matrix"/>
-    </listOfSpecies>
-</model>
-\end{example}
+\subsection{Connections between Generic Bonds}
 
-This model does not introduce any new variables that are not present in
-\texttt{malate\_aspartate\_shuttle1} it simply identifies \texttt{Aspartate\_in\_Cytosol}
-and \texttt{Aspartate\_in\_Mitochondrial\_Matrix} as being separate pools of the same chemical entity.
-You cannot refer to \class{SpeciesType} structures from MathML structures under this proposal.
+\subsection{Option - Reaction Predicates}
 
-The \texttt{malate\_aspartate\_shuttle1} example is still a valid model under this proposal.
-For backwards compatibility the \attrib{speciesType} attribute on \class{Species} is not
-mandatory.
+\subsection{Option - SpeciesType inheritance}
 
-It is not possible to locate a \class{SpeciesType} in a \class{Compartment} more than once
-i.e. it is not possible for two \class{Species} structures to have the same
-\attrib{speciesType} and \attrib{compartment} values.
+\subsection{Discussion - Model Composition and Multi-component Species}
 
-\subsection{Generalized Reactions: The Definition of Reactions across Compartments}
-\label{sec:commonreaction}
+\subsection{Discussion - reaction specificity - do we need groups?}
 
-Just as we would wish to give a common identify to chemical entities distributed across several
-compartments we would wish to have some common object describing reactions between those chemical
-entities that is independent of the compartments in which the reactions occur.
-
-For example consider the representation of the transamination reaction, a reversible reaction
-that converts Aspartate to Oxaloacetate in both the Cytosol and Mitochondrial Matrix.
-
-we could extend \texttt{malate\_aspartate\_shuttle2} using the SBML Level 2 form:
-\begin{example}
-<model id="malate_aspartate_shuttle3">
-    <listOfCompartments>
-        <compartment id="Cytosol"/>
-        <compartment id="Mitochondrial_Matrix"/>
-    </listOfCompartments>
-    <listOfSpeciesTypes>
-        <speciesType id="Aspartate"/>
-        <speciesType id="Oxaloacetate"/>
-    </listOfSpeciesTypes>
-    <listOfSpecies>
-        <species
-            id="Aspartate_in_Cytosol"
-            speciesType="Aspartate"
-            compartment="Cytosol"/>
-        <species
-            id="Aspartate_in_Mitochondrial_Matrix"
-            speciesType="Aspartate"
-            compartment="Mitochondrial_Matrix"/>
-        <species
-            id="Oxaloacetate_in_Cytosol"
-            speciesType="Oxaloacetate"
-            compartment="Cytosol"/>
-        <species
-            id="Oxaloacetate_in_Mitochondrial_Matrix"
-            speciesType="Oxaloacetate"
-            compartment="Mitochondrial_Matrix"/>
-    </listOfSpecies>
-    <listOfReactions>
-        <reaction id="Transamination_in_Cytosol" reversible="true">
-            <listOfReactants>
-                <speciesReference species="Aspartate_in_Cytosol"/>
-            </listOfReactants>
-            <listOfProducts>
-                <speciesReference species="Oxaloacetate_in_Cytosol"/>
-            </listOfProducts>
-        </reaction>
-        <reaction id="Transamination_in_Mitochondrial_Matrix" reversible="true">
-            <listOfReactants>
-                <speciesReference species="Aspartate_in_Mitochondrial_Matrix"/>
-            </listOfReactants>
-            <listOfProducts>
-                <speciesReference species="Oxaloacetate_in_Mitochondrial_Matrix"/>
-            </listOfProducts>
-        </reaction>
-    </listOfReactions>
-</model>
-\end{example}
-
-Under this proposal we can replace the 2 reactions above with a single reaction structure:
-
-\begin{example}
-<model id="malate_aspartate_shuttle4">
-    <listOfCompartments>
-        <compartment id="Cytosol"/>
-        <compartment id="Mitochondrial_Matrix"/>
-    </listOfCompartments>
-    <listOfSpeciesTypes>
-        <speciesType id="Aspartate"/>
-        <speciesType id="Oxaloacetate"/>
-    </listOfSpeciesTypes>
-    <listOfSpecies>
-        <species
-            id="Aspartate_in_Cytosol"
-            speciesType="Aspartate"
-            compartment="Cytosol"/>
-        <species
-            id="Aspartate_in_Mitochondrial_Matrix"
-            speciesType="Aspartate"
-            compartment="Mitochondrial_Matrix"/>
-        <species
-            id="Oxaloacetate_in_Cytosol"
-            speciesType="Oxaloacetate"
-            compartment="Cytosol"/>
-        <species
-            id="Oxaloacetate_in_Mitochondrial_Matrix"
-            speciesType="Oxaloacetate"
-            compartment="Mitochondrial_Matrix"/>
-    </listOfSpecies>
-    <listOfReactions>
-        <reaction id="Transamination" reversible="true">
-            <listOfReactants>
-                <speciesReference speciesType="Aspartate"/>
-            </listOfReactants>
-            <listOfProducts>
-                <speciesReference speciesType="Oxaloacetate"/>
-            </listOfProducts>
-        </reaction>
-    </listOfReactions>
-</model>
-\end{example}
-
-The reaction structure represents the set of reactions which occurs in all compartments where 
-the reactant or product are located.  This reaction would only occur where the reactant is located
-if the reaction was not reversible.  All the \class{SimpleSpeciesReference} structures refer to 
-species in the same compartment.  This means that, under this proposal, it is not possible to define
-a transport reaction, that is a reaction which moves chemical entities between compartments,
-using this simple form.  However a variant form is described in
-section~\ref{sec:locatedspeciesreferences} which employs a similar form to transport reactions.
-
-\subsubsection{Defining the explicit location of a \class{SimpleSpeciesReference}}
-\label{sec:locatedspeciesreferences}
-
-The location of a species pool can be made explicit in a \class{SimpleSpeciesReference} structure
-without referring to a \class{Species} structure.  This can be achieved by using the proposed optional
-\attrib{compartment} field which refers to a \class{Compartment} structure to indicate the 
-location of the given \class{SpeciesType}.
-
-For example consider the following transport reaction that can be added to model
-\texttt{malate\_aspartate\_shuttle4}:
-
-\begin{example}
-<reaction id="Malate_Transport" reversible="false">
-    <listOfReactants>
-        <speciesReference speciesType="Malate" compartment="Cytosol"/>
-    </listOfReactants>
-    <listOfProducts>
-        <speciesReference speciesType="Malate" compartment="Mitochondrial_Matrix"/>
-    </listOfProducts>
-</reaction>
-\end{example}
-
-\emph{This feature could be introduced later in the SBML development road map.
-It is however an essential component of features introduced later.}
-
-All the \class{SimpleSpeciesReference} structures of a reaction should simultaneously either
-(a) be located (i.e. have values for the \attrib{species} or \attrib{compartment} attributes);
-or (b) apply to any compartment (i.e. not have values for the \attrib{species} and \attrib{compartment}
-attributes). \emph{This restriction is not essential but simplifies the interpretation of
-the proposed format}.
-
-\subsubsection{Defining Kinetic Laws for Generalized Reactions}
-
-As defined in the examples above it is not possible to compose the kinetic law of these generalized
-reactions since there is no symbol that refers to either the modifiers, reactants or products or the
-reaction species pools.  However under this proposal the \attrib{id} field of a
-\class{SimpleSpeciesReference} becomes a symbol that can be used in the \class{KineticLaw} of the 
-enclosing \class{Reaction}.
-
-\emph{Here I am assuming that the \attrib{id} field on \class{SimpleSpeciesReference} is introduced by a
-new version of SBML Level 2 as proposed by ??? in ???. This \attrib{id} field is in the global symbol
-namespace despite, for the purposes of this proposal, only having scope in the enclosing
-\class{Reaction}.  If this is problematic then perhaps we could consider an additional attribute to
-declare the \class{symbol}.}
-
-As example here is the \texttt{Transamination} reaction, from model
-\texttt{malate\_aspartate\_shuttle4}, modified to include a rate law:
-
-\begin{example}
-<reaction id="Transamination" reversible="true">
-    <listOfReactants>
-        <speciesReference id="S1" speciesType="Aspartate"/>
-    </listOfReactants>
-    <listOfProducts>
-        <speciesReference speciesType="Oxaloacetate"/>
-    </listOfProducts>
-    <kineticLaw>
-        <math xmlns="http://www.w3.org/1998/MathMathML">
-            <apply>
-                <times/>
-                <cn>1.1</cn>
-                <ci>S1</ci>
-            </apply> 
-        </math>
-    </kineticLaw>
-</reaction>
-\end{example}
-
-\subsubsection{The Unit Attributes of \class{SimpleSpeciesReference}}
-
-To make the units of species explicit in kinetic laws under this proposal 
-\class{SimpleSpeciesReference} structures have the attributes \attrib{substanceUnits},
-\attrib{spatialSizeUnits} and \attrib{hasOnlySubstanceUnits}.  These have the same semantics as
-the corresponding attributes on \class{Species}.  The unit attributes of a
-\class{SimpleSpeciesReference} structure that match with a \class{Species} structure should
-default to the \class{Species} attributes and/or be exactly equivalent to them.  
-
-EXAMPLE HERE
-
-\subsection{Inferring Species}
-
-Under this proposal \class{Species} structures are used to indicate the initial conditions
-and/or attributes of specific pools of chemical entities (species) and don't represent the complete
-set of pools.  In SBML Level 2 the model's \attrib{species} list is a complete enumeration of the
-pools of chemical entities.  Instead, in this proposal, the set of \class{Species} structures
-which have an undefined or non-zero initial amount or concentration, \emph{initial species}, are used 
-as a starting point to infer the complete set of species in the model.  The complete set of species
-located in a given compartment can be inferred by traversing the reaction
-network, defined by the set of \class{Reaction} structures, from the initial species that are located
-in the compartment.
-
-So if we consider the model \texttt{malate\_aspartate\_shuttle4} the existence of
-\texttt{Oxaloacetate} in the compartment \texttt{Cytosol} can be inferred given the reaction
-\texttt{Transamination} and the species \texttt{Aspartate\_in\_Cytosol}.  This means we can omit
-the species \texttt{Oxaloacetate\_in\_Cytosol} from the model as follows
-
-\begin{example}
-<model id="malate_aspartate_shuttle5">
-    <listOfCompartments>
-        <compartment id="Cytosol"/>
-        <compartment id="Mitochondrial_Matrix"/>
-    </listOfCompartments>
-    <listOfSpeciesTypes>
-        <speciesType id="Aspartate"/>
-        <speciesType id="Oxaloacetate"/>
-    </listOfSpeciesTypes>
-    <listOfSpecies>
-        <species
-            id="Aspartate_in_Cytosol"
-            speciesType="Aspartate"
-            compartment="Cytosol"/>
-        <species
-            id="Aspartate_in_Mitochondrial_Matrix"
-            speciesType="Aspartate"
-            compartment="Mitochondrial_Matrix"/>
-    </listOfSpecies>
-    <listOfReactions>
-        <reaction id="Transamination" reversible="true">
-            <listOfReactants>
-                <speciesReference speciesType="Aspartate"/>
-            </listOfReactants>
-            <listOfProducts>
-                <speciesReference speciesType="Oxaloacetate"/>
-            </listOfProducts>
-        </reaction>
-    </listOfReactions>
-</model>
-\end{example}
-
-\emph{The inference of species could be introduced later in the SBML development road map.
-It is however an essential component of features introduced later.}
-
-Just as it is not possible to locate a \class{SpeciesType} in \class{Compartment} more than
-once the process of inferring the complete set of species may start from the initial species
-set and match with other \class{Species} that have for example a initial concentration of zero.
-The inference process does not create duplicate species.
-
-Inferred species, which don't match any \class{Species} structures, always have an initial
-concentration or substance amount of zero and are never
-constant nor boundary conditions.  This means that constant or boundary condition pools or pools
-with any initial concentration must be made explicit using a \class{Species} structure.
-Two 
-\class{SimpleSpecisReference} structures that refer to the same inferred species should have
-the same units.
-
-\emph{The above definition implies that the units of \class{SimpleSpeciesReference} can vary
-depending on the species that is being matched with.  It is open question whether this condition
-is actually a problem or not}
-
-Reactions of the form used in the example reaction \texttt{Malate\_Transport} fit in with the
-inference scheme: if \texttt{Malate} exists in the
-\texttt{Cytosol} then we can infer the existence of a pool of \texttt{Malate} in the
-\texttt{Mitochondrial\_Matrix}.  Given this form of reaction \class{Species} structures are only
-required to define the initial conditions of a model.
-
-\subsection{Simple Multi-Component Chemical Entities}
-\label{sec:multicomponentspecies}
-
-\subsection{Multi-component Chemical Entities with explicit bonds}
-\label{sec:explicitbonds}
-
-\subsection{Reactions generalized to cover classes of Multi-component Chemical Entities}
-\label{sec:generalizedreactions}
-
-\subsubsection{Generalized Multi-component Chemical Entities}
-
-\subsection{Hierarchal Species Types and Type Equivalence}
-
-\section{Option - Reaction Predicates}
-
-\section{Option - SpeciesType inheritance}
-
-\section{Discussion - Model Composition and Multi-component Species}
-
-\section{Discussion - reaction specificity - do we need groups?}
-
-\section{Discussion - Attributes of Species and Species Types}
+\subsection{Discussion - Attributes of Species and Species Types}
 
 \newpage
 \section{Appendix}

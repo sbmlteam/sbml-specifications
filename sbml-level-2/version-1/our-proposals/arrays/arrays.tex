@@ -12,11 +12,11 @@
 
 \title{Systems Biology Markup Language (SBML) Level 2 Proposal: Array Features}
 
-\author{Andrew Finney, Victoria Gor, Eric Mjolsness, Hamid Bolouri}
+\author{Andrew Finney, Victoria Gor, Ben Bornstein, Eric Mjolsness, Hamid Bolouri}
 
 \authoremail{
 \begin{minipage}{\textwidth}\centering
-afinney@cds.caltech.edu, gor@aig.jpl.nasa.gov,\\Eric.D.Mjolsness@jpl.nasa.gov, hbolouri@cds.caltech.edu
+afinney@cds.caltech.edu, gor@aig.jpl.nasa.gov, bornstei@aig.jpl.nasa.gov\\Eric.D.Mjolsness@jpl.nasa.gov, hbolouri@cds.caltech.edu
 \end{minipage}}
 
 \maketitlepage
@@ -53,14 +53,15 @@ All types proposed in this document will be derived from the
 The features described in this document are built upon the
 features defined in~\citet{finney:2002c}.
 
-The appendix~\ref{sec:operators} lists all the SBML Level 1 operators
-with all the operators proposed in this document.
+The appendix~\ref{sec:operators} lists all the SBML Level 1
+operators with all the operators proposed in this document and in
+~\citet{finney:2002c}.
 
 \section{Models}
 
 The proposed structure of the \texttt{Model} type is shown in
-figure~\ref{fig:model}. A model would have optional lists of
-\texttt{Domain} and \texttt{ArraySpecification} structures.
+figure~\ref{fig:model}. A model would have an optional list of
+\texttt{Domain} structures.
 
 \begin{figure}[h]
   \vspace*{8pt}
@@ -71,8 +72,7 @@ figure~\ref{fig:model}. A model would have optional lists of
 \end{figure}
 
 \texttt{Domain} structures are described in
-section~\ref{sec:domain} and \texttt{ArraySpecification}
-structures are described in section~\ref{sec:arrayspec}.
+section~\ref{sec:domain}.
 
 \section{Domains}
 \label{sec:domain}
@@ -81,13 +81,10 @@ In this proposal the bounds of an array are separated from an
 actual array definition.  Array bounds are defined by these
 proposed \texttt{Domain} structures, which are shown in UML form
 in figure~\ref{fig:domain}.  A \texttt{Domain} structure consists
-of a name (of \texttt{SName} type) and inclusive upper and lower
-bounds of \texttt{int} type.  These bounds values can be
-negative.  The upper bound must be greater than the lower bound.
-We suggest that Domains exist in their own namespace i.e. a
-domain name must unique among all the domains in the model but
-can have the same name as another non-domain structure in the
-model.
+of inclusive upper and lower bounds of \texttt{int} type and a
+set of symbols which have values over the domain.  The bound
+values can be negative.  The upper bound must be greater than the
+lower bound.
 
 \begin{figure}[h]
   \vspace*{8pt}
@@ -97,126 +94,19 @@ model.
   \label{fig:domain}
 \end{figure}
 
-\subsection{Example}
-
 The following example shows a \texttt{Model} structure
-incorporating a \texttt{Domain} structure called \texttt{x} which
-ranges from -10 through to 10.
+incorporating a \texttt{Domain} structure which ranges from -10
+through to 10.  The symbols \texttt{x} and \texttt{y} are defined
+to have values over the given domain.
 
 \begin{example}
 <model name="tissue">
     <listOfDomains>
-        <domain name="x" upperBound="10" lowerbound="-10"/>
+        <domain upperBound="10" lowerbound="-10">
+            <symbol name="x"/>
+            <symbol name="y"/>
+        </domain>
     </listOfDomains>
-    ...
-</model>
-\end{example}
-
-\section{Array Specifications}
-\label{sec:arrayspec}
-
-Within this proposal the next stage in defining an array is to
-specify the array `shape' by specifying the number of dimensions
-and assigning a domain to each dimension.  The proposed
-\texttt{ArraySpecification} structure shown in UML form in
-figure~\ref{fig:arrayspec} encapsulates this data.
-
-\begin{figure}[h]
-  \vspace*{8pt}
-  \centering
-  \includegraphics[scale = 0.7]{arrayspec}
-  \caption{The definition of the ArraySpecification type}
-  \label{fig:arrayspec}
-\end{figure}
-
-An \texttt{ArraySpecification} structure consists, in its
-simplest form, of a name field, of type \texttt{SName}, and a list
-of \texttt{Dimension} structures.  A \texttt{Dimension} structure
-consists of a symbol field and a domain field, both of type
-\texttt{SName}.  The domain field refers to a preceding
-\texttt{Domain} structure.  The symbol field identifies the
-\texttt{Dimension} structure.  The function of the symbol field will be
-described in section~\ref{sec:constantExpressions}.
-
-The arrays specified by a given \texttt{ArraySpecification}
-structure will have a dimension for each enclosed
-\texttt{Dimension} structure.  The bounds of each dimension are
-defined by the \texttt{Domain} field referenced by the
-\texttt{Dimension} structure.
-
-We suggest that \texttt{ArraySpecification} structures exist in
-their own namespace i.e. a \texttt{ArraySpecification} name must
-unique among all the \texttt{ArraySpecification} structures in
-the model but can have the same name as another
-non-\texttt{ArraySpecification} structure in the model.
-
-\subsection{Simple Array Specification Example}
-\label{sec:simplearray}
-
-The following example shows the specification for a 2 dimensional
-array of 10 by 5 elements indexed from 0.
-
-\begin{example}
-<model name="tissue">
-    <listOfDomains>
-        <domain name="x" upperBound="9" lowerbound="0"/>
-        <domain name="y" upperBound="4" lowerbound="0"/>
-    </listOfDomains>
-    <listOfArraySpecfications>
-        <arraySpecification name="grid">
-            <listOfDimensions>
-                <dimension domain="x"/>
-                <dimension domain="y"/>
-            <listOfDimensions>
-        </arraySpecification>
-    </listOfArraySpecifications>
-    ...
-</model>
-\end{example}
-
-\section{Arrays}
-
-The core of this proposal is the idea that almost all the
-structures in SBML can be defined as arrays as well as single
-named objects.  To this end, we propose that the following SBML
-types have a new optional field \texttt{arraySpecification} of
-type SName: \texttt{Specie}, \texttt{Compartment},
-\texttt{Reaction}, \texttt{Parameter} and \texttt{Rule}.  The
-\texttt{arraySpecificiation} field when present should contain
-the name of an \texttt{ArraySpecification} structure.
-
-The presence of an \texttt{arraySpecificiation} field on a
-structure indicates that the structure represents an array of the
-objects.  All the objects in the array have the properties
-described by the structures's attributes and substructures. The
-array shape is defined by the named \texttt{ArraySpecification}
-structure.
-
-Structures that have an \texttt{arraySpecificiation} field value
-share the same namespace as those structures that represent
-single objects.
-
-\subsection{Simple Array Example}
-\label{sec:simplearrayeg}
-
-The following SBML fragment shows a \texttt{Compartment}
-structure representing a 1 dimensional array.
-
-\begin{example}
-<model name="simple">
-    <listOfDomains>
-        <domain name="x" upperBound="9" lowerbound="0"/>
-    </listOfDomains>
-    <listOfArraySpecfications>
-        <arraySpecification name="strip">
-            <listOfDimensions>
-                <dimension symbol="X" domain="x"/>
-            </listOfDimensions>
-        <arraySpecification>
-    </listOfArraySpecifications>
-    <listOfCompartments>
-        <compartment name="cell" arraySpecification="strip"/>
-    </listOfCompartments>
     ...
 </model>
 \end{example}
@@ -224,93 +114,355 @@ structure representing a 1 dimensional array.
 \subsection{Constant Symbols and Expressions}
 \label{sec:constantExpressions}
 
-The symbol field of a \texttt{Dimension} structure defines a
-symbol which can be used in numeric expressions.  For each element
-of an array the symbol is assigned the index value of the element.
-Although these symbol values vary over a domain they are constant
-for the duration of a simulation.  These symbols are called
+The symbol field of a \texttt{Symbol} structure defines a symbol
+which can be used in numeric expressions.  The scope of these
+symbols is defined in section~\ref{sec:arrays}. Although these
+symbol values vary over a domain they are constant for the
+duration of a simulation.  These symbols are called
 \emph{constant symbols}. It is possible to create expressions
-using these symbols. It is possible to distinguish between constant and
-dynamic expressions: in a constant expression all operands and
-function arguments are either \texttt{Dimension} symbols or a
+using these symbols. It is possible to distinguish between
+constant and dynamic expressions: in a constant expression all
+operands and function arguments are either constant symbols or a
 constant numeric values.
 
 Constant expressions can then be used in place of most constant
-attribute values of type \texttt{double} throughout SBML.
-Constant symbols can occur in any numeric expression, for example
-a rate equation. As symbols given on \texttt{Dimension}
-structures are used in expressions they share the same namespace
-as other SBML structures such as species.
+attribute values of type \texttt{double} throughout SBML although
+there are limitations on which specific expression they can be
+used in, see section~\ref{sec:arrays}. Constant symbols can occur
+in any numeric expression, for example a rate equation. As
+constant symbols are used in expressions they share the same
+namespace as other SBML structures such as species.
 
-An examples of this feature is given in section ~\ref{sec:useconsts}.
+\section{Arrays}
+\label{sec:arrays}
 
-\subsection{Using Constant Symbols}
-\label{sec:useconsts}
+The core of this proposal is the idea that almost all the
+structures in SBML can be defined as arrays as well as single
+named objects.  We propose that following SBML types,
+\texttt{Specie}, \texttt{Compartment}, \texttt{Reaction},
+\texttt{Parameter} and \texttt{Rule} can be defined as arrays of
+objects.
 
-The constant symbols defined in an array specification can be
-used within any structure that references that array
-specification.  For example we can
-modify the example from section~\ref{sec:simplearrayeg}, to
-enable each element of the compartment array to have a different
-volume. The \texttt{Compartment} structure is changed from
-\begin{example}
-<compartment name="cell" arraySpecification="strip"/>
-\end{example}
-to
-\begin{example}
-<compartment name="cell" volume="1 + X/0.1" arraySpecification="strip"/>
-\end{example}
+To declare and operate on arrays we introduce the \texttt{[]}
+array operator, which is similar to the C array operator.  As in
+C the array operator is prefixed by a symbol name and should
+contain a constant expression.  Several array operators can be
+combined to indicate multiple dimensions.   As in C there are 2
+uses of the array operator: declaring arrays and accessing array
+elements.
 
-Notice that although constant symbol \texttt{X} varies over the
-domain \texttt{x} this variance only defines the structure of the
-model so that \texttt{X} is not a parameter or variable of any
-simulation of the model.
+\subsection{Array Declaration}
 
-\subsection{Referencing Array Elements}
+The array operator can be used in the \texttt{name} fields of
+\texttt{Specie}, \texttt{Compartment}, \texttt{Reaction} and
+\texttt{Parameter} structures and the object reference field of
+\texttt{Rule} structures to indicate that the given structure is
+an array rather than a single object. All the objects in the
+array have the properties described by the structures's
+attributes and substructures.
 
-It is proposed that in place of a symbol for a single object it
-is possible to refer to a element of an array.  This is achieved
-by using the \texttt{[]} array operator, which is similar to the
-C array operator.  In numeric expressions this operator is
-syntactically equivalent to a function call. The array operator
-can also be used in any field which refers to a \texttt{Specie},
-\texttt{Compartment}, \texttt{Reaction}, \texttt{Parameter} or
-\texttt{Rule} structure by name for example the \texttt{specie}
-field on a \texttt{SpecieReference} structure can contain an
-array operator instead of an \texttt{SName} type.
+Structures that are declared as arrays share the same namespace
+as those structures that represent single objects.
 
-The `array' operand of an array operator must be the name of a
-structure which has an \texttt{arraySpecification} field value.
-We suggest that the index operand to an array operator be
-restricted to being a constant expression.  An array operator
-when applied to an array of consisting of $n$ dimensions results
-in an array of $n-1$ dimensions and if $n$ is 1 then the result
-is a single object. The order of application of the array
-operator to array dimensions follows the order of the
-\texttt{Dimension} structures as given on the corresponding array
-specification.
+The following SBML fragment shows a \texttt{Compartment}
+structure representing a 1 dimensional array.
 
-We can extend the example shown in
-section~\ref{sec:simplearrayeg} to include an array of species
-placed in an array of compartments:
 \begin{example}
 <model name="simple">
     <listOfDomains>
-        <domain name="x" upperBound="9" lowerbound="0"/>
+        <domain upperBound="9" lowerbound="0">
+            <listOfSymbols>
+                <symbol name="x"/>
+            </listOfSymbols>
+        </domain>
     </listOfDomains>
-    <listOfArraySpecfications>
-        <arraySpecification name="strip">
-            <listOfDimensions>
-                <dimension symbol="X" domain="x"/>
-            </listOfDimensions>
-        <arraySpecification>
-    </listOfArraySpecifications>
     <listOfCompartments>
-        <compartment name="cell" arraySpecification="strip"/>
+        <compartment name="cell[x]"/>
+    </listOfCompartments>
+    ...
+</model>
+\end{example}
+
+\subsubsection{Symbol Scope}
+
+Domain symbols used in the expressions contained in array declarations
+can be used in attributes of the same structure and sub
+structures of that structure.  This is the only place in which
+these symbols can be used other than in array declarations.
+
+The following example shows how a symbol can be used in numeric
+fields within the symbols scope:
+
+\begin{example}
+<model name="ref">
+    <listOfDomains>
+        <domain upperBound="9" lowerbound="0">
+            <listOfSymbols>
+                <symbol name="x"/>
+            </listOfSymbols>
+        </domain>
+    </listOfDomains>
+    <listOfCompartments>
+        <compartment name="cell[x]" volume="x * 0.2" />
+    </listOfCompartments>
+    ...
+</model>
+\end{example}
+
+Notice that although constant symbol \texttt{x} varies between 9
+and 0 this variance only defines the structure of the model so
+that \texttt{x} is not a parameter or variable of any simulation
+of the model.
+
+\subsubsection{Simple Sparse Arrays}
+
+Given the scheme described above it is possible to define sparse
+arrays. Array elements are only created once for each value of a
+domain symbol. The index of a created array element is the result
+of the constant expression contained in the array operator. In an
+array declaration involving more than one array operator, i.e. an
+declaration for a multi-dimensional array, each symbol only runs
+over its range once. For example consider the following model:
+
+\begin{example}
+<model name="notsimple">
+    <listOfDomains>
+        <domain upperBound="9" lowerbound="0">
+            <listOfSymbols>
+                <symbol name="x"/>
+                <symbol name="y"/>
+            </listOfSymbols>
+        </domain>
+    </listOfDomains>
+    <listOfCompartments>
+        <compartment name="cell2D[x][y]"/>
+        <compartment name="cellDiagonal[x][x]"/>
+    </listOfCompartments>
+    ...
+</model>
+\end{example}
+
+In the model \texttt{notsimple} the array \texttt{cell2D} is square array
+containing 100 elements.  \texttt{cellDiagonal} is a 2D array containing
+elements only on the diagonal.
+
+The following example creates an array where elements occur at even locations:
+
+\begin{example}
+<model name="even">
+    <listOfDomains>
+        <domain upperBound="9" lowerbound="0">
+            <listOfSymbols>
+                <symbol name="x"/>
+                <symbol name="y"/>
+            </listOfSymbols>
+        </domain>
+    </listOfDomains>
+    <listOfCompartments>
+        <compartment name="cell2D[2*x][2*y]"/>
+    </listOfCompartments>
+    ...
+</model>
+\end{example}
+
+\subsubsection{Declaring arrays of rules}
+
+Declaring arrays of rules is slightly different from the cases
+described above. Rule structures don't contain a \texttt{name}
+field that declares a new symbol instead they reference another
+structure.  When declaring an array of rules the array operator
+is used in the object reference field i.e. the \texttt{specie},
+\texttt{compartment} and \texttt{name} field for
+\texttt{SpecieConcentrationRule}, \texttt{CompartmentVolumeRule}
+and \texttt{ParameterRule} structures respectively. The symbol
+prefixing the array operator should be an array of the appropriate
+type e.g. a specie array for the \texttt{specie} field.  The
+expressions enclosed in the array operator in the object
+reference field operate in the same way as described above except
+that the declaration uses those expressions to link back to the
+referenced array.  For example the following model has a rule
+applied to an array of species.
+
+\begin{example}
+<model name="rules">
+    <listOfDomains>
+        <domain upperBound="9" lowerbound="0">
+            <listOfSymbols>
+                <symbol name="x"/>
+            </listOfSymbols>
+        </domain>
+    </listOfDomains>
+    ...
+    <listOfSpecies>
+        <species name="s[x]" initialAmount="0.1"/>
+    </listOfSpecies>
+    ...
+    <listOfRules>
+        <specieConcentrationRule specie="s[x]" type="rate" formula="0.1"/>
+    </listOfRules>
+</model>
+\end{example}
+
+As rules do not declare symbols it is possible for more than one
+rule to be applied to the same array. For example consider the
+following example:
+
+\begin{example}
+<model name="rules">
+    <listOfDomains>
+        <domain upperBound="9" lowerbound="0">
+            <listOfSymbols>
+                <symbol name="x"/>
+            </listOfSymbols>
+        </domain>
+        <domain upperBound="5" lowerbound="0">
+            <listOfSymbols>
+                <symbol name="w"/>
+            </listOfSymbols>
+        </domain>
+        <domain upperBound="9" lowerbound="6">
+            <listOfSymbols>
+                <symbol name="v"/>
+            </listOfSymbols>
+        </domain>
+    </listOfDomains>
+    ...
+    <listOfSpecies>
+        <species name="s[x]" initialAmount="0.1" compartment="cell"/>
+    </listOfSpecies>
+    ...
+    <listOfRules>
+        <specieConcentrationRule specie="s[w]" type="rate" formula="0.1"/>
+        <specieConcentrationRule specie="s[v]" type="rate" formula="0.2"/>
+    </listOfRules>
+</model>
+\end{example}
+
+\subsubsection{Rules applied to a whole arrays or slices of arrays}
+
+Rules can be defined which apply to the whole of an array, or
+slices of arrays, in which the formula expression returns a whole
+array value rather than a single value to be inserted into each
+array element.  This kind of rule is declared simply by not
+applying the array operator to an array symbol, or using the array
+slice operator (see section~\ref{sec:placeholder}), in the rule
+object reference field.  Whole matrix operators are described in
+more detail in section~\ref{sec:math}.  For now assume that we
+can, for instance, multiply arrays then consider the example
+model:
+
+\begin{example}
+<model name="rules">
+    <listOfDomains>
+        <domain upperBound="9" lowerbound="0">
+            <listOfSymbols>
+                <symbol name="x"/>
+            </listOfSymbols>
+        </domain>
+    </listOfDomains>
+    ...
+    <listOfSpecies>
+        <species name="s1[x]" initialAmount="0.1"/>
+        <species name="s2[x]" initialAmount="0.2"/>
+    </listOfSpecies>
+    ...
+    <listOfRules>
+        <specieConcentrationRule specie="s1" type="rate" formula="s1 * s2"/>
+    </listOfRules>
+</model>
+\end{example}
+
+The rule for \texttt{s1} defines that the rate of change of the
+values of the array of \texttt{s1} is the product of the matrices
+\texttt{s1} and \texttt{s2}.
+
+\subsubsection{Issues}
+\begin{itemize}
+\item
+It is possible avoid the use of the array operator in the name
+field for array declarations and instead use XML structures
+instead.  This would mean that a SBML parser would avoid having
+to parse the content of the \texttt{name} field.  For example the
+following model
+\begin{example}
+<model name="simple">
+    <listOfDomains>
+        <domain upperBound="9" lowerbound="0">
+            <listOfSymbols>
+                <symbol name="x"/>
+            </listOfSymbols>
+        </domain>
+    </listOfDomains>
+    <listOfCompartments>
+        <compartment name="cell[x]"/>
+    </listOfCompartments>
+    ...
+</model>
+\end{example}
+can be recast as:
+\begin{example}
+<model name="simple">
+    <listOfDomains>
+        <domain upperBound="9" lowerbound="0">
+            <listOfSymbols>
+                <symbol name="x"/>
+            </listOfSymbols>
+        </domain>
+    </listOfDomains>
+    <listOfCompartments>
+        <compartment name="cell">
+            <listOfDimensions>
+                <dimension formula="x"/>
+            </listOfDimensions>
+        </compartment>
+    </listOfCompartments>
+    ...
+</model>
+\end{example}
+
+\item
+We could eliminate simple sparse arrays by restricting the
+expressions inside array operators used in declarations to be
+just symbols rather than constant expressions and by forcing the
+symbol in each dimension to be unique within the declaration.
+\end{itemize}
+
+\subsection{Array Element Reference}
+In this section mechanisms for accessing specific elements of an
+array are described. In numeric expressions the array operator is
+syntactically equivalent to a function call and returns the value
+of the indexed array element. The array operator can also be used
+in any field which refers to a \texttt{Specie},
+\texttt{Compartment}, \texttt{Reaction} or \texttt{Parameter} by
+name, for example the \texttt{specie} field on a
+\texttt{SpecieReference} structure can contain an array operator
+instead of an \texttt{SName} type.  In these fields the array
+operator is used to refer to specific element.
+
+The `array' operand of an array operator must be the name of a
+structure which has been declared as an array.
+We suggest that for SBML Level 2, the index operand to an array operator be
+restricted to being a constant expression.  An array operator
+when applied to an array of consisting of $n$ dimensions results
+in an array of $n-1$ dimensions and if $n$ is 1 then the result
+is a single object.
+
+We can use the array operator to create an array of species
+distributed across an array of compartments:
+\begin{example}
+<model name="ref">
+    <listOfDomains>
+        <domain upperBound="9" lowerbound="0">
+            <listOfSymbols>
+                <symbol name="x"/>
+            </listOfSymbols>
+        </domain>
+    </listOfDomains>
+    <listOfCompartments>
+        <compartment name="cell[x]"/>
     </listOfCompartments>
     <listOfSpecies>
-        <species
-            name="s" arraySpecification="strip" compartment="cell[X]"/>
+        <species name="s[x]" compartment="cell[x]"/>
     </listOfSpecies>
     ...
 </model>
@@ -318,9 +470,108 @@ placed in an array of compartments:
 In this example each species array element is placed in a
 corresponding compartment.
 
-\section{Sparse Arrays and Connections}
+\subsubsection{Issue}
+We could use a new element to reference elements from an object
+reference field instead of putting the array operator inside the
+object reference fields. For example the above example can be
+re-formulated as:
+\begin{example}
+<model name="ref">
+    <listOfDomains>
+        <domain upperBound="9" lowerbound="0">
+            <listOfSymbols>
+                <symbol name="x"/>
+            </listOfSymbols>
+        </domain>
+    </listOfDomains>
+    <listOfCompartments>
+        <compartment name="cell">
+            <listOfDimensions>
+                <dimension formula="x"/>
+            </listOfDimensions>
+        </compartment>
+    </listOfCompartments>
+    <listOfSpecies>
+        <species name="s" compartment="cell">
+            <listOfDimensions>
+                <dimension formula="x"/>
+            </listOfDimensions>
+            <listOfCompartmentElementReferences>
+                <dimension formula="x"/>
+            </listOfCompartmentElementReferences>
+        </species>
+    </listOfSpecies>
+    ...
+</model>
 
-\subsection{Sparse Array Specifications}
+\end{example}
+We will still need to be able to parse the array operator in
+numeric expressions.
+
+\subsubsection{Example of using element references in both numeric and object reference fields}
+The following example shows how the array operator can be used in
+a numeric expression.
+
+\begin{example}
+<model name="ref">
+    <listOfDomains>
+        <domain upperBound="9" lowerbound="0">
+            <listOfSymbols>
+                <symbol name="x"/>
+            </listOfSymbols>
+        </domain>
+    </listOfDomains>
+    <listOfCompartments>
+        <compartment name="cell"/>
+    </listOfCompartments>
+    <listOfSpecies>
+        <species name="s1[x]" compartment="cell"/>
+        <species name="s2[x]" compartment="cell"/>
+    </listOfSpecies>
+    <listOfReactions>
+        <reaction name="r[x]">
+            <listOfReactants>
+                <specieReference specie="s1[x]"/>
+            </listOfReactants>
+            <listOfProducts>
+                <specieReference specie="s2[x]"/>
+            </listofProducts>
+            <kineticLaw formula="s1[x] * 0.1"/>
+        </reaction>
+    </listOfReactions>
+</model>
+\end{example}
+
+\subsubsection{Referring to elements of a sparse array}
+
+The index operand to an array operator must refer to an element
+which exists in an array.  For example the following model is
+inconsistent:
+
+\begin{example}
+<model name="ref">
+    <listOfDomains>
+        <domain upperBound="9" lowerbound="0">
+            <listOfSymbols>
+                <symbol name="x"/>
+            </listOfSymbols>
+        </domain>
+    </listOfDomains>
+    <listOfCompartments>
+        <compartment name="cell[x * 2]"/>
+    </listOfCompartments>
+    <listOfSpecies>
+        <species name="s" compartment="cell[1]"/>
+    </listOfSpecies>
+    ...
+</model>
+\end{example}
+
+The element \texttt{cell[1]} has not been declared.
+
+\section{Conditional Sparse Arrays and Connections}
+
+\subsection{Conditional Sparse Arrays}
 
 In practice arrays are not very useful for modeling unless its
 possible to describe connection schemes between elements of the
@@ -330,97 +581,108 @@ interesting until the interactions between the cells are
 incorporated.  This section begins the process of proposing
 structures which allow interconnection schemes to be defined.
 
-In this proposal \texttt{ArraySpecification} structures include
-an additional \texttt{elementExists} field, as shown in
-figure~\ref{fig:arrayspec}.  This field contains a constant
-expression which defines whether an element actually occurs at a
-given position in the array specification.  This expression is
+In this proposal the structures \texttt{Specie},
+\texttt{Compartment}, \texttt{Reaction} and \texttt{Parameter} and
+\texttt{Rule} include an additional \texttt{elementExists}
+field.  This field should only occur when the structure is
+declared as an array.  \texttt{elementExists} contains a constant
+expression which defines whether an array element actually occurs
+at a given position in the array.  This expression is
 conditional, which means that a zero value (false) implies that
 the element won't occur and a non-zero value (true) implies that
 an element will occur (conditional expressions are described in
 more detail in~\citet{finney:2002c}).
 
-The symbols that can occur in the \texttt{elementExists}
-expression are limited to built-in functions, functions defined
-by \texttt{Function} structures, and constant symbols.
+We propose that for SBML Level 2 that \texttt{elementExists}
+values are constant expressions.
 
-The default value of \texttt{elementExists}, 1, ensures that
-by default the shape of the array specification is determined
-as described in section~\ref{sec:simplearray}.
+The default value of \texttt{elementExists}, 1, ensures that by
+default the shape of the array specification is determined just
+by the array operator alone.
 
 Apart from the \texttt{elementExists} field, constant
 symbols only have values for those elements that exist in the
-array specification in which they are declared.
+array in which they are declared.
 
 The index operand to an array operator must refer to a an element
-which exists in the array.  This means that the index must be
-within the domain to which it is applied and, in the case of
-sparse arrays be a value to which the \texttt{elementExists}
-expression returns a non-zero value.
+which exists in the array.  This means that the index must be a
+value to which the \texttt{elementExists} expression returns a
+non-zero value.
 
-\subsection{Sparse Array Specification Example}
+\subsubsection{Issue}
+
+To enable dynamic structures in SBML we could allow the
+\texttt{elementExists} expression to be dynamic. This would allow
+the model to change dynamically during the simulation.  Perhaps
+other more explicit dynamic restructuring of a model should be
+considered in SBML.
+
+\subsection{Conditional Sparse Array Example}
 \label{sec:sparseeg}
 
-The following example shows a proposed
-\texttt{arraySpecification} structure for triangular arrays where
-the maximum \texttt{y} index is equal to the \texttt{x} index.
+The following example shows a proposed structure for triangular
+arrays where the maximum \texttt{y} index is equal to the
+\texttt{x} index.
 
 \begin{example}
 <model name="starfish">
     <listOfDomains>
-        <domain name="X" upperBound="9" lowerbound="0"/>
-        <domain name="Y" upperBound="9" lowerbound="0"/>
+        <domain upperBound="9" lowerbound="0"/>
+            <symbol name="x"/>
+            <symbol name="y"/>
+        </domain>
     </listOfDomains>
-    <listOfArraySpecfications>
-        <arraySpecification name="triangle" elementExists="y <= x">
-            <listOfDimensions>
-                <dimension symbol="x" domain="X"/>
-                <dimension symbol="y" domain="Y"/>
-            <listOfDimensions>
-        </arraySpecification>
-    </listOfArraySpecifications>
+    <compartment name="cell[x][y]" elementExists="y <= x">
     ...
 </model>
 \end{example}
 
-\subsection{Using Sparse Array Specifications to Represent Connection schemes}
+\subsection{Using Conditional Sparse Arrays to Represent Connection schemes}
 \label{sec:connections}
 
-We can use a proposed sparse array specification to present the
-connections between elements of another array.  This is shown in
-the following example, in which the specification, \texttt{grid},
-defines a 2 dimensional array and the specification,
-\texttt{connections} defines a sparse 4 dimensional array
-representing connections between elements of \texttt{grid}.
-\texttt{connections} contains adjacent array elements for all pairs of
-co-ordinates (over the \texttt{x} and \texttt{y} domains) where
-the co-ordinates are exactly one array element away from each other.
+We can use a proposed sparse array to represent the connections
+between elements of another array.  This is shown in the
+following example, in which \texttt{grid} is a 2 dimensional
+array of compartments and, \texttt{connections} is a sparse 4
+dimensional array of reactions between elements of \texttt{grid}.
+\texttt{connections} contains adjacent array elements for all
+pairs of co-ordinates (over the \texttt{x} and \texttt{y}
+domains) where the co-ordinates are exactly one array element
+away from each other.
 
 \begin{example}
 <model name="tissue">
     <listOfDomains>
-        <domain name="x" upperBound="9" lowerbound="0"/>
-        <domain name="y" upperBound="4" lowerbound="0"/>
+        <domain upperBound="9" lowerbound="0">
+            <symbol name="x"/>
+            <symbol name="y"/>
+            <symbol name="x1"/>
+            <symbol name="x2"/>
+            <symbol name="y1"/>
+            <symbol name="y2"/>
+        </domain>
     </listOfDomains>
-    <listOfArraySpecfications>
-        <arraySpecification name="grid">
-            <listOfDimensions>
-                <dimension domain="x"/>
-                <dimension domain="y"/>
-            <listOfDimensions>
-        </arraySpecification>
-        <arraySpecification
-            name="connections"
-            elementExists="abs(x2 - x1) == 1 || abs(y2 - y1) == 1">
-            <listOfDimensions>
-                <dimension symbol="x1" domain="x"/>
-                <dimension symbol="y1" domain="y"/>
-                <dimension symbol="x2" domain="x"/>
-                <dimension symbol="y2" domain="y"/>
-            <listOfDimensions>
-        </arraySpecification>
-    </listOfArraySpecifications>
-    ...
+    <listOfCompartments>
+        <compartment name="grid[x][y]"/>
+    </listOfCompartments>
+    <listOfSpecies>
+        <species name="s[x][y]" initialAmount="0.1" compartment="grid[x][y]"/>
+    </listOfSpecies>
+    <listOfReactions>
+        <reaction
+                name="connections[x1][y1][x2][y2]"
+                elementExists="abs(x2 - x1) == 1 || abs(y2 - y1) == 1">
+
+            <listOfReactants>
+                <specieReference specie="s[x1][y1]"/>
+            </listOfReactants>
+            <listOfProducts>
+                <specieReference specie="s[x2][y2]"/>
+            </listOfProducts>
+            <kineticLaw formula="s[x1][y1] * 0.1"/>
+
+        </reaction>
+    </listOfReactions>
 </model>
 \end{example}
 
@@ -435,120 +697,68 @@ x2 - x1 == 1 || y2 - y1 == 1
 In this case the connections only run from bottom to top and left
 to right.
 
-This scheme is used in a complete example in
-section~\ref{sec:complexeg}.
-
-\subsection{Example using Connections}
-\label{sec:complexeg}
-
-Consider the model containing the \texttt{ArraySpecification}
-structures defined in section~\ref{sec:connections}.  The model
-can be completed as follows:
+Often its convenient to use \texttt{Function} structures in the
+\texttt{elementExists} field. The following example, uses a
+\texttt{Function} structure to define an more explicit connection
+scheme.
 
 \begin{example}
-<model name="tissue">
+<model name="spotty">
+    <listOfFunctions>
+        <function name="explicit"
+            formula="(x==1 && y==1) || (x==3 && y==3) || (x==0 && y==9)">
+            <listOfArguments>
+                <argument name="x"/>
+                <argument name="y"/>
+            </listOfArguments>
+        </function>
+    </listOfFunctions>
     <listOfDomains>
-        <domain name="X" upperBound="9" lowerbound="0"/>
-        <domain name="Y" upperBound="4" lowerbound="0"/>
+        <domain upperBound="9" lowerbound="0">
+            <symbol name="a"/>
+            <symbol name="b"/>
+        </domain>
     </listOfDomains>
-    <listOfArraySpecfications>
-        <arraySpecification name="grid">
-            <listOfDimensions>
-                <dimension symbol="x" domain="X"/>
-                <dimension symbol="y" domain="Y"/>
-            <listOfDimensions>
-        </arraySpecification>
-        <arraySpecification
-            name="connections"
-            elementExists="x2 - x1 == 1 || y2 - y1 == 1">
-            <listOfDimensions>
-                <dimension symbol="x1" domain="X"/>
-                <dimension symbol="y1" domain="Y"/>
-                <dimension symbol="x2" domain="X"/>
-                <dimension symbol="y2" domain="Y"/>
-            <listOfDimensions>
-        </arraySpecification>
-    </listOfArraySpecifications>
-    <listOfCompartments>
-        <compartment name="cell" arraySpecification="grid"/>
-    </listOfCompartments>
-    <listOfSpecies>
-        <specie name="s" arraySpecification="grid"
-            compartment="cell[x][y]" initialAmount="x == 0 ? 1e-10 : 0"/>
-    </listOfSpecies>
-    </listOfReactions>
-        <reaction name="j" arraySpecification="connections"/>
-            <listOfReactants>
-                <specieReference specie="s[x1][y1]" stoichiometry="1"/>
-            </listOfReactants>
-            <listOfProducts>
-                <specieReference specie="s[x2][y2]" stoichiometry="1"/>
-            </listOfProducts>
-            <kineticLaw formula="s[x1][y1] * 5"/>
+    ...
+    <listOfReactions>
+        <reaction name="spots[a][b]" elementExists="explicit(a, b)">
+            ...
         </reaction>
     </listOfReactions>
 </model>
 \end{example}
 
-As shown before, in section~\ref{sec:connections}, the array
-specification, \texttt{grid}, specifies a 2D array and
-\texttt{connections} specifies a sparse array representing the
-connections between elements of \texttt{grid}.
-
-The structure
-\begin{example}
-<compartment name="cell" arraySpecification="grid"/>
-\end{example}
-simply creates an 2 dimensional array of compartments.
-The structure
-\begin{example}
-<specie name="s" arraySpecification="grid"
-    compartment="cell[x][y]" initialAmount="x == 0 ? 1e-10 : 0"/>
-\end{example}
-creates an 2 dimensional array of species where each species
-array element is located in the corresponding compartment array
-element.  Only the first column of species has an initial
-concentration.  Notice that the \texttt{compartment} field of the
-\texttt{Specie} structure contains an array operator to refer to
-specific compartments.
-
-The structure
-\begin{example}
-<reaction name="j" arraySpecification="connections"/>
-    <listOfReactants>
-        <specieReference specie="s[x1][y1]" stoichiometry="1"/>
-    </listOfReactants>
-    <listOfProducts>
-        <specieReference specie="s[x2][y2]" stoichiometry="1"/>
-    </listOfProducts>
-    <kineticLaw formula="s[x1][y1] * 5"/>
-</reaction>
-\end{example}
-creates a reaction between adjacent species.  Notice that the
-kinetic law formula contains a reference to a species
-concentration.
-
-\section{Simplified Array Structures for Species}
+\section{Simplified Array Structures for Related Objects}
 
 It is possible to incorporate a simplified mechanism for creating
-species arrays and referencing the elements of those arrays into
-the scheme proposed in this document.
+species, compartment and parameter arrays and for referencing the
+elements of those arrays.
 
 \subsection{Implied Species Arrays}
 \label{sec:impliedarrays}
 
 In this proposal the \texttt{compartment} field of a
 \texttt{Specie} structure can consist of a name of an array of
-compartments. This kind of structure represents an array of
-species with the same specification as the given compartment
-array.  Each element of the specie array is located in a
-corresponding compartment element.  The
-\texttt{arraySpecification} field is then optional.
+compartments, without an array operator. This kind of structure
+represents an array of species with the same specification as the
+given compartment array.  Each element of the specie array is
+located in a corresponding compartment element.  The specie array
+doesn't have to be explicitly declared.
 
-For example the structure in section~\ref{sec:complexeg}
+For example given
 \begin{example}
-<specie name="s" arraySpecification="grid"
-    compartment="cell[x][y]" initialAmount="x == 0 ? 1e-10 : 0"/>
+<domain lowerBound="0" upperBound="9"/>
+    <listOfSymbols>
+        <symbol name="x"/>
+        <symbol name="y"/>
+    </listOfSymbols>
+</domain>
+...
+<compartment name="cell[x][y]"/>
+\end{example}
+the structure
+\begin{example}
+<specie name="s[x][y]" compartment="cell[x][y]" initialAmount="x == 0 ? 1e-10 : 0"/>
 \end{example}
 can be replaced with the equivalent structure
 \begin{example}
@@ -558,94 +768,333 @@ can be replaced with the equivalent structure
 Elements of Specie arrays created this way can be referenced as
 described in previous sections.
 
-If \texttt{arraySpecification} is present in this kind of
+If the specie \texttt{name} field includes an array operator in this kind of
 structure the resulting specie array created is the combination
-of the compartment and species \texttt{arraySpecification}
-structures.  For example the following structures defines a 3
+of the compartment and species arrays.  For example the following structures defines a 3
 dimension array of species where 2 dimensions are mapped across a
 grid of compartments:
 \begin{example}
-<domain name="i" lowerBound="0" upperBound="5"/>
+<listOfDomains>
+    <domain lowerBound="0" upperBound="9"/>
+        <listOfSymbols>
+            <symbol name="x"/>
+            <symbol name="y"/>
+        </listOfSymbols>
+    </domain>
+    <domain lowerBound="0" upperBound="5"/>
+        <listOfSymbols>
+            <symbol name="i"/>
+        </listOfSymbols>
+    </domain>
+<listOfDomains>
 ...
-<arraySpecification name="vector">
-    <listOfDimensions>
-        <dimension symbol="i" domain="i"/>
-    </listOfDimensions>
-</arraySpecification>
+<compartment name="cell[x][y]"/>
 ...
-<specie name="ss" arraySpecification="vector"
-    compartment="cell" initialAmount="0"/>
+<specie name="ss[i]" compartment="cell" initialAmount="0"/>
 \end{example}
-The compartment array \texttt{cell} is defined as before.
 
-\subsection{Referencing species array elements}
+\subsection{Implied Compartment Arrays}
+
+In SBML Level 1 it is possible to specify nested compartments.
+For example the fragment:
+
+\begin{example}
+<listOfCompartments>
+    <compartment name="a">
+    <compartment name="b" outside="a">
+</listOfCompartments>
+\end{example}
+
+Defines a compartment \texttt{b} which is enclosed by \texttt{a}.
+
+We can extend the structure defined in section~\ref{sec:impliedarrays} to cover
+nested compartments.
+
+For example given
+
+\begin{example}
+<domain lowerBound="0" upperBound="5"/>
+    <listOfSymbols>
+        <symbol name="i"/>
+    </listOfSymbols>
+</domain>
+\end{example}
+
+then
+
+\begin{example}
+<listOfCompartments>
+    <compartment name="a[i]"/>
+    <compartment name="b" outside="a"/>
+</listOfCompartments>
+\end{example}
+
+is equivalent to
+
+\begin{example}
+<listOfCompartments>
+    <compartment name="a[i]"/>
+    <compartment name="b[i]" outside="a[i]"/>
+</listOfCompartments>
+\end{example}
+
+\subsection{Implied Parameter Arrays}
+
+We can apply the above concept to parameters if we introduce a
+new \texttt{SName} field, \texttt{foreach}, to the parameter
+structure. This field allows us to reference any other symbol
+from this structure and thus attach a parameter to each element
+of the referenced array.
+
+For example the model:
+\begin{example}
+<listOfDomains>
+    <domain lowerBound="0" upperBound="5"/>
+        <listOfSymbols>
+            <symbol name="i"/>
+        </listOfSymbols>
+    </domain>
+<listOfDomains>
+...
+<compartment name="cell[i]"/>
+...
+<parameter name="p" foreach="cell" value="0"/>
+...
+\end{example}
+is equivalent to
+\begin{example}
+<listOfDomains>
+    <domain lowerBound="0" upperBound="5"/>
+        <listOfSymbols>
+            <symbol name="i"/>
+        </listOfSymbols>
+    </domain>
+<listOfDomains>
+...
+<compartment name="cell[i]"/>
+...
+<parameter name="p[i]" value="0"/>
+...
+\end{example}
+
+\subsection{Referencing nested array elements}
 
 To compliment the above simplification we introduce a new
 operator `\texttt{.}' which has precedence between function
-operators and the '\texttt{*}' and `\texttt{/}' operators. The left
-hand operand of this operator is always a compartment (either a
-single compartment or a compartment array element).  The right
-hand side is always a specie within that compartment.  The
-operator returns the specie object.
+operators and the '\texttt{*}' and `\texttt{/}' operators. The
+left hand operand of this operator is an expression representing
+a containing object. The right hand side is a symbol representing
+an object within the left hand object.
 
-If the compartment on the left hand side is an element of an
-array then it is assumed that the specie is also an array
-distributed across the compartments of the array. In which case
-the `\texttt{.}' operator returns the specie element
-corresponding to the left hand compartment array element.
+If the object on the left hand side is an element of an
+array then it is assumed that the right hand object is also an array
+distributed across the elements of the array. In which case
+the `\texttt{.}' operator returns the element
+corresponding to the left hand array element.
 
-Consider the reaction structure from section~\ref{sec:complexeg}:
+Consider the following model:
 
 \begin{example}
-<reaction name="j" arraySpecification="connections"/>
-    <listOfReactants>
-        <specieReference specie="s[x1][y1]" stoichiometry="1"/>
-    </listOfReactants>
-    <listOfProducts>
-        <specieReference specie="s[x2][y2]" stoichiometry="1"/>
-    </listOfProducts>
-    <kineticLaw formula="s[x1][y1] * 5"/>
-</reaction>
+<model>
+    <listOfDomains>
+        <domain lowerBound="0" upperBound="5"/>
+            <listOfSymbols>
+                <symbol name="i"/>
+            </listOfSymbols>
+        </domain>
+    <listOfDomains>
+    <listOfCompartments>
+        <compartment name="cell[i]"/>
+    </listOfCompartments>
+    <listOfSpecies>
+        <species name="s1[i]" compartment="cell[i]"/>
+        <species name="s2[i]" compartment="cell[i]"/>
+    </listOfSpecies>
+    <reaction name="j[i]">
+        <listOfReactants>
+            <specieReference specie="s1[i]" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+            <specieReference specie="s2[i]" stoichiometry="1"/>
+        </listOfProducts>
+        <kineticLaw formula="s1[i] * 5"/>
+    </reaction>
+</model>
 \end{example}
 This can be written as
 \begin{example}
-<reaction name="j" arraySpecification="connections"/>
-    <listOfReactants>
-        <specieReference specie="cell[x1][y1].s" stoichiometry="1"/>
-    </listOfReactants>
-    <listOfProducts>
-        <specieReference specie="cell[x2][y2].s" stoichiometry="1"/>
-    </listOfProducts>
-    <kineticLaw formula="cell[x1][y1].s * 5"/>
-</reaction>
+<model>
+    <listOfDomains>
+        <domain lowerBound="0" upperBound="5"/>
+            <listOfSymbols>
+                <symbol name="i"/>
+            </listOfSymbols>
+        </domain>
+    <listOfDomains>
+    <listOfCompartments>
+        <compartment name="cell[i]"/>
+    </listOfCompartments>
+    <listOfSpecies>
+        <species name="s1" compartment="cell"/>
+        <species name="s2" compartment="cell"/>
+    </listOfSpecies>
+    <reaction name="r[i]">
+        <listOfReactants>
+            <specieReference specie="cell[i].s1" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+            <specieReference specie="cell[i].s2" stoichiometry="1"/>
+        </listOfProducts>
+        <kineticLaw formula="cell[i].s1 * 5"/>
+    </reaction>
+</model>
 \end{example}
 
 The `\texttt{.}' operator can be used with arrays of species which
 have more dimensions than the compartments in which they are
-located. For example consider the \texttt{ss} species array
-create in the second example in~\ref{sec:impliedarrays}, this array
-can be referenced in the following way in a formula:
+located. For example consider the following model:
 \begin{example}
-cell[x1][y1].ss[i]
+<model>
+    <listOfDomains>
+        <domain lowerBound="0" upperBound="5"/>
+            <listOfSymbols>
+                <symbol name="i"/>
+            </listOfSymbols>
+        </domain>
+        <domain lowerBound="0" upperBound="10"/>
+            <listOfSymbols>
+                <symbol name="j"/>
+            </listOfSymbols>
+        </domain>
+    <listOfDomains>
+    <listOfCompartments>
+        <compartment name="cell[i]"/>
+    </listOfCompartments>
+    <listOfSpecies>
+        <species name="s1[j]" compartment="cell"/>
+        <species name="s2[j]" compartment="cell"/>
+    </listOfSpecies>
+    <reaction name="r[i][j]">
+        <listOfReactants>
+            <specieReference specie="cell[i].s1[j]" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+            <specieReference specie="cell[i].s2[j]" stoichiometry="1"/>
+        </listOfProducts>
+        <kineticLaw formula="cell[i].s1[j] * 5"/>
+    </reaction>
+</model>
 \end{example}
 
+It is possible to create a model with more than one level of nesting.
+For example:
+
+\begin{example}
+<model>
+    <listOfDomains>
+        <domain lowerBound="0" upperBound="5">
+            <listOfSymbols>
+                <symbol name="i"/>
+            </listOfSymbols>
+        </domain>
+    </listOfDomains>
+    <listOfCompartments>
+        <compartment name="a[i]"/>
+        <compartment name="b" outside="a"/>
+    </listOfCompartments>
+    </listOfSpecies>
+        <specie name="s1" compartment="b" initialAmount="0.1"/>
+        <specie name="s2" compartment="b" initialAmount="0.1"/>
+    </listOfSpecies>
+    <listOfReactions>
+        <reaction name="r[i]">
+            <listOfReactions>
+                <specieReference specie="a[i].b.s1"/>
+            </listOfReactions>
+            <listOfProducts>
+                <specieReference specie="a[i].b.s2"/>
+            </listOfProducts>
+        </reaction>
+    </listOfReactions>
+</model>
+\end{example}
 This array proposal does not change any of the existing namespace
-rules of SBML: species located in different compartments cannot
+rules of SBML: for example species located in different compartments cannot
 have the same name.
 
 \subsection{Issue}
 
-Given that the simplified species structure and the `\texttt{.}'
-operator is redundant should they be incorporated into SBML Level 2?
+\begin{itemize}
+\item
+The simplified structures and the `\texttt{.}' operator
+described in this section are redundant.  Should they be
+incorporated into SBML Level 2?
+\item
+The above definition implies that elements of an array defined using the implied forms
+described in this section can be referenced by either the `.' operator or indexing the array directly.
+For example given:
+\begin{example}
+<listOfDomains>
+    <domain upperBound="0" lowerBound="9">
+        <symbol name="x"/>
+    </domain>
+    <domain upperBound="0" lowerBound="3">
+        <symbol name="y"/>
+    </domain>
+</listOfDomains>
+<listOfCompartments>
+    <compartment name="cell[x]"/>
+</listOfCompartments>
+<listOfSpecies>
+    <specie name="s[y]" compartment="cell"/>
+</listOfSpecies>
+\end{example}
+elements of \texttt{s} can be referenced in two equivalent ways:
+\begin{example}
+<specieReference specie="s[x][y]"/>
+\end{example}
+or
+\begin{example}
+<specieReference specie="cell[x].s[y]"/>
+\end{example}
+
+Is this a good idea?
+
+\item
+By using the same domain symbol twice in the same nested structure can have confusing results.
+For example given:
+\begin{example}
+<listOfDomains>
+    <domain upperBound="0" lowerBound="9">
+        <symbol name="x"/>
+    </domain>
+</listOfDomains>
+<listOfCompartments>
+    <compartment name="cell[x]"/>
+</listOfCompartments>
+\end{example}
+then
+\begin{example}
+<listOfSpecies>
+    <specie name="s[x]" compartment="cell"/>
+</listOfSpecies>
+\end{example}
+is equivalent to
+\begin{example}
+<listOfSpecies>
+    <specie name="s[x][x]" compartment="cell[x]"/>
+</listOfSpecies>
+\end{example}
+
+This means that a sparse array of species has been created.
+Should a parse detect this as an error or simply warn the user?
+\end{itemize}
 
 \section{Array Math}
 \label{sec:math}
 
-We suggest that, in the context of this proposal, while SBML
-formulas must return a scalar value, intermediate values within
-formulas can be arrays.  This section describes a set of proposed
-operators and functions that can be performed on arrays in
-formulas.
+This section describes a set of proposed operators and functions
+that can be performed on arrays in formulas.
 
 \subsection{Operators}
 
@@ -657,18 +1106,21 @@ Appendix~\ref{sec:operators} shows how these operators are
 integrated into SBML.
 
 \subsection{\texttt{:} Array Index Placeholder}
+\label{sec:placeholder}
 
 In this proposal the character `\texttt{:}' can be used as a
 place holder for array indices.  The result of using such a place
 holder is an array which is a slice of the original array. The
 precise definition of this operation is taken from
-MATLAB~\citep{matlab:1998}.  SBML uses this operation in
-combination with the 'C' language notation for arrays so that if
-we consider a two dimensional array, \texttt{a}, then
-\texttt{a[:][:]} is equivalent to \texttt{a} and \texttt{a[i][:]}
-is equivalent to \texttt{a[i]} however there is no equivalent of
-\texttt{a[:][i]}.  The form \texttt{a[:][i]} is supported by this
-proposal.
+MATLAB~\citep{matlab:1998}.  For example given a 2 dimensional
+array \texttt{x} the expression \texttt{x[:][i]} returns the 1
+dimensional array of the ith row of the array.
+
+SBML uses the \texttt{:} operation in combination with the 'C'
+language notation for arrays so that if we consider a two
+dimensional array, \texttt{a}, then \texttt{a[:][:]} is
+equivalent to \texttt{a} and \texttt{a[i][:]} is equivalent to
+\texttt{a[i]}.
 
 \subsection{Built-In Array Functions}
 
@@ -681,12 +1133,12 @@ sum(array)
 This function returns the sum of all the elements of the given array
 
 \begin{example}
-sum(symbol1, lowerBound1, upperBound1,...
-    symboln, lowerBoundn, upperBoundn, expression)
+sum(expression, symbol1, lowerBound1, upperBound1,...
+    symboln, lowerBoundn, upperBoundn)
 \end{example}
-This function's arguments consist of a sequence of triples
-followed by an expression.  The triples sequence consist of 1 or
-more triples. Each triple consists of a symbol, which is a new
+This function's arguments consist of an expression followed by a
+sequence of triples.  The triples sequence consist of 1 or more
+triples. Each triple consists of a symbol, which is a new
 constant integer symbol (i.e. not an expression) sharing the same
 namespace as species, compartment etc plus an upper and lower
 bound.  The symbols only have scope within following the following
@@ -698,21 +1150,42 @@ final expression is evaluated.  The function returns the sum of
 these final expression values.
 
 \begin{example}
+sumOverDomain(expression, domainSymbol1, ... domainSymboln)
+\end{example}
+This function's arguments consist of an expression followed by a
+sequence of domain symbols.  The domain symbols only have scope
+in the expression argument.  The domain symbols cannot be any of
+the domain symbols already used in the scope outside the function
+call.
+
+This function simply runs through all the possible symbol values
+with the domains.  For each set of symbol values the final
+expression is evaluated.  The function returns the sum of these
+final expression values.
+
+\begin{example}
 product(array)
 \end{example}
 This function returns the product of all the elements of the
 given array
 
 \begin{example}
-product(symbol1, lowerBound1, upperBound1,...
-    symboln, lowerBoundn, upperBoundn, expression)
+product(expression, symbol1, lowerBound1, upperBound1,...
+    symboln, lowerBoundn, upperBoundn)
 \end{example}
 Similar to the multiple argument \texttt{sum} function: the only
 difference is that \texttt{product} returns the product of the final
 expression values.
 
 \begin{example}
-map(array, function)
+productOverDomain(expression, domainSymbol1, domainSymboln)
+\end{example}
+Similar to the multiple argument \texttt{sumOverDomain} function: the only
+difference is that \texttt{product} returns the product of the final
+expression values.
+
+\begin{example}
+map(function, array)
 \end{example}
 returns the array which results from the application of
 \texttt{function} to all the elements of the given array.
@@ -720,7 +1193,8 @@ returns the array which results from the application of
 function will take a single argument.
 
 \begin{example}
-reduce(startValue, array, function)
+reduce(function, array, startValue)
+reduce(function, array)
 \end{example}
 This function computes a value $x$ through the application of a
 function \texttt{function} to elements of the array
@@ -728,6 +1202,7 @@ function \texttt{function} to elements of the array
 \texttt{startValue}.  \texttt{function} takes two arguments: the
 current value of $x$ and the next element in the array.
 \texttt{function} then returns the new value of $x$.
+The default value of \texttt{startValue} is zero.
 
 For example given the following structure
 \begin{example}
@@ -740,7 +1215,7 @@ For example given the following structure
 \end{example}
 then the expression
 \begin{example}
-reduce(0, s, plus)
+reduce(plus, s)
 \end{example}
 is equivalent to
 \begin{example}
@@ -753,9 +1228,158 @@ computed as a series of nested loops in which the first dimension
 forms the outermost loop and the last dimension forms the
 innermost loop.
 
-\subsubsection{Issue:}
-The bound pairs in arguments of the \texttt{sum} and
-\texttt{product} functions might be better replaced by domain names.
+\begin{example}
+argmin(expression, symbol)
+\end{example}
+
+returns the potential value of previously declared
+\texttt{symbol} which clauses \texttt{expression} to return the
+minimum value. \texttt{argmin} returns a value but doesn't change
+\texttt{symbol}.  \texttt{symbol} can be a scalar or array value.
+When \texttt{symbol} is an array then the set of values that
+minimize \texttt{expression} is returned.
+
+\begin{example}
+argmax(expression, symbol)
+\end{example}
+
+Similar to \texttt{argmin} except that the function returns the
+value that a maximizes \texttt{expression}.
+
+\subsection{Issues}
+\begin{itemize}
+\item Some of the above matrix functions are redundant should they be included in SBML?
+\item Given that \texttt{argmin} and \texttt{argmax} can't be mapped to SBML Level 1
+should they be included in Level 2?  If yes should they be part
+of a seperate package (called \texttt{optimization})?
+\end{itemize}
+
+\section{Complex Example using Array Math}
+
+The following example employs array math.
+
+\begin{example}
+<?xml version="1.0" encoding="UTF-8"?>
+<sbml xmlns="http://www.sbml.org/sbml/level2" version="1" level="2">
+<model name="GRN_Equations">
+
+    <listOfFunctions>
+        <function name="CM"
+            formula=
+                "abs(x2-x1) <= 0.2 && abs(y2-y1) <= 0.2 && ( (x2 != x1) || (y2!=y1) )">
+            <listOfArguments>
+                <argument name="x1"/>
+                <argument name="y1"/>
+                <argument name="x2"/>
+                <argument name="y2"/>
+            </listOfArguments>
+        </function>
+        <function name="sigmoid" formula = "0.5* (1.0+ (x/sqrt(1.0+x*x)))">
+            <listOfArguments>
+                <argument name="x"/>
+            </listOfArguments>
+        </function>
+    </listOfFunctions>
+
+
+    <listOfDomains>
+      <domain upperBound="8" lowerBound="0">
+        <listOfSymbols>
+          <symbol name="ic"/>
+          <symbol name="I"/>
+          <symbol name="K"/>
+          <symbol name="i_cnt"/>
+          <symbol name="j_cnt"/>
+        </listOfSymbols>
+      </domain>
+
+      <domain upperBound="2" lowerBound="0">
+        <listOfSymbols>
+          <symbol name="is"/>
+          <symbol name="js"/>
+          <symbol name="J"/>
+          <symbol name="L"/>
+        </listOfSymbols>
+      </domain>
+
+      <domain upperBound="2" lowerBound="1">
+        <listOfSymbols>
+          <symbol name="i_crd"/>
+        </listOfSymbols>
+      </domain>
+    </listOfDomains>
+
+    <listOfCompartments>
+      <compartment name="cell[ic]"/>
+    </listOfCompartments>
+
+    <listOfSpecies>
+      <specie name="ss[is]" compartment="cell" initialAmount="0"/>
+    </listOfSpecies>
+
+    <listOfParameters>
+      <parameter name="h[is]"        value="1"/>
+      <parameter name="lambda[is]"   value="1"/>
+      <parameter name="tau[is]"      value="1"/>
+      <parameter name="Tin[is][js]"  value="1"/>
+      <parameter name="TOne[is][js]" value="1"/>
+      <parameter name="Tout[is][js]" value="1"/>
+      <parameter name="TTwo[is][js]" value="1"/>
+      <parameter name="CS[i_cnt][j_cnt]" value="0"/>
+      <parameter name="crd[i_crd]" foreach="cell"
+                 value="i_crd == 1 ?
+                            (ic div 3 + 1) * 0.1 :
+                            (ic mod 3 + 1) * 0.1"/>
+
+      <parameter name="mass" foreach="cell" value="1"/>
+      <parameter name="init_eq_dist[i_cnt][j_cnt]"
+                 value="( (cell[i_cnt].crd[1]-cell[j_cnt].crd[1])^2 +
+                          (cell[i_cnt].crd[2]-cell[j_cnt].crd[2])^2 ) / 2"/>
+    </listOfParameters>
+
+    <listOfRules>
+        <specieConcentrationRule specie="cell[ic].ss[is]" type="rate"
+            formula = "(
+                      (-lambda[is]*cell[ic].ss[is]) +
+                      sigmoid(
+                        h[is] +
+sumOverDomain(cell[ic].ss[L]*Tin[is][L], L) +
+sumOverDomain(CM(cell[ic].crd[1], cell[ic].crd[2], cell[K].crd[1], cell[K].crd[2]) *
+                sumOverDomain(cell[K].ss[L] * Tout[is][L], L), K) +
+
+sumOverDomain(CM(cell[ic].crd[1], cell[ic].crd[2], cell[K].crd[1], cell[K].crd[2]) *
+                 sumOverDomain(
+                               cell[K].ss[I]  *
+                               cell[ic].ss[I] *
+                               Tone[J][is]    *
+                               TTwo[is][J]),
+                               I,
+                               J)
+                        )
+                     ,K) / tau[is]" />
+
+        <parameterRule parameter="mass[ic]"
+                       formula="sumOverDomain(cell[ic].ss[L], L)+1"/>
+
+        <parameterRule name="CS[i_cnt][j_cnt]"
+                       formula="init_eq_dist[i_cnt][j_cnt] *( mass[i_cnt]^-3+
+                                                              mass[j_cnt]^-3)"/>
+        <parameterRule parameter="crd"
+                       formula="
+                       argmin(1/2 *
+                         sumOverDomain(
+                           CM(cell[I].crd[1],cell[I].crd[2],cell[J].crd[1],cell
+[J].crd[2]) * ( (((cell[I].crd[1]-cell[J].crd[1])^2 +
+(cell[I].crd[2]-cell[J].crd[2])^2)^-2)-CS[I][J])^2, I, J), crd )"/>
+
+    </listOfRules>
+</model>
+</sbml>
+
+\end{example}
+
+This model doesn't contain any reactions.  We're assuming that SBML Level 2 will
+allow models to contain no reactions.
 
 \section{Discussion: Combining arrays with Modularity}
 The proposed features described in this document could

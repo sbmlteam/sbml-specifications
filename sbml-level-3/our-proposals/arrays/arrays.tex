@@ -67,8 +67,6 @@ All types proposed in this document will be derived from the
 
 A model would have an optional list of
 \texttt{IntegerParameter} structures.
-The \class{IntegerParameter} type is described in section~\ref{sec:integerParameters}.
-
 \class{IntegerParameter} structures declare integer constants with identifiers in the model's global identifier namespace.
 They can be used in any MathML expression where they have an implicit type of \texttt{integer}.
 They are distinct from \class{Parameter} structures: it is not possible to define a rule for an \class{IntegerParameter}.
@@ -79,7 +77,7 @@ Integer parameters are constant.
 
 A constant expression is an expression whose result doesn't vary during simulation.
 The only symbols occurring in constant expressions are those representing integer variables (declared by \attrib{Dimension} structures)
-or integer parameters.  A constant expression is required in the \attrib{elementExists} field.
+or integer parameters.
 
 \section{Integer Expressions}
 
@@ -91,6 +89,37 @@ operators that return integer values given integer arguments.  Integer expressio
 MathML \texttt{selector} operator should be integer expressions.
 
 Because none of the symbols in integer expressions vary at simulation time an integer expression can be considered constant.
+
+\section{Conditional Objects}
+\label{sec:exists}
+In this proposal \class{Species}, \class{Parameter}, \class{Link}, \class{Instance}, \class{Rule}, \class{Reaction} and \class{Compartment}
+objects all have a new \attrib{exists} field.  This field contains a MathML expression which returns a boolean result.  If this expression
+is true the containing object is part of the model.  If the expression is false the object does not exist.  Variables acquire their initial values
+whenever they come into existence.
+
+As an example the following fragment shows a species that only exists when the parameter \texttt{x} is greater than \texttt{size}. 
+\pagebreak
+\begin{example}
+<species id="offspring" initialAmount="0">
+    <exists>
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+                <gt/>
+                <ci>x</ci>
+                <ci>size</ci>
+            </apply>
+        </math>
+    </exists>
+</species>
+\end{example}
+
+A model which contains non-constant expressions in
+\attrib{exists} fields is \emph{dynamic} i.e the model structure can change during simulation.  A model which contains no \attrib{exists} fields or
+contains constant expressions in \attrib{exists} fields is \emph{static} i.e the model structure cannot change during simulation.
+
+This feature is independent of the rest of the features described in this proposal.
+As will be shown in section~\ref{sec:sparseandconnections} there is a class of static models which use \attrib{exists}
+attributes as a mechanism for describing sparse arrays.
 
 \section{Arrays}
 \label{sec:arrays}
@@ -113,7 +142,7 @@ A dimension structure declares an integer symbol that takes integer values over 
 Array cells exists on the given dimension for each value of the integer symbol.  The range of values
 is defined by the inclusive range between the results of the \texttt{upperLimit} and \texttt{lowerLimit}
 MathML expressions.  These expressions must return an integer result.  The integer symbol iteratively takes on the
-value in the range and has scope within the other MathML expression contained by the SBML component element
+value in the range and has scope within the MathML expressions contained by the SBML component element
 except for \class{Dimension} structures preceding the given \class{Dimension} structure in \texttt{listOfDimensions}.
 The integer symbol will overload symbols declared elsewhere in the model.
 
@@ -390,7 +419,7 @@ elements of those arrays.
 
 In this proposal when the \texttt{compartment} field of a
 \texttt{Species} structure contains the identifier of an array of
-compartments the \attrib{compartmentLink} field has to be omitted.
+compartments the \attrib{compartmentLink} field can be omitted.
 A structure configured in this fashion
 represents an array of species with the same specification as the
 given compartment array.
@@ -507,7 +536,7 @@ dimension array of species where the first dimension is mapped across a row of c
 In these cases the symbols declared in the referenced compartment's \attrib{dimension} field (\texttt{listOfDimensions} sub-element)
 are in scope in all the MathML expressions contained within the species structure.  For example a species structure
 could omit the \attrib{compartmentLink} field yet still use symbols from the compartment's \attrib{dimension} field
-in the species' \attrib{elementExists} field (see section~\ref{sec:sparse} for more details on this field).
+in the species' \attrib{exists} field.
 
 \subsection{Implied Compartment Arrays}
 
@@ -1001,6 +1030,7 @@ across a 1 dimensional array of species would be encoded as follows:
 \end{example}
 
 \section{Sparse Arrays and Connections}
+\label{sec:sparseandconnections}
 
 \subsection{Sparse Arrays}
 \label{sec:sparse}
@@ -1013,45 +1043,16 @@ interesting until the interactions between the cells are
 incorporated.  This section begins the process of proposing
 structures which allow interconnection schemes to be defined.
 
-In this proposal \class{Array} structure include an additional \texttt{elementExists}
-MathML field.  This field should only occur when the structure is
-declared as an array.  \texttt{elementExists} contains a constant
-expression which defines whether an array element actually occurs
-at a given position in the array.  This expression is
-conditional, which means that a false value implies that
-the element won't occur and a true value implies that
-an element will occur.
-
-The default value of \texttt{elementExists}, true, ensures that by
-default the shape of the array specification is determined just
-by the \attrib{dimension} field (\texttt{listOfDimensions} sub-element) alone.
-
-Apart from the \texttt{elementExists} field, the set of dimension
-symbols only have values for those elements that exist in the
-array in which they are declared.
-
-The index operand to an array operator must refer to an element
-which exists in the array.  This means that the index must be a
-value to which the \texttt{elementExists} expression returns a
-true value.
-
-\subsubsection{Issue}
-
-To enable dynamic structures in SBML we could allow the
-\texttt{elementExists} expression to be dynamic. This would allow
-the model to change dynamically during the simulation.  Perhaps
-other more explicit dynamic restructuring of a model should be
-considered in SBML.
-In fact we could generalise the concept of \attrib{elementExists} 
-(perhaps renaming the field \attrib{exists}) so that it operates 
-even when the given structure is not an array.  In this way a model 
-could change dynamically during a simulation.
+We can use the \attrib{exists} field (see section~\ref{sec:exists}) 
+as a mechanism for creating sparse arrays.  Elements of an array
+are simply absent if the \attrib{exists} expression is false for a given
+set of dimension integer variables.
 
 \subsection{Sparse Array Example}
 \label{sec:sparseeg}
 
-The following example shows a proposed structure for triangular
-arrays where the maximum \texttt{y} index is equal to the
+The following example shows how the \attrib{exists} field is used to create a structure for a triangular
+array where the maximum \texttt{y} index is equal to the
 \texttt{x} index.
 
 \begin{example}
@@ -1084,7 +1085,7 @@ arrays where the maximum \texttt{y} index is equal to the
                     </upperLimit>
                 </dimension>
             </listOfDimensions>
-            <elementExists>
+            <exists>
                 <math xmlns="http://www.w3.org/1998/Math/MathML">
                     <apply>
                         <leq/>
@@ -1092,7 +1093,7 @@ arrays where the maximum \texttt{y} index is equal to the
                         <ci> y </ci>
                     </apply>
                 </math>
-            </elementExists>
+            </exists>
         </compartment>
     </listOfCompartments>
 </model>
@@ -1242,7 +1243,7 @@ away from each other.
                     </upperLimit>
                 </dimension>
             </listOfDimensions>
-            <elementExists>
+            <exists>
                 <note>
                     <p xmlns="http://www.w3.org/1999/xhtml">
                         abs(x2 - x1) == 1 || abs(y2 - y1) == 1
@@ -1277,7 +1278,7 @@ away from each other.
                         </apply>
                     </apply>
                 </math>
-            </elementExists>
+            </exists>
             <listOfReactants>
                 <speciesReference>
                     <speciesLink object="s">
@@ -1331,7 +1332,7 @@ away from each other.
 The \texttt{connections} specification is bidirectional: for every
 pair of adjacent \texttt{grid} co-ordinates there are a pair of
 elements. \texttt{connections} can be simplified and made
-unidirectional by changing the \texttt{elementExists} expression
+unidirectional by changing the \texttt{exists} expression
 to:
 \begin{example}
 x2 - x1 == 1 || y2 - y1 == 1
@@ -1632,7 +1633,7 @@ The second model:
                     </upperLimit>
                 </dimension>
             </listOfDimensions>
-            <elementExists>
+            <exists>
                 <note>
                     <p xmlns="http://www.w3.org/1999/xhtml">
                         (x1 == x2 or y1 == y2) and (x1 != x2 or y1 != y2)
@@ -1669,7 +1670,7 @@ The second model:
                         </apply>
                     </apply>
                 </math>
-            </elementExists>
+            </exists>
             <listOfReactants>
                 <speciesReference>
                     <speciesLink object="cell">

@@ -103,8 +103,10 @@ to have values over the given domain.
 <model name="tissue">
     <listOfDomains>
         <domain upperBound="10" lowerBound="-10">
-            <symbol name="x"/>
-            <symbol name="y"/>
+            <listOfSymbols>
+                <symbol name="x"/>
+                <symbol name="y"/>
+            </listOfSymbols>
         </domain>
     </listOfDomains>
     ...
@@ -379,7 +381,7 @@ values of the array of \texttt{s1} is the product of the matrices
 \subsubsection{Issues}
 \begin{itemize}
 \item
-It is possible avoid the use of the array operator in the name
+It is possible to avoid the use of the array operator in the name
 field for array declarations and instead use XML structures
 instead.  This would mean that a SBML parser would avoid having
 to parse the content of the \texttt{name} field.  For example the
@@ -442,8 +444,8 @@ operator is used to refer to specific element.
 The `array' operand of an array operator must be the name of a
 structure which has been declared as an array.
 We suggest that for SBML Level 2, the index operand to an array operator be
-restricted to being a constant expression.  An array operator
-when applied to an array of consisting of $n$ dimensions results
+restricted to being a constant expression.  An array operator,
+when applied to an array consisting of $n$ dimensions, results
 in an array of $n-1$ dimensions and if $n$ is 1 then the result
 is a single object.
 
@@ -628,8 +630,10 @@ arrays where the maximum \texttt{y} index is equal to the
 <model name="starfish">
     <listOfDomains>
         <domain upperBound="9" lowerBound="0"/>
-            <symbol name="x"/>
-            <symbol name="y"/>
+            <listOfSymbols>
+                <symbol name="x"/>
+                <symbol name="y"/>
+            </listOfSymbols>
         </domain>
     </listOfDomains>
     <compartment name="cell[x][y]" elementExists="y <= x">
@@ -654,12 +658,14 @@ away from each other.
 <model name="tissue">
     <listOfDomains>
         <domain upperBound="9" lowerBound="0">
-            <symbol name="x"/>
-            <symbol name="y"/>
-            <symbol name="x1"/>
-            <symbol name="x2"/>
-            <symbol name="y1"/>
-            <symbol name="y2"/>
+            <listOfSymbols>
+                <symbol name="x"/>
+                <symbol name="y"/>
+                <symbol name="x1"/>
+                <symbol name="x2"/>
+                <symbol name="y1"/>
+                <symbol name="y2"/>
+            </listOfSymbols>
         </domain>
     </listOfDomains>
     <listOfCompartments>
@@ -765,8 +771,12 @@ can be replaced with the equivalent structure
 <specie name="s" compartment="cell" initialAmount="x == 0 ? 1e-10 : 0"/>
 \end{example}
 
-Elements of Specie arrays created this way can be referenced as
-described in previous sections.
+It is important to note that in the second case the symbol
+\texttt{x} is in scope even though it doesn't appear in the
+\texttt{specie} structure directly.  For the purposes of this
+document, arrays declared using form of the second case are called
+implied arrays. Elements of implied arrays created this way can
+be referenced as described in previous sections.
 
 If the specie \texttt{name} field includes an array operator in this kind of
 structure the resulting specie array created is the combination
@@ -1061,8 +1071,30 @@ or
 Is this a good idea?
 
 \item
-By using the same domain symbol twice in the same nested structure can have confusing results.
-For example given:
+Is it a good idea that the symbols used in a implied array declaration
+can include those used in the enclosing structure and not only
+those using in the immediate enclosed structure?
+Note the following is possible:
+
+\begin{example}
+...
+<domain lowerBound="0" upperBound="9"/>
+    <listOfSymbols>
+        <symbol name="x"/>
+        <symbol name="y"/>
+    </listOfSymbols>
+</domain>
+...
+<compartment name="cell[x][y]"/>
+...
+<specie name="s" compartment="cell" initialAmount="x == 0 ? 1e-10 : 0"/>
+...
+\end{example}
+
+\item
+Following on from previous issue, the same domain symbol
+appearing twice in the same nested structure can have confusing
+results. For example given:
 \begin{example}
 <listOfDomains>
     <domain upperBound="0" lowerBound="9">
@@ -1087,7 +1119,10 @@ is equivalent to
 \end{example}
 
 This means that a sparse array of species has been created.
+
 Should a parser detect this as an error or simply warn the user?
+This is this another good reason for modifying the
+scope of the symbols declared in the enclosing structure?
 \end{itemize}
 
 \section{Array Math}
@@ -1256,7 +1291,54 @@ of a separate package (called \texttt{optimization})?
 
 \section{Complex Example using Array Math}
 
-The following example employs array math.
+The following SBML Level 2 example is the complete model which
+describes an epithelium consisting of 9 cells with 3 species
+inside each cell \texttt{cell[ic].ss[is]}, and the dynamic
+development of this epithelium. The species inside each cell
+interact with each other and with the species of the neighboring
+cells according to a single \texttt{specieConcentrationRule}.
+Parameters \texttt{h}, \texttt{lambda}, \texttt{tau},
+\texttt{Tin}, \texttt{TOne}, \texttt{Tout} and \texttt{TTwo} are
+parameters for the \texttt{specieConcentrationRule} and they
+describe how neighboring species interact and develop.
+
+Each cell is allowed to move in 2-dimensional space. To implement
+that, each cell has 2-dimensional array of coordinates (an
+implied parameter array), associated with it
+\verb+cell[I].crd[i_crd]+. Initially, the cells are placed on
+two-dimensional (3x3) grid. Cell positions are allowed to change,
+and dynamic cell positions are determined from by the
+\texttt{parameterRule} for \texttt{crd}. Obviously, once cell
+positions change, the neighboring relationships change also. The
+list of current neighbors for each cell is determined in function
+\texttt{CM} (\texttt{CM} stands for Connection Matrix). This
+function returns 1 if given coordinates of two cells indicate
+that cells are neighbors (that is cells are connected), and it
+returns 0 otherwise. Each pair of cells is considered.
+
+Also involved in cell positioning are the masses of the cells
+\texttt{parameter name="mass"} and the connection strengths
+\verb+parameter name="CS[i_cnt][j_cnt]"+ between the cells.
+Masses of the cells are initially set to 1 and are dynamically
+changing according to \texttt{parameterRule name="mass[ic]"}.
+Connection strengths are dynamic as well, they depend on initial
+equilibrium distance between two cells
+\verb+init_eq_dist[i_cnt][j_cnt]+ and on current masses of these
+cells. (Remember, function CM determines if two cells are
+connected or not). The initial equilibrium distance
+\verb+init_eq_dist[i_cnt][j_cnt]+ is a static parameter. No
+\texttt{parameterRule} for it exists. This parameter is used to
+store the \emph{initial} equilibrium distance between two cells
+(as defined by formula for \texttt{value} of this parameter). And
+the initial equilibrium distances together with dynamic masses
+are used to calculate dynamic connection strength between two
+cells in developmental simulations.
+
+This model fully describes the epithelium at initial time, and
+all the processes which are needed to calculate the epithelium
+condition at any future time.
+
+The SBML Level 2 representation of this model is as follows:
 
 \begin{example}
 <?xml version="1.0" encoding="UTF-8"?>
@@ -1351,20 +1433,20 @@ sumOverDomain(CM(cell[ic].crd[1], cell[ic].crd[2], cell[K].crd[1], cell[K].crd[2
                  sumOverDomain(
                                cell[K].ss[I]  *
                                cell[ic].ss[I] *
-                               Tone[J][is]    *
+                               TOne[J][is]    *
                                TTwo[is][J]),
                                I,
                                J)
                         )
                      ,K) / tau[is]" />
 
-        <parameterRule parameter="mass[ic]"
+        <parameterRule name="mass[ic]"
                        formula="sumOverDomain(cell[ic].ss[L], L)+1"/>
 
         <parameterRule name="CS[i_cnt][j_cnt]"
                        formula="init_eq_dist[i_cnt][j_cnt] *( mass[i_cnt]^-3+
                                                               mass[j_cnt]^-3)"/>
-        <parameterRule parameter="crd"
+        <parameterRule name="crd"
                        formula="
                        argmin(1/2 *
                          sumOverDomain(

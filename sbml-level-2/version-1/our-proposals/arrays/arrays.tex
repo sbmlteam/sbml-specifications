@@ -1378,8 +1378,174 @@ sumOverDomain(CM(cell[ic].crd[1], cell[ic].crd[2], cell[K].crd[1], cell[K].crd[2
 
 \end{example}
 
-This model doesn't contain any reactions.  We're assuming that SBML Level 2 will
-allow models to contain no reactions.
+This model doesn't contain any reactions.  We're assuming that
+SBML Level 2 will allow models to contain no reactions.
+
+\section{Example: the community effect in developmental gene regulation}
+
+This section contains an example model of the community effect in
+developmental gene regulation. The model basically contains a
+high abstracted model of gene expression for a single gene as follows:
+
+\begin{equation*}
+  \begin{array}{@{}ccc@{}}
+    ubiq & \underrightarrow{v_{mu} ubiq} & waste \\ \\[-4pt]
+    mRNA & \underrightarrow{k_{dm} mRNA} & waste \\ \\[-4pt]
+    p & \underrightarrow{k_{dp} p} & waste \\ \\[-4pt]
+    mat & \underrightarrow{v_i} & ubiq \\ \\[-4pt]
+    mat & \underrightarrow{\frac{k_t ubiq}{k_{mu} + ubiq}} & mRNA \\ \\[-4pt]
+    mat & \underrightarrow{\frac{k_s mRNA}{k_{mu} + mRNA}} & p
+  \end{array}
+\end{equation*}
+
+where $ubiq$ is a transcription factor and $p$ is the gene product.
+
+This model is applied to a rectangular array of compartments. The
+model contains a positive feedback loop between adjacent cells by
+enabling the gene product of an adjacent cell to be a
+transcription factor of the gene in the current cell. Thus the
+feedback loop is completed by the following reaction for every
+pair of adjacent cells $(a,b)$:
+
+\begin{equation*}
+  \begin{array}{@{}ccc@{}}
+    mat_a & \underrightarrow{\frac{k_r p_b}{k_mr + p_b}} & mRNA_a
+  \end{array}
+\end{equation*}
+
+where adjacent simply means cells above, below left and right of
+the current cell.
+
+The SBML form of this model is as follows:
+
+\begin{example}
+<?xml version="1.0" encoding="UTF-8"?>
+<sbml xmlns="http://www.sbml.org/sbml/level2" version="1" level="2">
+<model name="community_effect">
+    <listOfDomains>
+        <domain upperBound = "9" lowerBound = "0">
+            <symbol name="x"/>
+            <symbol name="x1"/>
+            <symbol name="x2"/>
+        </domain>
+        <domain upperBound = "5" lowerBound = "0">
+            <symbol name="y"/>
+            <symbol name="y1"/>
+            <symbol name="y2"/>
+        </domain>
+    </listOfDomains>
+    <listOfCompartments>
+        <compartment name="cell[x][y]"/>
+    </listOfCompartments>
+    <listOfSpecies>
+        <specie name="mat" compartment="cell" boundaryCondition="true" initialAmount="1.0"/>
+        <specie name="waste" compartment="cell" boundaryCondition="true" initialAmount="1.0"/>
+        <specie name="ubiq" compartment="cell" initialAmount="0"/>
+        <specie name="mRNA" compartment="cell" initialAmount="0"/>
+        <specie name="p" compartment="cell" initialAmount="0"/>
+    </listOfSpecies>
+    <listOfParameters>
+        <parameter name="kmu" value="0.1"/>
+    </listOfParameters>
+    <listOfReactions>
+        <reaction name="ubiq2waste[x][y]">
+            <listOfReactants>
+                <specieReference specie="ubiq[x][y]"/>
+            </listOfReactants>
+            <listOfProducts>
+                <specieReference specie="waste[x][y]"/>
+            </listOfProducts>
+            <kineticLaw formula="vmu * ubiq[x][y]"/>
+                <listOfParameters>
+                    <parameter name="vmu" value="0.1"/>
+                </listOfParameters>
+            </kineticLaw>
+        </reaction>
+        <reaction name="mRNA2waste[x][y]">
+            <listOfReactants>
+                <specieReference specie="mRNA[x][y]"/>
+            </listOfReactants>
+            <listOfProducts>
+                <specieReference specie="waste[x][y]"/>
+            </listOfProducts>
+            <kineticLaw formula="kdm * mRNA[x][y]"/>
+                <listOfParameters>
+                    <parameter name="kdm" value="0.1"/>
+                </listOfParameters>
+            </kineticLaw>
+        </reaction>
+        <reaction name="p2waste[x][y]">
+            <listOfReactants>
+                <specieReference specie="p[x][y]"/>
+            </listOfReactants>
+            <listOfProducts>
+                <specieReference specie="waste[x][y]"/>
+            </listOfProducts>
+            <kineticLaw formula="kdp * p[x][y]"/>
+                <listOfParameters>
+                    <parameter name="kdp" value="0.1"/>
+                </listOfParameters>
+            </kineticLaw>
+        </reaction>
+        <reaction name="mat2ubiq[x][y]">
+            <listOfReactants>
+                <specieReference specie="mat[x][y]"/>
+            </listOfReactants>
+            <listOfProducts>
+                <specieReference specie="ubiq[x][y]"/>
+            </listOfProducts>
+            <kineticLaw formula="x==0 ? vi1 : vin"/>
+                <listOfParameters>
+                    <parameter name="vi1" value="0.1"/>
+                    <parameter name="vin" value="0.00001"/>
+                </listOfParameters>
+            </kineticLaw>
+        </reaction>
+        <reaction name="mat2p[x][y]">
+            <listOfReactants>
+                <specieReference specie="mat[x][y]"/>
+            </listOfReactants>
+            <listOfProducts>
+                <specieReference specie="p[x][y]"/>
+            </listOfProducts>
+            <kineticLaw formula="(ks * mRNA[x][y])/(kmu + mRNA[x][y])"/>
+                <listOfParameters>
+                    <parameter name="ks" value="0.1"/>
+                </listOfParameters>
+            </kineticLaw>
+        </reaction>
+        <reaction name="local_mat2mRNA[x][y]">
+            <listOfReactants>
+                <specieReference specie="mat[x][y]"/>
+            </listOfReactants>
+            <listOfProducts>
+                <specieReference specie="mRNA[x][y]"/>
+            </listOfProducts>
+            <kineticLaw formula="(kt * ubiq[x][y])/(kmu + ubiq[x][y])"/>
+                <listOfParameters>
+                    <parameter name="kt" value="0.1"/>
+                </listOfParameters>
+            </kineticLaw>
+        </reaction>
+        <reaction name="neighbour_mat2mRNA[x1][y1][x2][y2]"
+                  elementExists="(x1 == x2 || y1 == y2) && (x1 != x2 || y1 != y2)">
+            <listOfReactants>
+                <specieReference specie="mat[x1][y1]"/>
+            </listOfReactants>
+            <listOfProducts>
+                <specieReference specie="mRNA[x1][y1]"/>
+            </listOfProducts>
+            <kineticLaw formula="(kr * p[x2][y2])/(kmr + p[x2][y2])"/>
+                <listOfParameters>
+                    <parameter name="kr" value="0.1"/>
+                    <parameter name="kmr" value="0.07"/>
+                </listOfParameters>
+            </kineticLaw>
+        </reaction>
+    </listOfReactions>
+</model>
+</sbml>
+\end{example}
 
 \section{Discussion: Combining arrays with Modularity}
 The proposed features described in this document could

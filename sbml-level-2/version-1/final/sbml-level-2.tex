@@ -13,10 +13,13 @@
 \defcitealias{bipm:1998}{BIPM, 1998}
 \defcitealias{bipm:2000}{BIPM, 2000}
 
+
 % Miscellaneous macros.
 
 \newcommand{\D}{\displaystyle}
 \newcommand{\tm}{\textsuperscript{\tiny{\texttrademark}}}
+\newcommand{\changed}[1]{{#1}}
+\newenvironment{blockChanged}{}
 
 \pagestyle{myheadings}
 \markboth{\textit{SBML Level 2: Working Draft Revision 3}}{\textit{SBML
@@ -45,7 +48,7 @@
 
 \acknowledge{Principal Investigators: John Doyle and Hiroaki Kitano}
 
-\date{SBML Level 2, Version 1\\[5pt]\fbox{Working Draft Revision 3}\\[5pt]
+\date{SBML Level 2, Version 1\\[5pt]\fbox{Working Draft Revision 4}\\[5pt]
   \today{}}
 
 \maketitlepage
@@ -76,12 +79,12 @@ versa.
 
 SBML Level 2 was created in part studying the modeling facilities provided
 by the following software systems: \emph{BioSpice}~\citep{arkin:2001},
-\emph{Cellarator}~\citep{shapiro:2000}, \emph{COPASI}~\citep{mendes:2000},
+\emph{Cellerator}~\citep{shapiro:2000,shapiro:2001,shapiro:2003}, \emph{COPASI}~\citep{mendes:2000},
 \emph{DBSolve}~\citep{goryanin:2001,goryanin:1999},
 \emph{E-Cell}~\citep{tomita:1999,tomita:2001},
 \emph{Gepasi}~\citep{mendes:1997,mendes:2001},
 \emph{Jarnac}~\citep{sauro:2000,sauro:1991},
-\emph{JigCell}~\citep{?},
+\emph{JigCell}~\citep{vass:2003},
 \emph{NetBuilder}~\citep{schilstra:2002},
 \emph{ProMot/DIVA}~\citep{stelling:2001},
 \emph{StochSim}~\citep{bray:2001,morton-firth:1998}, and \emph{Virtual
@@ -159,7 +162,7 @@ changes:
   Sections~\ref{sec:formulas} and \ref{sec:functions}.
   
 \item The top-level \class{Model} structure can contain an optional list of
-  event organized in strutures of type \class{Event} which specify the a
+  events organized in structures of type \class{Event} which specify the a
   discrete event can occur during a simulation. See Section \ref{sec:events}.
   
 \item The namespace for identifiers in a model does not contain any
@@ -186,23 +189,20 @@ changes:
 \item The form of scalar rules is constrained.  See
   Section~\ref{sec:rules}.
   
-\item \class{ParameterRule} structures have a field named
-  \attrib{parameter} (instead of \attrib{name}) which contains the
-  identifier for the parameter assigned a rate or value by the rule.  See
-  Section~\ref{sec:rules}.
+\item \class{Rule} structures have been changed and simplified.  Instances of
+  \class{AssignmentRule} replace instances of \class{ParameterRule},
+  \class{SpeciesConcentrationRule} and \class{CompartmentVolumeRule}.
+  See Section~\ref{sec:rules}.
   
-\item \class{ParameterRule} structures no longer have a \attrib{units}
-  field.  The units of the parameter are given by the corresponding
-  \class{Parameter} structure.  See Section~\ref{sec:rules}.
-
 \item A rule is not a substitute for a component definition.  For example,
-  a \class{Parameter} structure for a given identifier must precede a
-  \class{ParameterRule} structure for the same identifier.
+  a \class{Compartment} structure for a given identifier must precede an
+  \class{AssignmentRule} structure for the same identifier.
   
 \item A new \attrib{listOfModifiers} element has been added to the
   \class{Reaction} structure.  This list enumerates species that affect a
-  reaction but are neither created nor destroyed by the reaction.  See
-  Section~\ref{sec:reactions}.
+  reaction but are neither created nor destroyed by the reaction.  Each species
+  occurring in a kinetic law must appear in the list of reactants, list of
+  products or list of modifiers. See Section~\ref{sec:reactions}.
   
 \item A reaction may have no products or no reactants but must have at
   least one reactant or product.  See Section~\ref{sec:reactions}.
@@ -213,6 +213,9 @@ changes:
 \item Unlike in SBML Level 1, unit identifiers in Level~2 are in a separate
   namespace from the namespace used for models, functions, species,
   compartments, reactions and parameters.
+
+\item All structures are derived from \class{SBase} including \class{Sbml} and
+  \class{listOf}\rule{0.5in}{0.5pt} elements.
 
 \end{itemize}
 
@@ -349,8 +352,10 @@ are described in detail.  Section~\ref{sec:general} first introduces a few
 basic structures that are used throughout SBML Level~2, then
 Section~\ref{sec:elements} provides details on each of the main components.
 Section~\ref{sec:xml-rep} provides several complete examples of models
-encoded in XML using SBML Level~2.
-
+encoded in XML using SBML Level~2. Section~\ref{sec:discussion} contains a
+list of anticipated enhancements that will be made in SBML Level 3; a review
+of other similar efforts; and discusses the availability of documentation and
+a XML schema for this standard.
 
 %=============================================================================
 \section{Preliminary Definitions}
@@ -368,7 +373,7 @@ into the details of the components provided in SBML Level 2.
 
 Each of the main structures composing an SBML Level 2 model definition has
 a specific data type that is derived directly or indirectly from a single
-base type called \class{SBase}.  This inheritance hierarchy is depicted in
+abstract type called \class{SBase}.  This inheritance hierarchy is depicted in
 Figure~\vref{fig:top-level}.  The definition of \class{SBase} is presented
 in Figure~\vref{fig:sbase}.
 
@@ -393,20 +398,19 @@ in Figure~\vref{fig:sbase}.
   \label{fig:sbase}
 \end{figure}
 
-The type \class{SBase} is designed to give a modeler or a software package
-the ability to attach arbitrary information to each major component in an
-SBML model.  \class{SBase} contains two optional fields to support the
-attachment of arbitrary information: \attrib{notes} and
-\attrib{annotation}.  The field \attrib{notes} is a container for XHTML
-content.  It is intended for recording optional user-visible information.
-Every data object derived directly or indirectly from type \class{SBase}
-can have a separate value for \attrib{notes}, allowing users considerable
-freedom for annotating their models.  The second field,
-\attrib{annotation}, is provided for software-generated annotations.  It is
-a container for arbitrary data (XML type \class{any}) and is intended to
-store information not meant for human viewing.  As with the user-visible
-\attrib{notes} field, every data object can have its own
-\attrib{annotation} value.
+The type \class{SBase} is designed to allow a modeler or a software package
+to attach arbitrary information to each major component in an SBML model.
+\class{SBase} contains three fields, all of which are optional:
+\attrib{metaid}, \attrib{notes} and \changed{\attrib{annotation}}.  The
+field \attrib{notes} is a container for XHTML content.  It is intended for
+recording optional user-visible information.  Every data object derived
+directly or indirectly from type \class{SBase} can have a separate value
+for \attrib{notes}, allowing users considerable freedom for annotating
+their models.  The second field, \attrib{annotation}, is provided for
+software-generated annotations.  It is a container for arbitrary data (XML
+type \class{any}) and is intended to store information not meant for human
+viewing.  As with the user-visible \attrib{notes} field, every data object
+can have its own \attrib{annotation} value.
 
 Metadata expressed using RDF can be placed anywhere within an \class{sbml}
 element and its subelements, \emph{except} within MathML elements.  To
@@ -488,18 +492,19 @@ Table~\ref{tab:reserved-urls}.
 \begin{table}[t]
   \vspace*{10pt}
   \centering
-  \setlength{\tabcolsep}{14pt}
   \begin{tabular}{ll}
     \toprule
-    \texttt{http://www.sbml.org/2002/ns/biocharon}  & \texttt{http://www.sbml.org/2002/ns/jarnac}\\
-    \texttt{http://www.sbml.org/2002/ns/biosketchpad}   & \texttt{http://www.sbml.org/2002/ns/jdesigner}\\
-    \texttt{http://www.sbml.org/2002/ns/biospice}   & \texttt{http://www.sbml.org/2002/ns/mcell}\\
-    \texttt{http://www.sbml.org/2002/ns/cellerator} & \texttt{http://www.sbml.org/2002/ns/netbuilder}\\
-    \texttt{http://www.sbml.org/2002/ns/copasi}     & \texttt{http://www.sbml.org/2002/ns/promot}\\
-    \texttt{http://www.sbml.org/2002/ns/cytoscape}  & \texttt{http://www.sbml.org/2002/ns/sbedit}\\
-    \texttt{http://www.sbml.org/2002/ns/dbsolve}    & \texttt{http://www.sbml.org/2002/ns/stochsim}\\
-    \texttt{http://www.sbml.org/2002/ns/ecell}      & \texttt{http://www.sbml.org/2002/ns/vcell}\\
-    \texttt{http://www.sbml.org/2002/ns/gepasi}\\
+    \texttt{http://www.sbml.org/2001/ns/biocharon}  & \texttt{http://www.sbml.org/2001/ns/jarnac}\\
+    \texttt{http://www.sbml.org/2001/ns/bioreactor} & \texttt{http://www.sbml.org/2001/ns/jdesigner}\\
+    \texttt{http://www.sbml.org/2001/ns/biosketchpad}   & \texttt{http://www.sbml.org/2001/ns/jigcell}\\
+    \texttt{http://www.sbml.org/2001/ns/biospice}   & \texttt{http://www.sbml.org/2001/ns/mcell}\\
+    \texttt{http://www.sbml.org/2001/ns/cellerator} & \texttt{http://www.sbml.org/2001/ns/netbuilder}\\
+    \texttt{http://www.sbml.org/2001/ns/copasi}     & \texttt{http://www.sbml.org/2001/ns/pathdb}\\
+    \texttt{http://www.sbml.org/2001/ns/cytoscape}  & \texttt{http://www.sbml.org/2001/ns/promot}\\
+    \texttt{http://www.sbml.org/2001/ns/dbsolve}    & \texttt{http://www.sbml.org/2001/ns/sbedit}\\
+    \texttt{http://www.sbml.org/2001/ns/ecell}      & \texttt{http://www.sbml.org/2001/ns/stochsim}\\
+    \texttt{http://www.sbml.org/2001/ns/gepasi}     & \texttt{http://www.sbml.org/2001/ns/vcell}\\
+    \texttt{http://www.sbml.org/2001/ns/isys}\\
     \bottomrule
   \end{tabular}
   \caption{Reserved XML Namespace names in SBML Level 2.}
@@ -790,7 +795,7 @@ encodes the formula $x + t$, where $t$ is the built-in symbol for time.
 \begin{example}
 <math xmlns="http://www.w3.org/1998/Math/MathML">
     <apply>
-        <add/>
+        <plus/>
         <ci> x </ci>
         <csymbol encoding="SBML" definitionURL="http://www.sbml.org/symbols/time">
             t
@@ -803,7 +808,7 @@ $k + delay(x, 0.1)$ or alternatively $k_t + x_{t - 0.1}$:
 \begin{example}
 <math xmlns="http://www.w3.org/1998/Math/MathML">
     <apply>
-        <add/>
+        <plus/>
         <ci> k </ci>
         <apply>
             <csymbol encoding="SBML" definitionURL="http://www.sbml.org/symbols/delay">
@@ -818,27 +823,6 @@ $k + delay(x, 0.1)$ or alternatively $k_t + x_{t - 0.1}$:
 
 Section~\ref{sec:delayeg} contains a complete model which uses the built-in delay function.
 
-%-----------------------------------------------------------------------
-\subsection{Valid XML Headers for SBML Level 2}
-\label{sec:header}
-%-----------------------------------------------------------------------------
-
-An SBML Level 2 model definition in XML consists of a single \class{sbml}
-element enclosing a single \class{model} element.  The namespace URI for
-SBML Level~2 is \texttt{http://www.sbml.org/sbml/level2}.  The SBML element
-has two attributes: \attrib{version} and \attrib{level}.  For the SBML
-described in this document these attributes should be set to ``\texttt{1}''
-and ``\texttt{2}'', respectively.  (The \texttt{version} attribute is
-present in case SBML Level~2 must be revised in the future to correct
-errors.)
-
-The following is an example of a valid minimal header for SBML Level~2:
-
-\begin{example}
-<?xml version="1.0"?>
-<sbml xmlns="http://www.sbml.org/sbml/level2" version="1" level="2">
-\end{example}
-
 
 %=============================================================================
 \section{SBML Components}
@@ -849,6 +833,41 @@ In this section, we define each of the major data structures in SBML. To
 provide illustrations of their use, we give partial XML encodings of SBML
 model components, but we leave full XML examples to
 Section~\ref{sec:xml-rep}.
+
+
+%-----------------------------------------------------------------------------
+\subsection{The SBML Container}
+\label{sec:sbml}
+%-----------------------------------------------------------------------------
+
+An SBML Level 2 model definition in XML consists of a single \class{Sbml}
+element enclosing a single \class{Model} element (see next Section).  The
+structure of the \class{Sbml} element is shown in Figure~\ref{fig:sbml}.
+
+\begin{figure}[htb]
+  \centering
+  \includegraphics{sbml}
+  \caption{The definition of \class{Sbml}.  Additional fields are
+    inherited from \class{SBase} but are not shown here.}
+  \label{fig:sbml}
+\end{figure}
+
+The namespace URI for SBML Level~2 is
+\texttt{http://www.sbml.org/sbml/level2}.  The SBML element has two
+attributes: \attrib{version} and \attrib{level}.  For the SBML described in
+this document these attributes should be set to ``\texttt{1}'' and
+``\texttt{2}'', respectively.  (The \texttt{version} attribute is present
+in case SBML Level~2 must be revised in the future to correct errors.)
+
+The following is an example of the outermost content of an SBML model
+definition in XML:
+
+\begin{example}
+<?xml version="1.0"?>
+<sbml xmlns="http://www.sbml.org/sbml/level2" version="1" level="2">
+  ..
+</sbml>
+\end{example}
 
 
 %-----------------------------------------------------------------------------
@@ -982,11 +1001,11 @@ the function $pow3(x)$ to be $x^{3}$:
 \label{sec:unitdefinitions}
 %-----------------------------------------------------------------------------
 
-Units may be supplied in a number of contexts in an SBML model.  A
-facility for defining units is convenient to have so that
-combinations of units can be given abbreviated names.  This is the
-motivation behind the \class{UnitDefinition} data structure, whose
-definition is shown in Figure~\vref{fig:unitdefinition}.
+Units may be supplied in a number of contexts in an SBML model.  A facility
+for defining units is convenient to have so that combinations of units can
+be given abbreviated names.  This is the motivation behind the
+\class{UnitDefinition} data structure, whose definition is shown in
+Figure~\vref{fig:unitdefinition}.
 
 \begin{figure}[htb]
   \centering
@@ -1006,8 +1025,8 @@ The approach to defining units in SBML is compositional; for
 example, $meter\ second^{\,-2}$ is constructed by combining a
 \class{Unit}-type element representing $meter$ with a
 \class{Unit}-type element representing $second^{\,-2}$.  The
-\class{Unit} data structure has a \attrib{kind} field whose value
-must be taken from \class{UnitKind}, an enumeration of SI units.
+\class{Unit} data structure has a required field, \attrib{kind}, whose value
+must be taken from \class{UnitKind}, an enumeration of units.
 The possible values of \class{UnitKind} are listed in
 Table~\vref{tab:unitkind}.  The \attrib{exponent} field on
 \class{Unit} represents an exponent on the unit.  Its default
@@ -1028,26 +1047,26 @@ value of ``\texttt{gram}'' and a \attrib{scale} value of
     ampere      & farad & joule     & lumen     & ohm     & steradian\\
     becquerel   & gram  & katal     & lux       & pascal  & tesla\\
     candela & gray  & kelvin    & meter     & radian  & volt\\
-    celsius     & henry & kilogram  & metre     & second  & watt\\
+    Celsius     & henry & kilogram  & metre     & second  & watt\\
     coulomb & hertz & liter     & mole      & siemens & weber\\
     \underline{dimensionless} & \underline{item} & litre    & newton    & sievert\\
     \bottomrule
   \end{tabular}
   \caption{The possible values of \attrib{kind} in a \class{UnitKind}
     structure.  All are names of base or derived SI units, except for
-    ``\texttt{dimensionless}'' and ``\texttt{item}'', which are
+    ``\texttt{dimensionless}'' and ``\texttt{item}'', which are 
     SBML additions important for handling certain common cases.
     ``\texttt{Dimensionless}'' is intended for cases where a quantity does not
     have units, and ``\texttt{item}'' is  needed in certain contexts to express
     such things as ``N items'' (e.g., ``100 molecules'').
-    Strictly speaking, ``\texttt{celsius}'' should be capitalized; however,
-    for simplicity, SBML requires that the values of \class{UnitKind} be
-    treated in a case-insensitive manner by software reading and writing SBML.
+    \changed{Although ``\texttt{Celsius}'' is capitalized, for 
+    simplicity, SBML
+    requires that these names be treated in a case-insensitive manner.
     Also, note that the gram and liter/litre are not
-    strictly part of SI~\protect\citepalias{bipm:1998,bipm:2000}; however,
-    they are so useful in SBML's areas of application that they are
-    included in the \class{UnitKind} enumeration of unit names.  (The
-    standard SI unit of mass is in fact the kilogram, and volume is
+    strictly part of SI~\protect\citep{bipm:2000}; however, they are so
+    commonly used in SBML's areas of application that they 
+    are included as predefined unit names.}  (The standard SI unit of
+    mass is in fact the kilogram, and volume is
     defined in terms of cubic meters.)}
   \label{tab:unitkind}
 \end{table}
@@ -1069,38 +1088,38 @@ example illustrates the definition of an abbreviation named
 </listOfUnitDefinitions>
 \end{example}
 
-Many of the components in a model refer to quantities that have
-associated units.  SBML Level~2 has three predefined quantity
-types: amount of substance, time, and volume.  SBML defines
-default units and scales for these quantities.  The defaults are
-summarized in Table~\vref{tab:builtin}.
+There are three special unit names in SBML, listed in
+Table~\ref{tab:builtin}, corresponding to the three types of quantities
+that play roles in biochemical reactions: amount of substance, volume and
+time.  SBML defines default units for these quantities, all with a default
+\texttt{scale} value of \texttt{0}.  The various components of a model,
+such as parameters, can use only the predefined units from
+Table~\ref{tab:unitkind}, new units defined in unit definitions, or the
+three predefined names ``\texttt{substance}'', ``\texttt{time}'', and
+``\texttt{volume}'' from Table~\ref{tab:builtin}.  The latter usage
+signifies that the units to be used should be the designated defaults.  
 
-\begin{table}[htb]
-  \vspace*{12pt}                        % ADJUSTMENT FOR SPECIFIC PAGE
+\begin{table}[tb]
   \centering
+  \small
+  \setlength{\tabcolsep}{4.5pt}
+  \begin{blockChanged}
   \begin{tabular}{lllc}
     \toprule
-    \textbf{Name} & \textbf{Allowable Units} & \textbf{Default Units} & \textbf{Default Scale} \\
+    \textbf{Name} & \textbf{Allowable Units} & \textbf{Default Units}\\
     \midrule
-    \texttt{substance} & moles or no. of molecules & moles            & 1 \\
-    \texttt{time}      & seconds                   & seconds          & 1 \\
-    \texttt{volume}    & liters                    & liters           & 1 \\
+    \texttt{substance} & moles \emph{or} no. of molecules     & moles \\
+    \texttt{volume}                & liters           & liters \\
+    \texttt{time}                  & seconds          & seconds \\
     \bottomrule
   \end{tabular}
-  \caption{SBML's built-in quantities and their default
-    scale values.  The names in the left-hand column are reserved. These
-    names may be used wherever
-    units may be supplied in a model component.}
+  \end{blockChanged}
+  \caption{SBML's built-in quantities.  Each of these units has a default
+  \texttt{scale} value of \texttt{0}.}
   \label{tab:builtin}
 \end{table}
 
-% FIXME the caption above says the units are in tab:unitkind, but aren't.
-
-Wherever unit specifications are permitted in a model (for example, for the
-volume in a compartment), the relevant built-in name from
-Table~\vref{tab:builtin} may be used.  Such usage signifies that the units
-to be used for the quantity should be the designated defaults.  A model may
-change the default scales by reassigning the keywords
+A model may change the default scales by reassigning the keywords
 ``\texttt{substance}'', ``\texttt{time}'', and ``\texttt{volume}'' in a
 unit definition.  This takes advantage of the \class{UnitDefinition}
 structure's facility for defining scales on units.  The following example
@@ -1124,13 +1143,6 @@ If the definition above appeared in a model, the volume scale on all
 components that did not explicitly use different units would be changed to
 milliliters.
 
-The list of unit definitions in a \class{Model}-type structure is the only
-place where new units can be defined.  The new unit names may be used
-anywhere in a model where unit specifications are permitted.  The various
-components of a model, such as reaction parameters and rules, can only use
-the base units from Table~\ref{tab:unitkind}, the global unit definitions
-in the model, or the three predefined keywords ``\texttt{substance}'',
-``\texttt{time}'', and ``\texttt{volume}''.
 
 %-----------------------------------------------------------------------------
 \subsection{Compartments}
@@ -1283,7 +1295,10 @@ part of the reaction system.  Table~\ref{tab:specieattrib} shows how to
 interpret the combined values of the \attrib{boundaryCondition} and
 \attrib{constant} fields.  In practice, the \attrib{boundaryCondition}
 attribute means that a differential equation derived from the reaction
-definitions should not be generated for the species.
+definitions should not be generated for the species.  The example model in
+section~\ref{sec:constantspecieseg} contains all4 possible states of the
+\attrib{boundaryCondition} and \attrib{constant} attributes on
+\class{species} elements.
 
 \begin{table}[h]
   \vspace*{8pt}
@@ -1433,7 +1448,7 @@ cases for the following reasons:
   equations make a distinction between the different categories listed
   above; and
   
-\item Some specialized numeric analyses of models may only be applicable to
+\item Some specialized numerical analyses of models may only be applicable to
   models that do not contain \emph{algebraic} rules.
 \end{itemize}
 
@@ -1453,17 +1468,13 @@ is to define an abstract \class{Rule} structure that contains only one
 field, \attrib{math}, to hold the right-hand side expression, then to
 derive subtypes of \class{Rule} that add fields to cover the various cases
 above.  Figure~\vref{fig:rules} gives the definitions of \class{Rule} and
-the subtypes derived from it.  The figure shows that \class{AlgebraicRule}
-is defined directly from \class{Rule}, whereas
-\class{CompartmentVolumeRule}, \class{SpeciesConcentrationRule}, and
-\class{ParameterRule} are all derived from an intermediate abstract
-structure called \class{AssignmentRule}.  \class{AlgebraicRule} represents
-\emph{algebraic} rules whereas \class{AssignmentRule} represents
-\emph{assignment} rules.
+the subtypes derived from it.  The figure shows there are two subtypes,
+\class{AlgebraicRule} and \class{AssignmentRule}, defined directly from
+\class{Rule}.
 
 \begin{figure}[htb]
   \centering
-  \includegraphics[scale = 0.68]{rule}
+  \includegraphics[scale = 0.68]{new-rules}
   \caption{The definition of \class{Rule} and derived types.}
   \label{fig:rules}
 \end{figure}
@@ -1482,65 +1493,56 @@ add to the possible values of \class{RuleType}.
 
 \subsubsection{\class{AlgebraicRule}}
 
-The rule type \class{AlgebraicRule} is used to express equations
-whose left-hand sides are zero.  \class{AlgebraicRule} does not
-add any fields to the basic \class{Rule}; its role is simply to
-distinguish this case from the other cases.  An example of the use
-of \class{AlgebraicRule} structures is given in
-Section~\ref{sec:algeraiceg}.
+The rule type \class{AlgebraicRule} is used to express equations whose
+left-hand sides are zero.  \class{AlgebraicRule} does not add any fields to
+the basic \class{Rule}; its role is simply to distinguish this case from
+the assignment rule case.  An example of the use of \class{AlgebraicRule}
+structures is given in Section~\ref{sec:algeraiceg}.
 
-\subsubsection{\class{SpeciesConcentrationRule}}
+\subsubsection{\class{AssignmentRule}}
 
-The \class{SpeciesConcentrationRule} structure adds one field,
-\attrib{species}, to the basic \class{AssignmentRule} type.  The field
-\attrib{species} is of type \class{SId} and is used to identify the species
-affected by the rule.  The effect of the rule depends on the value of
-\attrib{type}: if the value is ``\class{scalar}'', the rule sets the
-referenced species's concentration to the value determined by the formula
-in \attrib{math}; if the value is ``\class{rate}'', the rule sets the rate
-of change of the species's concentration to the value determined by the
-formula.  The units are in terms of $substance/volume$, where the
-$substance$ units are those that are declared on the referenced
-\class{Species} element, and the $volume$ units are those declared on the
-\class{compartment} element that contains the \class{Species}.
+The left-hand sides of assignment rules can be the identifiers of species,
+compartments, or parameters.  The effects are in general terms the same,
+but have different effects depending on what variable is being set:
 
-A \class{SpeciesConcentrationRule} structure and a
-\class{SpeciesReference} structure (see
-Section~\ref{sec:reactions}) cannot both have the same \attrib{species}
-attribute value.  This means that a rule cannot be defined for a
-species that is created or destroyed in a reaction.  The only
-exception is when the given species is a boundary condition; i.e.,
-on the \class{Species} structure that defines the specie the
-\attrib{boundaryCondition} field is set to ``\attribvalue{true}''.
+\begin{itemize}
+  
+\item \emph{In the case of a species}, the effect of the rule depends on the
+  value of \attrib{type}: if the value is ``\class{scalar}'', the rule sets
+  the referenced species's concentration to the value determined by the
+  formula in \attrib{math}; if the value is ``\class{rate}'', the rule sets
+  the rate of change of the species's concentration to the value determined
+  by the formula.  The units are in terms of $substance/volume$, where the
+  $substance$ units are those that are declared on the referenced
+  \class{Species} element, and the $volume$ units are those declared on the
+  \class{compartment} element that contains the \class{Species}.
+  
+  A rule and a \class{SpeciesReference} structure (see
+  Section~\ref{sec:reactions}) cannot both have the same \attrib{species}
+  attribute value.  This means that a rule cannot be defined for a species
+  that is created or destroyed in a reaction.  The only exception is when
+  the given species is a boundary condition; i.e., on the \class{Species}
+  structure that defines the specie the \attrib{boundaryCondition} field is
+  set to ``\attribvalue{true}''.
+  
+\item \emph{In the case of a compartment}, the effect of the rule depends
+  on the value of \attrib{type}: if the type is ``\class{scalar}'', the
+  rule sets the referenced compartment's volume to the volume determined by
+  the formula in \attrib{math}; if the type is ``\class{rate}'', the rule
+  sets the rate of change of the compartment's volume to the volume
+  determined by the formula.  No more than one
+  \class{AssignmentRule} can refer to a given compartment in an SBML
+  model definition.
+  
+\item \emph{In the case of a parameter}, the effect of this \class{AssignmentRule} depends on
+  the value of the \attrib{type} field: if the
+  type is ``\texttt{scalar}'', the rule sets the referenced parameter's
+  value to that determined by the formula in \attrib{math}; if the type is
+  ``\texttt{rate}'', the rule sets the rate of change of the parameter's
+  value to that determined by the formula.  No more than one
+  \class{AssignmentRule} can refer to a given parameter.
 
-Section~\ref{apdx:rules-eg} contains an example model with a
-\class{SpeciesConcentrationRule} structure.
-
-\subsubsection{\class{CompartmentVolumeRule}}
-
-The \class{CompartmentVolumeRule} structure adds one field,
-\attrib{compartment}, to the basic \class{AssignmentRule} type.  The field
-\attrib{compartment} has type \class{SId} and is used to identify the
-compartment affected by the assignment.  The effect of the rule depends on
-the value of \attrib{type}: if the type is ``\class{scalar}'', the rule
-sets the referenced compartment's volume to the volume determined by the
-formula in \attrib{math}; if the type is ``\class{rate}'', the rule sets
-the rate of change of the compartment's volume to the volume determined by
-the formula.  No more than one \class{CompartmentVolumeRule} can refer to a
-given compartment in an SBML model definition.
-
-\subsubsection{\class{ParameterRule}}
-
-The \class{ParameterRule} structure adds one field, \attrib{parameter} to
-the basic \class{AssignmentRule} type.  The \attrib{parameter} field has
-type \class{SId} and identifies the parameter affected by the assignment.
-The effect of this rule depends on the value of the \attrib{type} field in
-\class{AssignmentRule}: if the type is ``\texttt{scalar}'', the rule sets
-the referenced parameter's value to that determined by the formula in
-\attrib{math}; if the type is ``\texttt{rate}'', the rule sets the rate of
-change of the parameter's value to that determined by the formula.  No more
-than one \class{ParameterRule} can refer to a given parameter.
-
+\end{itemize}
 
 \subsubsection{Constraints on rules}
 \label{sec:ruleconstraints}
@@ -1560,8 +1562,8 @@ A \texttt{scalar} rule for a given identifier overrides the initial value
 of that identifier; i.e., the initial value should be ignored.  This does
 not mean that any structure declaring an identifier can be omitted if there
 is a \texttt{scalar} rule for that identifier.  For example, there must be
-a \texttt{Parameter} structure for a given parameter if there is a
-\texttt{ParameterRule} for that parameter.
+a \texttt{Parameter} structure for a given parameter if there is a rule for
+that parameter.
 
 The ordering of \texttt{scalar} rules is significant: they are always
 evaluated in the order given in SBML.  The \attrib{math} field of a
@@ -1600,7 +1602,7 @@ This math can be encoded by the following scalar rule set:
 <model>
     ...
     <listOfRules>
-        <parameterRule id="k">
+        <assignmentRule id="k">
             <notes>
                 <xhtml:p>
                     k = k3/k2
@@ -1613,8 +1615,8 @@ This math can be encoded by the following scalar rule set:
                     <ci> k2 </ci>
                 </apply>
             </math>
-        </parameterRule>
-        <speciesConcentrationRule species="s2">
+        </assignmentRule>
+        <assignmentRule variable="s2">
             <notes>
                 <xhtml:p>
                     s2 = (k * t)/(1 + k2)
@@ -1635,8 +1637,8 @@ This math can be encoded by the following scalar rule set:
                     </apply>
                 </apply>
             </math>
-        </speciesConcentrationRule>
-        <compartmentVolumeRule compartment="A">
+        </assignmentRule>
+        <assignmentRule variable="A">
             <notes>
                 <xhtml:p>
                     A = 0.10 * t
@@ -1649,7 +1651,7 @@ This math can be encoded by the following scalar rule set:
                     <ci> t </ci>
                 </apply>
             </math>
-        </compartmentVolumeRule>
+        </assignmentRule>
     </listOfRules>
     ...
 </model>
@@ -1727,7 +1729,10 @@ various quantities are recorded in the fields \attrib{reactant},
 Section~\ref{subsec:speciesreference} below).  The \class{modifier} field
 is also a list of references to species, but implemented using
 \class{ModifierSpeciesReference} structures (defined in
-Section~\ref{subsec:modifierreference}).  The \attrib{kineticLaw} is an
+Section~\ref{subsec:modifierreference}).  
+All species involved in a reaction including modifiers must be listed in the
+\attrib{reactant}, \attrib{product} and \attrib{modifier} fields.
+The \attrib{kineticLaw} is an
 optional field of type \class{KineticLaw} (defined in
 Section~\ref{subsec:kinetic-law} below), used to provide a mathematical
 formula describing the rate of the reaction.
@@ -1763,20 +1768,28 @@ no single unambiguous method for designating which reactions should be
 considered fast, and some users may designate a reaction as fast when in
 fact it is not.)
 
-\subsubsection{\class{SpeciesReference}}
-\label{subsec:speciesreference}
+\subsubsection{\class{SimpleSpeciesReference}}
+\label{subsec:simplespeciesReference}
 
 All species in a model are listed once, in the the \attrib{listOfSpecies}
 field of the top-level \class{Model} data structure (see
 Section~\ref{sec:model}).  Lists of products, reactants and modifiers in
 \class{Reaction} type structures do not introduce new species, but rather
-refer to those listed in the \class{Model}.  For reactants and products,
-the connection is established using the \class{SpeciesReference} type data
-structure defined in Figure~\vref{fig:reaction}.
+refer to those listed in the \class{Model}.  The connection between the species listed
+in the model and the reactions in which they are involved is established using
+\class{SimpleSpeciesReference} structures.
 
-The field \attrib{species} of type \class{SId} in \class{SpeciesReference}
-must refer to the name of an existing species defined in the enclosing
-\class{Model}-type structure.  Note that whether a species is allowed to
+\class{SimpleSpeciesReference} has only one field, \attrib{species}, of type \class{SId}; its value must
+be the identifier of a species defined in the enclosing \class{Model}.
+The \class{SimpleSpecieReference} structure is the base definition for the
+\class{SpeciesReference} and \class{ModifierSpeciesReference} structures.
+
+\subsubsection{\class{SpeciesReference}}
+\label{subsec:speciesreference}
+
+The reactants and products of a reaction are defined using a \class{SpeciesReference} type data
+structure defined in Figure~\vref{fig:reaction} which is derived from \class{SimpleSpeciesReference}.
+Note that whether a species is allowed to
 appear as a reactant or product or not is dictated by certain flags on the
 structure describing the species in the \class{Model}; see
 Table~\ref{tab:specieattrib} for more information.
@@ -1811,6 +1824,11 @@ of reactants within a reaction named ``J1'':
 </model>
 \end{example}
 
+The following example shows how a stoichiometry of a half is expressed:
+\begin{example}
+<speciesReference species="X1" stoichiometry="1" denominator="2"/>
+\end{example}
+
 A reaction can contain an empty list of reactants or an empty list
 of products but must have at least one reactant or product.
 
@@ -1828,8 +1846,7 @@ as modifiers in a given reaction.  This is the purpose of the
 \attrib{modifier} field in \class{Reaction}; this field is a list of
 \class{ModifierSpeciesReference} structures defined in
 Figure~\vref{fig:reaction}.  The \class{ModifierSpeciesReference} structure
-has only one field, \attrib{species}, of type \class{SId}; its value must
-be the identifier of a species defined in the enclosing \class{Model}.
+is derived from \class{SimpleSpeciesReference}.
 
 The following is a simple example of a modifier species reference in a list
 of reactants within a reaction named ``J1'':
@@ -1859,16 +1876,22 @@ component is optional; however, in general there is no useful default that
 can be substituted in place of a missing kinetic law definition in a
 reaction.
 
-The field \attrib{math} is a MathML element and contains an expression that
+The field \attrib{math} of \class{KineticLaw} is a MathML element and contains an expression that
 sets the rate of the reaction, in $substance/time$ units.
 (Section~\ref{sec:formulas} discusses the use of MathML in SBML Level~2).
+The only species
+identifiers that can be used in \attrib{math} are those in the \texttt{species} fields contained in the
+\class{Reactant}, \class{Product} and \class{Modifier} fields of the
+\class{Reaction} structure. In the XML encoding this means that any
+species identifier occurring within the MathML \texttt{math} element must also
+occur as a \texttt{species} attribute value of a \texttt{speciesReference} or
+\texttt{modifierSpeciesReference} element
+contained within the same \texttt{reaction} element.
+
 The optional fields \attrib{substanceUnits} and \attrib{timeUnits}
 determine the units of substance and time.  If not set, the units are taken
 from the defaults defined by the built-in ``\texttt{substance}'' and
-``\texttt{time}'' of Table~\vref{tab:builtin}.  The only species
-identifiers that can be used in \attrib{math} are those listed in the
-\class{Reactant}, \class{Product} and \class{Modifier} fields of the
-\class{Reaction} structure.
+``\texttt{time}'' of Table~\vref{tab:builtin}.  
 
 A \class{KineticLaw} type structure can contain zero or more
 \class{parameter} structures (Section~\ref{sec:parameters}) that
@@ -2183,7 +2206,7 @@ and milliMolar, respectively.
 \begin{example}
 <?xml version="1.0"?>
 <sbml xmlns="http://www.sbml.org/sbml/level2" version="1" level="2"
-      html:xmlns="http://www.w3.org/1999/xhtml">
+      xmlns:html="http://www.w3.org/1999/xhtml">
     <model>
         <listOfUnitDefinitions>
             <unitDefinition id="substance">
@@ -2341,7 +2364,7 @@ The following example SBML model encodes the approximate form.
 \begin{example}
 <?xml version="1.0"?>
 <sbml xmlns="http://www.sbml.org/sbml/level2" version="1" level="2"
-      math:xmlns="http://www.w3.org/1998/Math/MathML">
+      xmlns:math="http://www.w3.org/1998/Math/MathML">
     <model>
         <listOfCompartments>
             <compartment id="cell"/>
@@ -2357,20 +2380,20 @@ The following example SBML model encodes the approximate form.
             <parameter id="Keq" value="2.5"/>
         </listOfParameters>
         <listOfRules>
-            <speciesConcentrationRule species="S1">
+            <assignmentRule variable="S1">
                 <math xmlns="http://www.w3.org/1998/Math/MathML">
                     <apply>
                         <divide/>
                         <ci> T </ci>
                         <apply>
-                            <add/>
+                            <plus/>
                             <cn> 1 </cn>
                             <ci> Keq </ci>
                         </apply>
                     </apply>
                 </math>
-            </speciesConcentrationRule>
-            <speciesConcentrationRule species="S2">
+            </assignmentRule>
+            <assignmentRule variable="S2">
                 <math xmlns="http://www.w3.org/1998/Math/MathML">
                     <apply>
                         <times/>
@@ -2378,7 +2401,7 @@ The following example SBML model encodes the approximate form.
                         <ci> S1 </ci>
                     </apply>
                 </math>
-            </speciesConcentrationRule>
+            </assignmentRule>
         </listOfRules>
         <listOfReactions>
             <reaction id="in">
@@ -2476,7 +2499,7 @@ The following example SBML model encodes this approximate form.
             <parameter id="Keq" value="2.5"/>
         </listOfParameters>
         <listOfRules>
-            <speciesConcentrationRule species="S2">
+            <assignmentRule variable="S2">
                 <math xmlns="http://www.w3.org/1998/Math/MathML">
                     <apply>
                         <times/>
@@ -2484,19 +2507,19 @@ The following example SBML model encodes this approximate form.
                         <ci> S1 </ci>
                     </apply>
                 </math>
-            </speciesConcentrationRule>
+            </assignmentRule>
             <algebraicRule>
                 <math xmlns="http://www.w3.org/1998/Math/MathML">
                     <apply>
                         <minus/>
                         <apply>
                             <plus/>
-                            <cin> S2 <cin/>
-                            <cin> S1 <cin/>
+                            <cin> S2 </cin>
+                            <cin> S1 </cin>
                         </apply>
-                        <cin> T <cin/>
-                    <apply>
-                <math>
+                        <cin> T </cin>
+                    </apply>
+                </math>
             </algebraicRule>
         </listOfRules>
         <listOfReactions>
@@ -2538,6 +2561,112 @@ The following example SBML model encodes this approximate form.
                     <listOfParameters>
                         <parameter id="k2" value="0.15"/>
                     </listOfParameters>
+                </kineticLaw>
+            </reaction>
+        </listOfReactions>
+    </model>
+</sbml>
+\end{example}
+
+%-----------------------------------------------------------------------------
+\subsection{Use of \attrib{boundaryCondition} and \attrib{constant} attributes on \class{species} elements in a Model}
+\label{sec:constantspecieseg}
+%-----------------------------------------------------------------------------
+
+This section contains a model which includes four species each with a different combination of values of
+for the \attrib{boundaryCondition} and \attrib{constant} attributes.  
+
+Consider the following hypothetical system:
+\begin{equation*}
+  \begin{array}{@{}ccc@{}}
+    S_1 + S_2 & \underrightarrow{k_1 S_1 S_2 S_3} & S_4 \\ \\[-4pt]
+  \end{array}
+\end{equation*}
+where values over time are determined by:
+\begin{equation*}
+  \begin{array}{l}
+    \frac{d S_1}{d t} = k_2 \\ \\[-4pt]
+    S_2 = 1 \\ \\
+    S_3 = 2 \\ \\
+    k_1 = 0.5 \\ \\
+    k_2 = 0.1 \\ \\
+  \end{array}
+\end{equation*}
+and initial values are:
+\begin{equation*}
+  \begin{array}{l}
+    S_1 = 0 \\ \\
+    S_4 = 0 \\ \\
+  \end{array}
+\end{equation*}
+
+$S_1$ and $S_2$ are reactants but their values are not determined
+by a kinetic law therefore they are both on the boundary of the
+reaction system and in SBML have \attrib{boundaryCondition} 
+attributes of \texttt{true}. The value of $S_1$ varies over time
+so in SBML $S_1$ has a \attrib{constant} attribute default value
+of \texttt{false}. The values of $S_2$ and $S_3$ are fixed so in
+SBML they have a \attrib{constant} attribute values of 
+\texttt{true}. $S_3$ is only occurs as a modifier so the value of
+its \attrib{boundaryCondition} attribute can default to false.
+$S_4$ is a product whose value is determined by a kinetic law and
+therefore in the SBML representation has false values for both
+\attrib{boundaryCondition} and \attrib{constant} attribute values.
+
+The following is the XML document that encodes the model shown
+above:
+
+\begin{example}
+<?xml version="1.0"?>
+<sbml xmlns="http://www.sbml.org/sbml/level2" version="1" level="2">
+    <model id="x">
+        <listOfCompartments>
+            <compartment id="compartmentOne" volume="1"/>
+        </listOfCompartments>
+        <listOfSpecies>
+            <species id="S1" initialAmount="0" compartment="compartmentOne"
+                boundaryCondition="true" />
+            <species id="S2" initialAmount="1" compartment="compartmentOne"
+                boundaryCondition="true" constant="true" />
+            <species id="S3" initialAmount="3" compartment="compartmentOne"
+                constant="true"/>
+            <species id="S4" initialAmount="0" compartment="compartmentOne"/>
+        </listOfSpecies>
+        <listOfParameters>
+            <parameter id="k1" value="0.5"/>
+            <parameter id="k2" value="0.1"/>
+        </listOfParameters>
+        <listOfRules>
+            <assignmentRule variable="S1">
+                <math xmlns="http://www.w3.org/1998/Math/MathML">
+                    <apply>
+                        <ci> k2 </ci>
+                    </apply>
+                </math>
+            </assignmentRule>
+        </listOfRules>
+        <listOfReactions>
+            <reaction id="reaction_1" reversible="false">
+                <listOfReactants>
+                    <speciesReference species="S1" stoichiometry="1"/>
+                    <speciesReference species="S2" stoichiometry="1"/>
+                </listOfReactants>
+                <listOfProducts>
+                    <speciesReference species="S4" stoichiometry="1"/>
+                </listOfProducts>
+                <listOfModifiers>
+                    <modifierSpeciesReference species="S3"/>
+                </listofModifiers>
+                <kineticLaw>
+                    <math xmlns="http://www.w3.org/1998/Math/MathML">
+                        <apply>
+                            <times/>
+                            <ci> k1 </ci>
+                            <ci> S1 </ci>
+                            <ci> S2 </ci>
+                            <ci> S3 </ci>
+                         </apply>
+                    </math>
                 </kineticLaw>
             </reaction>
         </listOfReactions>
@@ -2652,21 +2781,21 @@ The SBML form of this model is as follows:
             <parameter id="delta_t" value="1"/>
         </listOfParameters>
         <listOfRules>
-            <speciesConcentrationRule species="P" type="rate">
+            <assignmentRule variable="P" type="rate">
                 <math xmlns="http://www.w3.org/1998/Math/MathML">
                  <apply>
                   <divide/>
                   <apply>
-                   <minus/
+                   <minus/>
                    <apply>
                     <divide/>
                     <cn> 1 </cn>
                     <apply>
-                     <add/>
+                     <plus/>
                      <cn> 1 </cn>
                      <apply>
                       <times/>
-                      <ci> m <ci/>
+                      <ci> m </ci>
                       <apply>
                        <power/>
                        <apply>
@@ -2682,11 +2811,12 @@ definitionURL="http://www.sbml.org/symbols/delay">
                      </apply>
                     </apply>
                    </apply>
+                   <ci> P </ci>
                   </apply>
                   <ci> tau </ci>
                  </apply>
                 </math>
-            </speciesConcentrationRule>
+            </assignmentRule>
         </listOfRules>
     </model>
 </sbml>
@@ -2725,7 +2855,7 @@ The SBML Level 2 representation of this as follows:
 \begin{example}
 <?xml version="1.0"?>
 <sbml xmlns="http://www.sbml.org/sbml/level2" version="1" level="2"
-      math:xmlns="http://www.w3.org/1998/Math/MathML">
+      xmlns:math="http://www.w3.org/1998/Math/MathML">
     <model>
         <listOfCompartments>
             <compartment id="cell"/>
@@ -2740,26 +2870,24 @@ The SBML Level 2 representation of this as follows:
             <parameter id="tau" value="0.25"/>
         </listOfParameters>
         <listOfRules>
-            <speciesConcentrationRule species="P1" type="rate">
+            <assignmentRule variable="P1" type="rate">
                 <math:math>
                     <math:apply>
                         <math:minus/>
                         <math:ci> k1 </math:ci>
                         <math:ci> P1 </math:ci>
-                        </math:apply>
                     </math:apply>
                 </math:math>
-            </speciesConcentrationRule>
-            <speciesConcentrationRule species="P2" type="rate">
+            </assignmentRule>
+            <assignmentRule variable="P2" type="rate">
                 <math:math>
                     <math:apply>
                         <math:minus/>
                         <math:ci> k2 </math:ci>
                         <math:ci> P2 </math:ci>
-                        </math:apply>
                     </math:apply>
                 </math:math>
-            </speciesConcentrationRule>
+            </assignmentRule>
         </listOfRules>
         <listOfEvents>
             <event>
@@ -2776,7 +2904,7 @@ The SBML Level 2 representation of this as follows:
                     <assignment variable="k2">
                         <math:cn> 1 </math:cn>
                     </assignment>
-                <listOfAssignments>
+                </listOfAssignments>
             </event>
             <event>
                 <trigger>
@@ -2792,7 +2920,7 @@ The SBML Level 2 representation of this as follows:
                     <assignment variable="k2">
                         <math:cn> 0 </math:cn>
                     </assignment>
-                <listOfAssignments>
+                </listOfAssignments>
             </event>
         </listOfEvents>
     </model>
@@ -2867,17 +2995,21 @@ included in SBML Level~3:
 \item \emph{Geometry}.  We will develop a scheme for representing the 3-D
   structure of compartments.
 
-\item \emph{Submodels}.  This will enable a large model to be built up out
+\item \emph{Model Composition}.  This will enable a large model to be built up out
   of instances of other models.  It will also allow the reuse of model
   components and the creation of several instances of the same model.
+
+\item \emph{Multi-state and Complex Species}.  This will allow the straight-forward
+    construction of models involving species with a large number of states or
+    species composed of subcomponents.  The representation scheme would be designed
+    to contain the combinatorial explosion of objects that often results from these
+    types of models. 
 
 \item \emph{Component Identification}.  This will enable components to be
   described using some stable universal identification scheme.
 
 \item \emph{Diagrams}.  This feature will allow components to be
-annotated
-  with data to enable the display of the model in a diagram.  It will also
-  enable multistate representations.
+  annotated with data to enable the display of the model in a diagram.  
 
 \item \emph{Conditional rules}.  This will enable rules and reactions to have
 their effect conditional on the state of the model system.  For example in
@@ -2898,9 +3030,7 @@ Conditional rules would enable the expression of the following example:
 \end{array}
 \end{equation*}
 where $s$ is not determined by the rule when $s \leq 0$.
-\item \emph{\class{SpeciesAmountRule}}.  This feature would introduce the type
-\class{SpeciesAmountRule} which would enable the expression of rules that determine
-the amount of species rather than their concentration.
+
 \end{itemize}
 
 

@@ -45,4 +45,4 @@ html: cekarticle.perl
 	/bin/mkdir $(HTML_DIR)
 	latex2html -white -split +0 -show_section_numbers -image_type gif \
 		   -no_navigation -local_icons -discard \
-		   -mkdir -dir html $(BASENAME)
+		   -mkdir -dir $(HTML_DIR) $(BASENAME)

@@ -24,6 +24,9 @@ dvi:;
 	latex $(BASENAME).tex
 	latex $(BASENAME).tex
 
+ps: dvi
+	dvips -o $(BASENAME).ps $(BASENAME)
+
 pdf:;
 #	make eps
 	-@/bin/rm -f $(BASENAME).toc $(BASENAME).aux

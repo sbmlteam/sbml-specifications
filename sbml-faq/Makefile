@@ -43,6 +43,10 @@ eps:;
 sbmlfaq.perl:
 	ln -s ../../project/tex/sbmlfaq.perl
 
+# The perl line below replaces the title of the web page produced by 
+# latex2html.  I don't know why the -t flag to latex2html doesn't seem
+# to have an effect, so this is a hack to get around the problem.
+
 html: sbmlfaq.perl
 	/bin/rm -rf $(HTML_DIR)
 	/bin/mkdir $(HTML_DIR)
@@ -50,5 +54,6 @@ html: sbmlfaq.perl
 	latex2html -white -split +0 -show_section_numbers -image_type gif \
 		   -no_navigation -local_icons -discard -antialias \
 		   -short_extn -discard \
-		   -t "SBML Frequently Asked Questions and Answers" \
+		   -t "SBML Frequently Asked Questions" \
 		   -mkdir -dir "html" -prefix "sbml-faq-" $(BASENAME)
+	perl -pi -e 's/<TITLE>Contents<\/TITLE>/<TITLE>SBML Frequently Asked Questions<\/TITLE>/' $(HTML_DIR)/$(BASENAME).htm

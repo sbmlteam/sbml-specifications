@@ -20,7 +20,7 @@ dvi:;
 	latex $(BASENAME).tex
 
 pdf:;
-#	make eps
+	make eps
 	-@/bin/rm -f $(BASENAME).toc $(BASENAME).aux
 	pdflatex $(BASENAME).tex
 	bibtex $(BASENAME)

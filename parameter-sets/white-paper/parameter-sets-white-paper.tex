@@ -384,7 +384,6 @@ XSLT to be defined as the parameter set format standard.
 information (by duplicating templates).
 
 \item no way to optionally apply the XSLT to a specific model
-
 \item cascading will require the careful application of \texttt{import} elements
 
 \end{itemize}
@@ -400,12 +399,44 @@ The advantages of using XSLT are:
 \subsection{Model Composition}
 
 An alternative approach would be to use the model composition proposal~\citep{finney:2003b}
-as an implementation of parameter sets.  The requirements of model composition do overlap with that
-of parameter sets: in both cases an overloading mechanism is needed.  However model composition is
+as an implementation of parameter sets i.e. a proposed form of SBML Level 3.
+
+Although the requirements of model composition do overlap with that
+of parameter sets - in both cases an overloading mechanism is needed - there some important differences:
+
+\begin{itemize}
+\item The result of model composition is a nested set of model instances
+whereas a parameter set simply transforms a model.  
+\item Model composition is
 always applied to specific submodels whereas parameter sets do not always specify the model that they
-are applied to (see section~\ref{sec:specificity}).  Therefore we describe here a small modification to
-the \class{Instance} type in the model composition to assist the use of model composition as an
-implementation for parameter sets.
+are applied to (see section~\ref{sec:specificity}).
+\item Model composition can be applied to several submodels where as parameter sets are applied to one model at a time
+\end{itemize}
+Therefore we describe here a number modifications to the model composition proposal to support its use as parameter sets:
+
+\begin{itemize}
+\item The \class{Sbml} type has an optional attribute \attrib{mode} which indicates whether the stream should be interpreted as a parameter set.
+\item The stream must contain one and only one \class{Instance} structure which represents the source model.
+\item The \class{Instance} type has optional links to specific submodels.
+\item Direct links cannot be used (\class{ObjectRef} structures can't be used outside \class{Link} structures).
+\item All objects declared in the stream must be linked to structures in the instance.
+\item The result of the stream is a transformed version of the model referenced by the instance in which the outer layer of nesting is ignored:
+objects inside the instance are at the top level and retain their previous identity.
+\end{itemize}
+
+The new form of \class{Sbml} is shown in the UML diagram in figure~\ref{fig:sbml}.
+
+\begin{figure}[h]
+  \vspace*{8pt}
+  \centering
+  \includegraphics[scale = 0.7]{sbml}
+  \caption{The revised \class{Sbml} type}
+  \label{fig:sbml}
+\end{figure}
+
+The new mode \attrib{mode} can contain one of two values: \emph{normal} or \emph{parameter-set}.
+The field defaults to \emph{normal}.  The value \emph{parameter-set} indicates that the stream
+should be interpreted as a parameter set.
 
 The new form of \class{Instance} is shown in the UML diagram in figure~\ref{fig:instance}.
 
@@ -427,7 +458,7 @@ This example uses unlocated species to supply the initial species concentrations
 
 \begin{example}
 <?xml version="1.0"?>
-<sbml xmlns="http://www.sbml.org/sbml/level3" version="1" level="3">
+<sbml xmlns="http://www.sbml.org/sbml/level3" version="1" level="3" mode="parameter-set">
     <model id="parameter_set">
         <listOfSpecies>
             <species id="P0" initialAmount=10"/>
@@ -458,7 +489,7 @@ The following example shows how the previous example cascaded can be overloaded.
 
 \begin{example}
 <?xml version="1.0"?>
-<sbml xmlns="http://www.sbml.org/sbml/level3" version="1" level="3">
+<sbml xmlns="http://www.sbml.org/sbml/level3" version="1" level="3" mode="parameter-set">
     <model id="cascading_set">
         <listOfSpecies>
             <species id="C" initialAmount="20"/>
@@ -467,7 +498,7 @@ The following example shows how the previous example cascaded can be overloaded.
             <parameter id="J23__V_24" value="1.2"/>
         </listOfParameters>
         <listOfInstances>
-            <instance id="outer_source" xsl:type="simple" xsl:href="justa.xml"/>
+            <instance id="source" xsl:type="simple" xsl:href="justa.xml"/>
         </listOfInstances>
         <listOfLinks>
             <link>
@@ -478,11 +509,9 @@ The following example shows how the previous example cascaded can be overloaded.
             </link>
             <link>
                 <from object="J23__V_24"/>
-                <to object="outer_source">
-                    <subobject="source">
-                        <subobject object="J23">
-                            <subobject object="V_24"/>
-                        </subobject>
+                <to object="source">
+                    <subobject object="J23">
+                        <subobject object="V_24"/>
                     </subobject>
                 </to>
             </link>

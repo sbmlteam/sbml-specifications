@@ -36,9 +36,9 @@
 \title{Systems Biology Markup Language (SBML) Level 2:\\
   Structures and Facilities for Model Definitions}
 
-\author{Andrew Finney, Michael Hucka, Hamid Bolouri}
+\author{Andrew Finney, Michael Hucka}
 
-\authoremail{\{afinney,mhucka,hbolouri\}@cds.caltech.edu}
+\authoremail{\{afinney,mhucka\}@cds.caltech.edu}
 
 \address{Systems Biology Workbench Development Group\\
   ERATO Kitano Systems Biology Project\\
@@ -48,7 +48,7 @@
 
 \acknowledge{Principal Investigators: John Doyle and Hiroaki Kitano}
 
-\date{SBML Level 2, Version 1\\[5pt]\fbox{Working Draft Revision 4}\\[5pt]
+\date{SBML Level 2, Version 1\\[5pt]\fbox{Working Draft Revision 3}\\[5pt]
   \today{}}
 
 \maketitlepage
@@ -144,8 +144,8 @@ changes:
   The field named \attrib{formula} previously available on the
   \class{KineticLaw} and \class{Rule} structures has been replaced by a
   MathML element named \class{math} containing MathML content; see
-  Sections~\ref{sec:formulas}, \ref{subsec:kinetic-law}
-  and~\ref{sec:rules}.  The subset of MathML used in SBML includes logical
+  Sections~\ref{sec:formulas}, \ref{sec:rules}
+  and~\ref{subsec:kinetic-law}.  The subset of MathML used in SBML includes logical
   operators that enable the expression of discontinuous functions,
   something that was not possible in SBML Level~1.
   
@@ -173,7 +173,7 @@ changes:
   MathML to allow models to refer to two built-in entities, a symbol
   representing time and a delay function which represents a variable's value
   at some point in the past.  However even these entities are not in the
-  namespace of a model's identifiers.  See Section~\ref{sec:mathmltokens}.
+  same namespace as the model's identifiers.  See Section~\ref{sec:mathmltokens}.
   
 \item Species, compartments and reactions are each optional in a model;
   thus, a model does not need to contain species, compartments or reactions
@@ -318,7 +318,7 @@ The meaning of each component is as follows:
  
 \item \emph{Rule}: In SBML, a mathematical expression that is used in
   combination with the differential equations constructed based on the set
-  of reactions; it can be used to establish contraints between variables in
+  of reactions; it can be used to establish constraints between variables in
   a model, define how a variable can be calculated from other variables,
   or used to define the rate of change of a variable.
 
@@ -374,7 +374,9 @@ into the details of the components provided in SBML Level 2.
 Each of the main structures composing an SBML Level 2 model definition has
 a specific data type that is derived directly or indirectly from a single
 abstract type called \class{SBase}.  This inheritance hierarchy is depicted in
-Figure~\vref{fig:top-level}.  The definition of \class{SBase} is presented
+Figure~\vref{fig:top-level}.  In addition to this all the
+\class{listOf}\rule{0.5in}{0.5pt}\class{s} elements in SBML
+are derived from \class{SBase}.  The definition of \class{SBase} is presented
 in Figure~\vref{fig:sbase}.
 
 \begin{figure}[h]
@@ -846,7 +848,7 @@ structure of the \class{Sbml} element is shown in Figure~\ref{fig:sbml}.
 
 \begin{figure}[htb]
   \centering
-  \includegraphics{sbml}
+  \includegraphics[scale = 0.68]{sbml}
   \caption{The definition of \class{Sbml}.  Additional fields are
     inherited from \class{SBase} but are not shown here.}
   \label{fig:sbml}
@@ -969,13 +971,14 @@ Figure~\vref{fig:mathdefinition}.
 \end{figure}
 
 The \class{FunctionDefinition} structure has three fields, \attrib{id},
-\attrib{name} and \attrib{lambda}.  The \attrib{id} and \attrib{name}
+\attrib{name} and \attrib{math}.  The \attrib{id} and \attrib{name}
 fields operate in the manner described in section~\ref{sec:idnameattribs}.
 \attrib{id} is a field of type \class{SId} and \attrib{name} is an optional
-string field.  MathML elements can refer to the function contained in a
+string field.  MathML \texttt{ci} elements can refer to the function contained in a
 \class{FunctionDefinition} using the value of its \attrib{id} field.  The
-\attrib{lambda} field is a container for MathML content that defines the
-function.  The function is only available for use in other MathML elements
+\attrib{math} field is a container for MathML content that defines the
+function.  The content of this field can only be a MathML \texttt{lambda} element.
+The function is only available for use in other MathML elements
 that follow the place of its definition in an SBML model.  (This
 restriction is to prevent recursive and mutually-recursive functions from
 being expressed.)
@@ -985,14 +988,16 @@ the function $pow3(x)$ to be $x^{3}$:
 
 \begin{example}
 <functionDefinition id="pow3">
-    <lamdba xmlns="http://www.w3.org/1998/Math/MathML">
-        <bvar><ci> x </ci></bvar>
-        <apply>
-            <power/>
-            <ci> x </ci>
-            <cn> 3 </cn>
-        </apply>
-    </lamdba>
+    <math xmlns="http://www.w3.org/1998/Math/MathML">
+        <lamdba>
+            <bvar><ci> x </ci></bvar>
+            <apply>
+                <power/>
+                <ci> x </ci>
+                <cn> 3 </cn>
+            </apply>
+        </lamdba>
+    </math>
 </functionDefinition>
 \end{example}
 
@@ -1264,7 +1269,7 @@ these entities.  Its definition is shown in Figure~\vref{fig:species}.
 compartment in which the species is located.  The optional field
 \attrib{initialAmount}, of type \class{double}, is used to set the initial
 amount of the species in the named compartment.  A missing \attrib{initialAmount} value
-implies that the value is either either unknown, not required for analysis
+implies that the value is either unknown, not required for analysis
 or available from an external data source.  The units of the substance
 quantity may be explicitly set using the optional field \attrib{units}.  The
 value assigned to \attrib{units} must be chosen from one of the following
@@ -1296,7 +1301,7 @@ interpret the combined values of the \attrib{boundaryCondition} and
 \attrib{constant} fields.  In practice, the \attrib{boundaryCondition}
 attribute means that a differential equation derived from the reaction
 definitions should not be generated for the species.  The example model in
-section~\ref{sec:constantspecieseg} contains all4 possible states of the
+section~\ref{sec:constantspecieseg} contains all 4 possible states of the
 \attrib{boundaryCondition} and \attrib{constant} attributes on
 \class{species} elements.
 
@@ -1474,7 +1479,7 @@ the subtypes derived from it.  The figure shows there are two subtypes,
 
 \begin{figure}[htb]
   \centering
-  \includegraphics[scale = 0.68]{new-rules}
+  \includegraphics[scale = 0.68]{rule}
   \caption{The definition of \class{Rule} and derived types.}
   \label{fig:rules}
 \end{figure}
@@ -1583,7 +1588,7 @@ would be invalid because the rule for $x$ refers to $x$ and the rule for
 $y$ refers to $z$ before $z$ is defined.
 
 Eliminating these algebraic loops ensures that scalar rules can be
-evaluated any number of times in a simulation without the result of those
+evaluated any number of times without the result of those
 evaluations changing.
 
 
@@ -1704,51 +1709,50 @@ This math can be encoded by the following scalar rule set:
 \label{sec:reactions}
 %-----------------------------------------------------------------------------
 
-A \emph{reaction} represents some transformation, transport or
-binding process, typically a chemical reaction, that can change
-the amount of one or more species.  The \class{Reaction} type is
-defined in Figure~\vref{fig:reaction}.
+A \emph{reaction} represents any transformation, transport or binding
+process, typically a chemical reaction, that can transform or change the
+amount of one or more species.  In SBML, a reaction is defined primarily in
+terms of the participating reactants and products (and their corresponding
+stoichiometries), along with optional modifier species, an optional kinetic
+law describing the rate at which the reaction takes place, and optional
+parameters entering into the kinetic law.  These various parts of a
+reaction are recorded in the SBML \class{Reaction} type defined in
+Figure~\vref{fig:reaction}.
 
 \begin{figure}[htb]
   \centering
-  \includegraphics[scale = 0.68]{reaction}
-  \caption{The definitions of \class{Reaction}, \class{KineticLaw} and
-    \class{SpeciesReference}.}
+  \includegraphics[scale=0.68]{reaction}
+  \caption{The definitions of \class{Reaction}, \class{KineticLaw},
+    \class{SpeciesReference} and \class{ModiferSpeciesReference}.}
   \label{fig:reaction}
 \end{figure}
 
-In SBML, a reaction is defined primarily in terms of the participating
-reactants and products (and their corresponding stoichiometries), along
-with an optional kinetic law describing the rate of the reaction, and
-optional modifiers and parameters entering into the kinetic law.  These
-various quantities are recorded in the fields \attrib{reactant},
-\attrib{product}, \attrib{modifier} and \attrib{kineticLaw} in the
-\class{Reaction} structure.  The fields \attrib{reactant} and
-\attrib{product} are both references to species implemented using lists of
-\class{SpeciesReference} structures (defined in
-Section~\ref{subsec:speciesreference} below).  The \class{modifier} field
-is also a list of references to species, but implemented using
-\class{ModifierSpeciesReference} structures (defined in
-Section~\ref{subsec:modifierreference}).  
-All species involved in a reaction including modifiers must be listed in the
-\attrib{reactant}, \attrib{product} and \attrib{modifier} fields.
-The \attrib{kineticLaw} is an
-optional field of type \class{KineticLaw} (defined in
-Section~\ref{subsec:kinetic-law} below), used to provide a mathematical
-formula describing the rate of the reaction.
+As with the other main structures in SBML, the \class{Reaction} data
+structure includes a required \attrib{id} field and an optional
+\class{name}.  These must be used according to the guidelines described in
+Section~\ref{sec:idnameattribs}.  The reactant species, product species and
+modifier species in a reaction are described using the fields
+\attrib{reactant}, \attrib{product} and \attrib{modifiers}.  These fields
+are optional lists of either \class{SpeciesReference} or
+\class{ModifierSpeciesReference} structures, as shown in
+Figure~\vref{fig:reaction}.  They are described in more detail in
+Sections~\ref{subsec:speciesreference} and~\ref{subsec:modifierreference}
+below.  The \attrib{kineticLaw} is an optional field of type
+\class{KineticLaw}, described in more detail in
+Section~\ref{subsec:kinetic-law} below.
 
-In addition to these, the \class{Reaction} structure also has two optional
-boolean fields.  The first field, \attrib{reversible}, indicates whether
-the reaction is reversible.  The field is optional, and if left unspecified
-in a model, it defaults to a value of ``\attribvalue{true}''.  Although the
-reversibility of a reaction is determined by the rate law, the need to
-allow rate laws to be optional leads to the need for a flag indicating
-reversibility.  Information about reversibility in the absence of a kinetic
-laws is useful in certain kinds of structural analyses such as elementary
-mode analysis.  It is true that the presence of this information in two
-places (i.e., the rate law and the flag \attrib{reversible}) leaves open
-the possibility of a model containing contradictory information, but the
-creation of such a model would indicate an error on the part of the
+In addition to the above, the \class{Reaction} structure also has two
+optional boolean fields.  The first field, \attrib{reversible}, indicates
+whether the reaction is reversible.  The field is optional, and if left
+unspecified in a model, it defaults to a value of ``\attribvalue{true}''.
+Although the reversibility of a reaction is determined by the rate law, the
+need to allow rate laws to be optional leads to the need for a flag
+indicating reversibility.  Information about reversibility in the absence
+of a kinetic laws is useful in certain kinds of structural analyses such as
+elementary mode analysis.  It is true that the presence of this information
+in two places (i.e., the rate law and the flag \attrib{reversible}) leaves
+open the possibility of a model containing contradictory information, but
+the creation of such a model would indicate an error on the part of the
 software generating it.  Software developers must take care to ensure
 against logical contradictions in the definitions of reactions.
 
@@ -1768,43 +1772,33 @@ no single unambiguous method for designating which reactions should be
 considered fast, and some users may designate a reaction as fast when in
 fact it is not.)
 
-\subsubsection{\class{SimpleSpeciesReference}}
-\label{subsec:simplespeciesReference}
-
-All species in a model are listed once, in the the \attrib{listOfSpecies}
-field of the top-level \class{Model} data structure (see
-Section~\ref{sec:model}).  Lists of products, reactants and modifiers in
-\class{Reaction} type structures do not introduce new species, but rather
-refer to those listed in the \class{Model}.  The connection between the species listed
-in the model and the reactions in which they are involved is established using
-\class{SimpleSpeciesReference} structures.
-
-\class{SimpleSpeciesReference} has only one field, \attrib{species}, of type \class{SId}; its value must
-be the identifier of a species defined in the enclosing \class{Model}.
-The \class{SimpleSpecieReference} structure is the base definition for the
-\class{SpeciesReference} and \class{ModifierSpeciesReference} structures.
-
 \subsubsection{\class{SpeciesReference}}
 \label{subsec:speciesreference}
 
-The reactants and products of a reaction are defined using a \class{SpeciesReference} type data
-structure defined in Figure~\vref{fig:reaction} which is derived from \class{SimpleSpeciesReference}.
-Note that whether a species is allowed to
-appear as a reactant or product or not is dictated by certain flags on the
-structure describing the species in the \class{Model}; see
-Table~\ref{tab:specieattrib} for more information.
+Every species that enters into a given reaction must appear in that
+reaction's lists of reactants, products or modifiers.  In an SBML model,
+all species that participate in any reaction are listed in the
+\attrib{listOfSpecies} field of the top-level \class{Model} data structure
+(see Section~\ref{sec:model}).  Lists of products, reactants and modifiers
+in \class{Reaction} type structures do not introduce new species, but
+rather, they refer back to those listed in the model's
+\attrib{listOfSpecies}.  For reactants and products, the connection is
+made using the \class{SpeciesReference} type data structure defined
+in Figure~\vref{fig:reaction}.
 
-Stoichiometric numbers for the products and reactants can be specified
-using two optional attributes on the \attrib{speciesReference} element:
-\attrib{stoichiometry} and \attrib{denominator}.  Both attributes take
-positive integers as values, and both have default values of ``\class{1}''
-(one).  The absolute value of the stoichiometric number is the value of
-\attrib{stoichiometry} divided by \attrib{denominator}, and the sign is
-implicit from the role of the species (i.e., negative for reactants and
-positive for products).  The use of separate numerator and denominator
-terms allows a simulator to employ rational arithmetic if it is capable of
-it, potentially reducing round-off errors and other problems during
-computations.
+In \class{SpeciesReference}, the field \attrib{species} of type \class{SId}
+must refer to the name of an existing species defined in the enclosing
+\class{Model}-type structure.  Stoichiometric numbers for the products and
+reactants can be specified using two optional attributes on the
+\attrib{speciesReference} element: \attrib{stoichiometry} and
+\attrib{denominator}.  Both attributes take positive integers as values,
+and both have default values of ``\class{1}'' (one).  The absolute value of
+the stoichiometric number is the value of \attrib{stoichiometry} divided by
+\attrib{denominator}, and the sign is implicit from the role of the species
+(i.e., negative for reactants and positive for products).  The use of
+separate numerator and denominator terms allows a simulator to employ
+rational arithmetic if it is capable of it, potentially reducing round-off
+errors and other problems during computations.
 
 The following is a simple example of a species reference in a list
 of reactants within a reaction named ``J1'':
@@ -1824,13 +1818,12 @@ of reactants within a reaction named ``J1'':
 </model>
 \end{example}
 
-The following example shows how a stoichiometry of a half is expressed:
-\begin{example}
-<speciesReference species="X1" stoichiometry="1" denominator="2"/>
-\end{example}
+A reaction can contain an empty list of reactants or an empty list of
+products but must have at least one reactant or product.  Also note that
+whether a given species is allowed to appear as a reactant or product is
+dictated by certain flags on the structure describing the species in the
+\class{Model}; see Table~\ref{tab:specieattrib} for more information.
 
-A reaction can contain an empty list of reactants or an empty list
-of products but must have at least one reactant or product.
 
 \subsubsection{\class{ModifierSpeciesReference}}
 \label{subsec:modifierreference}
@@ -1846,7 +1839,8 @@ as modifiers in a given reaction.  This is the purpose of the
 \attrib{modifier} field in \class{Reaction}; this field is a list of
 \class{ModifierSpeciesReference} structures defined in
 Figure~\vref{fig:reaction}.  The \class{ModifierSpeciesReference} structure
-is derived from \class{SimpleSpeciesReference}.
+has only one field, \attrib{species}, of type \class{SId}; its value must
+be the identifier of a species defined in the enclosing \class{Model}.
 
 The following is a simple example of a modifier species reference in a list
 of reactants within a reaction named ``J1'':
@@ -1870,38 +1864,31 @@ of reactants within a reaction named ``J1'':
 \subsubsection{\class{KineticLaw}}
 \label{subsec:kinetic-law}
 
-A \class{kineticLaw} structure describes the rate of the enclosing
-reaction.  The use of a \class{KineticLaw} structure in a \class{Reaction}
-component is optional; however, in general there is no useful default that
-can be substituted in place of a missing kinetic law definition in a
-reaction.
+A \class{kineticLaw} structure describes the rate at which the reaction
+takes place.  The inclusion of a \class{KineticLaw} structure in an
+instance of a \class{Reaction} component is optional; however, in general
+there is no useful default that can be substituted in place of a missing
+rate law definition in a reaction.
 
-The field \attrib{math} of \class{KineticLaw} is a MathML element and contains an expression that
+The field \attrib{math} is a MathML element and contains an expression that
 sets the rate of the reaction, in $substance/time$ units.
 (Section~\ref{sec:formulas} discusses the use of MathML in SBML Level~2).
-The only species
-identifiers that can be used in \attrib{math} are those in the \texttt{species} fields contained in the
-\class{Reactant}, \class{Product} and \class{Modifier} fields of the
-\class{Reaction} structure. In the XML encoding this means that any
-species identifier occurring within the MathML \texttt{math} element must also
-occur as a \texttt{species} attribute value of a \texttt{speciesReference} or
-\texttt{modifierSpeciesReference} element
-contained within the same \texttt{reaction} element.
-
 The optional fields \attrib{substanceUnits} and \attrib{timeUnits}
 determine the units of substance and time.  If not set, the units are taken
 from the defaults defined by the built-in ``\texttt{substance}'' and
-``\texttt{time}'' of Table~\vref{tab:builtin}.  
+``\texttt{time}'' of Table~\vref{tab:builtin}.  The only species
+identifiers that can be used in \attrib{math} are those listed in the
+\attrib{reactant}, \attrib{product} and \attrib{modifier} fields of the
+\class{Reaction} structure.
 
-A \class{KineticLaw} type structure can contain zero or more
-\class{parameter} structures (Section~\ref{sec:parameters}) that
-define symbols that can be used in the \attrib{math} element.  As
-discussed in Section~\ref{sec:namespaces}, reactions introduce
-local namespaces for parameter identifiers.  Within a
-\class{KineticLaw} structure inside a reaction definition, a local
-parameter whose identifier is identical to a global parameter
-defined in the enclosing \class{Model}-type structure takes
-precedence over that global parameter.
+An instance of a \class{KineticLaw} type structure can contain zero or more
+\class{parameter} structures (Section~\ref{sec:parameters}) that define
+symbols that can be used in the \attrib{math} element.  As discussed in
+Section~\ref{sec:namespaces}, reactions introduce local namespaces for
+parameter identifiers.  Within a \class{KineticLaw} structure inside a
+reaction definition, a local parameter whose identifier is identical to a
+global parameter defined in the enclosing \class{Model}-type structure
+takes precedence over that global parameter.
 
 The following is an example of a complete \class{Reaction} structure that
 defines a reaction named $J_1$, in which $X_0 \longrightarrow S_1$ at a
@@ -1940,6 +1927,7 @@ a parameter.  It demonstrates the use of species references and the
     ...
 </model>
 \end{example}
+
 
 %-----------------------------------------------------------------------------
 \subsection{Events}
@@ -2601,17 +2589,17 @@ and initial values are:
 \end{equation*}
 
 $S_1$ and $S_2$ are reactants but their values are not determined
-by a kinetic law therefore they are both on the boundary of the
+by a kinetic law thus they are both on the boundary of the
 reaction system and in SBML have \attrib{boundaryCondition} 
-attributes of \texttt{true}. The value of $S_1$ varies over time
-so in SBML $S_1$ has a \attrib{constant} attribute default value
+attribute values of \texttt{true}. The value of $S_1$ varies over time
+so in SBML $S_1$ has a \attrib{constant} attribute with a default value
 of \texttt{false}. The values of $S_2$ and $S_3$ are fixed so in
 SBML they have a \attrib{constant} attribute values of 
-\texttt{true}. $S_3$ is only occurs as a modifier so the value of
+\texttt{true}. $S_3$ only occurs as a modifier so the value of
 its \attrib{boundaryCondition} attribute can default to false.
 $S_4$ is a product whose value is determined by a kinetic law and
-therefore in the SBML representation has false values for both
-\attrib{boundaryCondition} and \attrib{constant} attribute values.
+therefore in the SBML representation has false values, the default values, for both
+\attrib{boundaryCondition} and \attrib{constant} attributes.
 
 The following is the XML document that encodes the model shown
 above:
@@ -2637,7 +2625,7 @@ above:
             <parameter id="k2" value="0.1"/>
         </listOfParameters>
         <listOfRules>
-            <assignmentRule variable="S1">
+            <assignmentRule variable="S1" type="rate">
                 <math xmlns="http://www.w3.org/1998/Math/MathML">
                     <apply>
                         <ci> k2 </ci>
@@ -2702,14 +2690,16 @@ above:
     <model id="Branch">
         <listOfFunctionDefinitons>
             <functionDefinition id="f">
-                <lamdba xmlns="http://www.w3.org/1998/Math/MathML">
-                    <bvar><ci> x </ci></bvar>
-                    <apply>
-                        <times/>
-                        <ci> x </ci>
-                        <cn> 2 </cn>
-                    </apply>
-                </lamdba>
+                <math xmlns="http://www.w3.org/1998/Math/MathML">
+                    <lamdba>
+                        <bvar><ci> x </ci></bvar>
+                        <apply>
+                            <times/>
+                            <ci> x </ci>
+                            <cn> 2 </cn>
+                        </apply>
+                    </lamdba>
+                </math>
             </functionDefinition>
         </listOfFunctionDefinitions>
         <listOfCompartments>
@@ -3162,7 +3152,7 @@ SBML Level 2 was developed with the help of many people, especially the
 authors of BioSpice, DBSolve, Cellerator, COPASI, E-Cell, Gepasi, Jarnac,
 MCell, NetBuilder, Promot/DIVA, StochSim, and Virtual Cell, and members of
 the \texttt{sysbio} mailing list.  We are particularly grateful to the
-following people for discussions, advice and comments: Benjamin Bornstein,
+following people for discussions, advice and comments: Hamid Bolouri, Benjamin Bornstein,
 Dennis Bray, Claudine Chaouiya, Kwang Cho, Athel Cornish-Bowden, Autumn
 Cuellar, Serge Dronov, David Fell, Carl Firth, Akira Funahashi, Warren
 Hedley, Charles Hodgman, Stefan Hoops, Martin Ginkel, Victoria Gor, Igor
@@ -3323,10 +3313,6 @@ capitalized name of the field, and then put a list of elements named after
 the field as the content of the \class{listOf}\rule{0.5in}{0.5pt}\class{s}
 element.
 
-A field whose type is shown in parentheses is implemented as an
-XML subelement rather than an XML attribute.  The parentheses
-indicate that the type refers to the type of the subelement value.
-
 Expressions in curly braces (\texttt{\{\}}) shown after an
 attribute type indicate additional constraints placed on the
 field.  We express constraints using XML Schema language.  In the
@@ -3334,9 +3320,17 @@ examples above, the expression \texttt{\{use="default"
 value="0.0"\}} indicates that the field \attrib{field4} is
 optional and that it has a default value of $0.0$.
 A constraint of the form \texttt{\{namespace="}\emph{X}\texttt{"\}} indicates that the
-field itself is not in the SBML Level 2 XML namespace but resides in the
-given XML namespace \emph{X}.
+field is not in the SBML Level 2 XML namespace but resides in the
+given XML namespace \emph{X}.  If a field is in a different namespace then the
+type of the field will not be defined by the SBML UML.
 
+A field definition of the form \texttt{X : (A : B)} defines an element \emph{X}
+that contains a field \emph{A} with type \emph{B}.  If \emph{A} is the string \texttt{ANY}
+then the element \emph{X} contains an arbitrary sequence of elements.  A field definition
+of the form \texttt{X : ( A : B ) \{ C \}} is similar except that the field \emph{X} and its content
+is constrained by constraint \emph{C}.  A field definition
+of the form \texttt{X : ( A : B \{ C \} ) } is similar except that the field \emph{A} and its content
+is constrained by constraint \emph{C}.  
 
 %%=============================================================================
 %\section{XML Schema for SBML}

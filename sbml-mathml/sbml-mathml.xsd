@@ -1,15 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- edited with XMLSPY v5 rel. 3 U (http://www.xmlspy.com) by Andrew Finney (University of Hertfordshire Biocomputation Research Group, STRC) -->
-<!--/**
- * Filename    : restricted-math.xsd
- * Description : schema for the MathML subset used by SBML L3+, specifically designed to work with JAXB
- * Author(s)   : SBML Development Group <sbml-team@caltech.edu>
- * Organization: University of Hertfordshire STRC
+<!--
+ * Filename    : sbml-mathml.xsd
+ * Description : Schema for the MathML subset used by SBML L2.
+ * Author(s)   : Andrew Finney, Michael Hucka
+ * Organization: SBML Team <sbml-team@caltech.edu>
  * Created     : 2003-10-9
  * Revision    : $Id$
  * Source      : $Source$
  *
- * Copyright 2003 California Institute of Technology, the Japan Science
+ * Copyright 2003-2005 California Institute of Technology, the Japan Science
  * and Technology Corporation, and the University of Hertfordshire
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -39,19 +38,19 @@
  *
  * The original code contained here was initially developed by:
  *
- *     Andrew Finney
- *     Science and Technology Research Centre
- *     University of Hertfordshire
- *     Hatfield, AL10 9AB
- *     United Kingdom
- *
+ *     Andrew Finney and Michael Hucka
+ *     SBML Team
  *     http://www.sbml.org
  *     mailto:sbml-team@caltech.edu
  *
  * Contributor(s):
- */
 -->
-<xs:schema targetNamespace="http://www.w3.org/1998/Math/MathML" xmlns="http://www.w3.org/1998/Math/MathML" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
+<xs:schema 	xmlns="http://www.w3.org/1998/Math/MathML" 
+		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+		xmlns:xs="http://www.w3.org/2001/XMLSchema" 
+		targetNamespace="http://www.w3.org/1998/Math/MathML" 
+		elementFormDefault="qualified" 
+		attributeFormDefault="unqualified">
 	<xs:attributeGroup name="MathAttributes">
 		<xs:attribute name="class" type="xs:NMTOKENS" use="optional"/>
 		<xs:attribute name="style" type="xs:string" use="optional"/>
@@ -60,6 +59,26 @@
 	<xs:complexType name="MathBase">
 		<xs:attributeGroup ref="MathAttributes"/>
 	</xs:complexType>
+	<xs:attributeGroup name="CnAttributes">
+		<xs:attribute name="type">
+			<xs:simpleType>
+				<xs:restriction base="xs:NMTOKEN">
+					<xs:enumeration value="e-notation"/>
+					<xs:enumeration value="integer"/>
+					<xs:enumeration value="rational"/>
+					<xs:enumeration value="real"/>
+				</xs:restriction>
+			</xs:simpleType>
+		</xs:attribute>
+		<xs:attributeGroup ref="MathAttributes"/>
+	</xs:attributeGroup>
+	<xs:complexType name="SepType"/>
+	<xs:complexType name="Cn" mixed="true">
+		<xs:choice minOccurs="0">
+			<xs:element name="sep" type="SepType"/>
+		</xs:choice>
+		<xs:attributeGroup ref="CnAttributes"/>
+	</xs:complexType>
 	<xs:complexType name="Ci">
 		<xs:simpleContent>
 			<xs:extension base="xs:string">
@@ -67,24 +86,8 @@
 			</xs:extension>
 		</xs:simpleContent>
 	</xs:complexType>
-	<xs:simpleType name="CnType">
-		<xs:restriction base="xs:string">
-			<xs:enumeration value="e-notation"/>
-			<xs:enumeration value="real"/>
-			<xs:enumeration value="integer"/>
-			<xs:enumeration value="rational"/>
-		</xs:restriction>
-	</xs:simpleType>
-	<xs:complexType name="Cn" mixed="true">
-		<xs:sequence>
-			<xs:element name="sep" type="MathBase"/>
-		</xs:sequence>
-		<xs:attribute name="type" type="CnType" use="optional" default="real"/>
-		<xs:attributeGroup ref="MathAttributes"/>
-	</xs:complexType>
 	<xs:simpleType name="CsymbolURI">
 		<xs:restriction base="xs:string">
-			<xs:enumeration value="http://www.sbml.org/sbml/symbols/arrayselector"/>
 			<xs:enumeration value="http://www.sbml.org/sbml/symbols/time"/>
 			<xs:enumeration value="http://www.sbml.org/sbml/symbols/delay"/>
 		</xs:restriction>
@@ -101,9 +104,7 @@
 	<xs:complexType name="NodeContainer">
 		<xs:complexContent>
 			<xs:extension base="MathBase">
-				<xs:sequence>
-					<xs:group ref="Node"/>
-				</xs:sequence>
+				<xs:group ref="Node"/>
 			</xs:extension>
 		</xs:complexContent>
 	</xs:complexType>
@@ -168,10 +169,15 @@
 						<xs:element name="arccsch" type="MathBase"/>
 						<xs:element name="arccoth" type="MathBase"/>
 					</xs:choice>
-					<xs:sequence maxOccurs="unbounded">
-						<xs:group ref="Node"/>
-					</xs:sequence>
+					<xs:group ref="Node" maxOccurs="unbounded"/>
 				</xs:sequence>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<xs:complexType name="Piece">
+		<xs:complexContent>
+			<xs:extension base="MathBase">
+				<xs:group ref="Node" minOccurs="2" maxOccurs="2"/>
 			</xs:extension>
 		</xs:complexContent>
 	</xs:complexType>
@@ -182,22 +188,13 @@
 			</xs:extension>
 		</xs:complexContent>
 	</xs:complexType>
-	<xs:complexType name="Piece">
-		<xs:complexContent>
-			<xs:extension base="MathBase">
-				<xs:sequence minOccurs="2" maxOccurs="2">
-					<xs:group ref="Node"/>
-				</xs:sequence>
-			</xs:extension>
-		</xs:complexContent>
-	</xs:complexType>
 	<xs:complexType name="Piecewise">
 		<xs:complexContent>
 			<xs:extension base="MathBase">
-				<xs:choice maxOccurs="unbounded">
-					<xs:element name="piece" type="Piece"/>
-					<xs:element name="otherwise" type="Otherwise"/>
-				</xs:choice>
+				<xs:sequence>
+					<xs:element name="piece" type="Piece" minOccurs="0" maxOccurs="unbounded"/>
+					<xs:element name="otherwise" type="Otherwise" minOccurs="0" maxOccurs="1"/>
+				</xs:sequence>
 			</xs:extension>
 		</xs:complexContent>
 	</xs:complexType>
@@ -262,21 +259,25 @@
 		<xs:complexContent>
 			<xs:extension base="MathBase">
 				<xs:sequence>
-					<xs:sequence maxOccurs="unbounded">
-						<xs:element name="bvar" type="Bvar"/>
-					</xs:sequence>
+					<xs:element name="bvar" type="Bvar" 
+							minOccurs="0" maxOccurs="unbounded"/>
 					<xs:group ref="Node"/>
 				</xs:sequence>
 			</xs:extension>
 		</xs:complexContent>
 	</xs:complexType>
 	<xs:complexType name="Math">
-		<xs:sequence>
-			<xs:choice>
-				<xs:group ref="Node"/>
-				<xs:element name="lambda" type="Lambda"/>
-			</xs:choice>
-		</xs:sequence>
+		<xs:complexContent>
+			<xs:extension base="MathBase">
+				<xs:choice>
+					<xs:group ref="Node"/>
+					<xs:element name="lambda" type="Lambda"/>
+				</xs:choice>
+			</xs:extension>
+		</xs:complexContent>
+		<!--Most <math> elements in SBML can have a variety of constructs, but in the definitions of user-defined functions, <math> elements must contain a single <lambda>.  The way this is handled in this schema is through the use of a group element that permits either a lambda or a more general MathML content tree.  The latter is expressed in this schema using a complex type called "Node".  It is called a node because it is a node of a tree structure.-->
 	</xs:complexType>
-	<xs:element name="math" type="Math"/>
+	<xs:element name="math" type="Math">
+		<!--This is the top-level element for a 'math' container in SBML.-->
+	</xs:element>
 </xs:schema>

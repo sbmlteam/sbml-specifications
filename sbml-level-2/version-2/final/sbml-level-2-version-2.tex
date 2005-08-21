@@ -52,6 +52,8 @@
 \newcommand{\changed}[1]{\textcolor{BrickRed}{#1}}
 \newenvironment{blockChanged}{\color{BrickRed}}{\color{black}}
 
+\newcommand{\sbmlrule}[1]{\setcounter{enumi}{#1} \addtocounter{enumi}{-1}}
+
 \newenvironment{rulesection}{\begin{center} \large}{\normalsize \end{center}}
 
 \begin{document}
@@ -75,8 +77,12 @@
 
 \acknowledge{Principal Investigators: John Doyle and Hiroaki Kitano}
 
-\date{SBML Level 2, Version 2 (Draft)\\[5pt]
-  26th March 2005}
+\date{SBML Level 2, Version 2, Issue 1 (Draft)\\[5pt]
+  29th May 2005\\
+  The latest issue of this specification is available at
+  \url{http://sbml.org/specifications/sbml-level-2/version-2/}\\
+  This issue of this specification is available at
+  \url{http://sbml.org/specifications/sbml-level-2/version-2-1/}}
 
 \maketitlepage
 
@@ -108,14 +114,37 @@ fashion to Level~2.  In addition, a large subset of the structures
 in Level~2 can be mapped to Level~1.  However, the levels remain
 distinct; a valid SBML Level~1 document is not a valid SBML
 Level~2 document, and likewise, a valid SBML Level~2 document is
-not a valid SBML Level~1 document. \changed{Minor Releases of SBML
-are termed \emph{versions}.  This specification defines the
-revised standard SBML Level 2 Version 2.
+not a valid SBML Level~1 document.
+
+\changed{Minor Releases of SBML are termed \emph{versions}.  This
+specification defines the revised standard SBML Level 2 Version 2.
 Appendix~\ref{apdx:level1-level2} lists the differences between
 Level~1 and Level~2 Version~1. Differences in the specification
 between Version 1 and Version 2 of SBML Level 2 are highlighted in
 red in the body of this specification and are listed in
-Appendix~\ref{apdx:version1-version2}}.
+Appendix~\ref{apdx:version1-version2}.}
+
+\changed{Each SBML version specification document is an evolves as
+inevitably the community clarifies and disambiguates the
+specification. These changes will be made public as \emph{errata}.
+Each errata to the specification will result in an new
+\emph{issue} of the specification. Each issue will be numbered.
+The first issue of the specification will be numbered 1. The
+errata for this specification be recorded in a new section
+starting in issue 2. Each errata will be numbered with the issue
+in which the errata is introduced. Errata should not change the
+fundamental semantics or syntax of SBML but merely clarify and
+disambiguate the specification.  (SBML Versions introduce new
+syntax and semantics.) A complete list of the errata for SBML
+Level 2 Version 2 created since Issue 1 is available at
+\url{http://sbml.org/specifications/sbml-level-2/version-2/errata}.}
+
+\changed{Any new levels, versions, issues and errata of SBML will
+be announced on the \texttt{sbml-std@sbml.org} mailing list.
+E-mail \texttt{???} to subscribe to this mailing list.  Only
+editors of the specification will post to this list: it is
+intended to be a low volume mailing list. An archive of this list
+is available at: \url{http://sbml.org/forums/}.}
 
 \changed{Both versions of SBML Level 2 were} created in
 collaboration with the authors of the following systems:
@@ -329,6 +358,7 @@ simply consists of lists of these components:
         \>list of species (optional)\\[-1pt]
         \>list of parameters (optional)\\[-1pt]
         \>list of rules (optional)\\[-1pt]
+        \>list of constraints (optional)\\[-1pt]
         \>list of reactions (optional)\\[-1pt]
         \>list of events (optional)\\[-1pt]
         end of model definition
@@ -361,11 +391,18 @@ The meaning of each component is as follows:
   provides the ability to define parameters that are global to a model as
   well as parameters that are local to a single reaction.
 
+
 \item \emph{Rule}: A mathematical expression used in
   combination with the differential equations constructed based on the set
-  of reactions in a model; it can be used to establish constraints between variables,
-  define how a variable can be calculated from other variables,
-  or used to define the rate of change of a variable.
+  of reactions in a model; \changed{it can be used to define how a variable
+  can be calculated from other variables,
+  or used to define the rate of change of a variable.  The set of rules can be
+  used with the reaction rate equations to determine the behavior of the
+  model with respect to time.}
+
+\item \changed{ \emph{Constraint}: A mathematical expression that
+  defines a constraint on the values of model variables at any instant.  The set of
+  constraints should not be used determine the behavior of the model with respect to time.}
 
 \item \emph{Reaction}: A statement describing some transformation,
   transport or binding process that can change the amount of one or more
@@ -456,9 +493,10 @@ Figure~\vref{fig:sbase}.
   \label{fig:sbase}
 \end{figure}
 
-\class{SBase} contains three fields, all of which are optional:
-\attrib{metaid}, \attrib{notes} and \attrib{annotation}.  These fields are
-discussed separately in the following subsections.
+\class{SBase} contains four fields, all of which are optional:
+\attrib{metaid}, \attrib{notes}, \attrib{annotation} and
+\attrib{definitionURL}. These fields are discussed separately in
+the following subsections.
 
 \subsubsection{The \attrib{metaid} Field}
 
@@ -493,6 +531,49 @@ intended to be seen by humans.  This field is a container for arbitrary
 data (XML type \class{any}).  As with the user-visible \attrib{notes}
 field, every data object can have its own value for \attrib{annotation}.
 Section~\ref{sec:annotation-use} provides guidelines for using this field.
+
+\begin{blockChanged}
+
+\subsubsection{The \attrib{definitionURL} Field}
+
+The field \attrib{definitionURL} in \class{SBase}, when present,
+contains a Universal Resource Identifier (URI) string.  This URI
+associates the SBML object containing the field value with the
+resource referenced by the URI and indicates that the entity
+represented by the structure has a `is a' relationship with the
+resource referenced by the URI.  The URI is \emph{not} a URL and
+does not refer to a location on the world wide web.  Instead the
+URI string will be recognized by a set of application as referring
+to a resource which in the simplest case is purely conceptual.
+
+For example consider instances of software applications that share
+a common definition of the URI
+
+    \texttt{http://www.foobar.com/protein}
+
+as representing the concept
+of a protein. The following fragment of SBML indicates to those
+instances that the species \texttt{MAPK} is a protein.
+
+\begin{example}
+<species id="MAPK" definitionURL="http://www.foobar.com/protein"/>
+\end{example}
+
+The presence of \attrib{definitionURL} on any SBML structure does
+not change the semantics of that structure as described in this
+document irrespective of any value contained in the field.  A
+parser wishing to interpret the mathematical or structural aspects
+of an SBML document can ignore \attrib{definitionURL} values. (The
+use of \attrib{definitionURL} fields on MathML elements is covered
+by Section~\ref{sec:csymbol-token}.)
+
+Developers are advised and encouraged to take care when designing
+syntax schemes for URI to ensure that schemes used by different
+application do not overlap.  The best way to ensure this to use
+the Internet domain name of an appropriate organization as the
+base name for URIs.
+
+\end{blockChanged}
 
 \subsubsection{The SBML Type Inheritance Hierarchy}
 
@@ -938,9 +1019,10 @@ containing structure in which the \class{ci} is used:
   referenced identifier must be either (i) one of the declared arguments to
   the function, or (ii) the identifier of a previously defined function.
 
-\item In all other situations, the referenced identifier must be the
-  identifier of a species, compartment, parameter or function declared in
-  the model.  The following are the only possible interpretations of using
+\item \changed{In all other situations, the referenced identifier
+must be the
+  identifier of a species, compartment, parameter, function or reaction declared in
+  the model.}  The following are the only possible interpretations of using
   such an identifier in SBML:
 
   \begin{itemize}
@@ -970,6 +1052,17 @@ containing structure in which the \class{ci} is used:
     \class{apply} and often involve supplying arguments to the function;
     see Section~\ref{sec:functions}.
 
+  \item \changed{\emph{Reaction identifier}: When a reaction
+    identifier occurs in a \class{ci} element, it represents the
+    rate of the reaction which is given by the kinetic law of the
+    reaction if present.  The units associated with the reaction
+    value are the units assigned to the \class{KineticLaw} structure
+    contained within the \class{Reaction} structure; see
+    Section~\ref{subsec:kinetic-law}.  (The units of the reaction
+    identifier follow the defaults described in
+    Section~\ref{subsec:kinetic-law} when the \class{KineticLaw}
+    structure is not present.)}
+
   \end{itemize}
 
 \end{itemize}
@@ -977,8 +1070,8 @@ containing structure in which the \class{ci} is used:
 \changed{The content of \class{ci} elements outside a
 \class{KineticLaw} and \class{FunctionDefinition} structures
 always refer to objects declared in the top level global namespace
-i.e. SBML does uses ``early binding" semantics.  The only
-\class{ci} elements that can represent parameters listed in a
+i.e. SBML uses ``early binding" semantics.  The only \class{ci}
+elements that can represent parameters listed in a
 \class{KineticLaw} structure are those \class{ci} elements
 contained in the \class{KineticLaw} structure (see
 Section~\ref{subsec:kinetic-law}).}
@@ -1093,6 +1186,81 @@ logical operators and the boolean constants (\class{false},
 values and symbols return numeric results. The type of an operator
 referring to a function definition is the type of the top level
 operator of the function definition.
+
+\subsubsection{N-ary Operators}
+\label{sec:nary-operators}
+
+The N-ary operators (\class{add}, \class{times}, \class{and},
+\class{or} and \class{xor}) should follow their definition in the
+MathML specification.  Note however that the MathML specification
+does not define the semantics of these operators with zero or one
+operand.  Such a definition is given in this section.
+
+The general form of these operators is as follows:
+
+\begin{equation}
+\label{eq:n-ary-operator}
+f(x_1 ... x_n) = base_operand operator x_1 operator ... x_n
+\end{equation}
+
+where $n$ is any non-negative integer and $base_operand$ is a
+constant that is associated with the operator.  The $base_operand$
+can be considered an additional hidden operand to the operator.
+
+Table~\ref{tab:baseoperands} gives the base operands for the N-ary
+operators of the MathML subset used in SBML.
+
+\begin{table}[bh]
+  \centering
+  \ttfamily
+  \begin{tabular}{ll}
+    \toprule
+    Operator & Base Operand \\
+    \midrule \\
+    \class{add} & 0 \\
+    \class{times} & 1 \\
+    \class{and} & true \\
+    \class{or} & false \\
+    \class{xor} & false \\
+    \bottomrule
+  \end{tabular}
+  \caption{The base operands of the N-ary operators of the MathML subset}
+  \label{tab:baseoperands}
+\end{table}
+
+For example
+
+\begin{example}
+<apply>
+    <add/>
+<apply/>
+\end{example}
+
+returns $0 = 0$;
+
+\begin{example}
+<apply>
+    <add/>
+    <cn>7</cn>
+<apply/>
+\end{example}
+
+returns $7 = 0 + 7$; and
+
+\begin{example}
+<apply>
+    <add/>
+    <cn>7<cn/>
+    <cn>13<cn/>
+</apply>
+\end{example}
+
+returns $20 = 0 + 17 + 13$.
+
+For all the n-ary operators to give optimal computation the
+operator can be replaced by (a) the 'base operand' if the operator
+has no operands; or (b) replaced by an operand if the operator has
+only one operand i.e. the operator is equivalent to identity.
 \end{blockChanged}
 
 %=============================================================================
@@ -1725,6 +1893,7 @@ are used in the following ways:
 \end{itemize}
 
 \subsubsection{The \attrib{constant} Field}
+\label{sec:compartment-constant}
 
 A \class{Compartment} also has an optional boolean field called
 \attrib{constant} that indicates whether the compartment's size stays
@@ -1744,12 +1913,12 @@ if the \attrib{spatialDimensions} field is 0.
 The optional field \attrib{outside} of type \class{SId} can be
 used to express containment relationships between compartments. If
 present, the value of \attrib{outside} for a given compartment
-must be the name of another compartment enclosing it, or in other
-words, the compartment that is ``outside'' of it.  This enables
-the representation of simple topological relationships between
-compartments, for those simulation systems that can make use of
-the information (e.g., for drawing simple diagrams of
-compartments).
+must be \changed{the \attrib{id} field value of another
+compartment which encloses it}, or in other words, the compartment
+that is ``outside'' of it. This enables the representation of
+simple topological relationships between compartments, for those
+simulation systems that can make use of the information (e.g., for
+drawing simple diagrams of compartments).
 
 \changed{The directed graph formed by representing
 \class{Compartment} structures as vertexes and the \class{outside}
@@ -1908,33 +2077,43 @@ identify the species type of the chemical entities that make up
 the pool represented by the \class{Species} structure. The field's
 value must be the identifier of an existing \class{SpeciesType}
 structure.  If the \attrib{speciesType} field is not present the
-pool contains chemical entities of a type unique to that pool.
-The value of \class{speciesType} attributes have no effect on the
+pool contains chemical entities of a type unique to that pool. The
+value of \class{speciesType} attributes have no effect on the
 numerical interpretation of a model. Simulators and other
 numerical analysis software may ignore \class{speciesType}
-attributes.
+attributes.  In any \class{Species} structure, that has a
+\attrib{speciesType} field value, the pair of \attrib{speciesType}
+and \attrib{compartment} field values must be unique in the set of
+all \class{Species} structures i.e. a species type cannot be
+located more than once in a compartment.
 \end{blockChanged}
 
 \subsubsection{The \attrib{initialAmount} and \attrib{initialConcentration} Fields}
 \label{sec:initialAmount}
 
 The optional fields \attrib{initialAmount} and
-\attrib{initialConcentration}, both having a data type of \class{double},
-are used to set the initial quantity of the species in the named
-compartment.  These fields are mutually exclusive; i.e., \emph{only one} can
-have a value on any given instance of a \class{Species} structure.  Also,
-\attrib{initialConcentration} must not have a value if the species'
-compartment has a \attrib{spatialDimensions} value of ``\texttt{0}'' or if
-the value of the species' \attrib{hasOnlySubstanceUnits} field is ``\attribvalue{true}''.
-Missing \attrib{initialAmount} or
-\attrib{initialConcentration} values implies that their values are either
-unknown, set by an assignment rule, not required for analysis or available from
-an external data source.
+\attrib{initialConcentration}, both having a data type of
+\class{double}, are used to set the initial quantity of the
+species in the named compartment.  These fields are mutually
+exclusive; i.e., \emph{only one} can have a value on any given
+instance of a \class{Species} structure.  \changed{Also,
+\attrib{initialConcentration} must not have a value if the
+species' compartment has a \attrib{spatialDimensions} value of
+``\texttt{0}''}. Missing \attrib{initialAmount} or
+\attrib{initialConcentration} values implies that their values are
+either unknown, set by an assignment rule, not required for
+analysis or available from an external data source.
 
-The units of the value in the \attrib{initialAmount} field is that given by
-the \attrib{substanceUnits} field of the species structure.  The units of the value
-in the \attrib{initialConcentration} field are the \emph{units of the
-  species} as described in the next subsection.
+The units of the value in the \attrib{initialAmount} field is that
+given by the \attrib{substanceUnits} field of the species
+structure.  \changed{The units of the value in the
+\attrib{initialConcentration} field are
+\quantity{substance}/\quantity{size} units (i.e.,
+\quantity{concentration} unit.  The units of \quantity{substance}
+are those defined in the \attrib{substanceUnits}, and the
+\quantity{size} units are those given in the
+\attrib{spatialSizeUnits} field as described in the next
+subsection.}
 
 \subsubsection{The \attrib{substanceUnits}, \attrib{spatialSizeUnits} and
     \attrib{hasOnlySubstanceUnits} Fields}
@@ -1945,21 +2124,43 @@ The units associated with a species' quantity, referred to as the
 optional fields \attrib{substanceUnits}, \attrib{spatialSizeUnits} and
 \attrib{hasOnlySubstanceUnits}.
 
-\attrib{hasOnlySubstanceUnits} is a boolean field which defaults to
-``\attribvalue{false}''.
-The \emph{units of the species} are of the form
-\quantity{substance}/\quantity{size} units
-(i.e., \quantity{concentration} units, using a broad definition of concentration)
-if the compartment's
-\attrib{spatialDimensions} is non-zero and \attrib{hasOnlySubstanceUnits} has
-the value ``\attribvalue{false}''.
-The \emph{units of the species} are of the form \quantity{substance} if
-\attrib{spatialDimensions} is zero or \attrib{hasOnlySubstanceUnits} has
-the value ``\attribvalue{true}''.
-The units of
-\quantity{substance} are those defined in the \attrib{substanceUnits}, and
-the \quantity{size} units are those given
-in the \attrib{spatialSizeUnits} field.
+\attrib{hasOnlySubstanceUnits} is a boolean field which defaults
+to ``\attribvalue{false}''. The \emph{units of the species} are of
+the form \quantity{substance}/\quantity{size} units (i.e.,
+\quantity{concentration} units, using a broad definition of
+concentration) if the compartment's \attrib{spatialDimensions} is
+non-zero and \attrib{hasOnlySubstanceUnits} has the value
+``\attribvalue{false}''. The \emph{units of the species} are of
+the form \quantity{substance} if \attrib{spatialDimensions} is
+zero or \attrib{hasOnlySubstanceUnits} has the value
+``\attribvalue{true}''.  \changed{The possible values of
+\emph{units of the species} are summarized in
+Table~\ref{tab:speciesunits}.}  The units of \quantity{substance}
+are those defined in the \attrib{substanceUnits}, and the
+\quantity{size} units are those given in the
+\attrib{spatialSizeUnits} field.
+
+\begin{table}[ht]
+\begin{blockChanged}
+  \vspace*{8pt} \centering
+  \begin{tabular}{lll}
+    \toprule
+    \textbf{value of} &
+    \textbf{\emph{units of the species} when} &
+    \textbf{\emph{units of the species} when}\\
+    \textbf{\attrib{hasOnlySubstanceUnits}}&
+    \textbf{Spatial Dimensions is greater than 0} &
+    \textbf{Spatial Dimensions is 0}\\
+    \midrule
+    \texttt{false} (default) & $substance/size$ & $substance$ \\
+    \texttt{true} & $substance$ & $substance$ \\
+    \bottomrule
+  \end{tabular}
+  \caption{How to interpret the value the \attrib{hasOnlySubstanceUnits}
+  field of the \class{Species} structure.}
+  \label{tab:speciesunits}
+\end{blockChanged}
+\end{table}
 
 For both \attrib{substanceUnits} and \attrib{spatialSizeUnits},
 the value chosen must be either
@@ -1987,14 +2188,10 @@ the species' \attrib{hasOnlySubstanceUnits} field has a value of ``\attribvalue{
 The default value of the \attrib{spatialSizeUnits} is the value of
 the \attrib{units} field of the species' compartment.
 
-The \emph{units of the species} are used in the
-following ways:
+\begin{blockChanged}
+The \emph{units of the species} are used in the following ways:
 
 \begin{itemize}
-
-\item The species \attrib{initialConcentration} field has these units
-  (see Section~\ref{sec:initialAmount}).
-
 \item The
   species identifier has these units when it appears as a numerical quantity
   in a mathematical formula expressed in MathML
@@ -2012,7 +2209,7 @@ following ways:
   \quantity{time} units.
 
 \end{itemize}
-
+\end{blockChanged}
 
 \subsubsection{The \attrib{constant} and \attrib{boundaryCondition} Fields}
 \label{sec:species-constant}
@@ -2194,20 +2391,18 @@ The following is an example of parameters defined at the \class{Model} level:
 cases in which the constraints cannot be expressed using reactions
 (Section~\ref{sec:reactions}) nor the assignment of an initial
 value to a component in a model.  There are two orthogonal
-dimensions by which rules can be described.  \changed{First, there
-are three different possible functional forms, corresponding to
-the following three general cases (where $x$ is a variable, $f$ is
-some arbitrary function returning a numeric result, $g$ is some
-arbitrary function returning a boolean result, $V$ is a vector of
-variables that does not include $x$, and $W$ is a vector of
-variables that may include $x$):}
+dimensions by which rules can be described.  First, there are
+three different possible functional forms, corresponding to the
+following three general cases (where $x$ is a variable, $f$ is
+some arbitrary function returning a numeric result, $V$ is a
+vector of variables that does not include $x$, and $W$ is a vector
+of variables that may include $x$):
 
 \begin{center}
 \begin{tabular}{rll}
 \emph{Algebraic}    & left-hand side is zero:             & $0 = f(W)$\\
 \emph{Assignment}  & left-hand side is a scalar:         & $x = f(V)$\\
 \emph{Rate}         & left-hand side is a rate-of-change: & $dx/dt = f(W)$\\
-\changed{\emph{Constraint}} & \changed{no left-hand side} & \changed{$g(V)$}
 \end{tabular}
 \end{center}
 
@@ -2236,26 +2431,17 @@ cases for the following reasons:
   models that do not contain \emph{algebraic} rules.
 \end{itemize}
 
-\changed{Whereas the \emph{Algebraic}, \emph{Assignment} and
-\emph{Rate} cases above can and should be used to compute the
-dynamical behavior the \emph{constraint} case should not.  The
-\emph{constraint} case is simply a mechanism for expressing the
-validity of the model's state during numerical analysis.  A false
-result from the function $g(V)$ indicates that model is is in a
-invalid state.}
-
 The approach taken to covering these cases in SBML is to define an
 abstract \class{Rule} structure containing only one field,
 \attrib{math}, to hold the right-hand side expression, then to
 derive subtypes of \class{Rule} that add fields to distinguish the
 cases of algebraic, assignment and rate rules.
 Figure~\vref{fig:rules} gives the definitions of \class{Rule} and
-the subtypes derived from it.  \changed{The figure shows there are
-four subtypes, \class{AlgebraicRule}, \class{AssignmentRule},
-\class{ConstraintRule} and \class{RateRule} derived directly from
-\class{Rule}. These correspond to the cases \emph{Algebraic},
-\emph{Assignment}, \emph{Constraint} and \emph{Rate} described
-above respectively.}
+the subtypes derived from it.  The figure shows there are four
+subtypes, \class{AlgebraicRule}, \class{AssignmentRule} and
+\class{RateRule} derived directly from \class{Rule}. These
+correspond to the cases \emph{Algebraic}, \emph{Assignment}, and
+\emph{Rate} described above respectively.
 
 \begin{figure}[htb]
   \vspace*{-5pt}
@@ -2280,15 +2466,17 @@ Section~\ref{sec:algeraiceg}.
 \subsubsection{\class{AssignmentRule}}
 \label{sec:assignmentrule}
 
-The rule type \class{AssignmentRule} is used to express equations that set
-the values of variables.  The left-hand side (the \attrib{variable} field) of an
-assignment rule can refer to the identifier of a species,
-compartment, or parameter.  Two or
-more \class{RateRule} or \class{AssignmentRule} structures cannot have the
-same left-hand side or \attrib{variable} field value in an SBML model definition.
-In all cases, as would be expected, the units of the formula representing the
-right hand side, the \attrib{math} field, are identical to the units associated with the
-left hand side, the \attrib{variable} field, when that variable appears in other
+The rule type \class{AssignmentRule} is used to express equations
+that set the values of variables.  The left-hand side (the
+\attrib{variable} field) of an assignment rule can refer to the
+identifier of a species, compartment, or parameter \changed{(but
+not a reaction)}.  Two or more \class{RateRule} or
+\class{AssignmentRule} structures cannot have the same left-hand
+side or \attrib{variable} field value in an SBML model definition.
+In all cases, as would be expected, the units of the formula
+representing the right hand side, the \attrib{math} field, are
+identical to the units associated with the left hand side, the
+\attrib{variable} field, when that variable appears in other
 formulae.
 
 The effects of an \class{AssignmentRule} structure are in general terms
@@ -2336,19 +2524,21 @@ being set:
 \subsubsection{\class{RateRule}}
 \label{sec:raterule}
 
-The rule type \class{RateRule} is used to express equations that determine
-the rates of change of variables.  The left-hand side (the
-\attrib{variable} of a rate rule) can refer to the identifier of a species,
-compartment, or parameter.  Two or
-more \class{RateRule} or \class{AssignmentRule} structures cannot have the
-same left-hand side or \attrib{variable} field value in an SBML model definition.
-In all cases, as would be expected, the units of the formula representing the
-right hand side, in the \attrib{math} field, are of the form \quantity{x}/\quantity{time} where
-\quantity{x} are the same units as associated with the symbol
-in the \attrib{variable} field, when that variable appears in other
-formulae.  \quantity{time} is a built-in unit (see Section~\ref{sec:unitdefinitions}).
-The effects of a \class{RateRule} are in general terms the same, but
-differ in the precise details depending on which variable is being set:
+The rule type \class{RateRule} is used to express equations that
+determine the rates of change of variables.  The left-hand side
+(the \attrib{variable} of a rate rule) can refer to the identifier
+of a species, compartment, or parameter \changed{(but not a
+reaction)}. Two or more \class{RateRule} or \class{AssignmentRule}
+structures cannot have the same left-hand side or
+\attrib{variable} field value in an SBML model definition. In all
+cases, as would be expected, the units of the formula representing
+the right hand side, in the \attrib{math} field, are of the form
+\quantity{x}/\quantity{time} where \quantity{x} are the same units
+as associated with the symbol in the \attrib{variable} field, when
+that variable appears in other formulae.  \quantity{time} is a
+built-in unit (see Section~\ref{sec:unitdefinitions}). The effects
+of a \class{RateRule} are in general terms the same, but differ in
+the precise details depending on which variable is being set:
 
 \begin{itemize}
 
@@ -2394,23 +2584,6 @@ differ in the precise details depending on which variable is being set:
 
 \end{itemize}
 
-\begin{blockChanged}
-\subsubsection{\class{ConstraintRule}}
-
-The \class{ConstraintRule} structure is used to express
-mathematical statements which cannot and should not be used to
-compute the dynamical behavior of the model.  The MathML field
-inherited from \class{Rule} should return a boolean value which
-indicates the validity of the current state of the model. A
-numerical analysis or simulation of the model can halt and warn
-the user if the expression returns a false value.  In which case
-the software can display the content of the \attrib{notes} field
-to the user as an explanation to the user.  \class{ConstraintRule}
-structures should be used to encode assumptions under which the
-model is designed to operate
-
-\end{blockChanged}
-
 \subsubsection{Constraints on rules}
 \label{sec:ruleconstraints}
 
@@ -2453,6 +2626,13 @@ would be invalid because the rule for $x$ refers to $x$ and the rule for
 $y$ refers to $z$ before $z$ is defined.
 
 \begin{blockChanged}
+A rule cannot determine the value if a reaction rate by
+referencing the \attrib{id} value of a \class{Reaction} structure.
+However a rule can determine other variable values by reference to
+the rate of a reaction through by referencing the \attrib{id}
+value of a \class{Reaction} structure in MathML \class{cin}
+elements.
+
 A SBML model must not be over determined.  A SBML model that does
 not contain \class{AlgebraicRule} structures is not over
 determined.
@@ -2460,13 +2640,14 @@ determined.
 To determine whether a continuous deterministic mathematical model
 is over determined we form a bipartite graph in which one set of
 vertices represent the variables and the other the set of vertices
-represent the equations. Edges in the graph link equations to the
-variables that are determined by the equations. Edges connect each
-algebraic equation vertex to all the vertices representing
-variables occurring in the equation. For each an ordinary
-differential equation (ODE) a single edge connects the vertex
-representing the equation to the vertex representing the variable
-determined by the equation.
+represent the equations. Edges in the graph link equation vertexes
+to the variable vertices so that the variables are linked to the
+equations that determine them. Edges connect each algebraic
+equation vertex to all the vertices representing variables
+occurring in the equation. For each an ordinary differential
+equation (ODE) a single edge connects the vertex representing the
+equation to the vertex representing the variable determined by the
+equation.
 
 A mathematical model is over determined if the maximal matchings
 of the bipartite graph contain disconnected vertexes representing
@@ -2479,13 +2660,13 @@ for finding a maximal matching is described in
 We can define the application of the above general statement to
 SBML by defining the mapping of SBML structures to components of
 the bipartite graph representing the model structure. In this
-mapping we consider assignment rules to be algebraic equations. We
-assume the construction of an ODE for each species determined by
-one or more reaction rate laws. \class{ConstraintRule} structures
-are not mapped as they do not determine variables.  The following
-mapping assumes that the model is valid in all respects but may be
-over determined e.g. equations can't refer to undeclared
-variables.
+mapping we consider assignment rules to be algebraic equations and
+we consider the assignment of kinetic laws to reaction variables
+to be algebraic equations.  We assume the construction of an ODE
+for each species determined by one or more reaction rate laws. The
+following mapping assumes that the model is valid in all respects
+but may be over determined e.g. equations can't refer to
+undeclared variables.
 
 The bipartite graph is formed as follows:
 
@@ -2499,13 +2680,15 @@ field set to false and which is referenced by one or more reactant
 or product lists of a \class{Reaction} structure containing a
  \class{KineticLaw} structure
 
-\item a \class{Rule} structure other than a \class{ConstraintRule}
-structure
+\item a \class{Rule} structure
+
+\item a \class{KineticLaw} structure
 \end{enumerate}
 
-\item Create variable vertexes for every \class{Species},
+\item Create variable vertexes for (a) every \class{Species},
  \class{Compartment} and \class{Parameter} structure which has the
- \class{Constant} field set to false.
+ \class{Constant} field set to false; and (b) for every
+ \class{Reaction} structure.
 
 \item Create an edge for each case of the following:
 
@@ -2523,13 +2706,41 @@ edge connects the vertex representing the \class{Rule} to the
 vertex representing the variable referenced by the
 \attrib{variable} field of the rule.
 
+\item \emph{a \class{KineticLaw}.}  The edge connects the vertex
+representing the \class{KineticLaw} equation to the variable
+vertex representing the \class{Reaction} containing the
+\class{KineticLaw}.
+
 \item \emph{the occurrence of a MathML \class{ci} symbol
 referencing a variable (that is referencing a \class{Species},
-\class{compartment} or \class{parameter} structure which has the
+\class{compartment}, \class{parameter} structure which has the
 \attrib{constant} field set to false) within an \\
 \class{AssignmentRule} or \class{AlgebraicRule}.} The edge
 connects the vertex representing the rule to the vertex
 representing the variable.
+
+\item \emph{the occurrence of a MathML \class{ci} symbol
+referencing a \class{Reaction} within an \class{AssignmentRule} or
+\class{AlgebraicRule}.}  The edge connects the vertex representing
+the rule to the vertex representing the reaction variable.
+
+\item \emph{the occurrence of a MathML \class{ci} symbol
+referencing a variable within an \class{AssignmentRule} or
+\class{AlgebraicRule}.} The edge connects the vertex representing
+the rule to the vertex representing the variable.  The \class{ci}
+element must either reference: (a) a \class{Species},
+\class{compartment} or \class{parameter} structure which has the
+\attrib{constant} field set to false; or (b) reference a
+\class{Reaction} structure)
+
+\item \emph{the occurrence of a MathML \class{ci} symbol
+referencing a variable within an \class{KineticLaw}.} The edge
+connects the vertex representing the kinetic law to the vertex
+representing the variable.  The \class{ci} element must either
+reference a \class{Species}, \class{compartment} or
+\class{parameter} structure which has the \attrib{constant} field
+set to false.  In this context a \class{ci} element cannot refer
+to a \class{Reaction} structure.
 
 \end{enumerate}
 \end{itemize}
@@ -2650,6 +2861,71 @@ abbreviated example):
 %variable values determined by \class{rate} and
 %\class{AlgebraicRule} structures.
 %
+
+\begin{blockChanged}
+%-----------------------------------------------------------------------------
+\subsection{Constraints}
+\label{sec:constraints}
+%-----------------------------------------------------------------------------
+
+\class{Constraint} structures are used to express mathematical
+statements which cannot and should not be used to compute the
+dynamical behavior of the model.  A \class{Constraint} structure
+is simply a mechanism for expressing the validity of the model's
+state during numerical analysis and should be used to encode those
+assumptions under which the model is designed to operate.
+
+A \class{Constraint} structure consists of two fields:
+\attrib{math} which contains a MathML formula and an optional
+\attrib{message} which contains a HTML message to potentially be
+displayed to the user.  Figure~\vref{fig:constraint} shows the
+definition of the \class{Constraint} structures.  The formula
+contained in the \attrib{math} field should be an arbitrary
+function of the variables and parameters of the model which
+returns a boolean value which is true when the model is in a valid
+state.  The \attrib{message} field can be displayed to the user
+when a tool detects that the function given by the \attrib{math}
+field is false.
+
+\begin{figure}[htb]
+  \vspace*{-5pt}
+  \centering
+  \includegraphics[scale = 0.68]{constraint}
+  \caption{The definition of \class{Constraint}.
+    Following UML notation fields
+    that are inherited from a base class are not shown.}
+  \label{fig:constraint}
+\end{figure}
+
+As an example the constraint that species $S_1$ should only have
+values between 1 and 100 could be encoded as:
+
+\begin{example}
+<constraint>
+    <math xmlns="http://www.w3.org/1998/Math/MathML">
+        <apply>
+            <and/>
+            <apply>
+                <lt/>
+                <cn> 1 </cn>
+                <ci> S1 </ci>
+            </apply>
+            <apply>
+                <lt/>
+                <ci> S1 </ci>
+                <cn> 100 </cn>
+            </apply>
+        </apply>
+    </math>
+    <message>
+        <xhtml:p>
+            Species S1 is out of range
+        </xhtml:p>
+    </message>
+</constraint>
+\end{example}
+
+\end{blockChanged}
 
 %-----------------------------------------------------------------------------
 \subsection{Reactions}
@@ -2976,23 +3252,27 @@ reaction definition, a local parameter whose identifier is identical to a
 global parameter defined in the enclosing \class{Model}-type structure
 takes precedence over that global parameter.
 
-The following is an example of a \class{Reaction} structure that defines a
-reaction named $J_1$, in which $X_0 \rightarrow S_1$ at a rate given by
-$k X_0 S_2$, where $S_2$ is a catalyst and $k$ is a parameter.  It
-demonstrates the use of species references and the \class{KineticLaw}
-structure.  The units on the species here are the defaults of
-\quantity{substance}/\quantity{volume} (see Section~\ref{sec:species}), and
-so the units of the parameter $k$ are set appropriately to make the rate
-expression have final units of \quantity{substance/time}.
+\begin{blockChanged}
+The following is an example of a \class{Reaction} structure that
+defines a reaction named $J_1$, in which $X_0 \rightarrow S_1$ at
+a rate given by $k X_0 S_2$, in conventional units, where $S_2$ is
+a catalyst and $k$ is a parameter.  It demonstrates the use of
+species references and the \class{KineticLaw} structure.  The
+units on the species here are the defaults of
+\quantity{substance}/\quantity{volume} (see
+Section~\ref{sec:species}), and so the conventional rate
+expression is multiplied by the compartment volume so that the
+encode rate expression has the final units of
+\quantity{substance/time}.
 
 \begin{example}
 
 <model>
     ...
     <listOfUnitDefinitions>
-        <unitDefinition id="vol_per_concent_per_time">
+        <unitDefinition id="concent_per_time">
             <listOfUnits>
-                <unit kind="litre"  exponent="2"/>
+                <unit kind="litre"/>
                 <unit kind="mole"   exponent="-1"/>
                 <unit kind="second" exponent="-1"/>
             </listOfUnits>
@@ -3023,10 +3303,11 @@ expression have final units of \quantity{substance/time}.
                         <ci> k </ci>
                         <ci> S2 </ci>
                         <ci> X0 </ci>
+                        <ci> c1 </ci>
                     </apply>
                 </math>
                 <listOfParameters>
-                    <parameter id="k" value="0.1" units="vol_per_concent_per_time"/>
+                    <parameter id="k" value="0.1" units="concent_per_time"/>
                 </listOfParameters>
             </kineticLaw>
         </reaction>
@@ -3034,7 +3315,24 @@ expression have final units of \quantity{substance/time}.
     ...
 </model>
 \end{example}
+\end{blockChanged}
 
+\begin{blockChanged}
+\subsubsection{Reaction as Symbol}
+\label{subsec:reaction-as-symbol}
+
+The value of the \attrib{id} field of a \class{Reaction} structure
+can occur as the content of a MathML \class{ci} element. Such a
+\class{ci} element or symbol represents the rate of the given
+reaction as given by the \class{KineticLaw} structure of the
+reaction.  The symbol has the units of the \class{KineticLaw} as
+described in Section~\ref{subsec:kinetic-law} or
+\quantity{substance/time} units if the \class{KineticLaw} is not
+present.  A \class{KineticLaw} expression cannot contain reaction
+symbols. This restriction means that it is not possible to either
+create algebraic loops amongst \class{KineticLaw} expressions or
+to require a specific order of evaluation of kinetic laws.
+\end{blockChanged}
 
 %-----------------------------------------------------------------------------
 \subsection{Events}
@@ -3115,8 +3413,9 @@ structures represent variable assignments that have effect when
 the event is \emph{executed}. The \class{Assignment} structure is
 shown in Figure~\ref{fig:event}. The \attrib{variable} field is of
 type \class{SId} and contains the identifier of a variable i.e. a
-compartment, species or parameter.  \changed{The values of the
-\attrib{variable} field must be unique among the set of
+compartment, species or parameter.  \changed{The \attrib{variable}
+field must not contain the identifier of a reaction.  The values
+of the \attrib{variable} field must be unique among the set of
 \class{EventAssignment} structures within an \class{Event}
 structure.} The structures referenced by the \attrib{variable}
 field must have their \attrib{constant} fields set to
@@ -3132,11 +3431,22 @@ MathML \attrib{ci} fields of the \class{EventAssignment}
 structures represent the value of the identifier at the point when
 the \class{Event} is \emph{fired}.
 
-In all cases, as would be expected, the units of the formula are identical to the
-units associated with the \attrib{variable} field, when that variable appears in
-other formulae.
-However, the precise details, which are identical to those of \class{AssignmentRule}
-structures, depend on the variable that is being set:
+\changed{A variable can't be assigned a value in an
+\class{EventAssignment} structure and be assigned a value by an
+\class{AssignmentRule} structure i.e. the value of a
+\attrib{variable} attribute on a \class{EventAssignment} structure
+cannot be the same as the value of a \attrib{variable} attribute
+on a \class{AssignmentRule} structure.  This restriction is
+imposed because in the invalid case the EventAssignment is
+redundant because the variable would assume the value of given by
+the \class{AssignmentRule}.}
+
+In all cases, as would be expected, the units of the formula
+\changed{ in a \class{EventAssignment}} are identical to the units
+associated with the \attrib{variable} field, when that variable
+appears in other formulae. However, the precise details, which are
+identical to those of \class{AssignmentRule} structures, depend on
+the variable that is being set:
 
 \begin{itemize}
 
@@ -3236,6 +3546,14 @@ cascade and continue the simulation without at least indicating the infinite cas
 A variable can change more than once when processing simultaneous events at simulation
 time $t$.  The model behavior (output) for such a variable is the value of the
 variable at the end of processing all the simultaneous events at time $t$.
+
+\changed{It is not possible for an event to be triggered when
+simulation time is zero ($t=0$).  All variables are nominally
+assumed to have their initial conditions at any time before $t=0$
+(to do otherwise assumes simulation before $t=0$).  The time
+symbol can never have a negative value.  As result no transition
+in variable values or expressions can occur at $t=0$ and thus no
+events can be triggered at that point in simulation time.}
 
 %=============================================================================
 \section{Example Models Expressed in XML Using SBML}
@@ -5027,7 +5345,6 @@ Jonathan Webb, J\"{o}rg Weimar, Darren Wilkinson, Olaf Wolkenhauer and Tau-Mu Yi
 
 \end{itemize}
 
-
 %-----------------------------------------------------------------------------
 \begin{blockChanged}
 \section{Differences between SBML Level 2 Version 1 and Level 2 Version 2}
@@ -5043,10 +5360,17 @@ The new features introduced in Version 2 are:
 
 \begin{itemize}
 
+\item \emph{\attrib{definitionURL} on SBase}
+
+In Version 2 the \class{SBase} structure has an addition field
+\attrib{definitionURL} which contains the URI of a resource with a
+`is a' relationship with the containing SBML structure.  This can
+be used for example to label a species as being a protein.
+
 \item \emph{Nested Unit Definitions}
 
 In Version 2 the \class{Unit} structure has an additional field
-\class{definition} which refers to another\\
+\attrib{definition} which refers to another\\
 \class{UnitDefinition} thus allowing the the \class{Unit}
 structure to be defined in terms of that \class{UnitDefinition}
 rather being restricted to the \class{UnitKind} enumeration of
@@ -5061,22 +5385,34 @@ consists of just \attrib{name} and \attrib{id} fields.  The
 \attrib{id} field can optionally be referenced from an
 \class{Species} structure using a new \attrib{speciesType} field.
 
-\item \emph{Constraint Rule}
+\item \emph{Constraint}
 
-Version 2 introduces a new subtype of \class{Rule}:
-\class{ConstraintRule}.  Unlike the other \class{Rule} subtypes
-\class{ConstraintRule} should not be used to compute the dynamical
-behavior of the model.  The \attrib{math} field of
-\class{ConstraintRule} contains a boolean expression which is is
+In Version 2 the \class{Model} structure has an addition list of
+\class{Constraint} structures.  The \attrib{math} field of
+\class{Constraint} contains a boolean expression which is is
 function of the model state which returns whether the state is
-valid.
+valid.  Unlike the \class{Rule} structures \class{Constraint}
+should not be used to compute the dynamical behavior of the model.
 
 \item \emph{\attrib{Id} on \class{SimpleSpeciesReference}}
 
-Version 2 adds \class{id} and \class{name} fields to the
+Version 2 adds \attrib{id} and \attrib{name} fields to the
 \class{SimpleSpeciesReference} structure.  The \class{id} field
 declares an identifier which is in the global namespace of
 objects.
+
+\item \emph{Reaction identifier as a symbol in math expressions}
+
+In Version 2 the value of the \attrib{id} of any reaction can
+appear in an expression within a MathML \class{ci} element.  The
+symbol represents the rate of the reaction which is given by the
+\class{KineticLaw} structure of the \class{Reaction}.  It is not
+possible to explicitly assign a value of the symbol using
+\class{EventAssignment}, \class{AssignmentRule} or
+\class{RateRule} structures.  A reaction symbol cannot occur
+within the math expression of within a \class{KineticLaw} (this is the
+simplest restriction to avoid algebraic loops amongst
+\class{KineticLaw} structures).
 
 \end{itemize}
 
@@ -5086,6 +5422,23 @@ page and section numbers refer to the final PDF version of the
 SBML Level 2 Version 1 specification.
 
 \begin{itemize}
+
+\item page 1: The specification should contain a link to the
+latest version of the specification and to this specific
+\emph{issue} of the document.
+
+\item page 2: Each additional errata to the specification should
+result in an new issue of the specification each with a unique
+number.  The first issue of the specification should be numbered
+1.  The errata on this specification should recorded in a new
+section starting in issue 2.  Each errata will be numbered with
+the issue in which the errata is introduced.  Errata should not
+change the fundamental semantics or syntax of SBML but merely
+clarify and disambiguate the specification.
+
+\item page 2: Each new level, version and issue of SBML should be
+announced on a low volume emailing list mentioned in the
+specification.
 
 \item page 9 Section 3.6: The specification should reference
 existing documents to clarify the semantics of the MathML
@@ -5099,6 +5452,12 @@ use of MathML operators which return different types of result
 permitted on MathML \class{annotation} and
 \\ \class{annotation-xml} elements, not only on \class{csymbol} as
 stated on that page.
+
+\item page 9 Section 3.6.1: The MathML standard doesn't specify
+the result of n-ary operators when the number of operands is
+critically small, for example for \class{times} and \class{add}
+elements, when the number of operands are zero or one.  The
+specification should clarify the correct behavior.
 
 \item page 10 Section 3.6.3: The specification should state
 whether SBML has early or late binding semantics.
@@ -5135,10 +5494,23 @@ built-in unit \texttt{volume} should replace \texttt{liters} with
 %\item page 17 Section 4.5.5 and page 19 Section 4.6.4: The text is
 %slightly contradictory.  The text needs to be improved.
 
+\item page 18 section 4.5.6: the value of '''outside''' for a
+given compartment must be the '''id''' (not name) of another
+compartment
+
 \item page 18 Section 4.5.6: The graph formed where compartments
 are nodes and the arcs are implied by the values of
 \attrib{outside} attributes must be acyclic otherwise a
 compartment can be outside itself.
+
+\item page 19 Section 4.6.3: On \class{Species} elements the
+\attrib{initialConcentration} attribute can have a value even if
+the \attrib{hasOnlySubstanceUnits} attribute is ``\texttt{true}''.
+
+\item page 19 Section 4.6.4: This section should contain a table
+that shows how the units of a species is determined from the
+spatial dimensions of the species and the value of the
+\attrib{hasOnlySubstanceUnits} attribute.
 
 \item page 24 Section 4.8.4: This section should specify that the
 model should not be over determined as defined in
@@ -5153,20 +5525,31 @@ specification only applies this rule to the \class{KineticLaw}
 element. Such a species is at a minimum a modifier of the
 reaction.
 
-\item page 29 section 4.9.7 3rd paragraph: The text is overly
-restrictive and contradictory with respect of the units of species
-symbols. Species symbols can be either amount or concentration
-units depending on the species declaration.
-
 \item page 29 Section 4.9.6: Despite being redundant it is
 possible for a species to be referenced from the \attrib{modifier}
 field whilst being referenced from the \attrib{product} and/or
 \attrib{reactant} fields of the same reaction.
 
+\item page 29 section 4.9.7: 3rd paragraph: The text is overly
+restrictive and contradictory with respect of the units of species
+symbols. Species symbols can be either amount or concentration
+units depending on the species declaration.
+
+\item page 29 section 4.9.7: Final paragraph: The kinetic law
+expression is composed so that the units are of the parameter are
+not those conventionally used.  This is not good practice.  The
+rate law expression should be changed to include the compartment
+volume so that the units of the parameter are those that would be
+measured by an experimentalist and used in practice by a modeler.
+
 \item page 31 Section 4.10.5: A \attrib{variable} attribute on a
 \class{EventAssignment} element should be unique among the set of
 assignments within an \class{Event} element if not the effect of
 event assignment is ambiguous.
+
+\item page 31 Section 4.10.5: A \attrib{variable} attribute on a
+\class{EventAssignment} element should not have the same value as
+a \attrib{variable} attribute on a \class{AssignmentRule} element.
 
 \item page 32 Section 4.10.7: \emph{Any} transition of a
 \attrib{trigger} expression from false to true will cause an
@@ -5176,7 +5559,9 @@ from false to true at times $t_1$ and $t_2$.  The
 \class{EventAssignment} structure will have effect at $t_1+d$ and
 $t_2+d$ irrespective of the relative times of $t_1$ and $t_2$. For
 example events can ``overlap'' so that $t_1 < t_2 < t_1+d$ still
-causes an event assignments to occur at $t_1+d$ and $t_2+d$.
+causes event assignments to occur at $t_1+d$ and $t_2+d$.
+
+\item page 32 Section 4.10.7: Events cannot be triggered at $t=0$.
 
 \item page 38 Example 5.3: The \texttt{out} reaction should have a
 \class{listOfModifiers} which refers to species \texttt{S2} since
@@ -5250,17 +5635,17 @@ consistent with these two schemas.
 \begin{small}
 \tightspacing
 \begin{verbatim}
-<?xml version="1.0" encoding="UTF-8"?> <xsd:schema
-targetNamespace="http://www.sbml.org/sbml/level2"
-xmlns="http://www.sbml.org/sbml/level2"
-xmlns:mml="http://www.w3.org/1998/Math/MathML"
-xmlns:xlink="http://www.w3.org/1999/xlink"
-xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-elementFormDefault="qualified" attributeFormDefault="unqualified"
-version="$Header:
-/cvsroot/sbml/specifications/sbml-level-2/version-1/schema/sbml.xsd,v
-1.2 2005/03/22 16:47:29 sarahkeating Exp $">
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema
+    targetNamespace="http://www.sbml.org/sbml/level2"
+    xmlns="http://www.sbml.org/sbml/level2"
+    xmlns:mml="http://www.w3.org/1998/Math/MathML"
+    xmlns:xlink="http://www.w3.org/1999/xlink"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+    elementFormDefault="qualified"
+    attributeFormDefault="unqualified"
+    version="SBML L2 V2">
     <xsd:import
         namespace="http://www.w3.org/1998/Math/MathML"
         schemaLocation="http://www.w3.org/Math/XMLSchema/mathml2/mathml2.xsd"/>
@@ -5268,18 +5653,19 @@ version="$Header:
         <xsd:documentation>
       File name : sbml.xsd
       Author : M. Hucka, A. Finney, D. Lucio
-\end{verbatim}
-\begin{blockChanged}
-\begin{verbatim}
+/end{verbatim}
+/begin{blockChanged}
+/begin{verbatim}
       Description : XML Schema for the Systems Biology Markup Language Level 2 Version 2
                     This is designed for XML Schema version 1.0.
       Version : 1
 
       Copyright 2005 California Institute of Technology and Japan Science and
       Technology Corporation.
-\end{verbatim}
-\end{blockChanged}
-\begin{verbatim}
+/end{verbatim}
+/end{blockChanged}
+/begin{verbatim}
+
       This library is free software; you can redistribute it and/or modify it
       under the terms of the GNU Lesser General Public License as published
       by the Free Software Foundation; either version 2.1 of the License, or
@@ -5309,8 +5695,8 @@ version="$Header:
     <xsd:simpleType name="SId">
         <xsd:annotation>
             <xsd:documentation>
-                The type SId is used throughout SBML as the type of the 'id' attributes on
-                model elements.
+                The type SId is used throughout SBML as the type of the 'id'
+                attributes on model elements.
             </xsd:documentation>
         </xsd:annotation>
         <xsd:restriction base="xsd:string">
@@ -5326,10 +5712,6 @@ version="$Header:
             </xsd:documentation>
         </xsd:annotation>
         <xsd:sequence>
-\end{verbatim}
-\begin{blockChanged}
-\begin{verbatim}
-
             <xsd:element name="notes" minOccurs="0">
                 <xsd:complexType>
                     <xsd:sequence>
@@ -5348,11 +5730,15 @@ version="$Header:
                     </xsd:sequence>
                 </xsd:complexType>
             </xsd:element>
-\end{verbatim}
-\end{blockChanged}
-\begin{verbatim}
         </xsd:sequence>
         <xsd:attribute name="metaid" type="xsd:ID" use="optional"/>
+/end{verbatim}
+/begin{blockChanged}
+/begin{verbatim}
+        <xsd:attribute name="definitionURL" type="xsd:anyURI" use="optional"/>
+/end{verbatim}
+/end{blockChanged}
+/begin{verbatim}
     </xsd:complexType>
     <!--The definition of FunctionDefinition follows.-->
     <xsd:complexType name="FunctionDefinition">
@@ -5408,14 +5794,14 @@ version="$Header:
     <xsd:complexType name="Unit">
         <xsd:complexContent>
             <xsd:extension base="SBase">
-\end{verbatim}
-\begin{blockChanged}
-\begin{verbatim}
+/end{verbatim}
+/begin{blockChanged}
+/begin{verbatim}
                 <xsd:attribute name="definition" type="SId" use="optional"/>
                 <xsd:attribute name="kind" type="UnitKind" use="optional"/>
-\end{verbatim}
-\end{blockChanged}
-\begin{verbatim}
+/end{verbatim}
+/end{blockChanged}
+/begin{verbatim}
                 <xsd:attribute name="exponent" type="xsd:integer" default="1"/>
                 <xsd:attribute name="scale" type="xsd:integer" default="0"/>
                 <xsd:attribute name="multiplier" type="xsd:double" default="1"/>
@@ -5465,9 +5851,9 @@ version="$Header:
             </xsd:extension>
         </xsd:complexContent>
     </xsd:complexType>
-\end{verbatim}
-\begin{blockChanged}
-\begin{verbatim}
+/end{verbatim}
+/begin{blockChanged}
+/begin{verbatim}
     <!--The definition of SpeciesType follows.-->
     <xsd:complexType name="SpeciesType">
         <xsd:complexContent>
@@ -5477,9 +5863,9 @@ version="$Header:
             </xsd:extension>
         </xsd:complexContent>
     </xsd:complexType>
-\end{verbatim}
-\end{blockChanged}
-\begin{verbatim}
+/end{verbatim}
+/end{blockChanged}
+/begin{verbatim}
     <!--The definition of Species follows.-->
     <xsd:complexType name="Species">
         <xsd:complexContent>
@@ -5487,19 +5873,19 @@ version="$Header:
                 <xsd:attribute name="id" type="SId" use="required"/>
                 <xsd:attribute name="name" type="xsd:string" use="optional"/>
                 <xsd:attribute name="compartment" type="SId"/>
-\end{verbatim}
-\begin{blockChanged}
-\begin{verbatim}
+/end{verbatim}
+/begin{blockChanged}
+/begin{verbatim}
                 <xsd:attribute name="speciesType" type="SId"  use="optional"/>
-\end{verbatim}
-\end{blockChanged}
-\begin{verbatim}
+/end{verbatim}
+/end{blockChanged}
+/begin{verbatim}
                 <xsd:attribute name="initialAmount" type="xsd:double" use="optional"/>
                 <xsd:attribute name="initialConcentration" type="xsd:double" use="optional"/>
                 <xsd:attribute name="substanceUnits" type="SId" use="optional"/>
                 <xsd:attribute name="spatialSizeUnits" type="SId" use="optional"/>
                 <xsd:attribute
-                    name="hasOnlySubstanceUnits"\
+                    name="hasOnlySubstanceUnits"
                     type="xsd:boolean"
                     use="optional"
                     default="false"/>
@@ -5546,17 +5932,6 @@ version="$Header:
             <xsd:extension base="Rule"/>
         </xsd:complexContent>
     </xsd:complexType>
-\end{verbatim}
-\begin{blockChanged}
-\begin{verbatim}
-    <xsd:complexType name="ConstraintRule">
-        <xsd:complexContent>
-            <xsd:extension base="Rule"/>
-        </xsd:complexContent>
-    </xsd:complexType>
-\end{verbatim}
-\end{blockChanged}
-\begin{verbatim}
     <xsd:complexType name="AssignmentRule">
         <xsd:complexContent>
             <xsd:extension base="Rule">
@@ -5571,6 +5946,33 @@ version="$Header:
             </xsd:extension>
         </xsd:complexContent>
     </xsd:complexType>
+/end{verbatim}
+/begin{blockChanged}
+/begin{verbatim}
+    <!--The definition of Constraint follows.-->
+    <xsd:complexType name="Constraint">
+        <xsd:complexContent>
+            <xsd:extension base="SBase">
+                <xsd:sequence>
+                    <xsd:element ref="mml:math"/>
+                    <xsd:element name="message" minOccurs="0">
+                        <xsd:complexType>
+                            <xsd:sequence>
+                                <xsd:any
+                                    namespace="http://www.w3.org/1999/xhtml"
+                                    processContents="skip"
+                                    minOccurs="0"
+                                    maxOccurs="unbounded"/>
+                            </xsd:sequence>
+                        </xsd:complexType>
+                    </xsd:element>
+                </xsd:sequence>
+            </xsd:extension>
+        </xsd:complexContent>
+    </xsd:complexType>
+/end{verbatim}
+/end{blockChanged}
+/begin{verbatim}
     <!--The definition of Reaction follows.-->
     <xsd:complexType name="KineticLaw">
         <xsd:complexContent>
@@ -5587,14 +5989,14 @@ version="$Header:
     <xsd:complexType name="SimpleSpeciesReference" abstract="true">
         <xsd:complexContent>
             <xsd:extension base="SBase">
-\end{verbatim}
-\begin{blockChanged}
-\begin{verbatim}
+/end{verbatim}
+/begin{blockChanged}
+/begin{verbatim}
                 <xsd:attribute name="id" type="SId" use="optional"/>
                 <xsd:attribute name="name" type="xsd:string" use="optional"/>
-\end{verbatim}
-\end{blockChanged}
-\begin{verbatim}
+/end{verbatim}
+/end{blockChanged}
+/begin{verbatim}
                 <xsd:attribute name="species" type="SId" use="required"/>
             </xsd:extension>
         </xsd:complexContent>
@@ -5640,9 +6042,7 @@ version="$Header:
             <xsd:extension base="SBase">
                 <xsd:sequence>
                     <xsd:element
-                        name="speciesReference"
-                        type="SpeciesReference"
-                        maxOccurs="unbounded"/>
+                        name="speciesReference" type="SpeciesReference" maxOccurs="unbounded"/>
                 </xsd:sequence>
             </xsd:extension>
         </xsd:complexContent>
@@ -5759,9 +6159,9 @@ version="$Header:
                             </xsd:complexContent>
                         </xsd:complexType>
                     </xsd:element>
-\end{verbatim}
-\begin{blockChanged}
-\begin{verbatim}
+/end{verbatim}
+/begin{blockChanged}
+/begin{verbatim}
                     <xsd:element name="listOfSpeciesTypes" minOccurs="0">
                         <xsd:complexType>
                             <xsd:complexContent>
@@ -5775,19 +6175,17 @@ version="$Header:
                                 </xsd:extension>
                             </xsd:complexContent>
                         </xsd:complexType>
+/end{verbatim}
+/end{blockChanged}
+/begin{verbatim}
                     </xsd:element>
-\end{verbatim}
-\end{blockChanged}
-\begin{verbatim}
                     <xsd:element name="listOfSpecies" minOccurs="0">
                         <xsd:complexType>
                             <xsd:complexContent>
                                 <xsd:extension base="SBase">
                                     <xsd:sequence>
                                         <xsd:element
-                                            name="species"
-                                            type="Species"
-                                            maxOccurs="unbounded"/>
+                                            name="species" type="Species" maxOccurs="unbounded"/>
                                     </xsd:sequence>
                                 </xsd:extension>
                             </xsd:complexContent>
@@ -5816,19 +6214,9 @@ version="$Header:
                                             name="algebraicRule"
                                             type="AlgebraicRule"
                                             minOccurs="0"/>
-\end{verbatim}
-\begin{blockChanged}
-\begin{verbatim}
-                                        <xsd:element
-                                            name="constraintRule"
-                                            type="ConstraintRule"
-                                            minOccurs="0"/>
-\end{verbatim}
-\end{blockChanged}
-\begin{verbatim}
-                                        <xsd:element
+                                         <xsd:element
                                             name="assignmentRule"
-                                            type="AssignmentRule"\
+                                            type="AssignmentRule"
                                             minOccurs="0"/>
                                         <xsd:element
                                             name="rateRule" type="RateRule" minOccurs="0"/>
@@ -5837,15 +6225,33 @@ version="$Header:
                             </xsd:complexContent>
                         </xsd:complexType>
                     </xsd:element>
+/end{verbatim}
+/begin{blockChanged}
+/begin{verbatim}
+                    <xsd:element name="listOfConstraints" minOccurs="0">
+                        <xsd:complexType>
+                            <xsd:complexContent>
+                                <xsd:extension base="SBase">
+                                    <xsd:sequence>
+                                        <xsd:element
+                                            name="constraint"
+                                            type="Constraint"
+                                            maxOccurs="unbounded"/>
+                                    </xsd:sequence>
+                                </xsd:extension>
+                            </xsd:complexContent>
+                        </xsd:complexType>
+                    </xsd:element>
+/end{verbatim}
+/end{blockChanged}
+/begin{verbatim}
                     <xsd:element name="listOfReactions" minOccurs="0">
                         <xsd:complexType>
                             <xsd:complexContent>
                                 <xsd:extension base="SBase">
                                     <xsd:sequence>
                                         <xsd:element
-                                            name="reaction"
-                                            type="Reaction"
-                                            maxOccurs="unbounded"/>
+                                            name="reaction" type="Reaction" maxOccurs="unbounded"/>
                                     </xsd:sequence>
                                 </xsd:extension>
                             </xsd:complexContent>
@@ -5877,13 +6283,13 @@ version="$Header:
                     <xsd:element name="model" type="Model"/>
                 </xsd:sequence>
                 <xsd:attribute name="level" type="xsd:positiveInteger" use="required" fixed="2"/>
-\end{verbatim}
-\begin{blockChanged}
-\begin{verbatim}
+/end{verbatim}
+/begin{blockChanged}
+/begin{verbatim}
                 <xsd:attribute name="version" type="xsd:positiveInteger" use="required" fixed="2"/>
-\end{verbatim}
-\end{blockChanged}
-\begin{verbatim}
+/end{verbatim}
+/end{blockChanged}
+/begin{verbatim}
             </xsd:extension>
         </xsd:complexContent>
     </xsd:complexType>
@@ -6229,10 +6635,11 @@ eliminated.  A unit definition which contains no unit structures
 at this stage has inserted a single unit structure refering to the
 \texttt{dimensionless} builtin unit.
 
-\begin{rulesection}General Identifier Validation\end{rulesection}
+\subsection{General Identifier Validation}
 
 \begin{enumerate}
 
+\sbmlrule{900}
 \item The \attrib{id} field on a \class{functionDefinition}
 element, a \class{species} element, a \class{speciesType} element,
 a \class{modifierSpeciesReference} element, a
@@ -6242,66 +6649,95 @@ a \class{reaction} element or an \class{events} element should
 contain a value unique among the set of all these attributes.  See
 Section~\ref{sec:namespaces}.
 
-\item The \class{id} attributes on \class{parameter} elements
-inside \class{kineticLaw} elements should contain values unique to
-each element among the set of these attributes within the same
-\class{kineticLaw} element.  See Section~\ref{sec:namespaces}.
+\sbmlrule{901}
+\item The \attrib{id} attributes on
+\class{unitDefinition} elements should contain a unique value
+amongst the set of all such attributes.  See
+section~\ref{sec:unitdefinition-structure}.
 
-\begin{rulesection}MathML\end{rulesection}
+\sbmlrule{902}
+\item The \class{id} attributes on
+\class{parameter} elements inside \class{kineticLaw} elements
+should contain values unique to each element among the set of
+these attributes within the same \class{kineticLaw} element.  See
+Section~\ref{sec:namespaces}.
 
-\item Only elements in the SBML MathML subset are used (see
-section~\ref{sec:mathmlsubset})
+\sbmlrule{903}
+\item The \attrib{variable} attribute value
+must be unique amongst the set of \class{assignmentRule} and
+\class{rateRule} elements. See Sections~\ref{sec:assignmentrule}
+and~\ref{sec:raterule}.
 
-\item Only SBML MathML subset attributes are used as described in
-the specification (see section~\ref{sec:mathmlsubset})
+\sbmlrule{904}
+\item The \attrib{variable} attribute value
+must be unique amongst the set of \class{eventAssignment} elements
+within a each \class{event} element.  See
+Section~\ref{sec:eventassignment}.
 
-\item In a MathML element outside a \class{functionDefinition}
-element, a \class{ci} element that is a leaf operand (argument) of
-a MathM operator must contain the value of the \attrib{id}
-attribute of a \class{species}, \class{compartment} or
-\class{parameter} element. (see section~\ref{sec:ci-token}).
+\end{enumerate} \subsection{MathML} \begin{enumerate}
 
-\item In a MathML element within a \class{functionDefinition}
-element, a \class{ci} element that is a leaf operand (argument) of
-a MathML operator must contain the content of one of the top-level
-\class{bvar} elements. (see section~\ref{sec:ci-token}).
+%\item Only elements in the SBML MathML subset are used (see
+%section~\ref{sec:mathmlsubset})
+%
+%\item Only SBML MathML subset attributes are used as described in
+%the specification (see section~\ref{sec:mathmlsubset})
 
-\item The value of an \class{id} attribute of a local parameter
-can only be used in \class{ci} elements within the MathML
-contained in the same \class{kineticLaw} element that contains the
-\class{parameter} element. (see sections~\ref{sec:ci-token} and
-\ref{subsec:kinetic-law}).
+\sbmlrule{9999} \item In a MathML element outside a
+\class{functionDefinition} element, a \class{ci} element that is a
+leaf operand (argument) of a MathML operator must contain the
+value of the \attrib{id} attribute of a \class{species},
+\class{compartment}, \class{parameter} element or \class{reaction}
+element.(see section~\ref{sec:ci-token})
 
-\item A \class{ci} element that represents a math function i.e.
-the first subelement of an \class{apply} element can only contain
-the values of \attrib{id} attributes of previous
+\sbmlrule{9999} \item In a MathML element inside a
+\class{functionDefinition} element, a \class{ci} element that is a
+leaf operand (argument) of a MathML operator must contain the
+value the content of one of the top-level \class{bvar} elements.
+(see section~\ref{sec:ci-token}).
+
+\sbmlrule{9999} \item The value of an \class{id} attribute of a
+local parameter can only be used in \class{ci} elements within the
+MathML contained in the same \class{kineticLaw} element that
+contains the \class{parameter} element. (see
+sections~\ref{sec:ci-token} and \ref{subsec:kinetic-law}).
+
+\sbmlrule{9999} \item The value of an \class{id} attribute of a
+reaction cannot be used in \class{ci} elements within the MathML
+contained in the \class{kineticLaw} element that is contained in
+any \class{reaction} element. (see
+section~\ref{subsec:reaction-as-symbol}).
+
+\sbmlrule{9999} \item A \class{ci} element that represents a math
+function i.e. the first subelement of an \class{apply} element can
+only contain the values of \attrib{id} attributes of previous
 \class{functionDefinition} elements.  The \class{ci} element
 cannot contain the value of the \attrib{id} field of any enclosing
 \class{functionDefinition} element. (Function definitions are not
 recursive or mutually recursive). (see
 section~\ref{sec:ci-token}).
 
+\sbmlrule{9999}
 \item The \class{lambda} elements can only be used as the outer
 most element contained within the MathML element contained within
 a \class{functionDefinition} element. (see
 section~\ref{sec:function-definition-math})
 
+\sbmlrule{9999}
 \item MathML operators return results of two types: boolean and
 numeric.  Boolean operators and values must be used as the root of
-an expression tree in following contexts:
+an expression tree in MathML
 
 \begin{enumerate}
 
-\item the \attrib{trigger} field of an \class{event} structure;
-
-\item the second argument of a \class{piece} operator;
+\item the second argument of a \class{piece} operator; and
 
 \item the arguments of the logical operators (\class{and},
 \class{or}, \class{xor}, \class{not});
 
 \end{enumerate}
 
-Boolean operators and values can optionally be used as the root of
+\sbmlrule{9999}
+\item Boolean operators and values can optionally be used as the root of
 an expression tree in following contexts:
 
 \begin{enumerate}
@@ -6315,6 +6751,7 @@ and
 
 In all other contexts numeric operators must be used.
 
+\sbmlrule{9999}
 The set of expressions that make up the first arguments of the
 \class{piece} and \class{otherwise} operators within the same
 \class{piecewise} operator should all return values of the same
@@ -6329,8 +6766,9 @@ of the top level operator of the function definition.
 
 See section~\ref{sec:mathmltype}.
 
-\begin{rulesection}\class{Unit}\end{rulesection}
+\end{enumerate} \subsection{\class{Unit}} \begin{enumerate}
 
+\sbmlrule{9999}
 \item All \class{unit} elements must have one and only value for
 the \attrib{kind} and \attrib{definition} attributes. \class{unit}
 elements with no \attrib{kind} or \attrib{definition} attribute
@@ -6338,13 +6776,15 @@ values are invalid.  \class{unit} elements with both \attrib{kind}
 and \attrib{definition} attribute values are invalid. See
 section~\ref{sec:unit-structure}.
 
+\sbmlrule{9999}
 \item The \attrib{definition} attribute on a \class{unit} element,
 when present, must contain the value of an \attrib{id} attribute
 on a \class{unitDefinition} element.  See
 section~\ref{sec:unit-structure}.
 
-\begin{rulesection}\class{UnitDefinition}\end{rulesection}
+\end{enumerate} \subsection{\class{UnitDefinition}} \begin{enumerate}
 
+\sbmlrule{9999}
 \item The directed graph formed from unit definitions must be
 acyclic. A directed graph is formed from unit definitions by
 creating a vertex for each \class{unitDefinition} element.  Each
@@ -6355,77 +6795,77 @@ element. The edge's sink is the vertex representing the unit
 definition referenced by the \attrib{definition} attribute value.
 See section~\ref{sec:unit-structure}.
 
-\item The \attrib{id} attributes on \class{unitDefinition}
-elements should contain a unique value amongst the set of all such
-attributes.  See section~\ref{sec:unitdefinition-structure}.
+\sbmlrule{1201}
+\item The \attrib{id} attributes on
+\class{unitDefinition} elements should not contain the values of
+the Unit kind enumeration (i.e. \texttt{metre}, \texttt{litre}
+etc). See section~\ref{sec:unitdefinition-structure}
 
-\item The \attrib{id} attributes on \class{unitDefinition}
-elements should not contain the values of the Unit kind
-enumeration (i.e. \texttt{metre}, \texttt{litre} etc). See
-section~\ref{sec:unitdefinition-structure}
-
-\item If the \attrib{id} attribute of a \class{unitDefinition}
-element contains \texttt{substance} then the element must simplify
-to a single \class{unit} element containing a \attrib{kind}
-attribute value of \texttt{mole} or \texttt{item} and
-\texttt{exponent} attribute value of '1' (can default to 1).  See
-section~\ref{sec:built-in-units}.
-
-\item If the \attrib{id} attribute of a \class{unitDefinition}
-element contains 'volume' then the element must simplify to a
-single \class{unit} element containing a \attrib{kind} attribute
-value of 'litre' or 'metre'.  If 'litre' is used then the
-'''exponent''' attribute must be '1' (can default to 1).  If
-'metre' is used then the '''exponent''' attribute must be '3'.
-See section~\ref{sec:built-in-units}.
-
-\item If the \attrib{id} attribute of a \class{unitDefinition}
-element contains 'area' then the element must simplify to a single
-\class{unit} element containing a \attrib{kind} attribute value of
-'metre' and a '''exponent''' attribute value of '2'.  See
-section~\ref{sec:built-in-units}.
-
-\item If the \attrib{id} attribute of a \class{unitDefinition}
-element contains 'length' then the element must simplify to a
-single \class{unit} element containing a \attrib{kind} attribute
-value of 'metre' and '''exponent''' attribute value of '1' (can
+\sbmlrule{1202}
+\item If the \attrib{id} attribute of a
+\class{unitDefinition} element contains \texttt{substance} then
+the element must simplify to a single \class{unit} element
+containing a \attrib{kind} attribute value of \texttt{mole} or
+\texttt{item} and \texttt{exponent} attribute value of 1 (can
 default to 1).  See section~\ref{sec:built-in-units}.
 
-\item If the \attrib{id} attribute of a \class{unitDefinition}
-element contains 'time' then the element must simplify to a single
-\class{unit} element containing a \attrib{kind} attribute value of
-'second' and '''exponent''' attribute value of '1' (can default to
-1).  See section~\ref{sec:built-in-units}.
+\sbmlrule{1203}
+\item If the \attrib{id} attribute of a
+\class{unitDefinition} element contains \texttt{length} then the element
+must simplify to a single \class{unit} element containing a
+\attrib{kind} attribute value of \texttt{metre} and \attrib{exponent}
+attribute value of 1 (can default to 1).  See
+section~\ref{sec:built-in-units}.
 
-\begin{rulesection}\class{Compartment}\end{rulesection}
+\sbmlrule{1204}
+\item If the \attrib{id} attribute of a
+\class{unitDefinition} element contains \texttt{area} then the element
+must simplify to a single \class{unit} element containing a
+\attrib{kind} attribute value of \texttt{metre} and a \attrib{exponent}
+attribute value of 2.  See section~\ref{sec:built-in-units}.
+
+\sbmlrule{1205}
+\item If the \attrib{id} attribute of a
+\class{unitDefinition} element contains \texttt{volume} then the element
+must simplify to a single \class{unit} element containing a
+\attrib{kind} attribute value of \texttt{litre} or \texttt{metre}. See
+section~\ref{sec:built-in-units}.
+
+\sbmlrule{1206}
+\item If the \attrib{id} attribute of a
+\class{unitDefinition} element contains \texttt{volume} then if the
+element must simplifies to \texttt{litre} then the effective
+\attrib{exponent} attribute must be 1 (can default to 1). See
+section~\ref{sec:built-in-units}.
+
+\sbmlrule{1207}
+\item If the \attrib{id} attribute of a
+\class{unitDefinition} element contains \texttt{volume} then if the
+element must simplifies to \texttt{metre} is used then the effective
+\attrib{exponent} attribute must be 3. See
+section~\ref{sec:built-in-units}.
+
+\sbmlrule{1208}
+\item If the \attrib{id} attribute of a
+\class{unitDefinition} element contains \texttt{time} then the element
+must simplify to a single \class{unit} element containing a
+\attrib{kind} attribute value of \texttt{second} and \attrib{exponent}
+attribute value of 1 (can default to 1).  See
+section~\ref{sec:built-in-units}.
+
+\end{enumerate}
+
+\class{Compartment}
 
 The value of the \attrib{spatialDimensions} attribute of a
 \class{compartment} element is known as the `spatial dimensions'
 in this section.
 
-\item The \attrib{units} attribute must contain either:
-
 \begin{enumerate}
 
-\item the values \texttt{length}, \texttt{area} or \texttt{volume}
-if the spatial dimensions are 1, 2 or 3 respectively; or
-
-\item the values \texttt{metre} or \texttt{litre} if the spatial
-dimensions are 1 or 3 respectively; or
-
-\item the values of \attrib{id} attributes of
-\class{unitDefinition} elements that define variants (i.e. have
-only arbitrary \attrib{scale}, \attrib{multiplier} and
-\attrib{offset} values) of the following units: metres, square
-metres, cubic metres and liters if the spatial dimensions are 1,
-2, 3, or 3 respectively.
-
-\end{enumerate}
-
-See section~\ref{sec:compartment-units}.
-
-\item The \attrib{size} attribute must not be set if
-\attrib{spatialDimensions} is zero. See
+\sbmlrule{1300}
+\item The \attrib{size} attribute must not be set
+if \attrib{spatialDimensions} is zero. See
 section~\ref{sec:compartment-units}.
 
 %\item The \attrib{units} attribute must not be set if
@@ -6433,81 +6873,128 @@ section~\ref{sec:compartment-units}.
 %yet - watch this space).  ''I required units to be
 %'''dimensionless''' if it's set. --[[Ben Kovitz]]''
 
+\sbmlrule{1301}
+\item A \class{compartment} element with
+attribute \attrib{spatialDimensions} set to 0 must have the
+\attrib{units} attribute set to \texttt{dimensionless}, or the
+\attrib{id} attribute value of a \class{unitDefinition} element
+that defines a variant of \texttt{dimensionless}. See
+section~\ref{sec:compartment-units}.
+
+\sbmlrule{1302} \item The \attrib{constant} field of a
+\class{compartment} element must default to or be set to
+“\texttt{true}” if the value of the \attrib{spatialDimensions} field is 0. See
+section~\ref{sec:compartment-constant}.
+
+\sbmlrule{1303}
 \item The value of the \attrib{outside} attribute of a
 \class{compartment} element must contain the value of a
 \attrib{id} field of another \class{compartment}. See
 section~\ref{sec:compartment-outside}.
 
+\sbmlrule{1304}
 \item The graph of links between compartments implied by the
 \attrib{outside} attributes must be acyclic.  See
 section~\ref{sec:compartment-outside}.
 
-\begin{rulesection}\class{Species}\end{rulesection}
+\sbmlrule{1305}
+\item A \class{compartment} element with
+attribute \attrib{spatialDimensions} set to 1 must have the
+\attrib{units} attribute set to \texttt{length},
+\texttt{metre}, or the \attrib{id} attribute value of a
+\class{unitDefinition} element that defines a variant of
+\texttt{metre} with an exponent value of 1. See
+section~\ref{sec:compartment-units}.
 
-\item The \attrib{compartment} attribute on a \class{species}
-element contains the value of an \attrib{id} attribute on a
+\sbmlrule{1306}
+\item A \class{compartment} element with
+attribute \attrib{spatialDimensions} set to 2 must have the
+\attrib{units} attribute set to \texttt{area} or the \attrib{id}
+attribute value of a \class{unitDefinition} element that defines a
+variant of \texttt{metre} with an exponent value of 2. See
+section~\ref{sec:compartment-units}.
+
+\sbmlrule{1307}
+\item A \class{compartment} element with
+attribute \attrib{spatialDimensions} set to 3 must have the
+\attrib{units} attribute set to \texttt{volume} or the
+\attrib{id} attribute value of a \class{unitDefinition} element
+that defines a variant of \texttt{metre} with an exponent value
+of 3 or a variant of \texttt{litre}. See
+section~\ref{sec:compartment-units}.
+
+\end{enumerate} \subsection{\class{Species}} \begin{enumerate}
+
+\sbmlrule{1400}
+\item The \attrib{compartment} attribute
+on a \class{species} element must contain the value of an \attrib{id}
+attribute on a
 \\ \class{compartment} element.  This \attrib{id} value is known as
-the `compartment' in this section.  The value of the
+the `\emph{compartment}' in this section.  The value of the
 \attrib{spatialDimensions} attribute of the compartment is known
-as the `spatial dimensions' in this section.  See
+as the `\emph{spatial dimensions}' in this section. See
 Section~\ref{sec:species-compartment}.
 
+\sbmlrule{1001}
+\item By implication of rule 1400 a model
+that has a species must also have at least one compartment because
+the compartment attribute on species is not optional.
+
+\sbmlrule{1401}
 \item The \attrib{spatialSizeUnits} attribute must not be present
 if the \attrib{hasOnlySubstanceUnits} attribute is true.  See
 Section~\ref{sec:species-units}.
 
+\sbmlrule{1402}
 \item The \attrib{spatialSizeUnits} attribute must not be present
 if the spatial dimensions is zero.  See
 Section~\ref{sec:species-units}.
 
-\item The \attrib{spatialSizeUnits} attribute must contain either
-
-\begin{enumerate}
-
-\item the values \texttt{length}, \texttt{area} or \texttt{volume}
-if the spatial dimensions are 1, 2 or 3 respectively; or
-
-\item the values \texttt{metre} or \texttt{litre} if the spatial
-dimensions are 1 or 3 respectively; or
-
-\item the values of \attrib{id} attributes of
-\class{unitDefinition} elements that define variants (i.e. have
-only arbitrary \attrib{scale}, \attrib{multiplier} and
-\attrib{offset} values) of the following units: metres, square
-metres, cubic metres and liters if the spatial dimensions are 1,
-2, 3, or 3 respectively.
-
-\end{enumerate}
-
-See Section~\ref{sec:species-units}.
-
-\item The \attrib{substanceUnits} attribute must contain either
-\texttt{substance}, \texttt{item}, \texttt{moles} or the values of
-\attrib{id} attributes of \class{unitDefinition} elements that
-define variants (i.e. have only arbitrary \attrib{scale},
-\attrib{multiplier} and \attrib{offset} values) of \texttt{item}
-or \texttt{moles}.  See Section~\ref{sec:species-units}.
-
-\item The \attrib{initialConcentration} attribute must not be
-present if the \attrib{hasOnlySubstanceUnits} attribute is true.
-See Section~\ref{sec:initialAmount}.
-
+\sbmlrule{1404}
 \item The \attrib{initialConcentration} attribute must not be
 present if the spatial dimensions is zero.  See
 Section~\ref{sec:initialAmount}.
 
+\sbmlrule{1405}
+\item If the spatial dimensions of a
+\class{species} element is 1 then the \attrib{spatialSizeUnits}
+attribute must a value of `\texttt{length}', `texttt{metre}' or
+the \attrib{id} value of a \class{unitDefinition} element that
+defines a variant of `texttt{metre}' with an exponent value of 1.
+See Section~\ref{sec:species-units}.
+
+\sbmlrule{1406}
+\item If the spatial dimensions of a
+\class{species} element is 2 then the \attrib{spatialSizeUnits}
+attribute must a value of `\texttt{area}' or the \attrib{id} value
+of a \class{unitDefinition} element that defines a variant of
+`texttt{metre}' with an exponent value of 2. See
+Section~\ref{sec:species-units}.
+
+\sbmlrule{1407}
+\item If the spatial dimensions of a
+\class{species} element is 3 then the \attrib{spatialSizeUnits}
+attribute must a value of `\texttt{volume}', `texttt{litre}' or
+the \attrib{id} value of a \class{unitDefinition} element that
+defines a variant of `texttt{metre}' with an exponent value of 3.
+See Section~\ref{sec:species-units}.
+
+\sbmlrule{1408}
+\item The \attrib{substanceUnits}
+attribute must contain either \texttt{substance}, \texttt{item},
+\texttt{moles} or the values of \attrib{id} attributes of
+\class{unitDefinition} elements that define variants (i.e. have
+only arbitrary \attrib{scale}, \attrib{multiplier} and
+\attrib{offset} values) of \texttt{item} or \texttt{moles}.  See
+Section~\ref{sec:species-units}.
+
+\sbmlrule{9999}
 \item The \attrib{initialConcentration} and \attrib{initialAmount}
 attributes must not be present on the same element at the same
 time.  They are mutually exclusive.  See
 Section~\ref{sec:initialAmount}.
 
-\item When a \class{species} element has a \attrib{constant}
-attribute value of true and a \attrib{boundaryCondition} attribute
-of false then there must be no \class{speciesReference} element's
-\attrib{species} attribute that contains the value of the
-\class{species} element's \attrib{id} attribute.
-Section~\ref{sec:species-constant}.
-
+\sbmlrule{9999}
 \item Consider a \class{species} element that has a
 \attrib{boundaryCondition} attribute of false and there exists a
 \attrib{species} attribute on a \class{speciesReference} element
@@ -6519,115 +7006,175 @@ attribute value on the \class{species} element. (A species can't
 be determined by rules and reactions at the same time). See
 Section~\ref{sec:species-constant}.
 
+\sbmlrule{9999}
 \item The \attrib{speciesType} attribute, when present, on a
 \class{species} element should contain the same value as an
 \class{id} attribute on a \class{speciesType} element. See
 Section~\ref{sec:species-species-type}.
 
-\begin{rulesection}\class{Parameter}\end{rulesection}
+\sbmlrule{9999} \item In any \class{Species} structure, that has a
+\attrib{speciesType} field value, the values of a pair of \attrib{speciesType}
+and \attrib{compartment} fields must be unique in the set of
+all \class{Species} structures. See
+Section~\ref{sec:species-species-type}.
 
-\item The \attrib{units} field must contain one of the following:
-a value from the unit kind enumeration (eg \texttt{metre}), a
-value from the built-in units table e.g. \texttt{substance} or the
-value of a \attrib{id} attribute of a \class{unitDefinition}
-element.  See Section~\ref{sec:parameter-units}.
+\end{enumerate} \subsection{\class{Parameter}} \begin{enumerate}
 
-\begin{rulesection}\class{Reaction}\end{rulesection}
+\sbmlrule{1500}
+\item The \attrib{units} field must
+contain one of the following: a value from the unit kind
+enumeration (eg \texttt{metre}), a value from the built-in units
+table e.g. \texttt{substance} or the value of a \attrib{id}
+attribute of a \class{unitDefinition} element.  See
+Section~\ref{sec:parameter-units}.
 
+\end{enumerate} \subsection{\class{Reaction}} \begin{enumerate}
+
+\sbmlrule{1600}
 \item A reaction must contain at least one
 \class{speciesReference} element (either in the products or
 reactants lists).  See Section~\ref{subsec:speciesreference}.
 
-\item Consider a \class{ci} element which contains the value of an
-\attrib{id} field of a \class{species} element where the
-\class{ci} element is contained within any mathml element within a
-\class{reaction} element (i.e. part of stoichiometry math and
-kinetic law elements). For all such \class{ci} elements its
-content must also be contained in a \attrib{species} attribute (on
-a \class{speciesReference} and \class{modifierSpeciesReference}
-element) within the given \class{reaction} element. (All species
-used in mathml in a reaction must occur on a simple species
-reference element of that reaction.) See
-section~\ref{subsec:speciesreference} and\ref{subsec:kinetic-law}.
+\sbmlrule{9999}
+\item Consider a \class{ci} element which
+contains the value of an \attrib{id} field of a \class{species}
+element where the \class{ci} element is contained within any
+mathml element within a \class{reaction} element (i.e. part of
+stoichiometry math and kinetic law elements). For all such
+\class{ci} elements its content must also be contained in a
+\attrib{species} attribute (on a \class{speciesReference} and
+\class{modifierSpeciesReference} element) within the given
+\class{reaction} element. (All species used in mathml in a
+reaction must occur on a simple species reference element of that
+reaction.) See section~\ref{subsec:speciesreference}
+and\ref{subsec:kinetic-law}.
 
-\begin{rulesection}\class{SimpleSpeciesReference}\end{rulesection}
+\end{enumerate} \subsection{\class{SimpleSpeciesReference}} \begin{enumerate}
 
-\item The value of a \attrib{species} attribute of a
-\class{speciesReference} and \class{modifierSpeciesReference}
-element must contain the value of a \attrib{id} attribute of a
-\class{species} element.  See
+\sbmlrule{1601}
+\item The value of a \attrib{species}
+attribute of a \class{speciesReference} and
+\class{modifierSpeciesReference} element must contain the value of
+a \attrib{id} attribute of a \class{species} element.  See
 section~\ref{subsec:speciesreference}
 and\ref{subsec:modifierreference}.
 
 \textbf{\class{SpeciesReference}}
 
-\item The \attrib{stoichiometry} attribute and
-\class{stoichiometryMath} element are mutually exclusive. See
+\sbmlrule{1602}
+\item When a \class{species} element has a
+\attrib{constant} attribute value of true and a
+\attrib{boundaryCondition} attribute of false then there must be
+no \class{speciesReference} element's \attrib{species} attribute
+that contains the value of the \class{species} element's
+\attrib{id} attribute. Section~\ref{sec:species-constant}.
+
+\sbmlrule{1603}
+\item The \attrib{stoichiometry} attribute
+and \class{stoichiometryMath} element are mutually exclusive. See
 section~\ref{subsec:speciesreference}.
 
-\begin{rulesection}\class{KineticLaw}\end{rulesection}
+\end{enumerate} \subsection{\class{KineticLaw}} \begin{enumerate}
 
-\item The \attrib{substanceUnits} attribute must contain either
-\texttt{substance}, \texttt{item}, \texttt{moles} or the values of
-\attrib{id} attributes of \class{unitDefinition} elements that
-define variants of \texttt{item} or \texttt{mole}.  See
+\sbmlrule{1604}
+\item The \attrib{substanceUnits}
+attribute must contain either \texttt{substance}, \texttt{item},
+\texttt{moles} or the values of \attrib{id} attributes of
+\class{unitDefinition} elements that define variants of
+\texttt{item} or \texttt{mole}. See
 section~\ref{subsec:kinetic-law}.
 
-\item The \attrib{timeUnits} attribute must contain either
-\texttt{time}, \texttt{second} or the values of \attrib{id}
-attributes of \\ \class{unitDefinition} elements that define
-variants of \texttt{second}.  See
+\sbmlrule{1605}
+\item The \attrib{timeUnits} attribute
+must contain either \texttt{time}, \texttt{second} or the values
+of \attrib{id} attributes of \\ \class{unitDefinition} elements
+that define variants of \texttt{second}.  See
 section~\ref{subsec:kinetic-law}.
 
-\begin{rulesection}\class{AssignmentRule} and \class{RateRule}\end{rulesection}
+\end{enumerate} \subsection{\class{AssignmentRule} and \class{RateRule}} \begin{enumerate}
 
-\item The \attrib{variable} attribute of a \class{assignmentRule}
-or \class{rateRule} element must contain the value of a
+\sbmlrule{1700}
+\item The \attrib{variable} attribute of a
+\class{assignmentRule} element must contain the value of a
 \attrib{id} attribute of a \class{compartment}, \class{species},
-or \class{parameter} element.  The \attrib{constant} attribute of
-the \class{compartment}, \class{species}, or \class{parameter}
-element must be false.  See Sections~\ref{sec:assignmentrule}
-and~\ref{sec:raterule}.
+or \class{parameter} element.  See
+Sections~\ref{sec:assignmentrule}.
 
-\item The \attrib{variable} attribute value must be unique amongst
-the set of \class{assignmentRule} and \class{rateRule} elements.
-See Sections~\ref{sec:assignmentrule} and~\ref{sec:raterule}.
+\sbmlrule{1701}
+\item The \attrib{variable} attribute of
+a \class{rateRule} element must contain the value of a \attrib{id}
+attribute of a \class{species}, \class{compartment}, or
+\class{parameter} element.  See Sections~\ref{sec:raterule}.
 
-\item \class{ci} elements contained within an
-\class{assignmentRule} element cannot contain the value of any
+\sbmlrule{1702}
+\item The \attrib{constant} attribute of
+a \class{compartment}, \class{species}, or \class{parameter}
+element must be false when referred to by the \attrib{variable}
+attribute of an \class{assignmentRule} element. See
+Sections~\ref{sec:assignmentrule}.
+
+\sbmlrule{1703}
+\item The \attrib{constant} attribute of
+a \class{compartment}, \class{species}, or \class{parameter}
+element must be false when referred to by the \attrib{variable}
+attribute of an \class{rateRule} element. See
+Sections~\ref{sec:raterule}.
+
+\sbmlrule{9999}
+\item \class{ci} elements contained within
+an \class{assignmentRule} element cannot contain the value of any
 \attrib{variable} attributes of the containing and succeeding
 \class{assignmentRule} elements. (Assignment rules cannot have
 cyclic dependencies.)  See Section~\ref{sec:ruleconstraints}
 
-\begin{rulesection}\class{AlgebraicRule}\end{rulesection}
+\end{enumerate} \subsection{\class{AlgebraicRule}} \begin{enumerate}
 
-\item SBML models cannot be over determined as defined in the
-specification.  See the detailed exposition of this rule in
-Section~\ref{sec:ruleconstraints}.
+\sbmlrule{9999}
+\item SBML models cannot be over
+determined as defined in the specification.  See the detailed
+exposition of this rule in Section~\ref{sec:ruleconstraints}.
 
-\begin{rulesection}\class{Event}\end{rulesection}
+\end{enumerate} \subsection{\class{Event}} \begin{enumerate}
 
-\item The \attrib{timeUnits} attribute must contain either
-\texttt{time}, \texttt{second} or the values of \attrib{id}
-attributes of \\ \class{unitDefinition} elements that define
-variants of \texttt{second}. See Section~\ref{sec:event-timeunits}
+\sbmlrule{1800}
+\item The \attrib{timeUnits} attribute
+must contain either \texttt{time}, \texttt{second} or the values
+of \attrib{id} attributes of \\ \class{unitDefinition} elements
+that define variants of \texttt{second}. See
+Section~\ref{sec:event-timeunits}
 
-\begin{rulesection}\class{EventAssignment}\end{rulesection}
+\sbmlrule{1801}
+\item A boolean operators or value must be
+used as the root of an expression tree that forms the
+\attrib{trigger} field of an \class{event} structure;
 
-\item The \attrib{variable} attribute of an
-\class{eventAssignment} must contain the value of a \attrib{id}
+\end{enumerate} \subsection{\class{EventAssignment}}
+\begin{enumerate}
+
+\sbmlrule{1802}
+\item The \attrib{variable} attribute of
+an \class{eventAssignment} must contain the value of a \attrib{id}
 attribute of a \\ \class{compartment}, \class{species}, or
-\class{parameter} element. The \attrib{constant} attribute of the
-\class{compartment}, \class{species}, or \class{parameter} element
-must be false.  See Section~\ref{sec:eventassignment}.
+\class{parameter} element.  See Section~\ref{sec:eventassignment}.
 
-\item The \attrib{variable} attribute value must be unique amongst
-the set of \class{eventAssignment} elements within a each
-\class{event} element.  See Section~\ref{sec:eventassignment}.
+\sbmlrule{1803}
+\item The \attrib{constant} attribute of
+the \class{compartment}, \class{species}, or \class{parameter}
+element must be false.  See Section~\ref{sec:eventassignment}.
+
+\sbmlrule{9999}
+\item The value of a \attrib{variable} attribute on
+a \class{EventAssignment} structure cannot be the same as the
+value of a \attrib{variable} attribute on a \class{AssignmentRule}
+structure.  See Section~\ref{sec:eventassignment}.
 
 \end{enumerate}
-\end{blockChanged}
 
+The number 1403 is a placeholder for a rule that applies in
+Level~2 Version~1 but not in Level~2 Version~2.  This rule was as
+allows: the \attrib{initialConcentration} attribute must not be
+present if the \attrib{hasOnlySubstanceUnits} attribute is true.
+\end{blockChanged}
 \clearpage
 
 

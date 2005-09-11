@@ -562,7 +562,7 @@ must contain a Universal Resource Identifier (URI) string.  This URI
 associates the SBML object containing the field value with the
 resource referenced by the URI and indicates that the entity
 represented by the structure has a `is a' relationship with the
-resource referenced by the URI.  A typical use of \attrib{definitionURL} is
+resource.  A typical use of \attrib{definitionURL} is
 to reference an identifier in a controlled vocabulary.
 
 The field is named \attrib{definitionURL}, despite the fact that it would
@@ -938,10 +938,12 @@ having its own (to itself, global) namespace.
 Mathematical expressions in SBML Level~2 are represented using
 MathML~2.0~\citep{w3c:2000b}, the XML standard for describing mathematics
 in machine-readable format.  It is used in the definitions of functions
-(Section~\ref{sec:functions}), rules (Section~\ref{sec:rules}), reaction kinetics
+(Section~\ref{sec:functions}), rules (Section~\ref{sec:rules}), 
+constraints (Section~\ref{sec:constraints}), reaction kinetics
 (Section~\ref{subsec:kinetic-law}), stoichiometries
 (Section~\ref{subsec:speciesreference}) and events (Section~\ref{sec:events}).
-The \class{KineticLaw}, \class{StoichiometryMath}, \class{EventAssignment}
+The \class{KineticLaw}, \class{StoichiometryMath}, \class{EventAssignment},
+\class{Constraint},
 and \class{Rule} structures each have a single MathML \class{math} subelement.
 A function definition has a single \class{lambda} subelement.
 The \class{Event} structure has two math fields, \attrib{trigger} and \attrib{delay}
@@ -953,16 +955,17 @@ The XML namespace URI for all MathML elements is
 examples in Section~\ref{sec:examples} illustrate the use of this
 namespace and MathML in SBML.
 
-\changed{The semnatic interpreation of MathML in the context of
-SBML follows the MathML standard.  In particular the
+\changed{The semantic interpretation of MathML in the context of
+SBML follows the MathML standard.  In particular, the
 interpretation of MathML functions should follow the definitions
-laid out in~\cite{abramowitz:1997, zwillinger:1988}.}
+laid out by~\cite{abramowitz:1997} and~\cite{zwillinger:1988}.}
+
 
 \subsubsection{Subset of MathML Used in SBML Level 2}
 \label{sec:mathmlsubset}
 
 The subset of MathML elements used in SBML Level~2 is similar to that used by
-CellML and is itemized below:
+CellML~\changed{\citep{hedley:2001b}} and is itemized below:
 
 \begin{itemize}
 
@@ -1017,9 +1020,10 @@ The following are the only attributes permitted on MathML elements in SBML:
 element;
 
 \item \attrib{encoding} on \class{annotation},
-\class{annotation-xml} and \class{csymbol} elements;
+\class{annotation-xml}, \class{csymbol} and \class{semantics} elements;
 
-\item \attrib{definitionURL} on \class{csymbol} elements; and
+\item \attrib{definitionURL} on \class{annotation}, 
+\class{annotation-xml}, \class{csymbol} and \class{semantics} elements; and
 
 \item \attrib{type} on \class{cn} elements.
 \end{itemize}
@@ -1041,6 +1045,37 @@ attribute on MathML \class{cn} elements: ``\attribvalue{e-notation}'', ``\attrib
 ``\attribvalue{integer}'', and ``\attribvalue{rational}''.  The value of the \attrib{type} attribute
 defaults to ``\attribvalue{real}''.
 
+\begin{blockChanged}
+It is worth highlighting the fact that MathML uses a style of
+scientific notation that differs from what is defined in XML Schema.
+The MathML ``e-notation'' requires the mantissa and exponent to
+be separated by one \texttt{<sep/>} element.  The mantissa must
+be a real number and the exponent part must be a signed
+integer.  This leads to expressions such as
+
+\begin{example}
+<cn type="e-notation"> 2 <sep/> -5 </cn>
+\end{example}
+
+for the number $2 \times 10^{-5}$.  It is especially
+important to note that the expression
+
+\begin{example}
+<cn type="e-notation"> 2e-5 </cn>
+\end{example}
+
+is \emph{not valid} in MathML~2.0.  Elsewhere in SBML, when a
+field value is declared to have type ``\attribtype{double}'' (a
+type taken from XML Schema), the compact notation
+``\texttt{2e-5}'' is in fact allowed, but not inside MathML.
+This is a regrettable difference between two standards that SBML
+replies upon, but it is not feasible to redefine these types
+within SBML because the result would be incompatible with parser
+libraries written to conform with the MathML and XML Schema
+standards.
+\end{blockChanged}
+
+
 \subsubsection{Use of \class{ci} Elements in MathML Expressions in SBML}
 \label{sec:ci-token}
 
@@ -1051,7 +1086,8 @@ containing structure in which the \class{ci} is used:
 
 \begin{itemize}
 
-\item If \class{ci} appears in the body of a function definition, the
+\item If \class{ci} appears in the body of a function definition
+  \changed{(Section~\ref{sec:functions})}, the
   referenced identifier must be either (i) one of the declared arguments to
   the function, or (ii) the identifier of a previously defined function.
 
@@ -1077,7 +1113,7 @@ must be the
     see Section~\ref{sec:compartment-units}.
 
   \item \emph{Parameter identifier}: When a parameter identifier occurs in
-    a \class{ci} element, it represents the value assigned to that
+    a \class{ci} element, it represents the \changed{numerical} value assigned to that
     parameter.  The units associated with the parameter value are the units
     assigned in its instance of a \class{Parameter} structure; see
     Section~\ref{sec:parameter-units}.
@@ -1090,7 +1126,7 @@ must be the
 
   \item \changed{\emph{Reaction identifier}: When a reaction
     identifier occurs in a \class{ci} element, it represents the
-    rate of the reaction which is given by the kinetic law of the
+    rate of the reaction, which is given by the kinetic law of the
     reaction if present.  The units associated with the reaction
     value are the units assigned to the \class{KineticLaw} structure
     contained within the \class{Reaction} structure; see
@@ -1173,7 +1209,7 @@ $k + delay(x, 0.1)$ or alternatively $k_t + x_{t - 0.1}$:
 \end{example}
 
 Note that it is not necessary for a parser to access the resource pointed
-to by the ``\texttt{definitionURL:}'' in this context, the URL should be
+to by the ``\texttt{definitionURL}'' in this context, the URL should be
 interpreted as a URI.  Also, the content of the \class{csymbol} element is
 for rendering purposes only and can be ignored by the parser.
 
@@ -1184,17 +1220,19 @@ for rendering purposes only and can be ignored by the parser.
 \subsubsection{Math Expression Types}
 \label{sec:mathmltype}
 
-MathML operators return results of two types: boolean and numeric.
+MathML operators in SBML return results of two types: boolean and numeric.
 Boolean operators and values must be used as the node of an
 expression tree in following contexts:
 
 \begin{itemize}
 
-\item the \attrib{trigger} field of an \class{event} structure;
+\item the \attrib{trigger} field of an \class{Event} structure;
 
-\item the second argument of a \class{piece} operator; and
+\item the second argument of a \class{piece} operator; 
 
-\item the arguments of the logical operators
+\item the arguments of the logical operators; and
+
+\item the \attrib{math} field of a \class{Constraint} structure.
 
 \end{itemize}
 
@@ -1228,31 +1266,29 @@ operator of the function definition.
 
 The N-ary operators (\class{add}, \class{times}, \class{and},
 \class{or} and \class{xor}) should follow their definition in the
-MathML specification.  Note however that the MathML specification
+MathML specification.  Note, however, that the MathML specification
 does not define the semantics of these operators with zero or one
-operand.  Such a definition is given in this section.
+operand.  In this section, we define these semantics for the
+purposes of SBML.
 
 The general form of these operators is as follows:
 
-\begin{equation}
-\label{eq:n-ary-operator}
-f(x_1 ... x_n) = base_operand operator x_1 operator ... x_n
-\end{equation}
+\begin{center}
+f($x_1$ ... $x_n$) = base\_operand operator $x_1$ operator \ldots\ $x_n$
+\end{center}
 
-where $n$ is any non-negative integer and $base_operand$ is a
-constant that is associated with the operator.  The $base_operand$
+where $n$ is any non-negative integer and base\_operand is a
+constant that is associated with the operator.  The base\_operand
 can be considered an additional hidden operand to the operator.
-
 Table~\ref{tab:baseoperands} gives the base operands for the N-ary
 operators of the MathML subset used in SBML.
 
 \begin{table}[bh]
   \centering
-  \ttfamily
   \begin{tabular}{ll}
     \toprule
     Operator & Base Operand \\
-    \midrule \\
+    \midrule
     \class{add} & 0 \\
     \class{times} & 1 \\
     \class{and} & true \\
@@ -1293,10 +1329,12 @@ returns $7 = 0 + 7$; and
 
 returns $20 = 0 + 17 + 13$.
 
-For all the n-ary operators to give optimal computation the
-operator can be replaced by (a) the 'base operand' if the operator
-has no operands; or (b) replaced by an operand if the operator has
-only one operand i.e. the operator is equivalent to identity.
+Numerical computations involving the N-ary operators can be
+optimized by performing replacements on the operators when
+certain conditions apply.  Specifically, the operator can be
+replaced by the 'base operand' if the operator has no
+operands; or by an operand if the operator has only
+one operand (i.e.,  the operator is equivalent to identity).
 \end{blockChanged}
 
 %=============================================================================
@@ -1330,7 +1368,7 @@ Figure~\ref{fig:sbml}.
   \label{fig:sbml}
 \end{figure}
 
-\changed{In the XML encoding of SBML, the} XML namespace URI for SBML Level~2 is
+The XML namespace URI for SBML Level~2 is
 ``\texttt{http://www.sbml.org/sbml/level2}''.  All SBML Level~2 elements
 should be encoded using this URI by assigning this URI to either the
 default namespace or a tag prefix.  The character encoding for SBML is
@@ -1497,10 +1535,12 @@ where a \texttt{lambda} element can be used. The function is only
 available for use in other MathML elements that follow the
 \class{FunctionDefinition} structure in an SBML model.  (These
 restrictions prevent recursive and mutually-recursive functions
-from being expressed.)  The \texttt{lambda} element can contain
-any of the elements in the MathML subset listed in
-Section~\ref{sec:mathmlsubset} but not any further \texttt{lamdba}
-elements.
+from being expressed.)  \changed{The \texttt{lambda} element 
+must begin with zero or more \texttt{bvar} elements, followed
+by any other of the elements in the MathML subset listed in
+Section~\ref{sec:mathmlsubset} \emph{except} \texttt{lamdba}.
+(I.e., a \texttt{lambda} element cannot contain another
+\texttt{lambda} element.)}
 
 The following abbreviated SBML example shows a \class{FunctionDefinition}
 structure defining $pow3(x)$ as representing $x^{3}$:
@@ -2171,7 +2211,7 @@ given by the \attrib{substanceUnits} field of the species
 structure.  \changed{The units of the value in the
 \attrib{initialConcentration} field are
 \quantity{substance}/\quantity{size} units (i.e.,
-\quantity{concentration} unit.  The units of \quantity{substance}
+\quantity{concentration}).  The units of \quantity{substance}
 are those defined in the \attrib{substanceUnits}, and the
 \quantity{size} units are those given in the
 \attrib{spatialSizeUnits} field as described in the next
@@ -2969,8 +3009,8 @@ matter of best practice.
 
 \class{Constraint} structures \emph{cannot and should not} be
 used to compute the dynamical behavior of a model.  They simply
-provide a mechanism for expressing the validity of a model's
-state during numerical analysis.
+provide a mechanism allowing a modeler to express the validity
+of a model's state during numerical analysis.
 
 As an example, the following SBML fragment demonstrates the
 constraint that species $S_1$ should only have values between 1
@@ -3051,8 +3091,8 @@ These fields are optional lists of \class{SpeciesReference} and
 \class{ModifierSpeciesReference} structures, as shown in
 Figure~\vref{fig:reaction}.  They are described in more detail in
 Sections~\ref{subsec:speciesreference} and~\ref{subsec:modifierreference}
-below.  The abstract type \class{SimpleSpeciesReference} is shown
-simply to demonstrate the common field, \attrib{species},
+below.  The abstract type \class{SimpleSpeciesReference} is \changed{used
+simply to hold} the common field, \attrib{species},
 of the \class{SpeciesReference} and
 \class{ModifierSpeciesReference} structures.  In future levels of SBML
 it is anticipated that \class{SimpleSpeciesReference} will have additional
@@ -3242,7 +3282,6 @@ reaction and would not appear in the list of reactants or products
 because it is neither created nor destroyed in that reaction. In these
 cases, the species is known as a modifier. (That same species may still be
 a reactant or product of another reaction.)
-
 The \class{Reaction} structure provides a way to express which
 species act as modifiers in a given reaction.  This is the purpose
 of the \attrib{modifier} field in \class{Reaction}; this field is
@@ -3263,10 +3302,11 @@ described in Section~\ref{sec:idnameattribs}.}
 \changed{The \class{ModifierSpeciesReference} structure has a
 mandatory field, \attrib{species}, of type \class{SId}; its value
 must be the identifier of a species defined in the enclosing
-\class{Model}. Despite being redundant it is possible for a
-species to be referenced from the \attrib{modifier} field whilst
-being referenced from the \attrib{product} and/or
-\attrib{reactant} fields of the same reaction.}
+\class{Model}.  It is permissible for a
+species to be referenced simultaneously from the \attrib{modifier},
+\attrib{product}, and/or
+\attrib{reactant} fields of the same reaction, if appropriate
+for the kind of reaction kinetics involved.}
 
 \subsubsection{\class{KineticLaw}}
 \label{subsec:kinetic-law}
@@ -3400,7 +3440,7 @@ encode rate expression has the final units of
 \end{blockChanged}
 
 \begin{blockChanged}
-\subsubsection{Reaction as Symbol}
+\subsubsection{Reaction Identifiers Used in Mathematical Expressions}
 \label{subsec:reaction-as-symbol}
 
 The value of the \attrib{id} field of a \class{Reaction} structure
@@ -3410,10 +3450,12 @@ reaction as given by the \class{KineticLaw} structure of the
 reaction.  The symbol has the units of the \class{KineticLaw} as
 described in Section~\ref{subsec:kinetic-law} or
 \quantity{substance/time} units if the \class{KineticLaw} is not
-present.  A \class{KineticLaw} expression cannot contain reaction
-symbols. This restriction means that it is not possible to either
-create algebraic loops amongst \class{KineticLaw} expressions or
-to require a specific order of evaluation of kinetic laws.
+present.
+
+A \class{KineticLaw} expression itself cannot contain reaction
+identifiers.  This restriction is in place to prevent the
+creation of algebraic loops among \class{KineticLaw} expressions 
+and prevent dependencies on the order of evaluation of kinetic laws.
 \end{blockChanged}
 
 %-----------------------------------------------------------------------------

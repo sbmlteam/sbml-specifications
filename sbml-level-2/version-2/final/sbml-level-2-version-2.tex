@@ -1962,7 +1962,7 @@ units of volume if the value of
 units of area if the value of \attrib{spatialDimensions} is
 ``\attribvalue{2}'', or units of length
 if the value of \attrib{spatialDimensions} is ``\attribvalue{1}''.  If
-\attrib{spatialDimensions} is ``\attrib{0}'', the units 
+\attrib{spatialDimensions} is ``\attrib{0}'', the units
 associated with the compartment's \attrib{size} can only be
 ``\unit{dimensionless}''.}
 
@@ -2538,19 +2538,20 @@ The following is an example of parameters defined at the \class{Model} level:
 \label{sec:initialAssignment}
 %-----------------------------------------------------------------------------
 
-\emph{Initial Assignments} provide a way to encapsulate the
-calculation of the value of a constant or the initial value of a
-variable from the value of another constant or the initial value
-of another variable.  An \class{InitialAssignment} structure
-consists of two fields, \attrib{variable} and \attrib{math}, as shown
-in Figure~\vref{fig:initialAssignment}.  The \attrib{variable} field has type
-\class{SId} field and contains the value of an \attrib{id} field
-defined for a \class{compartment}, \class{species} or \class{parameter}
-elsewhere in the model.
-The \class{InitialAssignment} structure sets the initial value of
-the constant or variable referred to by the \attrib{variable} field.
+An \emph{Initial Assignment} enables the calculation of the value
+of a constant or the initial value of a variable from the value of
+a constant or the initial value of a variable.  An
+\class{InitialAssignment} structure consists of two fields,
+\attrib{symbol} and \attrib{math}, as shown in
+Figure~\vref{fig:initialAssignment}.  The \attrib{symbol} field
+has type \class{SId} field and contains the value of an
+\attrib{id} field defined for a \class{compartment},
+\class{species} or \class{parameter} elsewhere in the model. The
+\class{InitialAssignment} structure assigns the initial value of
+the constant or variable referred to by the \attrib{symbol} field.
 The \attrib{math} field contains a MathML expression that is used
-to calculate the value of the constant or variable.
+to calculate the value of the constant or the initial value of the
+variable.
 
 \begin{figure}[htb]
   \begin{blockChanged}
@@ -2564,16 +2565,15 @@ to calculate the value of the constant or variable.
 \end{figure}
 
 The value calculated by an \class{InitialAssignment} overrides any
-other initial value assigned to the given symbol except for that
-value calculated by an \class{AssignmentRule} structure. Two or
-more \class{InitialAssignment} structures cannot have the same
-\attrib{variable} field value in an SBML model definition. Unlike an
+other initial value assigned to the given symbol except for the
+value calculated by an \class{AssignmentRule} structure. Unlike an
 \class{AssignmentRule} structure, an \class{InitialAssignment}
 structure only applies at the start of simulated time and can set
 the value of a constant. In all cases, as would be expected, the
 units of the formula in the \attrib{math} field are identical to
-the units associated with the identifier given in the \attrib{variable} field,
-when that variable appears in other formulae.
+the units associated with the identifier given in the
+\attrib{symbol} field, when that variable appears in other
+formulae.
 
 The effects of an \class{InitialAssignment} structure are in
 general terms the same, but differ in the precise details
@@ -2610,7 +2610,7 @@ depending on the type of variable being set:
 \end{itemize}
 
 The ordering of \class{InitialAssignment} structures is
-significant: they are always evaluated in the order given in SBML.
+significant: they should be evaluated in the order given in SBML.
 An \class{InitialAssignment} structure for a given identifier
 overrides the initial value assigned to that identifier; i.e., the
 initial value should be ignored. This does not mean that a
@@ -2621,7 +2621,22 @@ parameter if there is a \class{InitialAssignment} structure for
 that parameter.
 
 In general, \class{InitialAssignment} structures are much less
-constrained than \class{AssignmentRule} structures.
+constrained than \class{AssignmentRule} structures. In the case of
+simulation \class{InitialAssignment} structures are only executed
+once to establish the state of the simulated system at the
+beginning of simulated time.  A model can contain more than one
+\class{InitialAssignment} structure with the same \attrib{symbol}
+value (the last one assigning the value to the given symbol at the
+start of the simulation).  The values of symbols contained in the
+\attrib{math} fields of \class{InitialAssignment} are either those
+given on the structure declaring the symbol (i.e. either a
+\class{Compartment}, \class{Species} or \class{Parameter}
+structure) or the value assigned to the symbol by a previous
+\class{InitialAssignment} structure.  As a result the
+\attrib{math} field of a \class{InitialAssignment} structures can
+refer to symbol before another (or the same)
+\class{InitialAssignment} structure makes an assignment to the
+given symbol.
 
 The following example shows how the symbol $x$ can assigned the
 initial value $2y$:
@@ -3450,7 +3465,7 @@ effective stoichiometry for all their species:
 Sometimes a species appears in the kinetic rate formula of a reaction but
 is itself neither created nor destroyed in that reaction (for example,
 because it acts as a catalyst or inhibitor).  In SBML, such species are
-called \emph{modifiers}.  
+called \emph{modifiers}.
 The \class{Reaction} structure provides a way to express which
 species act as modifiers in a given reaction.  This is the purpose
 of the \attrib{modifier} field in \class{Reaction}; this field is

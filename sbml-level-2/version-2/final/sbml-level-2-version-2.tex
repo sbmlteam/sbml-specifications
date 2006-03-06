@@ -66,7 +66,8 @@ Pasadena, CA 91125, USA\\[3pt]
 
 \date{SBML Level 2, Version 2, Issue 1\\[5pt]
  \fbox{Draft for Public Review}\\[6pt]
-  25th February 2006}
+  5th March 2006\\
+  Temporary Revision 1}
 
 \maketitle
 
@@ -81,6 +82,10 @@ This issue of the SBML Level 2 Version 2 specification is available at
 
 The list of errata for all issues of the SBML Level 2 Version 2 specification is available at
 \url{http://sbml.org/specifications/sbml-level-2/version-2/errata/}\\[10pt]
+
+The XML Schema for SBML Level 2 Version 2 is available at
+\url{http://sbml.org/xml-schemas/}\\[10pt]
+
 \end{center}
 
 \vfill
@@ -154,6 +159,27 @@ between Version~1 and Version~2 of SBML Level~2 are highlighted in
 red in the body of this specification and are also listed in
 Appendix~\ref{apdx:version1-version2}.
 
+The SBML Level~2 Version~2 specification has designed to be
+backward compatible with SBML Level~2 Version~1.  A SBML Level~2
+Version~1 document which has a transformed \class{sbml} element
+with modified XML Namespace and \attrib{version} attribute values,
+as described in Section~\ref{sec:sbml}, can become a valid SBML
+Level~2 Version~2 document.  However in some cases the following
+aspects of SBML Level~2 Version~2 may make the resulting document
+an invalid SBML document.
+
+\begin{itemize}
+
+\item SBML Level~2 Version~2 restricts the form of elements in
+\class{annotation} elements.  See
+section~\ref{sec:annotation-use}.
+
+\item SBML Level~2 Version~2 restricts the use of \attrib{offset}
+attributes and \texttt{Celsius} within \class{UnitDefinition}
+elements.  See section~\ref{sec:unitdefinitions}.
+
+\end{itemize}
+
 Each SBML Level+Version specification inevitably
 requires minor editorial changes as the community of users
 discovers errors and ambiguities.  As a practical reality, these
@@ -172,16 +198,17 @@ way that an software whose conformance was once unclear becomes
 clearly conforming or non-conforming.  [This definition of errata
 is adapted from~\cite{jacobs:2004}.]
 
-Errata result in new \emph{issues} of the SBML specification.
-Each issue is numbered. The first issue of the specification is
-numbered 1.  The errata for this specification be recorded in a
-new section starting in issue 2. Each errata will be numbered with
-the issue in which the errata is introduced. Errata do not change
-the fundamental semantics or syntax of SBML, but rather clarify
-and disambiguate the specification and correct errors.  (New
-syntax and semantics are only introduced in SBML Versions and
-Levels.) A complete list of the errata for SBML Level~2 Version~2
-created since Issue~1 is made publicly available at
+Errata result in new \emph{issues} of the SBML specification. Each
+issue is numbered. The first issue of the specification is
+numbered 1.  Subsequent issues of the specification will contain a
+section listing the errata created since the first issue. Each
+errata will be numbered with the issue in which the errata is
+introduced. Errata do not change the fundamental semantics or
+syntax of SBML, but rather clarify and disambiguate the
+specification and correct errors.  (New syntax and semantics are
+only introduced in SBML Versions and Levels.) A complete list of
+the errata for SBML Level~2 Version~2 created since Issue~1 is
+made publicly available at
 \url{http://sbml.org/specifications/sbml-level-2/version-2/errata}.
 
 %\changed{Any new levels, versions, issues and errata of SBML will
@@ -340,10 +367,21 @@ followed by a valid SBML document that cannot be expressed in XML
 schema. See~\cite{walmsley:2002} for more information on XML
 Schema.}
 
-\end{blockChanged}
-
 All data types in SBML follow XML Schema datatype definitions and
-conventions.
+conventions. The XML Schema type \class{double} is used as the
+type of floating point fields of structures in the SBML namespace.
+\class{double} is restricted to IEEE double-precision 64-bit
+floating point type IEEE 754-1985.  Integer fields in the SBML
+namespace are only restricted by sign in some cases. The absolute
+size of field integer values is not restricted.  This different
+from the values of the content of MathML \class{cn} elements which
+do not necessarily conform to any specific floating point or
+integer representations designed for CPU implementation. For
+example the value of a \class{cn} element may exceed the maximum
+value that can be stored in a IEEE 64 bit floating point number
+(IEEE 754).
+
+\end{blockChanged}
 
 We follow certain naming and typographical conventions throughout
 this document.  Specifically, the names of data structure
@@ -414,8 +452,8 @@ The meaning of each component is as follows:
 \item \changed{\emph{Compartment Type}: A type of well-stirred
 container of finite size for substances.}
 
-\item \emph{Compartment}: \changed{A well-stirred container of
-finite size for substances.}
+\item \emph{Compartment}: \changed{A location where chemical
+entities are located.}
 
 \item \changed{ \emph{Species type}: A chemical entity type. Some
   example species types are ions such as $\text{Ca}^{2+}$ and molecules
@@ -431,9 +469,9 @@ finite size for substances.}
 
 \item \changed{\emph{Initial Assignment} : A mathematical
 expression used to determine the initial conditions of the model.
-This type of structure can only be used to define define how the
-value of a variable can be calculated from other values and
-variables at the start of simulated time.}
+This type of structure can only be used to define how the value of
+a variable can be calculated from other values and variables at
+the start of simulated time.}
 
 \item \emph{Rule}: A mathematical expression used in
   combination with the differential equations constructed based on the set
@@ -489,7 +527,7 @@ between SBML Level~2 Version~1 and SBML Level~2 Version~2 as
 described in this document, Appendix~\ref{apdx:schema} provides
 the complete XML Schema for SBML Level~2 Version 2.,
 Appendix~\ref{apdx:mathml-subset-schema} provides the XML schema
-for the subset of MAthML used in SBML and finally
+for the subset of MathML used in SBML and finally
 Appendix~\ref{apdx:validation-rules} lists the validation rules
 that are required to determine the correctness of a SBML document
 beyond schema conformance.}
@@ -537,10 +575,20 @@ Figure~\vref{fig:sbase}.
   \label{fig:sbase}
 \end{figure}
 
-\class{SBase} contains four fields, all of which are optional:
-\attrib{metaid}, \attrib{notes}, \attrib{annotation} and
-\attrib{definitionURL}. These fields are discussed separately in
-the following subsections.
+\class{SBase} contains three fields, all of which are optional:
+\attrib{metaid}, \attrib{notes} and \attrib{annotation}. These
+fields are discussed separately in the following subsections.
+
+\changed{\class{SBase} does not contain an \attrib{id} field
+because there is no universal rule concerning the scope of
+identifiers declared using such a field (see
+Section~\ref{sec:namespaces} for more details).  If \class{SBase}
+where to have an \attrib{id} field then the specification of
+\class{SBase} would have to have a default scoping rule which
+would then have to be overloaded on derived classes that used a
+different rule. This would make this specification unnecessarily
+complex. \class{SBase} does not have a \attrib{name} simply
+because such a field is paired with an \class{id} field.}
 
 \subsubsection{The \attrib{metaid} Field}
 
@@ -548,13 +596,14 @@ the following subsections.
 The \attrib{metaid} field is present for supporting metadata
 annotations using RDF~\cite[Resource Description
 Format;][]{lassila:1999}.  It has a data type of \class{ID} (the
-XML identifier type), and serves as anchors for metadata
-references.  Metadata expressed using RDF can be placed anywhere
-within an \class{sbml} element and its subelements, \emph{except}
-within MathML elements.  The metadata elements can include RDF
-\class{description} elements in which the RDF \attrib{describes}
-attributes contain the values of the \attrib{metaid} fields of
-SBML elements in the model.
+XML identifier type), and thus each \attrib{metaid} value is
+unique within an SBML file.  The \attrib{metaid} value serves to
+identify the element from a metadata structure. Metadata expressed
+using RDF can be placed anywhere within an \class{sbml} element
+and its subelements, \emph{except} within MathML elements. The
+metadata elements can include RDF \class{description} elements in
+which the RDF \attrib{describes} attributes contain the values of
+the \attrib{metaid} fields of SBML elements in the model.
 \end{blockChanged}
 
 %The form of the RDF element content in SBML should follow the form
@@ -573,14 +622,141 @@ indirectly from type \class{SBase} can have a separate value for
 models.  Section~\ref{sec:examples} provides examples of using
 \attrib{notes} in different models.
 
+\begin{blockChanged}
 \subsubsection{The \attrib{annotation} Field}
+\label{sec:annotation-use}
 
 \class{SBase} includes the field called \attrib{annotation} to
-provide a container for software-generated annotations that are \emph{not}
-intended to be seen by humans.  This field is a container for arbitrary
-data (XML type \class{any}).  As with the user-visible \attrib{notes}
-field, every data object derived from \class{SBase} can have its own value for \attrib{annotation}.
-Section~\ref{sec:annotation-use} provides guidelines for using this field.
+provide a container for software-generated annotations that are
+\emph{not} intended to be seen by humans. This field is a
+container for essentially arbitrary data (XML type \class{any}).
+There are restrictions on the use XML Namespaces~\citep{bray:1999}
+within an \class{annotation} element which are described below. As
+with the user-visible \attrib{notes} field, every data object
+derived from \class{SBase} can have its own value for
+\attrib{annotation}.
+
+Applications must use XML Namespaces~\citep{bray:1999} to specify
+the intended vocabulary of a particular annotation. Here is an
+example. Suppose a particular application needs to annotate data
+structures in an SBML model definition with screen layout
+information.  The application's developers must choose a URI
+(\emph{Universal Resource
+  Identifier}; \citealt{harold:2001,w3c:2000}) reference that uniquely
+identifies the vocabulary the application will use for such
+annotations, and a prefix string for the annotations.  For
+illustration purposes, let us say the URI reference is
+``\texttt{http://www.mysim.org/ns}'' and the chosen prefix is
+\texttt{mysim}.  An example of an annotation might then be as
+follows:
+
+\begin{example}
+...
+<annotation>
+    <mysim:nodecolors
+        xmlns:mysim="http://www.mysim.org/ns"
+        mysim:bgcolor="green" mysim:fgcolor="white"/>
+</annotation>
+\end{example}
+
+The namespace prefix \texttt{mysim} is used to qualify the XML
+element \texttt{mysim:nodecolors} presumably these symbols have
+meaning to the application.
+
+In the following text the term \emph{top level element} of an
+\class{annotation} element refers to an element immediately
+contained within the \class{annotation} element. The order of top
+level elements within an \class{annotation} element is \emph{not}
+significant. An \class{annotation} element must not contain: (a)
+top level elements in the SBML XML namespace; and (b) two or more
+top level elements in the same XML namespace.  For example the
+following is not valid because it contains a top level element in
+the SBML XML namespace:
+
+\begin{example}
+<annotation>
+    <foo/>
+</annotation>
+\end{example}
+
+The following example is invalid because it contains two top level
+elements in the same XML Namespace:
+
+\begin{example}
+<annotation>
+    <mysim:nodecolors
+        xmlns:mysim="http://www.mysim.org/ns"
+        mysim:bgcolor="green" mysim:fgcolor="white"/>
+    <mysim:textcolors
+        xmlns:mysim="http://www.mysim.org/ns"
+        mysim:bgcolor="green" mysim:fgcolor="white"/>
+</annotation>
+\end{example}
+
+The following example is valid:
+
+\begin{example}
+<annotation>
+    <mysim:geometry
+        xmlns:mysim="http://www.mysim.org/ns"
+        mysim:bgcolor="green" mysim:fgcolor="white">
+        <graph:node
+            graph:x="4"
+            graph:y="5"
+            xmlns:graph="http://www.graph.org/ns"/>
+    </mysim:geometry>
+    <funky:foo xmlns:funky="http://www.funky.org/ns">
+         Wham
+    </funky:foo>
+</annotation>
+\end{example}
+
+The use of XML Namespaces permits multiple applications to place
+annotations on XML elements of a model without risking
+interference or element name collisions. Annotations stored by
+different simulation packages can thus coexist in the same model
+definition.  The rules governing the content of \class{annotation}
+elements are designed to enable applications to easily add, change
+and remove their annotations from SBML elements whilst at the same
+time preserving annotations inserted by other applications when
+mapping SBML from input to output.
+
+Although XML Namespace names must be URI references, an XML
+Namespace name is \emph{not required} to be directly usable in the
+sense of identifying an actual, retrieval document or resource on
+the Internet~\citep{bray:1999}. ``\texttt{http://www.mysim.org/}''
+is a namespace name or URI in the example above.  The name is
+simply intended to enable unique identification of constructs, and
+using URIs is a common and simple way of creating a unique name
+string. Finally, note that the namespaces being referred to here
+are XML Namespaces specifically in the context of the
+\attrib{annotation} field on \class{SBase}.  The namespace issue
+here is unrelated to the namespaces discussed in
+Section~\ref{sec:namespaces} in the context of \class{SId} and
+symbols in SBML.
+
+The \attrib{annotation} field in the definition of \class{SBase}
+exists in order that software developers may attach any
+information they need to the structures in an SBML model. However,
+it is important that this facility not be misused.  In particular,
+it is critical that information essential to a model definition
+\changed{or that can be easily encoded in existing SBML
+structures} is \emph{not} stored in \attrib{annotation}. Parameter
+values, functional dependencies between model structures, etc.,
+should not be recorded as annotations.
+
+Here are examples of the kinds of data that may be appropriately
+stored in \attrib{annotation}: (a) information about the graphical
+layout of model components; (b) application-specific processing
+instructions that do not change the essence of a model;
+\changed{(c) identification information for cross-referencing
+components in a model with items in a data resource.  For case (c)
+SBML Level 2 Version 2 recommends a standard form for use within
+an \attrib{annotation} field.  This form should be used in
+preference to proprietary syntaxes, see
+Section~\ref{sec:finney-novere}.}
+
+\end{blockChanged}
 
 %\begin{blockChanged}
 %
@@ -640,7 +816,7 @@ substructures such as \attrib{trigger} on \class{Event} and the
 elements contained inside \class{SBase} are not derived from
 \class{SBase}.)
 
-\begin{figure}[hb]
+\begin{figure}[ht]
   \vspace*{4pt}
   \centering
   \includegraphics[scale = 0.7]{top-level}
@@ -657,83 +833,6 @@ In other type definitions presented below, we follow the UML
 convention of hiding the attributes derived from a parent type such as
 \class{SBase}. It should be kept in mind that these attributes are always
 available.
-
-
-%-----------------------------------------------------------------------------
-\subsection{Guidelines for the \changed{General} Use of the \attrib{annotation} Field in
-  \class{SBase}}
-\label{sec:annotation-use}
-%-----------------------------------------------------------------------------
-
-The \attrib{annotation} field in the definition of \class{SBase}
-is formally unconstrained in order that software developers may
-attach any information they need to the structures in an SBML
-model.  However, it is important that this facility not be
-misused.  In particular, it is critical that information essential
-to a model definition \changed{or that can be easily encoded in
-existing SBML structures} is \emph{not} stored in
-\attrib{annotation}. Parameter values, functional dependencies
-between model structures, etc., should not be recorded as
-annotations.
-
-Here are examples of the kinds of data that may be appropriately
-stored in \attrib{annotation}: (a) information about the graphical
-layout of model components; (b) application-specific processing
-instructions that do not change the essence of a model; (c)
-identification information for cross-referencing components in a
-model with items in a database.  \changed{For case (c) SBML Level
-2 Version 2 contains a standard form for use within an
-\attrib{annotation} field.  This form should be used in preference
-to proprietary syntaxes, see Section~\ref{sec:finney-novere}.}
-
-Different applications may use XML Namespaces~\citep{bray:1999} to specify
-the intended vocabulary of a particular annotation.  Here is an example.
-Suppose a particular application needs to annotate data structures in an
-SBML model definition with screen layout information and a time stamp.  The
-application's developers should choose a URI (\emph{Universal Resource
-  Identifier}; \citealt{harold:2001,w3c:2000}) reference that uniquely
-identifies the vocabulary the application will use for such annotations,
-and a prefix string for the annotations.  For illustration purposes, let us
-say the URI reference is ``\texttt{http://www.mysim.org/ns}'' and the
-chosen prefix is \texttt{mysim}.  An example of an annotation might then be
-as follows:
-
-\begin{example}
-...
-<annotation xmlns:mysim="http://www.mysim.org/ns">
-    <mysim:nodecolors mysim:bgcolor="green" mysim:fgcolor="white"/>
-    <mysim:timestamp>2000-12-18 18:31 PST</mysim:timestamp>
-</annotation>
-...
-\end{example}
-
-The namespace prefix \texttt{mysim} is used to qualify the XML elements
-\texttt{mysim:nodecolors} and \texttt{mysim:timestamp}; presumably these
-symbols have meaning to the application.  This example places the XML
-Namespace information on \attrib{annotation} itself rather than on a
-higher-level enclosing construct or the enclosing document level, but other
-placements would be valid as well~\citep{bray:1999}.
-
-The use of XML Namespaces permits multiple applications to place
-annotations on XML elements of a model without risking interference or
-element name collisions.  Annotations stored by different simulation
-packages can thus coexist in the same model definition.  Although XML
-Namespace names
-must be URI references, an XML Namespace name is \emph{not required} to be
-directly usable in the sense of identifying an actual, retrieval document
-or resource on the Internet~\citep{bray:1999}.
-``\texttt{http://www.mysim.org/}'' is a namespace name or URI in the example
-above.  The name is simply intended
-to enable unique identification of constructs, and using URIs is a common
-and simple way of creating a unique name string.
-
-\begin{blockChanged}
-Finally, note that the namespaces being referred to here are XML Namespaces
-specifically in the context of the \attrib{annotation} field on
-\class{SBase}.  The namespace issue here is unrelated to the namespaces
-discussed in Section~\ref{sec:namespaces} in the context of
-\class{SId} and symbols in SBML.
-\end{blockChanged}
 
 \begin{blockChanged}
 %-----------------------------------------------------------------------------
@@ -781,7 +880,8 @@ encoded in the format.
     \midrule
     \class{dc} & \url{http://purl.org/dc/elements/1.1/} & \citep{powell:2003}\\
     \class{rdf} & \url{http://www.w3.org/1999/02/22-rdf-syntax-ns\#} & \citep{w3c:2004b} \\
-    \class{dcterm} & \url{http://purl.org/dc/terms/} & \citep{kokkelink:2002, DCMIUB:2005} \\
+    \class{dcterms} & \url{http://purl.org/dc/terms/} & \citep{kokkelink:2002}\\
+    & & \citep{DCMIUB:2005} \\
     \class{vcard} & \url{http://www.w3.org/2001/vcard-rdf/3.0#"} & \citep{iannella:2001} \\
     \bottomrule
   \end{tabular}
@@ -793,24 +893,12 @@ encoded in the format.
 \end{table}
 
 %=============================================================================
-\subsubsection{General Syntax for dublin-core annotation}
+\subsubsection{General Syntax for Dubin Core annotation}
 %=============================================================================
 
-The general outline of the format syntax is shown in
-Figure~\ref{fig:finney-novere-syntax}. In this format the
-annotation of an element is located in a single \class{rdf:RDF}
-element contained within an SBML \class{annotation} element. The
-annotation element can contain other elements in any order as
-described in Section \emph{FIX ME}.  The format described in this
-section only defines the form of the \class{rdf:RDF} element. The
-containing SBML \class{SBase} element must have a \attrib{metaId}
-field value. (As this attribute is of the type \class{ID} its
-value must unique to the entire SBML document.)
+An outline of the format syntax is shown below.
 
-\begin{figure}[hb]
-  \vspace*{8pt}
-  \centering
-  \begin{example}
+\begin{example}
 <SBML_ELEMENT +++ metaid="SBML_META_ID" +++ >
   +++
   <annotation>
@@ -836,29 +924,37 @@ value must unique to the entire SBML document.)
   </annotation>
   +++
 </SBML_ELEMENT>
-  \end{example}
-  \caption{
-  An illustrative overview of the syntax of the standard annotation scheme for
-  referring
-  to external resources.  The order of elements is as shown here. The capitalized identifiers refer to generic strings of a
-  particular type: \texttt{SBML\_ELEMENT} refers to any SBML element name that can contain
-  an \class{annotation} element; \texttt{SBML\_META\_ID} is a XML \class{ID} string;
-  \texttt{DUBLIN\_CORE\_RELATION\_ELEMENT} refers to a restricted subset of element names in the
-  \url{http://purl.org/dc/elements/1.1/} and \url{http://purl.org/dc/terms/} namespaces; and
-  \texttt{URI} is a URI.  \texttt{[MODEL\_HISTORY]} refers to an optional section described in
-  Section~\ref{sec:model-history-annotation} which can
-  only be present within SBML model elements. `\texttt{+++}' is a placeholder for either no content
-  or valid XML
-  syntax that is not defined by the standard annotation scheme but is
-  consistent with the relevant
-  standards for the enclosing elements.
-  `\texttt{...}' is a placeholder for zero or more elements of the same form as the immediately
-  preceding element.  The precise form of whitespace and the XML namespace prefix definitions
-  is not constrained.
-  See main text for a definitive description of the format.
-  }
-  \label{fig:finney-novere-syntax}
-\end{figure}
+\end{example}
+
+In the above outline shows the order of the elements. The
+capitalized identifiers refer to generic strings of a particular
+type: \texttt{SBML\_ELEMENT} refers to any SBML element name that
+can contain an \class{annotation} element; \texttt{SBML\_META\_ID}
+is a XML \class{ID} string;
+\texttt{DUBLIN\_CORE\_RELATION\_ELEMENT} refers to a restricted
+subset of element names in the
+\url{http://purl.org/dc/elements/1.1/} and
+\url{http://purl.org/dc/terms/} namespaces; and \texttt{URI} is a
+URI.  \texttt{[MODEL\_HISTORY]} refers to an optional section
+described in Section~\ref{sec:model-history-annotation} which can
+only be present within SBML model elements. `\texttt{+++}' is a
+placeholder for either no content or valid XML syntax that is not
+defined by the standard annotation scheme but is consistent with
+the relevant standards for the enclosing elements. `\texttt{...}'
+is a placeholder for zero or more elements of the same form as the
+immediately preceding element.  The precise form of whitespace and
+the XML namespace prefix definitions is not constrained.  The rest
+of this section describes the format formally in English.
+
+In this format the annotation of an element is located in a single
+\class{rdf:RDF} element contained within an SBML
+\class{annotation} element. The annotation element can contain
+other elements in any order as described in Section \emph{FIX ME}.
+The format described in this section only defines the form of the
+\class{rdf:RDF} element. The containing SBML \class{SBase} element
+must have a \attrib{metaid} field value. (As this attribute is of
+the type \class{ID} its value must unique to the entire SBML
+document.)
 
 The first element of the \class{rdf:RDF} element must be an
 \class{rdf:Description} element with an \attrib{rdf:about}
@@ -950,50 +1046,26 @@ can refer to:
 \noindent etc.
 
 To enable interoperability, the community has agreed on an initial
-set of standard valid URI syntax rules. This set of rules is not
+set of standardized valid URI syntax rules which may be used
+within the standard annotation format. This set of rules is not
 part of the SBML standard but will grow independently from
 specific SBML Levels and Versions. As the set changes a given URI
 syntax rule will not be modified although the physical resource
 associated with the rule may change. These URIs will always be
-composed as "resource\#id". The web page \url{FIX ME} lists URI
-syntaxes and possible physical links to controlled vocabulary and
-databases. The list will evolve with the evolution of databases
-and resources. The annotation format described in this section
-does not require software to access this list to operate.
-
-To enable consistent and thus useful links to external resources
-the URI syntax rule set must have a consistent view of the
-concepts represented by the different SBML elements for the
-purposes of this format.  The following lists the concepts
-represented by SBML elements for the purposes of this format:
-
-\begin{itemize}
-
-\item \class{compartmentType}
-
-\item \class{compartment}
-
-\item \class{speciesType}
-
-\item \class{species}
-
-\item \class{reaction}
-
-\item \class{kineticLaw}
-
-\item \class{speciesReference}
-
-\item \class{event}
-
-\item \class{parameter}
-
-\item \class{rule}
-
-\item \class{constaint}
-
-\item \class{initialAssignment}
-
-\end{itemize}
+composed as \texttt{resource\#id}. The web page \url{FIX ME} lists
+URI syntaxes and possible physical links to controlled vocabulary
+and databases. Each entry contains a list of SBML and relation
+elements in which the given URI can be appropriately embedded. To
+enable consistent and thus useful links to external resources the
+URI syntax rule set must have a consistent view of the concepts
+represented by the different SBML elements for the purposes of
+this format.  For example as the rule set is designed to link SBML
+biological and biochemical resources the rule set assumes that a
+\class{species} element represents the concept of a biochemical
+entity type rather than mathematical symbol. The URI rule list
+will evolve with the evolution of databases and resources. The
+annotation format described in this section does not require
+software to access this list to operate.
 
 %=============================================================================
 \subsubsection{Relation Elements}
@@ -1020,12 +1092,9 @@ The detailed semantics (i.e. from the perspective of automatic
 parser) of the relation elements depend on the consistent view of
 the concepts represented by the SBML element that is defined by
 the URI list at \url{FIX ME} and thus is outside the scope of
-SBML.  This format assumes that the biological entity represented
-by the element is the concept linked to the reference resource.
-This pattern doesn't apply in the case of
-\class{dcterms:isReferencedBy} because the referenced object is
-literature however the SBML element is still assumed to represent
-a biological concept.
+SBML.  The URI list generally assumes that the biological entity
+represented by the element is the concept linked to the reference
+resource.
 
 %\begin{figure}[htb]
 %  \vspace*{2pt}
@@ -1043,10 +1112,10 @@ a biological concept.
 %  \label{fig:lenovere-annotation}
 %\end{figure}
 
-The following is a list of the semantics of the relation elements
-derived from the Dublin Core standard taking into account the
-concepts represented by SBML elements when linked in this format
-to external resources.
+As a guide to maximal interoperability the following is a list of
+the semantics of the relation elements, derived from the Dublin
+Core standard, interpreted in the context of URIs taken from the
+URI list.
 
 \begin{itemize}
 \item \class{dc:relation} The object represented by the SBML
@@ -1079,21 +1148,15 @@ describes the component.
 \label{sec:model-history-annotation}
 %================================================================
 
-In the described format, when enclosed in an SBML \class{model}
-element, can include additional elements immediately before the
-first Dublin Core relation elements to encode information on the
-model creator and a sequence of dates recording changes to the
-model. The syntax for this section is outlined in
-Figure~\ref{fig:model-history-annotation}.
+The described format, when enclosed in an SBML \class{model}
+element, can include additional elements to describe the history
+of the model.  This history data must occur immediately before the
+first Dublin Core relation elements.  These additional elements
+encode information on the model creator and a sequence of dates
+recording changes to the model. The syntax for this section is
+outlined below.
 
-These additional elements consist in sequence of a
-\class{dc:creator} element, a \class{dcterms:created} element and
-zero or more \class{dcterms:modified} elements.
-
-\begin{figure}[hb]
-  \vspace*{8pt}
-  \centering
-  \begin{example}
+\begin{example}
 <dc:creator rdf:parseType="Resource">
   <rdf:Bag>
     <rdf:li rdf:parseType="Resource">
@@ -1121,33 +1184,60 @@ zero or more \class{dcterms:modified} elements.
 {<dcterms:modified rdf:parseType="Resource">
   <dcterms:W3CDTF>DATE<dcterms:W3CDTF>
 </dcterms:modified>}
-  \end{example}
-  \caption{
-  \emph{An illustrative overview of the syntax of the standard annotation scheme for
-    recording the history of a model.}  The order of elements is as shown here except that
-    elements of the format contained between \texttt{[[} and \texttt{]]}
-  can occur in any order.  The capitalized identifiers refer to generic strings of a
-  particular type:
-  \texttt{FAMILY\_NAME} is the family name of a person who created the model;
-  \texttt{GIVEN\_NAME} is the family name of the same person who created the model;
-  \texttt{EMAIL\_ADDRESS} is the email address of the same person who created the
-  model; and
-  \texttt{ORGANIZATION\_NAME} is the name of the organization with which the same person
-  who created the model is affiliated.
-  The elements of the format contained between \texttt{[} and \texttt{]} are optional.
-  `\texttt{+++}' is a placeholder for either no content or valid XML
-  syntax that is not defined by the standard annotation scheme but is
-  consistent with the relevant standards for the enclosing elements.
-  `\texttt{...}' is a placeholder for zero or more elements of the same form as the immediately
-  preceding element.
-  The precise form of whitespace and the XML namespace prefix definitions
-  is not constrained.
-  See main text for a definitive description of the format.
-  }
-  \label{fig:model-history-annotation}
-\end{figure}
+\end{example}
 
-\emph{FIXME: more on this part of the format here}
+The order of elements is as shown above except that elements of
+the format contained between \texttt{[[} and \texttt{]]} can occur
+in any order.  The capitalized identifiers refer to generic
+strings of a particular type: \texttt{FAMILY\_NAME} is the family
+name of a person who created the model; \texttt{GIVEN\_NAME} is
+the family name of the same person who created the model;
+\texttt{EMAIL\_ADDRESS} is the email address of the same person
+who created the model; and \texttt{ORGANIZATION\_NAME} is the name
+of the organization with which the same person who created the
+model is affiliated \texttt{DATE} is a date in W3C date
+format~\citep{wolf:1998}. \texttt{W3CDTF}, \texttt{N},
+\texttt{ORG} and \texttt{EMAIL} are literal strings. The elements
+of the format contained between \texttt{[} and \texttt{]} are
+optional. `\texttt{+++}' is a placeholder for either no content or
+valid XML syntax that is not defined by the standard annotation
+scheme but is consistent with the relevant standards for the
+enclosing elements. `\texttt{...}' is a placeholder for zero or
+more elements of the same form as the immediately preceding
+element. The precise form of whitespace and the XML namespace
+prefix definitions is not constrained.  The remaining text in this
+section describes the syntax formally in English.
+
+The additional elements of the model history sub-format consist in
+sequence of a \class{dc:creator} element, a
+\class{dcterms:created} element and zero or more
+\class{dcterms:modified} elements.  All these elements must have
+the attribute \attrib{rdf:parseType} set to \texttt{Resource}.
+
+The \class{dc:creator} element describes the person who created
+the SBML encoding of the model and contains a single
+\class{rdf:Bag} element.  The \class{rdf:Bag} element can contain
+any number of elements however the first element must be a
+\class{rdf:li} element.  The  \class{rdf:li} element can contain
+any number of elements in any order.  The set of elements
+contained with the \class{rdf:li} element can include the
+following informative elements: \class{vCard:N},
+\class{vCard:EMAIL} and \class{vCard:ORG}.  The \class{vCard:N}
+contains the name of the creator and must consist of a sequence of
+two elements: \class{vCard:Family} and the \class{vCard:Given}
+whose content is the family (surname) and given (first) names of
+the creator respectively.  The \class{vCard:N} must have the
+attribute \attrib{rdf:parseType} set to \texttt{Resource}.  The
+content of the \class{vCard:EMAIL} element must be the email
+address of the creator.  The content of the \class{vCard:ORG}
+element must contain a single \class{vCard:Orgname} element.  The
+\class{vCard:Orgname} element must contain the name of an
+organization to which the creator is affiliated.
+
+The \class{dcterms:created} and \class{dcterms:modified} elements
+must each contain a single \class{dcterms:W3CDTF} element whose
+content is a date in W3C date format~\citep{wolf:1998} which is a
+a profile of (restricted form of) ISO 8601.
 
 %================================================================
 \subsubsection{Examples}
@@ -1168,7 +1258,7 @@ of the reaction.
       <rdf:Description rdf:about="#jb007">
         <dc:relation>
           <rdf:Bag>
-            <rdf:li rdf:resource="http://www.geneontology.org/\#GO:0042166"/>
+            <rdf:li rdf:resource="http://www.geneontology.org/\#GO:0005509"/>
           </rdf:Bag>
         </dc:relation>
       </rdf:Description>
@@ -1211,7 +1301,7 @@ complex between the protein calmodulin and calcium ions:
 The following example describes a species that represents either
 ``Calcium/calmodulin-dependent protein kinase type II alpha
 chain'' or ``Calcium/calmodulin-dependent protein kinase type II
-beta chain''. This is the case for instance in the comatic
+beta chain''. This is the case for instance in the somatic
 cytoplasm of striatal medium-size spiny neurons, where both are
 present, and one cannot functionally differentiate them.
 
@@ -1238,9 +1328,9 @@ present, and one cannot functionally differentiate them.
 
 This approach should not be used to describe ``any
 Calcium/calmodulin-dependent protein kinase type II chain''.
-Because in this case we need an annotation representing the other
-genes such as gamma or delta. One could enumerate all the known
-proteins, but such an approach would almost surely lead to
+Because in this case we need annotation representing the products
+of other genes such as gamma or delta. One could enumerate all the
+known proteins, but such an approach would almost surely lead to
 inaccuracies due to the evolution of biological knowledge. What
 one should do instead is to refer to a generic information such as
 Ensembl family ENSF00000000194 ``CALCIUM/CALMODULIN DEPENDENT
@@ -1466,10 +1556,9 @@ hemoglobine, one with ChEBI heme, the other with KEGG heme.
 </species>
 \end{example}
 
-Finally, one can mix different qualified sets in the same
-annotation element. The following phosphorylation is annotated by
-its exact KEGG counterpart, and by the generis GO term
-``phosphorylation''.
+One can mix different qualified sets in the same annotation
+element. The following phosphorylation is annotated by its exact
+KEGG counterpart, and by the generic GO term ``phosphorylation''.
 
 \begin{example}
 <reaction id="phosphorylation" metaid="phosphorylation">
@@ -1494,6 +1583,93 @@ its exact KEGG counterpart, and by the generis GO term
     </rdf:RDF>
   </annotation>
 </reaction>
+\end{example}
+
+The following shows the annotation of a model with model creation
+data and links to external resources:
+
+\begin{example}
+<?xml version="1.0" encoding="UTF-8"?> <sbml
+xmlns="http://www.sbml.org/sbml/level2" metaid="_180324" level="2"
+version="1">
+  <model metaid="_180340" id="GMO" name="Goldbeter1991_MinMitOscil">
+    <notes>
+      <body xmlns="http://www.w3.org/1999/xhtml">
+    <p>
+     <h2>
+      <center>A Simple Mitotic Oscillator</center>
+     </h2>
+    </p>
+    <p>Reference:Goldbeter A (1991)
+     <i>
+      A minimal cascade model for the mitotic oscillator
+      involving cyclin and cdc2 kinase
+     </i>
+     , PNAS 88:9107-9111<br></br>
+     Web Reference:
+     <a href="http://www.pnas.org/cgi/content/abstract/88/20/9107">
+      http://www.pnas.org/cgi/content/abstract/88/20/9107
+     </a>
+</p>
+    <p style="font-size:x-small;">
+        This is a Systems Biology Markup Language (SBML) file,
+        generated by MathSBML 2.4.6 (14-January-2005) 14-January-2005 18:33:39.806932.
+        SBML is a form of XML, and most XML files will not display properly in an
+        internet browser. To view the contents of an XML file use the "Page Source" or
+        equivalent button on you browser.
+    </p>
+   </body>
+    </notes>
+    <annotation>
+        <rdf:RDF
+                xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+                xmlns:dc="http://purl.org/dc/elements/1.1/"
+                xmlns:dcterms="http://purl.org/dc/terms/"
+                xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" >
+            <rdf:Description rdf:about="#_180340">
+                <dc:creator rdf:parseType="Resource">
+                    <rdf:Bag>
+                        <rdf:li rdf:parseType="Resource">
+                            <vCard:N rdf:parseType="Resource">
+                                <vCard:Family>Shapiro</vCard:Family>
+                                <vCard:Given>Bruce</vCard:Given>
+                            </vCard:N>
+                            <vCard:EMAIL>bshapiro@jpl.nasa.gov</vCard:EMAIL>
+                            <vCard:ORG>
+                                <vCard:Orgname>NASA Jet Propulsion Laboratory</vCard:Orgname>
+                            </vCard:ORG>
+                        </rdf:li>
+                    </rdf:Bag>
+                </dc:creator>
+                <dcterms:created rdf:parseType="Resource">
+                    <dcterms:W3CDTF>2005-02-06T23:39:40</dcterms:W3CDTF>
+                </dcterms:created>
+                <dcterms:modified rdf:parseType="Resource">
+                    <dcterms:W3CDTF>2005-09-13T13:24:56</dcterms:W3CDTF>
+                </dcterms:modified>
+                <dc:relation>
+                    <rdf:Bag>
+                        <rdf:li
+                            rdf:resource="http://www.ebi.ac.uk/biomodels/#BIOMD0000000003"/>
+                        <rdf:li
+                            rdf:resource="http://www.ncbi.nlm.nih.gov/PubMed/#1833774"/>
+                    </rdf:Bag>
+                </dc:relation>
+                <dc:relation>
+                    <rdf:Bag>
+                        <rdf:li rdf:resource="http://www.geneontology.org/#GO:0000278"/>
+                        <rdf:li rdf:resource="http://www.ncbi.nlm.nih.gov/Taxonomy/#8292"/>
+                    </rdf:Bag>
+                </dc:relation>
+                <dcterms:isVersionOf>
+                    <rdf:Bag>
+                        <rdf:li rdf:resource="http://www.genome.jp/kegg/pathway/#hsa04110"/>
+                        <rdf:li rdf:resource="http://www.reactome.org/#69278"/>
+                    </rdf:Bag>
+                </dcterms:isVersionOf>
+        </rdf:Description>
+    </rdf:RDF>
+</annotation>
 \end{example}
 
 \end{blockChanged}
@@ -1563,9 +1739,10 @@ data~\citep[][Section~2.4]{bray:2000} must be obeyed:
 \item The ampersand (\texttt{\&}) character must be escaped using the
   entity \texttt{\&amp;}.
 
-\item The apostrophe (\texttt{"}) and  single-quote character (\texttt{'}) must be
+\item \changed{The apostrophe (\texttt{'}) and  single-quote
+character (\texttt{"}) must be
   escaped using the entities \texttt{\&apos;} and \texttt{\&quot;}, respectively, when
-  those characters are used to delimit a string attribute value.
+  those characters are used to delimit a string attribute value.}
 
 \end{itemize}
 Other XML built-in character or entity references, e.g., \texttt{\&lt;} and
@@ -1625,12 +1802,14 @@ definition is shown in Figure~\vref{fig:id}.
   \vspace*{2pt}
   \centering
   \begin{minipage}{3.8in}
+  \begin{blockChanged}
 \begin{verbatim}
   letter ::= 'a'..'z','A'..'Z'
   digit  ::= '0'..'9'
-  nameChar ::= letter | digit | '_'
-  name ::= ( letter | '_' ) nameChar*
+  idChar ::= letter | digit | '_'
+  SId ::= ( letter | '_' ) idChar*
 \end{verbatim}
+\end{blockChanged}
   \end{minipage}
   \caption{The definition of the type \class{SId} expressed in the variant
     of BNF used by the XML 1.0 specification~\protect\citep{bray:2000}.
@@ -1725,22 +1904,23 @@ space be private.  The rules governing namespaces within a submodel can
 simply be the Level~2 namespace rule described here, with each submodel
 having its own (to itself, global) namespace.
 
+\begin{blockChanged}
 %-----------------------------------------------------------------------------
 \subsection{The \attrib{sboTerm} Field on SBML Components and the \class{SBOTerm} type}
 \label{sec:sboTerm}
 %-----------------------------------------------------------------------------
 
-The SBML structures \class{Model}, \class{Reaction},
+The structures \class{InitialAssignment},
 \class{SimpleSpeciesReference}, \class{Parameter},
-\class{KineticLaw}, \class{Rule}, \class{Constraint} and
-\class{InitialAssignment} all have \attrib{sboTerm} optional
-fields of the type \class{SBOTerm}.  These fields when present
-must contain valid Systems Biology Ontology\sboref identifiers
-that refer to actual SBO terms. The \class{SBOTerm} type restricts
-the field values to strings of the form \texttt{sbo:XXXXXXX} where
-\texttt{X} is a decimal digit. The containing SBML structure
-should have an 'is a' relationship with the SBOTerm referenced by
-the \attrib{sboTerm} field.
+\class{KineticLaw}, \class{Rule}, \class{Model},
+\class{Constraint} and \class{Reaction} all have \attrib{sboTerm}
+optional fields of the type \class{SBOTerm}. These fields when
+present must contain valid Systems Biology Ontology\sboref
+identifiers that refer to actual SBO terms. The \class{SBOTerm}
+type restricts the field values to strings of the form
+\texttt{sbo:XXXXXXX} where \texttt{X} is a decimal digit. The
+containing SBML structure should have an `is a' relationship with
+the SBOTerm referenced by the \attrib{sboTerm} field.
 
 SBO is a standard ontology that is not part of the SBML standard.
 SBO will change independently of the SBML standard i.e. changes to
@@ -1752,25 +1932,29 @@ identifiers will never be reassigned to new definitions.
 Best practice for SBML generating software is to use the
 \class{sboTerm} fields in preference to using application specific
 annotation schemes.
-
+\end{blockChanged}
 %-----------------------------------------------------------------------------
 \subsection{Mathematical Formulas in SBML Level 2}
 \label{sec:formulas}
 %-----------------------------------------------------------------------------
 
 Mathematical expressions in SBML Level~2 are represented using
-MathML~2.0~\citep{w3c:2000b}, the XML standard for describing mathematics
-in machine-readable format.  It is used in the definitions of functions
-(Section~\ref{sec:functions}), rules (Section~\ref{sec:rules}),
-constraints (Section~\ref{sec:constraints}), reaction kinetics
+MathML~2.0~\citep{w3c:2000b}, the XML standard for describing
+mathematics in machine-readable format.  It is used in the
+definitions of functions (Section~\ref{sec:functions}), rules
+(Section~\ref{sec:rules}), initial assignments
+(Section~\ref{sec:initialAssignment}, constraints
+(Section~\ref{sec:constraints}), reaction kinetics
 (Section~\ref{subsec:kinetic-law}), stoichiometries
-(Section~\ref{subsec:speciesreference}) and events (Section~\ref{sec:events}).
-The \class{KineticLaw}, \class{StoichiometryMath}, \class{EventAssignment},
-\changed{\class{InitialAssignment}, \class{Constraint}},
-and \class{Rule} structures each have a single MathML \class{math} subelement.
-A function definition has a single \class{lambda} subelement.
-The \class{Event} structure has two math fields, \attrib{trigger} and \attrib{delay}
-each containing a single MathML \class{math} element.
+(Section~\ref{subsec:speciesreference}) and events
+(Section~\ref{sec:events}). The \class{KineticLaw},
+\class{StoichiometryMath}, \class{EventAssignment},
+\changed{\class{InitialAssignment}, \class{Constraint}}, and
+\class{Rule} structures each have a single MathML \class{math}
+subelement. A function definition has a single \class{lambda}
+subelement. The \class{Event} structure has two math fields,
+\attrib{trigger} and \attrib{delay} each containing a single
+MathML \class{math} element.
 
 The XML namespace URI for all MathML elements is
 ``\texttt{http://www.w3.org/1998/Math/MathML}''.  [See the W3C document by
@@ -1835,6 +2019,12 @@ that the requirements for partial differential calculus will be addressed
 in proposals for SBML Level~3 geometry representations (see
 Section~\ref{sec:level-3}).
 
+\changed{Parsers should take particular note of the MathML
+semantics of the N-ary operators \class{plus}, \class{times},
+\class{and}, \class{or} and \class{xor}.  The MathML
+specification~\citep{w3c:2000b} appendix C.2.3 describes the
+semantics for these operators with zero or one arguments.}
+
 The following are the only attributes permitted on MathML elements in SBML:
 
 \begin{blockChanged}
@@ -1863,12 +2053,29 @@ elements.
 \subsubsection{Use of \class{cn} Elements in MathML Expressions in SBML}
 \label{sec:cn-token}
 
-The following are the only permissible values for the \attrib{type}
-attribute on MathML \class{cn} elements: ``\attribvalue{e-notation}'', ``\attribvalue{real}'',
-``\attribvalue{integer}'', and ``\attribvalue{rational}''.  The value of the \attrib{type} attribute
-defaults to ``\attribvalue{real}''.
+\changed{The content of a \class{cn} element must be a number. The
+number can be preceded and succeeded by whitespace.}
+
+The following are the only permissible values for the
+\attrib{type} attribute on MathML \class{cn} elements:
+``\attribvalue{e-notation}'', ``\attribvalue{real}'',
+``\attribvalue{integer}'', and ``\attribvalue{rational}''.  The
+value of the \attrib{type} attribute defaults to
+``\attribvalue{real}''.
 
 \begin{blockChanged}
+The values of the content of \class{cn} elements do not
+necessarily conform to any specific floating point or integer
+representations designed for CPU implementation. For example the
+value of a \class{cn} element may exceed the maximum value that
+can be stored in a IEEE 64 bit floating point number (IEEE 754).
+This is different from the XML Schema type \class{double} that is
+used in the definition floating point fields of structures in the
+SBML namespace which \emph{is} restricted to IEEE double-precision
+64-bit floating point type IEEE 754-1985.  (Integer fields in the
+SBML namespace are only restricted by sign in some cases. The
+absolute size of field integer values is not restricted.)
+
 It is worth highlighting the fact that MathML uses a style of
 scientific notation that differs from what is defined in XML Schema.
 The MathML ``\attribvalue{e-notation}'' requires the mantissa and exponent to
@@ -1902,9 +2109,10 @@ standards.
 \subsubsection{Use of \class{ci} Elements in MathML Expressions in SBML}
 \label{sec:ci-token}
 
-The content of a \class{ci} element must obey MathML whitespace rules and
-contain an identifier that is declared elsewhere in the model.  The set of
-possible identifiers that can appear in a \class{ci} element depends on the
+\changed{The content of a \class{ci} element must be an identifier
+that is declared elsewhere in the model.  The identifier can be
+preceded and succeeded by whitespace.} The set of possible
+identifiers that can appear in a \class{ci} element depends on the
 containing structure in which the \class{ci} is used:
 
 \begin{itemize}
@@ -2040,8 +2248,8 @@ by the parser.
 
 %Section~\ref{sec:delayeg} contains a complete model which uses a delay
 %function.
-
 \begin{blockChanged}
+
 \subsubsection{Math Expression Types}
 \label{sec:mathmltype}
 
@@ -2094,83 +2302,85 @@ operator should all return values of the same type. The arguments
 of the \class{eq} and \class{neq} operators should return the same
 type.
 
-\subsubsection{N-ary Operators}
-\label{sec:nary-operators}
-
-The use of N-ary operators (\class{add}, \class{times}, \class{and},
-\class{or} and \class{xor}) should follow their definition in the MathML
-specification.  However, the MathML specification does not define the
-semantics of the operators with zero or one operand.  Here we define the
-relevant semantics for SBML.  The general form of the operators is
-
-\begin{center}
-f($x_1$ ... $x_n$) = base\_operand operator $x_1$ operator \ldots\ $x_n$
-\end{center}
-
-where $n$ is any non-negative integer and base\_operand is a
-constant that is associated with the operator.  The base\_operand
-can be considered an additional hidden operand to the operator.
-Table~\ref{tab:baseoperands} gives the base operands for the N-ary
-operators of the MathML subset used in SBML.
-
-\begin{table}[bh]
-  \begin{blockChanged}
-  \small
-  \centering
-  \begin{tabular}{ll}
-    \toprule
-    Operator & Base Operand \\
-    \midrule
-    \class{add} & 0 \\
-    \class{times} & 1 \\
-    \class{and} & true \\
-    \class{or} & false \\
-    \class{xor} & false \\
-    \bottomrule
-  \end{tabular}
-  \vspace*{-0.95ex}
-  \caption{The base operands of the N-ary operators of the MathML subset in
-    SBML.}
-  \label{tab:baseoperands}
-  \end{blockChanged}
-\end{table}
-
-For example
-
-\begin{example}
-<apply>
-    <add/>
-<apply/>
-\end{example}
-
-returns $0 = 0$;
-
-\begin{example}
-<apply>
-    <add/>
-    <cn>7</cn>
-<apply/>
-\end{example}
-
-returns $7 = 0 + 7$; and
-
-\begin{example}
-<apply>
-    <add/>
-    <cn>7<cn/>
-    <cn>13<cn/>
-</apply>
-\end{example}
-
-returns $20 = 0 + 17 + 13$.
-
-Numerical computations involving the N-ary operators can be
-optimized by performing replacements on the operators when certain
-conditions apply.  Specifically, the operator can be replaced by
-the base\_operand if the operator has no operands; or by an
-operand if the operator has only one operand (i.e.,  the operator
-is equivalent to identity).
 \end{blockChanged}
+
+%\subsubsection{N-ary Operators}
+%\label{sec:nary-operators}
+%
+%The use of N-ary operators (\class{add}, \class{times}, \class{and},
+%\class{or} and \class{xor}) should follow their definition in the MathML
+%specification.  However, the MathML specification does not define the
+%semantics of the operators with zero or one operand.  Here we define the
+%relevant semantics for SBML.  The general form of the operators is
+%
+%\begin{center}
+%f($x_1$ ... $x_n$) = base\_operand operator $x_1$ operator \ldots\ $x_n$
+%\end{center}
+%
+%where $n$ is any non-negative integer and base\_operand is a
+%constant that is associated with the operator.  The base\_operand
+%can be considered an additional hidden operand to the operator.
+%Table~\ref{tab:baseoperands} gives the base operands for the N-ary
+%operators of the MathML subset used in SBML.
+%
+%\begin{table}[bh]
+%  \begin{blockChanged}
+%  \small
+%  \centering
+%  \begin{tabular}{ll}
+%    \toprule
+%    Operator & Base Operand \\
+%    \midrule
+%    \class{add} & 0 \\
+%    \class{times} & 1 \\
+%    \class{and} & true \\
+%    \class{or} & false \\
+%    \class{xor} & false \\
+%    \bottomrule
+%  \end{tabular}
+%  \vspace*{-0.95ex}
+%  \caption{The base operands of the N-ary operators of the MathML subset in
+%    SBML.}
+%  \label{tab:baseoperands}
+%  \end{blockChanged}
+%\end{table}
+%
+%For example
+%
+%\begin{example}
+%<apply>
+%    <add/>
+%<apply/>
+%\end{example}
+%
+%returns $0 = 0$;
+%
+%\begin{example}
+%<apply>
+%    <add/>
+%    <cn>7</cn>
+%<apply/>
+%\end{example}
+%
+%returns $7 = 0 + 7$; and
+%
+%\begin{example}
+%<apply>
+%    <add/>
+%    <cn>7<cn/>
+%    <cn>13<cn/>
+%</apply>
+%\end{example}
+%
+%returns $20 = 0 + 17 + 13$.
+%
+%Numerical computations involving the N-ary operators can be
+%optimized by performing replacements on the operators when certain
+%conditions apply.  Specifically, the operator can be replaced by
+%the base\_operand if the operator has no operands; or by an
+%operand if the operator has only one operand (i.e.,  the operator
+%is equivalent to identity).
+%\end{blockChanged}
 
 %=============================================================================
 \section{SBML Components}
@@ -2331,11 +2541,12 @@ believe this helps organize the components and makes visual
 reading of model definitions easier.  These
 \class{listOf}\rule{0.5in}{0.5pt}\class{s} elements are derived
 from \class{SBase} which enables each list to contain its own
-\attrib{metaid}, \attrib{notes}, \changed{\attrib{annotation} and \attrib{definitionURL}} fields.
-Further details of how \class{listOf}\rule{0.5in}{0.5pt}\class{s}
-elements implement UML lists is described in
-Section~\ref{sec:notation}.
+\attrib{metaid}, \attrib{notes} and \attrib{annotation}
+ fields. Further details of how
+\class{listOf}\rule{0.5in}{0.5pt}\class{s} elements implement UML
+lists is described in Section~\ref{sec:notation}.
 
+\begin{blockChanged}
 \subsubsection{The \attrib{sboTerm} Field}
 
 The \class{Model} structure has an optional \class{SBOTerm} field,
@@ -2345,6 +2556,7 @@ identifier referring to a modelling framework SBO term, that is a
 term derived from \sbomodellingframework. The SBO term chosen
 should be the most precise (narrow) term that defines the
 mathematical framework used in the model.
+\end{blockChanged}
 
 %-----------------------------------------------------------------------------
 \subsection{Function Definitions}
@@ -3091,6 +3303,22 @@ Section~\ref{sec:id}.  \class{SpeciesType} also has an optional
 and \attrib{id} fields should be used as described in
 Section~\ref{sec:idnameattribs}.
 
+\subsubsection{Example}
+
+The following XML fragment is an example of two
+\class{SpeciesType} structures embedded in an SBML model.
+
+\begin{example}
+<model>
+    ...
+    <listOfSpeciesTypes>
+        <speciesType id="Glucose"/>
+        <speciesType id="Glucose_6_P"/>
+    </listOfSpeciesTypes>
+    ...
+</model>
+\end{example}
+
 \end{blockChanged}
 
 
@@ -3362,8 +3590,9 @@ The optional field \attrib{charge} takes an integer indicating the
 charge on the species (in terms of electrons, not the SI unit
 coulombs). This may be useful when the species is a charged ion
 such as calcium ($\text{Ca}^{2+}$).  \changed{The \attrib{charge}
-field is deprecated: parsers are free to ignore this field and
-generators do not need to create this field.}
+field is deprecated in SBML Level 2 Version 2: parsers are free to
+ignore this field and generators do not need to create this
+field.}
 
 \subsubsection{Example}
 
@@ -3440,10 +3669,10 @@ value.}
 \label{sec:parameter-units}
 
 The units associated with the value of the parameter are specified
-by the field \attrib{units}.  These units are used when the
-parameter identifier appears in MathML expressions and in
-\changed{\class{AssignmentRule} and \class{InitialAssignment}
-structures} setting the value of the parameter.  A
+by the field \attrib{units}.  \changed{These units are relevant
+when the parameter identifier appears in: (a)
+\class{AssignmentRule} and \class{InitialAssignment} structures
+setting the value of the parameter; and (b) MathML expressions.} A
 \class{RateRule} structure that may determine the value of the
 parameter has units \quantity{parameter
   units}/\quantity{time}, where \quantity{parameter units} are the units
@@ -3484,7 +3713,7 @@ field, \attrib{sboTerm} (see Section~\ref{sec:sboTerm}).  This
 field when present must contain an Systems Biology Ontology
 (SBO)\sboref term identifier referring to a parameter SBO term,
 that is a term derived from \sboparameter.  The
-\class{SpeciesReference} structure should have a 'is a'
+\class{SpeciesReference} structure should have a `is a'
 relationship with the SBO term. The SBO term chosen should be the
 most precise (narrow) term that captures the role of the given
 parameter.
@@ -3633,7 +3862,7 @@ The \class{InitialAssignment} structure has an optional
 \class{SBOTerm} field, \attrib{sboTerm} (see
 Section~\ref{sec:sboTerm}).  This field when present must contain
 an Systems Biology Ontology (SBO)\sboref term identifier.  The
-\class{InitialAssignment} structure should have a 'is a'
+\class{InitialAssignment} structure should have a `is a'
 relationship with the SBO term. The SBO term chosen should be the
 most precise (narrow) term that matches the form of the
 \class{InitialAssignment}.
@@ -3737,14 +3966,15 @@ correspond to the cases \emph{Algebraic}, \emph{Assignment}, and
   \label{fig:rules}
 \end{figure}
 
-The \class{Rule} structure has an optional \class{SBOTerm} field,
-\attrib{sboTerm} (see Section~\ref{sec:sboTerm}).  This field when
-present must contain an Systems Biology Ontology (SBO)\sboref term
-identifier.  The \attrib{sboTerm} field should contain a SBO term
-identifier referring to an actual SBO Term.  The \class{Rule}
-structure should have a 'is a' relationship with the SBO term. The
-SBO term chosen should be the most precise (narrow) term that
-matches the form of the \class{Rule}.
+\changed{The \class{Rule} structure has an optional
+\class{SBOTerm} field, \attrib{sboTerm} (see
+Section~\ref{sec:sboTerm}).  This field when present must contain
+an Systems Biology Ontology (SBO)~\sboref term identifier.  The
+\attrib{sboTerm} field should contain a SBO term identifier
+referring to an actual SBO Term. The \class{Rule} structure should
+have a `is a' relationship with the SBO term. The SBO term chosen
+should be the most precise (narrow) term that matches the form of
+the \class{Rule}.}
 
 \subsubsection{\class{AlgebraicRule}}
 \label{sec:algebraicrule}
@@ -3981,7 +4211,7 @@ we consider the assignment of kinetic laws to reaction variables
 to be algebraic equations.  We assume the construction of an ODE
 for each species determined by one or more reaction rate laws. The
 following mapping assumes that the model is valid in all respects
-but may be overdetermined e.g. equations can't refer to
+but may be overdetermined e.g. equations cannot refer to
 undeclared variables.
 
 The bipartite graph is formed as follows:
@@ -4241,7 +4471,7 @@ The \class{Constraint} structure has an optional \class{SBOTerm}
 field, \attrib{sboTerm} (see Section~\ref{sec:sboTerm}).  This
 field when present must contain an Systems Biology Ontology
 (SBO)\sboref term identifier referring to an actual SBO term.  The
-\class{Constraint} structure should have a 'is a' relationship
+\class{Constraint} structure should have a `is a' relationship
 with the SBO term. The SBO term chosen should be the most precise
 (narrow) term that matches the form of the \class{Constraint}.
 
@@ -4270,9 +4500,9 @@ and 100:
             </apply>
         </math>
         <message>
-            <xhtml:p>
+            <p xmlns="http://www.w3.org/1999/xhtml">
                 Species S1 is out of range
-            </xhtml:p>
+            </p>
         </message>
     </constraint>
 </listOfConstraints>
@@ -4383,16 +4613,24 @@ defines the mathematical framework used in the reaction.
 \subsubsection{\class{SpeciesReference}}
 \label{subsec:speciesreference}
 
-Every species that enters into a given reaction must appear in that
-reaction's lists of reactants, products or modifiers.  In an SBML model,
-all species that participate in any reaction are listed in the
-\attrib{listOfSpecies} field of the top-level \class{Model} data structure
-(see Section~\ref{sec:model}).  Lists of products, reactants and modifiers
-in \class{Reaction} structures do not introduce new species, but
-rather, they refer back to those listed in the model's
-\attrib{listOfSpecies}.  For reactants and products, the connection is
-made using the \class{SpeciesReference} data structure defined
-in Figure~\vref{fig:reaction}.
+Every species that enters into a given reaction must appear in
+that reaction's lists of reactants, products or modifiers.  In an
+SBML model, all species that participate in any reaction are
+listed in the \attrib{listOfSpecies} field of the top-level
+\class{Model} data structure (see Section~\ref{sec:model}).  Lists
+of products, reactants and modifiers in \class{Reaction}
+structures do not introduce new species, but rather, they refer
+back to those listed in the model's \attrib{listOfSpecies}.  For
+reactants and products, the connection is made using the
+\class{SpeciesReference} data structure defined in
+Figure~\vref{fig:reaction}.
+
+\changed{\class{SimpleSpeciesReference} is an abstract structure
+type that is used to represent the fields that are common between
+\class{SpeciesReference} and \class{ModifierSpeciesReference}.  An
+SBML structure cannot contain an \class{SimpleSpeciesReference}
+structure only \class{SpeciesReference} and
+\class{ModifierSpeciesReference} structures.}
 
 \changed{The \class{SpeciesReference} structure has an optional
 field, \attrib{id}, used to give the reference an identifier.  The
@@ -4445,7 +4683,7 @@ contained in the \attrib{product} field of the containing
 be used when the \class{SpeciesReference} structure is contained
 in the \attrib{reactant} field of the containing \class{Reaction}
 structure. The \class{SpeciesReference} structure should have a
-'is a' relationship with the SBO term. The SBO term chosen should
+`is a' relationship with the SBO term. The SBO term chosen should
 be the most precise (narrow) term that captures the role of the
 given species in the reaction.}
 
@@ -4577,10 +4815,10 @@ The \class{ModifierSpeciesReference} structure has an optional
 Section~\ref{sec:sboTerm}).  This field when present must contain
 a Systems Biology Ontology (SBO)\sboref term identifier referring
 to a modifier SBO term, that is a term derived from \sbomodifier.
-The \class{ModifierSpeciesReference} structure should have a 'is
-a' relationship with the SBO term. The SBO term chosen should be
-the most precise (narrow) term that captures the role of the given
-species in the reaction.
+The structure containing the \class{sboTerm} field should have a
+`is a' relationship with the SBO term. The SBO term chosen should
+be the most precise (narrow) term that captures the role of the
+given species in the reaction.
 
 \end{blockChanged}
 
@@ -4659,7 +4897,7 @@ field, \attrib{sboTerm} (see Section~\ref{sec:sboTerm}).  This
 field when present must contain a Systems Biology Ontology
 (SBO)\sboref term identifier referring to a kinetic law SBO term,
 that is a term derived from \sbokineticlaw.  The
-\class{KineticLaw} structure should have a 'is a' relationship
+\class{KineticLaw} structure should have a `is a' relationship
 with the SBO term. The SBO term chosen should be the most precise
 (narrow) term that defines the type of kinetic law encoded by the
 structure.
@@ -4861,7 +5099,7 @@ The identifiers occurring in the MathML \attrib{ci} fields of the
 \class{EventAssignment} structures represent the value of the
 identifier at the point when the \class{Event} is \emph{fired}.
 
-\changed{A variable can't be assigned a value in an
+\changed{A variable cannot be assigned a value in an
 \class{EventAssignment} structure and be assigned a value by an
 \class{AssignmentRule} structure i.e. the value of a
 \attrib{variable} attribute on a \class{EventAssignment} structure
@@ -5148,7 +5386,7 @@ and milliMoles per litres, respectively.
 \begin{verbatim}
 <?xml version="1.0" encoding="UTF-8"?>
 <sbml xmlns="http://www.sbml.org/sbml/level2" level="2" version="2"
-      xmlns:html="http://www.w3.org/1999/xhtml">
+      xmlns:xhtml="http://www.w3.org/1999/xhtml">
     <model>
         <listOfUnitDefinitions>
             <unitDefinition id="substance">
@@ -5193,7 +5431,7 @@ and milliMoles per litres, respectively.
                 </listOfProducts>
                 <kineticLaw>
                     <notes>
-                        <html:p>((vm * s1)/(km + s1))*cell</html:p>
+                        <xhtml:p>((vm * s1)/(km + s1))*cell</xhtml:p>
                     </notes>
                     <math xmlns="http://www.w3.org/1998/Math/MathML">
                         <apply>
@@ -5225,7 +5463,7 @@ and milliMoles per litres, respectively.
                 </listOfProducts>
                 <kineticLaw>
                     <notes>
-                        <html:p>((vm * s2)/(km + s2))*cell</html:p>
+                        <xhtml:p>((vm * s2)/(km + s2))*cell</xhtml:p>
                     </notes>
                     <math xmlns="http://www.w3.org/1998/Math/MathML">
                         <apply>
@@ -5257,7 +5495,7 @@ and milliMoles per litres, respectively.
                 </listOfProducts>
                 <kineticLaw>
                     <notes>
-                        <html:p>((vm * x1)/(km + x1))*cell</html:p>
+                        <xhtml:p>((vm * x1)/(km + x1))*cell</xhtml:p>
                     </notes>
                     <math xmlns="http://www.w3.org/1998/Math/MathML">
                         <apply>
@@ -6871,30 +7109,41 @@ The XML namespace for SBML Level 2 Version 2 is
 
 \item \emph{Removal of predefined annotation namespaces}
 
-In Section~\ref{sec:annotation-use}, previous Levels and Versions of SBML
-reserved set of XML Namespace names corresponding to software tools known
-to exist at the time.  Due to the explosion of SBML-compatible software
-tools in recent years, it has become infeasible to maintain such a list;
-moreover, informal discussions with SBML users revealed that no one paid
-much attention to the list anyway.  Beginning with SBML Level~2
-Version~2, no such namespaces are defined in the SBML specification.
+In Section~\ref{sec:annotation-use}, previous Levels and Versions
+of SBML reserved a set of XML Namespace names corresponding to
+software tools known to exist at the time.  Due to the explosion
+of SBML-compatible software tools in recent years, it has become
+infeasible to maintain such a list; moreover, informal discussions
+with SBML users revealed that no one paid much attention to the
+list anyway.  Beginning with SBML Level~2 Version~2, no such
+namespaces are defined in the SBML specification.
+
+\item \emph{One top level element per XML Namespace per
+\class{annotation} element and associated restrictions}
+
+An \class{annotation} element cannot contain two or more top level
+elements in the same XML namespace.  An \class{annotation} element
+cannot contain a top level element in the SBML namespace.  The
+order of top level elements within an \class{annotation} element
+is not significant.
 
 \item \emph{sboTerm}
 
-In Version 2 \class{SimpleSpeciesReference}, \class{KineticLaw},
-\class{Parameter}, \class{Reaction}, \class{Model}, \class{Rule},
-\class{InitialAssignment} and \class{Constraint} structures have
-an addition field \attrib{sboTerm}.  These fields can only contain
-valid Systems Biology Ontology (SBO) \sboref term values (that is
-they are of type SBOTerm).
+In Version 2 \class{SimpleSpeciesReference},
+\class{InitialAssignment}, \class{KineticLaw}, \class{Parameter},
+\class{Reaction}, \class{Model}, \class{Rule} and
+\class{Constraint} structures have an addition field
+\attrib{sboTerm}.  These fields can only contain valid Systems
+Biology Ontology (SBO) \sboref term values (that is they are of
+type SBOTerm).
 
 \item \emph{New format for linking external resources to SBML}
 
 A new format for using RDF and Dublin Core within
 \class{annotation} elements to link SBML models to external
-resources is introduced. Whilst CellML metadata can be included in
-SBML the specification does not make any specific mention of
-CellML metadata.
+resources and record model version history is introduced. Whilst
+CellML metadata can be included in SBML the specification does not
+make any specific mention of CellML metadata.
 
 \item \emph{Built-in units can be dimensionless}
 
@@ -6905,6 +7154,8 @@ experimental data.
 
 \item \emph{Substance units can be mass derived}
 
+\emph{FIX ME - this needs to be sorted out}
+
 In Version 2 the \emph{substance} built-in unit can be derived
 directly from kilogram rather from mole.  This facilitates the
 correct encoding of models that use a mass based rather mole based
@@ -6914,8 +7165,8 @@ examples of such models).
 \item \emph{Compartment Type}
 
 In Version 2 the \class{Model} structure has an addition list of
-\class{CompartmentType} structures.  A \class{CompartmentType}
-structure represents a type of compartment and consists of just
+\class{CompartmentType} structures.  Each of these structures
+represents a type of compartment and consists of just
 \attrib{name} and \attrib{id} fields.  The \attrib{id} field can
 optionally be referenced from an \class{Compartment} structure
 using a new \attrib{compartmentType} field.
@@ -7000,9 +7251,24 @@ the issue in which the errata is introduced.  Errata should not
 change the fundamental semantics or syntax of SBML but merely
 clarify and disambiguate the specification.
 
-\item page 2: Each new level, version and issue of SBML should be
-announced on a low volume emailing list mentioned in the
-specification.
+%\item page 2: Each new level, version and issue of SBML should be
+%announced on a low volume emailing list mentioned in the
+%specification.
+
+\item page 2: The specification should make explicit the features
+which are not backwards compatable between Level 2 Version 2 and
+Level 2 Version 1.
+
+\item page 3 Section 1.2: The specification should make explicit
+the differences in the numeric types of XML Schema and MathML.
+
+\item page 4 Section 3.1: This section should include an
+explanation of why \attrib{id} and \attrib{name} fields are not
+present on \class{SBase}.
+
+\item page 8 Figure 3: Change \texttt{nameChar} and \texttt{name}
+to \texttt{idChar} and \texttt{SId} to indicate clearly the use of
+the BNF syntax definition.
 
 \item page 9 Section 3.6: The specification should reference
 existing documents to clarify the semantics of the MathML
@@ -7017,11 +7283,21 @@ permitted on MathML \class{annotation} and
 \\ \class{annotation-xml} elements, not only on \class{csymbol} as
 stated on that page.
 
-\item page 9 Section 3.6.1: The MathML standard doesn't specify
-the result of n-ary operators when the number of operands is
+\item page 9 Section 3.6.1: The MathML standard specifies the
+result of n-ary operators when the number of operands is
 critically small, for example for \class{times} and \class{add}
-elements, when the number of operands are zero or one.  The
-specification should clarify the correct behavior.
+elements, when the number of operands are zero or one.  This is an
+obscure part of MathML and the specification should highlight the
+relevant sections of the MathML specification.
+
+\item page 9 Section 3.6.2: The specification should make explicit
+the differences in the numeric types of XML Schema and MathML.
+
+\item page 9 Section 3.6.2: The specification should describe the
+MathML whitespace rules for \class{cn} elements.
+
+\item page 10 Section 3.6.3: The specification should describe the
+MathML whitespace rules for \class{ci} elements.
 
 \item page 10 Section 3.6.3: The specification should state
 whether SBML has early or late binding semantics.
@@ -7058,9 +7334,9 @@ built-in unit \texttt{volume} should replace \texttt{liters} with
 %\item page 17 Section 4.5.5 and page 19 Section 4.6.4: The text is
 %slightly contradictory.  The text needs to be improved.
 
-\item page 18 section 4.5.6: the value of '''outside''' for a
-given compartment must be the '''id''' (not name) of another
-compartment
+\item page 18 section 4.5.6: the value of \attrib{outside} field
+for a given \class{Compartment} structure must be the value of an
+\attrib{id} field of another \class{Compartment} structure.
 
 \item page 18 Section 4.5.6: The graph formed where compartments
 are nodes and the arcs are implied by the values of
@@ -7081,8 +7357,8 @@ model should not be overdetermined as defined in
 Section~\ref{sec:ruleconstraints} of the SBML Level 2 Version 2
 specification (i.e. this document).
 
-\item page 24 Section 4.8.4: This section not refer to assignment
-rules using the term `scalar rule'.
+\item page 24 Section 4.8.4: This section should not refer to
+assignment rules using the term `scalar rule'.
 
 \item page 27 Section 4.9.5: If a species id occurs in any
 \class{ci} element MathML element including \class{KineticLaw} and
@@ -7091,6 +7367,11 @@ rules using the term `scalar rule'.
 specification only applies this rule to the \class{KineticLaw}
 element. Such a species is at a minimum a modifier of the
 reaction.
+
+\item page 29 Section 4.9.5: The relationship of the abstract
+class \class{SimpleSpeciesReference} to the concrete classes
+\class{SpeciesReference} and \class{ModifierSpeciesReference}
+should be made explicit.
 
 \item page 29 Section 4.9.6: Despite being redundant it is
 possible for a species to be referenced from the \attrib{modifier}
@@ -7224,18 +7505,18 @@ consistent with these two schemas.
         <xsd:documentation>
       File name : sbml.xsd
       Author : M. Hucka, A. Finney, D. Lucio
-/end{verbatim}
-/begin{blockChanged}
-/begin{verbatim}
+\end{verbatim}
+\begin{blockChanged}
+\begin{verbatim}
       Description : XML Schema for the Systems Biology Markup Language Level 2 Version 2
                     This is designed for XML Schema version 1.0.
       Version : 1
 
-      Copyright 2005 California Institute of Technology and Japan Science and
+      Copyright 2006 California Institute of Technology and Japan Science and
       Technology Corporation.
-/end{verbatim}
-/end{blockChanged}
-/begin{verbatim}
+\end{verbatim}
+\end{blockChanged}
+\begin{verbatim}
 
       This library is free software; you can redistribute it and/or modify it
       under the terms of the GNU Lesser General Public License as published
@@ -7274,9 +7555,9 @@ consistent with these two schemas.
             <xsd:pattern value="(_|[a-z]|[A-Z])(_|[a-z]|[A-Z]|[0-9])*"/>
         </xsd:restriction>
     </xsd:simpleType>
-/end{verbatim}
-/begin{blockChanged}
-/begin{verbatim}
+\end{verbatim}
+\begin{blockChanged}
+\begin{verbatim}
     <xsd:simpleType name="SBOTerm">
         <xsd:annotation>
             <xsd:documentation>a string for referring to an SBO term</xsd:documentation>
@@ -7285,9 +7566,9 @@ consistent with these two schemas.
             <xsd:pattern value="(SBO:)([0-9]{7})"/>
         </xsd:restriction>
     </xsd:simpleType>
-/end{verbatim}
-/end{blockChanged}
-/begin{verbatim}
+\end{verbatim}
+\end{blockChanged}
+\begin{verbatim}
     <!--The definition of SBase follows.-->
     <xsd:complexType name="SBase" abstract="true">
         <xsd:annotation>
@@ -7401,6 +7682,21 @@ consistent with these two schemas.
             </xsd:extension>
         </xsd:complexContent>
     </xsd:complexType>
+\end{verbatim}
+\begin{blockChanged}
+\begin{verbatim}
+    <!--The definition of CompartmentType follows.-->
+    <xsd:complexType name="CompartmentType">
+        <xsd:complexContent>
+            <xsd:extension base="SBase">
+                <xsd:attribute name="id" type="SId" use="required"/>
+                <xsd:attribute name="name" type="xsd:string" use="optional"/>
+            </xsd:extension>
+        </xsd:complexContent>
+    </xsd:complexType>
+\end{verbatim}
+\end{blockChanged}
+\begin{verbatim}
     <!--The definition of Compartment follows.-->
     <xsd:complexType name="Compartment">
         <xsd:complexContent>
@@ -7419,12 +7715,19 @@ consistent with these two schemas.
                 <xsd:attribute name="units" type="SId" use="optional"/>
                 <xsd:attribute name="outside" type="SId" use="optional"/>
                 <xsd:attribute name="constant" type="xsd:boolean" use="optional" default="true"/>
+\end{verbatim}
+\begin{blockChanged}
+\begin{verbatim}
+                <xsd:attribute name="compartmentType" type="SId" use="optional"/>
+\end{verbatim}
+\end{blockChanged}
+\begin{verbatim}
             </xsd:extension>
         </xsd:complexContent>
     </xsd:complexType>
-/end{verbatim}
-/begin{blockChanged}
-/begin{verbatim}
+\end{verbatim}
+\begin{blockChanged}
+\begin{verbatim}
     <!--The definition of SpeciesType follows.-->
     <xsd:complexType name="SpeciesType">
         <xsd:complexContent>
@@ -7434,9 +7737,9 @@ consistent with these two schemas.
             </xsd:extension>
         </xsd:complexContent>
     </xsd:complexType>
-/end{verbatim}
-/end{blockChanged}
-/begin{verbatim}
+\end{verbatim}
+\end{blockChanged}
+\begin{verbatim}
     <!--The definition of Species follows.-->
     <xsd:complexType name="Species">
         <xsd:complexContent>
@@ -7444,13 +7747,13 @@ consistent with these two schemas.
                 <xsd:attribute name="id" type="SId" use="required"/>
                 <xsd:attribute name="name" type="xsd:string" use="optional"/>
                 <xsd:attribute name="compartment" type="SId"/>
-/end{verbatim}
-/begin{blockChanged}
-/begin{verbatim}
+\end{verbatim}
+\begin{blockChanged}
+\begin{verbatim}
                 <xsd:attribute name="speciesType" type="SId"  use="optional"/>
-/end{verbatim}
-/end{blockChanged}
-/begin{verbatim}
+\end{verbatim}
+\end{blockChanged}
+\begin{verbatim}
                 <xsd:attribute name="initialAmount" type="xsd:double" use="optional"/>
                 <xsd:attribute name="initialConcentration" type="xsd:double" use="optional"/>
                 <xsd:attribute name="substanceUnits" type="SId" use="optional"/>
@@ -7476,13 +7779,13 @@ consistent with these two schemas.
                 <xsd:attribute name="value" type="xsd:double" use="optional"/>
                 <xsd:attribute name="units" type="SId" use="optional"/>
                 <xsd:attribute name="constant" type="xsd:boolean" use="optional" default="true"/>
-/end{verbatim}
-/begin{blockChanged}
-/begin{verbatim}
+\end{verbatim}
+\begin{blockChanged}
+\begin{verbatim}
                 <xsd:attribute name="sboTerm" type="SBOTerm" use="optional"/>
-/end{verbatim}
-/end{blockChanged}
-/begin{verbatim}
+\end{verbatim}
+\end{blockChanged}
+\begin{verbatim}
             </xsd:extension>
         </xsd:complexContent>
     </xsd:complexType>
@@ -7495,13 +7798,47 @@ consistent with these two schemas.
             </xsd:extension>
         </xsd:complexContent>
     </xsd:complexType>
-    <!--The definition of Rule follows. -->
+\end{verbatim}
+\begin{blockChanged}
+\begin{verbatim}
+    <!--The definition of Constraint follows. -->
+    <xsd:complexType name="Constraint" abstract="true">
+        <xsd:complexContent>
+            <xsd:extension base="SBase">
+                <xsd:sequence>
+                    <xsd:element ref="mml:math"/>
+                    <xsd:element name="message" minOccurs="0">
+                        <xsd:complexType>
+                            <xsd:sequence>
+                                <xsd:any
+                                    namespace="http://www.w3.org/1999/xhtml"
+                                    processContents="skip"
+                                    minOccurs="0"
+                                    maxOccurs="unbounded"/>
+                            </xsd:sequence>
+                        </xsd:complexType>
+                    </xsd:element>
+                </xsd:sequence>
+                <xsd:attribute name="sboTerm" type="SBOTerm" use="optional"/>
+            </xsd:extension>
+        </xsd:complexContent>
+    </xsd:complexType>
+\end{verbatim}
+\end{blockChanged}
+\begin{verbatim}
     <xsd:complexType name="Rule" abstract="true">
         <xsd:complexContent>
             <xsd:extension base="SBase">
                 <xsd:sequence>
                     <xsd:element ref="mml:math"/>
                 </xsd:sequence>
+\end{verbatim}
+\begin{blockChanged}
+\begin{verbatim}
+                <xsd:attribute name="sboTerm" type="SBOTerm" use="optional"/>
+\end{verbatim}
+\end{blockChanged}
+\begin{verbatim}
             </xsd:extension>
         </xsd:complexContent>
     </xsd:complexType>
@@ -7524,9 +7861,9 @@ consistent with these two schemas.
             </xsd:extension>
         </xsd:complexContent>
     </xsd:complexType>
-/end{verbatim}
-/begin{blockChanged}
-/begin{verbatim}
+\end{verbatim}
+\begin{blockChanged}
+\begin{verbatim}
     <!--The definition of Initial Assignment follows.-->
     <xsd:complexType name="InitialAssignment">
         <xsd:complexContent>
@@ -7560,9 +7897,9 @@ consistent with these two schemas.
             </xsd:extension>
         </xsd:complexContent>
     </xsd:complexType>
-/end{verbatim}
-/end{blockChanged}
-/begin{verbatim}
+\end{verbatim}
+\end{blockChanged}
+\begin{verbatim}
     <!--The definition of Reaction follows.-->
     <xsd:complexType name="KineticLaw">
         <xsd:complexContent>
@@ -7573,28 +7910,28 @@ consistent with these two schemas.
                 </xsd:sequence>
                 <xsd:attribute name="timeUnits" type="SId" use="optional"/>
                 <xsd:attribute name="substanceUnits" type="SId" use="optional"/>
-/end{verbatim}
-/begin{blockChanged}
-/begin{verbatim}
+\end{verbatim}
+\begin{blockChanged}
+\begin{verbatim}
                 <xsd:attribute name="sboTerm" type="SBOTerm" use="optional"/>
-/end{verbatim}
-/end{blockChanged}
-/begin{verbatim}
+\end{verbatim}
+\end{blockChanged}
+\begin{verbatim}
             </xsd:extension>
         </xsd:complexContent>
     </xsd:complexType>
     <xsd:complexType name="SimpleSpeciesReference" abstract="true">
         <xsd:complexContent>
             <xsd:extension base="SBase">
-/end{verbatim}
-/begin{blockChanged}
-/begin{verbatim}
+\end{verbatim}
+\begin{blockChanged}
+\begin{verbatim}
                 <xsd:attribute name="id" type="SId" use="optional"/>
                 <xsd:attribute name="name" type="xsd:string" use="optional"/>
                 <xsd:attribute name="sboTerm" type="SBOTerm" use="optional"/>
-/end{verbatim}
-/end{blockChanged}
-/begin{verbatim}
+\end{verbatim}
+\end{blockChanged}
+\begin{verbatim}
                 <xsd:attribute name="species" type="SId" use="required"/>
             </xsd:extension>
         </xsd:complexContent>
@@ -7743,6 +8080,26 @@ consistent with these two schemas.
                             </xsd:complexContent>
                         </xsd:complexType>
                     </xsd:element>
+\end{verbatim}
+\begin{blockChanged}
+\begin{verbatim}
+                    <xsd:element name="listOfCompartmentTypes" minOccurs="0">
+                        <xsd:complexType>
+                            <xsd:complexContent>
+                                <xsd:extension base="SBase">
+                                    <xsd:sequence>
+                                        <xsd:element
+                                            name="compartmentType"
+                                            type="CompartmentType"
+                                            maxOccurs="unbounded"/>
+                                    </xsd:sequence>
+                                </xsd:extension>
+                            </xsd:complexContent>
+                        </xsd:complexType>
+                    </xsd:element>
+\end{verbatim}
+\end{blockChanged}
+\begin{verbatim}
                     <xsd:element name="listOfCompartments" minOccurs="0">
                         <xsd:complexType>
                             <xsd:complexContent>
@@ -7757,9 +8114,9 @@ consistent with these two schemas.
                             </xsd:complexContent>
                         </xsd:complexType>
                     </xsd:element>
-/end{verbatim}
-/begin{blockChanged}
-/begin{verbatim}
+\end{verbatim}
+\begin{blockChanged}
+\begin{verbatim}
                     <xsd:element name="listOfSpeciesTypes" minOccurs="0">
                         <xsd:complexType>
                             <xsd:complexContent>
@@ -7773,9 +8130,9 @@ consistent with these two schemas.
                                 </xsd:extension>
                             </xsd:complexContent>
                         </xsd:complexType>
-/end{verbatim}
-/end{blockChanged}
-/begin{verbatim}
+\end{verbatim}
+\end{blockChanged}
+\begin{verbatim}
                     </xsd:element>
                     <xsd:element name="listOfSpecies" minOccurs="0">
                         <xsd:complexType>
@@ -7803,9 +8160,9 @@ consistent with these two schemas.
                             </xsd:complexContent>
                         </xsd:complexType>
                     </xsd:element>
-/end{verbatim}
-/begin{blockChanged}
-/begin{verbatim}
+\end{verbatim}
+\begin{blockChanged}
+\begin{verbatim}
                     <xsd:element name="listOfInitialAssignments" minOccurs="0">
                         <xsd:complexType>
                             <xsd:complexContent>
@@ -7820,9 +8177,9 @@ consistent with these two schemas.
                             </xsd:complexContent>
                         </xsd:complexType>
                     </xsd:element>
-/end{verbatim}
-/end{blockChanged}
-/begin{verbatim}
+\end{verbatim}
+\end{blockChanged}
+\begin{verbatim}
                     <xsd:element name="listOfRules" minOccurs="0">
                         <xsd:complexType>
                             <xsd:complexContent>
@@ -7843,9 +8200,9 @@ consistent with these two schemas.
                             </xsd:complexContent>
                         </xsd:complexType>
                     </xsd:element>
-/end{verbatim}
-/begin{blockChanged}
-/begin{verbatim}
+\end{verbatim}
+\begin{blockChanged}
+\begin{verbatim}
                     <xsd:element name="listOfConstraints" minOccurs="0">
                         <xsd:complexType>
                             <xsd:complexContent>
@@ -7860,9 +8217,9 @@ consistent with these two schemas.
                             </xsd:complexContent>
                         </xsd:complexType>
                     </xsd:element>
-/end{verbatim}
-/end{blockChanged}
-/begin{verbatim}
+\end{verbatim}
+\end{blockChanged}
+\begin{verbatim}
                     <xsd:element name="listOfReactions" minOccurs="0">
                         <xsd:complexType>
                             <xsd:complexContent>
@@ -7890,6 +8247,13 @@ consistent with these two schemas.
                 </xsd:sequence>
                 <xsd:attribute name="id" type="SId" use="optional"/>
                 <xsd:attribute name="name" type="xsd:string" use="optional"/>
+\end{verbatim}
+\begin{blockChanged}
+\begin{verbatim}
+                <xsd:attribute name="sboTerm" type="SBOTerm" use="optional"/>
+\end{verbatim}
+\end{blockChanged}
+\begin{verbatim}
             </xsd:extension>
         </xsd:complexContent>
     </xsd:complexType>
@@ -7901,13 +8265,13 @@ consistent with these two schemas.
                     <xsd:element name="model" type="Model"/>
                 </xsd:sequence>
                 <xsd:attribute name="level" type="xsd:positiveInteger" use="required" fixed="2"/>
-/end{verbatim}
-/begin{blockChanged}
-/begin{verbatim}
+\end{verbatim}
+\begin{blockChanged}
+\begin{verbatim}
                 <xsd:attribute name="version" type="xsd:positiveInteger" use="required" fixed="2"/>
-/end{verbatim}
-/end{blockChanged}
-/begin{verbatim}
+\end{verbatim}
+\end{blockChanged}
+\begin{verbatim}
             </xsd:extension>
         </xsd:complexContent>
     </xsd:complexType>
@@ -8263,10 +8627,10 @@ schema.
 \class{functionDefinition} element, a \class{species} element, a
 \class{speciesType} element, a \class{modifierSpeciesReference}
 element, a \class{speciesReference} element, a \class{compartment}
-element, a \class{compartmentType} element, a
-\\ \class{parameter} element outside any \class{kineticLaw} element,
-a \class{reaction} element or an \class{events} element should
-contain a value unique among the set of all these attributes.  See
+element, a \\ \class{compartmentType} element, a \class{parameter}
+element outside any \class{kineticLaw} element, a \class{reaction}
+element or an \class{events} element should contain a value unique
+among the set of all these attributes.  See
 Section~\ref{sec:namespaces}.
 
 \sbmlrule{901}
@@ -8522,8 +8886,8 @@ section~\ref{sec:compartment-units}.
 
 \sbmlrule{1302} \item The \attrib{constant} field of a
 \class{compartment} element must default to or be set to
-�texttt{true}�if the value of the \attrib{spatialDimensions} field is 0. See
-section~\ref{sec:compartment-constant}.
+\texttt{true} if the value of the \attrib{spatialDimensions} field
+is 0. See section~\ref{sec:compartment-constant}.
 
 \sbmlrule{1303}
 \item The value of the \attrib{outside} attribute of a
@@ -8638,15 +9002,14 @@ attributes must not be present on the same element at the same
 time.  They are mutually exclusive.  See
 Section~\ref{sec:initialAmount}.
 
-\sbmlrule{9999}
-\item Consider a \class{species} element that has a
-\attrib{boundaryCondition} attribute of false and there exists a
+\sbmlrule{9999} \item Consider a \class{species} element that has
+a \attrib{boundaryCondition} attribute of false and there exists a
 \attrib{species} attribute on a \class{speciesReference} element
 which contains the value of the \class{species} element's
 \attrib{id} attribute. (The species concentration is determined by
 a reaction.) In this case there must not exist a \attrib{variable}
 attribute of a rule element that contains the \attrib{id}
-attribute value on the \class{species} element. (A species can't
+attribute value on the \class{species} element. (A species cannot
 be determined by rules and reactions at the same time). See
 Section~\ref{sec:species-constant}.
 
@@ -8687,7 +9050,7 @@ value.  See Sections~\ref{sec:initialAssignment}.
 
 \sbmlrule{9999} \item The \attrib{symbol} attribute of a
 \class{initialAssignment} element and the \attrib{variable}
-attribute of a \class{assignmentRule} must not contain the same
+attribute of an\\ \class{assignmentRule} must not contain the same
 value.  See sections~\ref{sec:initialAssignment}.
 
 \end{enumerate} \subsection{\class{Reaction}} \begin{enumerate}

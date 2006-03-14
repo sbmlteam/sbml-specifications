@@ -89,7 +89,7 @@
 \date{SBML Level 2, Version 2, Revision 1\\[5pt]
  \fbox{Draft for Public Review}\\[6pt]
   \today{}\\
-  Temporary Revision 2}
+  $Revision$}
 
 \maketitle
 
@@ -1787,8 +1787,6 @@ available.
 \label{sec:sbml}
 %-----------------------------------------------------------------------------
 
-%%%%%%% FIXME: improve this text
-
 The outermost portion of an SBML Level~2 model definition consists of a
 single \class{Sbml} structure enclosing a single \class{Model} structure
 (see next Section).  The definition of \class{Sbml} is shown in
@@ -1828,6 +1826,58 @@ model definition in XML:
 </sbml>
 \end{example}
 \end{blockChanged}
+
+\begin{blockChanged}
+Readers may wonder why the SBML top-level XML element uses both a namespace
+URI identifying the SBML level and version, as well as separate XML
+attributes encoding the level and version.  Why is the information
+duplicated in this way?  There are several reasons.  First, XML is only one
+possible serialization of SBML (albeit an extremely popular one at this
+time).  Though most of this document is written with XML in mind, it is the
+intention behind the design of SBML that its object structure should be
+implementable in other languages and software systems.  For this reason,
+the level and version information must be made available as explicit data
+fields somewhere in a model.  Second, tools that use generic high-level XML
+parsers may not be given access to the value of the \texttt{xmlns}
+attribute.  Providing the information via separate attributes is a good
+backup measure.  Third, earlier in the history of SBML, it was expected
+that only the level needed to be encoded as part of the namespace URI
+(e.g., ``\texttt{http://www.sbml.org/sbml/level1}'') because it was hoped
+that changes within levels would not require XML Schema changes.  This has
+proven to be false, but both versions of SBML Level~1 and the first version
+of SBML Level~2 still subscribe to this principle.  This means that for
+these variants of SBML, software tools must look for a \attrib{version}
+attribute on the top-level element.  For backwards compatibility with
+software that expects this, it makes more sense to keep the version and
+level attributes.  And finally, XML namespaces have certain rules that
+stymie straightforward pattern-matching recognition in such things as XSLT
+transformations.  The full details would be beyond the scope of this
+section, but the consequences are that it is simpler and more reliable to
+match and extract information from attributes than from XML namespaces.
+\end{blockChanged}
+
+
+%One of them is that if an attribute name is not explicitly declared to be
+%in a particular XML namespace, then that name is (paradoxically) not in
+%\emph{any} XML namespace.  However, when it comes to namespaces in XML, all
+%of the following are legal:
+%\begin{example}
+%<sbml xmlns="http://www.sbml.org/sbml/level2/version2" level="2" version="2">
+%<sbml:sbml xmlns:sbml="http://www.sbml.org/sbml/level2/version2" level="2" version="2">
+%<foo:sbml xmlns:foo="http://www.sbml.org/sbml/level2/version2" level="2" version="2">
+%\end{example}
+%XML parsers would return ``\texttt{xmlns}'', ``\texttt{xmlns:sbml}'', and
+%``\texttt{xmlns:foo}'', respectively, for the namespace attribute.  The
+%consequence is this: a pattern-matching system such as XSLT could match the
+%\texttt{level} and \texttt{version} attributes regardless of which of these
+%alternatives was presented (because of the paradoxical nature of
+%unqualified attributes in namespaces), but properly detecting the namespace
+%setting requires more complicated parsing to allow for any variation in
+%namespace prefixes.  (After all, there may be other namespace declarations
+%on the top-level \texttt{sbml} element, so simply looking for
+%\texttt{xmlns} is not enough, nor is it enough to detect the SBML namespace
+%URI string, since the string might be present but its use combined with the
+%prefix might still be incorrect.) 
 
 
 %-----------------------------------------------------------------------------

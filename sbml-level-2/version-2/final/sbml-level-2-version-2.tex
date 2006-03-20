@@ -233,7 +233,7 @@ Appendix~\ref{apdx:version1-version2}.
 Language specification documents inevitably require minor editorial changes
 as its communities of users discover errors and ambiguities.  As a
 practical reality, these discoveries occur over time.  In the context of
-SBML, such problems are formally announced publicly as \emph{errata} for a
+SBML, such problems are formally announced publicly as \emph{errata} in a
 given specification document.  Borrowing concepts and processes
 from the World Wide Web consortium~\citep{jacobs:2004}, we define SBML
 errata as changes of the following types: (a) formatting changes that
@@ -644,6 +644,8 @@ The meaning of each component is as follows:
 \item \emph{Unit definition}: A name for a unit used in the expression of
   quantities in a model.
 
+% FIXME 2006-03-19 the following definition of compartment type is still funny
+
 \item \changed{\emph{Compartment Type}: A type of well-stirred
 container of finite size for substances.}
 
@@ -707,7 +709,8 @@ document where each of these components is described in more detail.
   \centering
   \begin{tabular}{lllc}
     \toprule
-    \textbf{Component}	& \textbf{Section}		& \textbf{Starting page}	& \textbf{New?}\\
+    			& 				& 				& \textbf{New in}\\
+    \textbf{Component}	& \textbf{Section}		& \textbf{Starting page}	& \textbf{Version 2?}\\
     \midrule
     Function definition	& \ref{sec:functions}		& \pageref{sec:functions}\\ 
     Unit definition	& \ref{sec:unitdefinitions}	& \pageref{sec:unitdefinitions}\\
@@ -862,8 +865,9 @@ restricted as shown in Figure~\ref{fig:id}.
   \caption{The definition of the XML Schema type \primtype{ID}
     expressed in the variant of BNF used by the XML 1.0
     specification~\protect\citep{bray:2000}.  The characters
-    \texttt{(} and \texttt{)} are used for grouping, and the
-    character \texttt{*} indicates ``zero or more times''.  The
+    \texttt{(} and \texttt{)} are used for grouping, the
+    character \texttt{*} indicates ``zero or more times'', and the
+    character \texttt{|} indicates ``or''.  The
     productions \token{CombiningChar} and \token{Extender} are
     relatively long lists of Unicode characters and are omitted
     here; please consult the XML 1.0
@@ -984,9 +988,11 @@ Figure~\vref{fig:top-level}.
 \label{sec:sbase}
 %-----------------------------------------------------------------------------
 
-Every structure composing an SBML Level~2 model definition has a specific
-data type that is derived directly or indirectly from a single abstract
-type called \SBase.  This base type is designed to allow a modeler
+Every structure composing an SBML Level~2 model definition has a
+specific data type that is derived directly or indirectly from a
+single abstract type called \SBase.  \changed{In addition to
+serving as the parent class for most other classes of objects in
+SBML, this} base type is designed to allow a modeler
 or a software package to attach arbitrary information to each major
 structure or list in an SBML model.  The definition of \SBase is
 presented in Figure~\vref{fig:sbase}.
@@ -1070,7 +1076,13 @@ a few restrictions on the organization of the content; these are intended
 help software tools read and write the data as well as help reduce
 conflicts between annotations added by different tools.
 
-\paragraph{The Use of XML Namespaces in Annotations}
+
+\paragraph{The Use of XML Namespaces in \token{annotation}}
+
+% FIXME 2006-03-19:
+% we should mention that RDF is an additional thing that can show
+% up in annotations.  basically what's happening here is that we're
+% saying any/all rdf content must be lumpted together in one place
 
 At the outset, software developers should keep in mind that multiple
 software tools may attempt to read and write annotation content.  To reduce
@@ -1086,13 +1098,11 @@ prefix \token{mysim} when writing annotations related to screen layout.
 The content of an annotation might look like the following:
 
 \begin{example}
-...
 <annotation>
     <mysim:nodecolors xmlns:mysim="http://www.mysim.org/ns"
          mysim:bgcolor="green"
          mysim:fgcolor="white"/>
 </annotation>
-...
 \end{example}
 
 In this particularly simple case, the content consists of a single XML
@@ -1100,10 +1110,10 @@ element (\token{nodecolors}) with two attributes (\token{bgcolor},
 \token{fgcolor}), all of which are prefixed by the string \token{mysim}.
 (Presumably this particular content would have meaning to the hypothetical
 application in question.)  The content in this particular example is small,
-but it should be clear that it could easily have been an arbitrarily large
+but it should be clear that there could easily have been an arbitrarily large
 amount of data placed inside the \token{mysim:nodecolors} element.
 
-The key point of the example above is that application-specific annotation
+The key point of the example above is that application-specific annotation data
 is entirely contained inside a single \emph{top-level element} within the
 SBML \token{annotation} container.  \sbmltwotwo places the following
 restrictions on annotations:
@@ -1121,7 +1131,9 @@ restrictions on annotations:
       ``\texttt{http://www.sbml.org/sbml/level2/version2}''.)
 
 \item The ordering of top-level elements within a given \token{annotation}
-      element is \emph{not} significant.
+      element is \emph{not} significant.  An application should
+      not expect that its annotation content appears first in the
+      \token{annotation} element, nor in any other particular location.
 
 \end{itemize}
 
@@ -1134,10 +1146,11 @@ are designed to enable applications to easily add, change, and remove their
 annotations from SBML elements while simultaneously preserving annotations
 inserted by other applications when mapping SBML from input to output.
     
-Some more examples hopefully will make this more clear.  The next example
-is invalid because it contains a top-level element in the SBML XML
-namespace (because no namespace is declared, which means by default it
-falls into the SBML namespace):
+Some more examples hopefully will make this more clear.  The next
+example is invalid because it contains a top-level element in the
+SBML XML namespace---this happens because no namespace is declared
+for the \token{<cytoplasm>} element, which means by default it
+falls into the SBML namespace:
 
 \begin{example}
 <annotation>
@@ -1145,8 +1158,13 @@ falls into the SBML namespace):
 </annotation>
 \end{example}
 
-The following example is invalid because it contains two top-level elements
-using the same XML namespace:
+The following example is invalid because it contains two top-level
+elements using the same XML namespace.  Note that it does not
+matter that these are two different top-level elements
+(\token{<nodecolors>} and \token{<textcolors>}); what matters is
+that these separate elements are both in the same namespace rather
+than having been collected and placed inside one overall container
+element for that namespace.
 
 \begin{example}
 <annotation>
@@ -1173,14 +1191,15 @@ On the other hand, the following example is valid:
 </annotation>
 \end{example}
 
-It is worth keeping in mind that although XML namespace names must be URI
-references, an XML namespace name is \emph{not required} to be directly
-usable in the sense of identifying an actual, retrieval document or
-resource on the Internet~\citep{bray:1999}. The string
-``\texttt{http://www.mysim.org/}'' is a namespace name or URI in the
-examples above.  The approach is simply intended to enable unique
-identification of constructs, and using URIs is a common and simple way of
-creating a unique name string.
+It is worth keeping in mind that although XML namespace names must
+be URI references, they are (like all XML namespace names)
+\emph{not required} to be directly usable in the sense of
+identifying an actual, retrieval document or resource on the
+Internet~\citep{bray:1999}.  URIs such as
+``\texttt{http://www.mysim.org/}'' may appear as though they are
+(e.g.) Internet addresses, but there are not the same thing.  This
+style of URI strings, using a domain name and other parts, is only
+a simple and commonly-used way of creating a unique name string.
 
 Finally, note that the namespaces being referred to here are XML
 namespaces specifically in the context of the \token{annotation}
@@ -1201,15 +1220,15 @@ structures} is \emph{not} stored in \token{annotation}. Parameter
 values, functional dependencies between model structures, etc.,
 should not be recorded as annotations.  It is crucial to keep in
 mind the fact that data placed in annotations can be freely ignored by
-software applications.  If such data changes the interpretation 
+software applications.  If such data affects the interpretation 
 of a model, then software interoperability is greatly impeded.
 
 Here are examples of the kinds of data that may be appropriately
 stored in \token{annotation}: (a) information about the graphical
 layout of model components; (b) application-specific processing
 instructions that do not change the essential meaning of a model;
-(c) identification information for cross-referencing
-components in a model with items in a data resource.
+(c) identification information for cross-referencing components in
+a model with items in a data resource such as a database.
 
 \paragraph{Standardized Format for Certain Classes of Annotations}
 
@@ -1384,7 +1403,7 @@ requirements on the implementation of software tools:
 The set of rules above can enable software packages using either
 local or global namespaces for parameters to exchange SBML model
 definitions.  In particular, software environments using local
-namespaces for parameters internally should be able to accept SBML
+namespaces for parameters internally should, in principle, be able to accept SBML
 model definitions without needing to change component identifiers.
 Environments using a global namespace for parameters internally
 can perform a simple manipulation of the identifiers of local
@@ -2756,7 +2775,7 @@ Figure~\vref{fig:compartment}.
 
 \begin{figure}[htb]
   \centering
-  \begin{classbox}{SpeciesType}
+  \begin{classbox}{Compartment}
     id: SId \\
     name: string \{ use="optional" \} \\
     spatialDimensions: integer \{ maxInclusive="3" minInclusive="0" use="optional" default="3" \} \\

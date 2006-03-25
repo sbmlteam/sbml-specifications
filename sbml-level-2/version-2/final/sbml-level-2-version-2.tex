@@ -6,6 +6,7 @@
 \newcommand{\abstractclass}[1]{\textsl{\figureFont{#1}}} % abstract classes
 \newcommand{\primtype}[1]{\literalFont{#1}} % double, SId, SBOTerm, IDREF, etc.
 \newcommand{\token}[1]{\literalFont{#1}}    % everything else
+\newcommand{\val}[1]{``\literalFont{#1}''} % a value in XML
 
 % Special commands for linking the SBML component classes.  The following
 % defines a special command of the form \Foo for any SBML type that has a
@@ -40,8 +41,7 @@
 
 % Special commands for validation rules.
 
-\newcommand{\sbmlrule}[1]{\setcounter{enumi}{#1} \addtocounter{enumi}{-1}}
-\newenvironment{rulesection}{\begin{center} \large}{\normalsize \end{center}}
+\newcommand{\sbmlrule}[1]{\item[#1.]\input{validation-rules/#1.tex}}
 
 % Macros for SBO.
 
@@ -58,6 +58,9 @@
 
 \newcommand{\quantity}[1]{\emph{#1}}
 
+\newcommand{\sbmlone}{SBML Level~2\xspace}
+\newcommand{\sbmltwo}{SBML Level~2\xspace}
+
 \newcommand{\sbmlonetwo}{SBML Level~1 Version~2\xspace}
 \newcommand{\sbmltwoone}{SBML Level~2 Version~1\xspace}
 \newcommand{\sbmltwotwo}{SBML Level~2 Version~2\xspace}
@@ -68,6 +71,13 @@
 
 \defcitealias{bipm:1998}{BIPM, 1998}
 \defcitealias{bipm:2000}{BIPM, 2000}
+
+% Extra settings for PDF.
+
+\hypersetup{
+  pdftitle={Systems Biology Markup Language (SBML) Level 2: Structures and Facilities for Model Definitions},
+  pdfauthor={Andrew Finney, Michael Hucka, and Nicolas Le Novere}}
+
 
 \begin{document}
 
@@ -128,14 +138,7 @@ The XML Schema for SBML Level 2 Version 2 is available at\\
 
 \clearpage
 
-% In the future I'll create a separate tex style just for the specs.
-% This is a temporary hack
-
-\begin{small}
-  \setlength{\baselineskip}{9pt}%
-  \addtolength{\parskip}{-1.35 ex}%
-  \tableofcontents%
-\end{small}
+\sbmltableofcontents
 
 \clearpage
 
@@ -854,10 +857,10 @@ restricted as shown in Figure~\ref{fig:id}.
   \centering
   \color{BrickRed}
   \begin{tabular}{lll}
-       NCName & ::= & ( letter | '\_' ) NCNameChar*\\
-   NCNameChar & ::= & letter | digit | '.' | '-' | '\_' | CombiningChar | Extender\\
        letter & ::= & 'a'..'z','A'..'Z'\\
-       digit  & ::= & '0'..'9'
+       digit  & ::= & '0'..'9'\\
+       NCName & ::= & ( letter | '\_' ) NCNameChar*\\
+   NCNameChar & ::= & letter | digit | '.' | '-' | '\_' | CombiningChar | Extender
   \end{tabular}
   \color{black}
   \caption{The definition of the XML Schema type \primtype{ID}
@@ -970,7 +973,7 @@ Figure~\vref{fig:top-level}.
 
 \begin{figure}[ht]
   \centering
-  \includegraphics[scale = 0.7]{top-level}
+  \includegraphics[scale = 0.7]{figs/top-level}
   \caption{A UML diagram of the inheritance hierarchy of major data types
     in SBML.  Open arrows indicate inheritance, pointing from inheritors to
     their parents~\protect\citep{eriksson:1998,oestereich:1999}.  In addition to
@@ -1340,8 +1343,6 @@ appear, the common rules of usage described below apply.
 \subsubsection{The \token{id} Field and Identifier Scoping}
 \label{sec:identifiers}
 
-% FIXME change this to talk about identifier scoping rather than namespaces
-
 The \token{id} field is a mandatory field on most structures in
 SBML.  It is used to identify a component within the model
 definition.  Other SBML structures can refer to the component
@@ -1370,27 +1371,33 @@ The fact that different simulation programs may use different
 rules for identifier resolution poses a problem for the exchange
 of models between simulation tools.  Without careful
 consideration, a model written out in SBML format by one program
-may be misinterpreted by another program.  SBML Level~2 must
+may be misinterpreted by another program.  \sbmltwo must
 therefore include a specific set of rules for treating identifers
-and namespaces.
+and \changed{their scopes}.
 
-The namespace rules in SBML Level 2 are relatively straightforward
+The \changed{scoping} rules in \sbmltwo are relatively straightforward
 and are intended to avoid this problem with a minimum of
 requirements on the implementation of software tools:
 \begin{itemize}
+  
+\item \changed{The identifiers (\ie the values of the field
+  \token{id}) of functions, compartment types, compartments,
+  species types, species, reactions, species references,
+  modifier species references, events, global parameters,
+  and the model object, must be unique across the set of all
+  such identifiers in the model.  This means, for example, that
+  a reaction and a species definition cannot both have the same
+  identifier.}
 
-\item The identifiers (i.e., the values of the field \token{id})
-  of functions, compartment types, compartments, species types,
-  species, reactions, simple species references, events and
-  model-level parameters reside in the same global namespace.
-  This means, for example, that a reaction and a species
-  definition cannot both have the same identifier.
-
-\item Each reaction definition (see Section~\ref{sec:reactions})
-  establishes a private local namespace for local parameter
-  identifiers.  Within the definition of a given reaction, local
-  parameter identifiers introduced in that reaction override
-  (shadow) identical identifers in the global namespace.
+\item Each \changed{\Reaction instance} (see
+  Section~\ref{sec:reactions}) establishes a private local
+  namespace for new local parameter identifiers.  Within the
+  definition of a given reaction, local parameter identifiers
+  introduced in that reaction override (shadow) identical
+  identifers \changed{outside of that reaction}.  \changed{Of
+    course, the corollary of this is that local parameters inside
+    a \Reaction object instance are not visible to other objects
+    outside of that reaction.}
 
 \item Unit identifiers (the values of the field \token{id} in the
   \UnitDefinition structure) exist in a separate global namespace
@@ -1416,8 +1423,8 @@ The namespace rules described here will hopefully provide a clean
 transition path to future levels of SBML, when submodels are
 introduced (Section~\ref{sec:level-3}).  Submodels will provide
 the ability to compose one model from a collection of other
-models.  This capability will have to be built on top of SBML
-Level~2's namespace organization.  A straightforward approach to
+models.  This capability will have to be built on top of \sbmltwo's
+namespace organization.  A straightforward approach to
 handling namespaces is to make each submodel's space be private.
 The rules governing namespaces within a submodel can simply be the
 Level~2 namespace rule described here, with each submodel having
@@ -2132,7 +2139,7 @@ the version and level attributes.
 The \Model structure is the highest-level construct in an SBML data
 stream or document.  Its definition is shown in
 Figure~\vref{fig:model}.  Only one component of type \Model is
-allowed per instance of an SBML document or data stream, although it does
+allowed per instance of an \changed{\sbmltwotwo} document or data stream, although it does
 not necessarily need to represent a single biological entity.
 
 \begin{figure}[htb]
@@ -2307,6 +2314,9 @@ field.}
 \subsubsection{The \token{math} Field}
 \label{sec:function-definition-math}
 
+% FIXME improve text, eg by explaining other reasons why lambdas
+% can't refer to other lambdas.
+
 The \token{math} field is a container for MathML content that
 defines the function.  The content of this field can only be a
 MathML \texttt{lambda} element.  This is the only place in SBML
@@ -2369,7 +2379,7 @@ Figure~\vref{fig:unitdefinition}.
 
 \begin{figure}[htb]
   \centering
-  \includegraphics[scale = 0.68]{unitdefinition}
+  \includegraphics[scale = 0.68]{figs/unitdefinition}
   \caption{The definition of \UnitDefinition and \Unit. Following UML
     notation, additional fields
     that are inherited from a base class, in this case \SBase, are not shown.}
@@ -3093,7 +3103,7 @@ is shown in Figure~\vref{fig:species}.
 
 \begin{figure}[htb]
   \centering
-  \includegraphics[scale = 0.68]{specie}
+  \includegraphics[scale = 0.68]{figs/specie}
   \caption{The definition of \Species.  Following UML notation,
     additional fields
     that are inherited from a base class, in this case \SBase, are not shown.}
@@ -3727,7 +3737,7 @@ correspond to the cases \emph{Algebraic}, \emph{Assignment}, and
 
 \begin{figure}[htb]
   \centering
-  \includegraphics[scale = 0.68]{rule}
+  \includegraphics[scale = 0.68]{figs/rule}
   \caption{The definition of \Rule and derived types.
     Following UML notation fields
     that are inherited from a base class are not shown.}
@@ -3854,7 +3864,7 @@ the precise details depending on which variable is being set:
   \RateRule \token{variable} field
   having the same
   value. (See Section~\ref{sec:reactions} for the definition of
-  \\ \SpeciesReference.)  \changed{This means an rate rule cannot be
+  \SpeciesReference.)  \changed{This means an rate rule cannot be
   defined for a species that is created or destroyed in a reaction.}  The
   only exception is when the given species is a boundary condition; i.e.,
   on the \Species structure that defines the species the
@@ -4198,7 +4208,7 @@ shows the definition of the \Constraint data structure.
 \begin{figure}[htb]
   \begin{blockChanged}
   \centering
-  \includegraphics[scale = 0.68]{constraint}
+  \includegraphics[scale = 0.68]{figs/constraint}
   \caption{The definition of \Constraint.
     Following UML notation fields
     that are inherited from a base class are not shown.}
@@ -4307,7 +4317,7 @@ Figure~\vref{fig:reaction}.
 
 \begin{figure}[htb]
   \centering
-  \includegraphics[scale=0.67]{reaction}
+  \includegraphics[scale=0.67]{figs/reaction}
   \caption{The definitions of \Reaction, \KineticLaw,
     \SpeciesReference and \ModifierSpeciesReference.
     Following UML notation fields
@@ -4833,7 +4843,7 @@ given below.
 
 \begin{figure}[htb]
   \centering
-  \includegraphics[scale = 0.68]{event}
+  \includegraphics[scale = 0.68]{figs/event}
   \caption{The definitions of \Event and \EventAssignment.
     Following UML notation, additional fields
     that are inherited from a base class, in this case \SBase, are not shown.}
@@ -4841,11 +4851,15 @@ given below.
 \end{figure}
 
 \subsubsection{The \token{id} and \token{name} Fields}
+\label{sec:event-id-name}
+
 These optional fields are available to support external references
 to event structures.  These fields operate in the manner described in
 Section~\ref{sec:idnameattribs} except that the \token{id} field is optional.
 
 \subsubsection{The \token{trigger} Field}
+\label{sec:event-trigger}
+
 The \token{trigger} field defines when the \Event structure has an
 effect on the model.  The \token{trigger} field contains a MathML boolean
 expression.  The exact instant that the expression evaluates to true is the
@@ -4855,6 +4869,8 @@ event will fire at any further time points when the \token{trigger} make
 this transition.
 
 \subsubsection{The \token{delay} Field}
+\label{sec:event-delay}
+
 The optional \token{delay} field defines the length of time after
 the event has \emph{fired} that the event is \emph{executed}. The
 \token{delay} field is another MathML expression.  This
@@ -6178,7 +6194,7 @@ encoded in XML using SBML Level~2.
 
 Consider the following hypothetical branched system:
 \begin{center}
-\includegraphics[scale = 0.9]{example-network}
+\includegraphics[scale = 0.9]{figs/example-network}
 \end{center}
 The following is an XML document encoding the model shown
 above:
@@ -6717,8 +6733,8 @@ The following example SBML model encodes this approximate form.
 
 %-----------------------------------------------------------------------------
 \subsection{Example Involving Combinations of
-  \token{boundaryCondition} and \token{constant} Values on \Species
-  with \RateRule structures}
+  \token{boundaryCondition} and \token{constant} Values on \class{Species}
+  with \class{RateRule} structures}
 \label{sec:constantspecieseg}
 %-----------------------------------------------------------------------------
 
@@ -6845,7 +6861,7 @@ figure~\ref{fig:multicomp}.
 \begin{figure}[htb]
   \vspace*{20pt}
   \centering
-  \includegraphics[scale=0.67]{multicomp}
+  \includegraphics[scale=0.67]{figs/multicomp}
   \caption{A example multi-compartmental model.}
   \label{fig:multicomp}
 \end{figure}
@@ -7787,7 +7803,7 @@ Japan Science and Technology Agency (JST) under the ERATO Kitano
 Symbiotic Systems Project during the years 2000--2003.  The
 principal investigators were Hiroaki Kitano and John~C.\ Doyle.
 The original SBML Team was lead by Hamid Bolouri and consisted of
-Andrew Finney, Herbert Sauro, and Michael Hucka.
+Hamid, Andrew Finney, Herbert Sauro, and Michael Hucka.
 
 We gratefully acknowledge sponsorship from many funding agencies.
 Support for the continued development of SBML and associated
@@ -7993,7 +8009,6 @@ XPPAUT.
 
 
 \newpage
-\section{Appendix}
 \setcounter{secnumdepth}{2}
 \appendix
 
@@ -9648,46 +9663,18 @@ schema.
 %containing \texttt{dimensionless} units with different unit
 %attributes e.g. \token{exponent} are equivalent.
 
-\subsection*{General Identifier Validation}
+\subsection*{General Identifier Validation}  \begin{enumerate}
 
-\begin{enumerate}
-
-\sbmlrule{900} \item The \token{id} field on a
-\token{functionDefinition} element, a \token{species} element, a
-\token{speciesType} element, a \token{modifierSpeciesReference}
-element, a \token{speciesReference} element, a \token{compartment}
-element, a \\ \token{compartmentType} element, a \token{parameter}
-element outside any \token{kineticLaw} element, a \token{reaction}
-element or an \token{events} element should contain a value unique
-among the set of all these attributes.  See
-Section~\ref{sec:identifiers}.
-
+\sbmlrule{900}
 \sbmlrule{901}
-\item The \token{id} attributes on
-\token{unitDefinition} elements should contain a unique value
-amongst the set of all such attributes.  See
-section~\ref{sec:unitdefinition-structure}.
-
 \sbmlrule{902}
-\item The \token{id} attributes on
-\token{parameter} elements inside \token{kineticLaw} elements
-should contain values unique to each element among the set of
-these attributes within the same \token{kineticLaw} element.  See
-Section~\ref{sec:identifiers}.
-
 \sbmlrule{903}
-\item The \token{variable} attribute value
-must be unique amongst the set of \token{assignmentRule} and
-\token{rateRule} elements. See Sections~\ref{sec:assignmentrule}
-and~\ref{sec:raterule}.
-
 \sbmlrule{904}
-\item The \token{variable} attribute value
-must be unique amongst the set of \token{eventAssignment} elements
-within a each \token{event} element.  See
-Section~\ref{sec:eventassignment}.
+\sbmlrule{905}
 
-\end{enumerate} \subsection*{MathML} \begin{enumerate}
+\end{enumerate} \subsection*{General MathML Validation} \begin{enumerate}
+
+% FIXME: MH not reviewed this section
 
 %\item Only elements in the SBML MathML subset are used (see
 %section~\ref{sec:mathmlsubset})
@@ -9695,26 +9682,26 @@ Section~\ref{sec:eventassignment}.
 %\item Only SBML MathML subset attributes are used as described in
 %the specification (see section~\ref{sec:mathmlsubset})
 
-\sbmlrule{9999} \item In a MathML element outside a
+\item[9999.] In a MathML element outside a
 \token{functionDefinition} element, a \token{ci} element that is a
 leaf operand (argument) of a MathML operator must contain the
 value of the \token{id} attribute of a \token{species},
 \token{compartment}, \token{parameter} element or \token{reaction}
 element.(see section~\ref{sec:ci-token})
 
-\sbmlrule{9999} \item In a MathML element inside a
+\item[9999.] In a MathML element inside a
 \token{functionDefinition} element, a \token{ci} element that is a
 leaf operand (argument) of a MathML operator must contain the
 value the content of one of the top-level \token{bvar} elements.
 (see section~\ref{sec:ci-token}).
 
-\sbmlrule{9999} \item The value of an \token{id} attribute of a
+\item[9999.] The value of an \token{id} attribute of a
 local parameter can only be used in \token{ci} elements within the
 MathML contained in the same \token{kineticLaw} element that
 contains the \token{parameter} element. (see
 sections~\ref{sec:ci-token} and \ref{subsec:kinetic-law}).
 
-\sbmlrule{9999} \item A \token{ci} element that represents a math
+\item[9999.] A \token{ci} element that represents a math
 function i.e. the first subelement of an \token{apply} element can
 only contain the values of \token{id} attributes of previous
 \token{functionDefinition} elements.  The \token{ci} element
@@ -9723,14 +9710,12 @@ cannot contain the value of the \token{id} field of any enclosing
 recursive or mutually recursive). (see
 section~\ref{sec:ci-token}).
 
-\sbmlrule{9999}
-\item The \token{lambda} elements can only be used as the outer
+\item[9999.] The \token{lambda} elements can only be used as the outer
 most element contained within the MathML element contained within
 a \token{functionDefinition} element. (see
 section~\ref{sec:function-definition-math})
 
-\sbmlrule{9999}
-\item MathML operators return results of two types: boolean and
+\item[9999.] MathML operators return results of two types: boolean and
 numeric.  Boolean operators and values must be used as the root of
 an expression tree in MathML
 
@@ -9743,8 +9728,7 @@ an expression tree in MathML
 
 \end{enumerate}
 
-\sbmlrule{9999}
-\item Boolean operators and values can optionally be used as the root of
+\item[9999.] Boolean operators and values can optionally be used as the root of
 an expression tree in following contexts:
 
 \begin{enumerate}
@@ -9758,7 +9742,7 @@ and
 
 In all other contexts numeric operators must be used.
 
-\sbmlrule{9999}
+\item[9999.]
 The set of expressions that make up the first arguments of the
 \token{piece} and \token{otherwise} operators within the same
 \token{piecewise} operator should all return values of the same
@@ -9773,6 +9757,30 @@ of the top level operator of the function definition.
 
 See section~\ref{sec:mathmltype}.
 
+
+\end{enumerate} \subsection*{General Unit Validation} \begin{enumerate}
+
+\sbmlrule{3000}
+\sbmlrule{3001}
+\sbmlrule{3002}
+\sbmlrule{3003}
+\sbmlrule{3004}
+\sbmlrule{3005}
+\sbmlrule{3100}
+\sbmlrule{3101}
+\sbmlrule{3102}
+\sbmlrule{3200}
+\sbmlrule{3400}
+
+
+\end{enumerate} \subsection*{\class{Model}} \begin{enumerate}
+
+\sbmlrule{1000}
+\sbmlrule{1001}
+
+% FIXME what's going on with these?  Are these bogus?  Why are
+% they here?
+%
 %\end{enumerate} \subsection*{\Unit} \begin{enumerate}
 %
 %\sbmlrule{9999}
@@ -9789,388 +9797,105 @@ See section~\ref{sec:mathmltype}.
 %on a \token{unitDefinition} element.  See
 %section~\ref{sec:unit-structure}.
 
-\end{enumerate} \subsection*{\UnitDefinition} \begin{enumerate}
+\end{enumerate} \subsection*{\class{FunctionDefinition}} \begin{enumerate}
 
-%\sbmlrule{9999}
-%\item The directed graph formed from unit definitions must be
-%acyclic. A directed graph is formed from unit definitions by
-%creating a vertex for each \token{unitDefinition} element.  Each
-%edge represents a \token{unit} element with a \token{definition}
-%attribute value. The edge's source is the vertex representing the
-%\token{unitDefinition} element containing the \token{unit}
-%element. The edge's sink is the vertex representing the unit
-%definition referenced by the \token{definition} attribute value.
-%See section~\ref{sec:unit-structure}.
+\sbmlrule{1100}
+\sbmlrule{1101}
+
+\end{enumerate} \subsection*{\class{UnitDefinition}} \begin{enumerate}
 
 \sbmlrule{1201}
-\item The \token{id} attributes on
-\token{unitDefinition} elements should not contain the values of
-the Unit kind enumeration (i.e. \texttt{metre}, \texttt{litre}
-etc). See section~\ref{sec:unitdefinition-structure}
+\sbmlrule{1202}
+\sbmlrule{1203}
+\sbmlrule{1204}
+\sbmlrule{1205}
+\sbmlrule{1206}
+\sbmlrule{1207}
+\sbmlrule{1208}
 
-\sbmlrule{1202} \item If the \token{id} attribute of a
-\token{unitDefinition} element contains \texttt{substance} then
-the element must contain a single \token{unit} element containing
-a \token{kind} attribute value of \token{dimensionless},
-\token{mole} or \token{item} and \texttt{exponent} attribute value
-of 1 (can default to 1).  See section~\ref{sec:built-in-units}.
+% FIXME decide what to do with this
 
-\sbmlrule{1203} \item If the \token{id} attribute of a
-\token{unitDefinition} element contains \texttt{length} then the
-element must contain a single \token{unit} element containing
-either:
-\begin{itemize}
+\item[9999.] The directed graph formed from unit definitions must be
+acyclic. A directed graph is formed from unit definitions by
+creating a vertex for each \token{unitDefinition} element.  Each
+edge represents a \token{unit} element with a \token{definition}
+attribute value. The edge's source is the vertex representing the
+\token{unitDefinition} element containing the \token{unit}
+element. The edge's sink is the vertex representing the unit
+definition referenced by the \token{definition} attribute value.
+See section~\ref{sec:unit-structure}.
 
-\item a \token{kind} attribute value of \texttt{metre} and
-\token{exponent} attribute value of 1 (can default to 1); or
 
-\item a \token{kind} attribute value of \texttt{dimensionless}
-with arbitrary \token{exponent} attribute value.
-
-\end{itemize}
-
-See section~\ref{sec:built-in-units}.
-
-\sbmlrule{1204} \item If the \token{id} attribute of a
-\token{unitDefinition} element contains \texttt{area} then the
-element must contain a single \token{unit} element containing
-either:
-\begin{itemize}
-
-\item a \token{kind} attribute value of \texttt{metre} and
-\token{exponent} attribute value of 2; or
-
-\item a \token{kind} attribute value of \texttt{dimensionless}
-with arbitrary \token{exponent} attribute value.
-
-\end{itemize}
-
-See section~\ref{sec:built-in-units}.
-
-\sbmlrule{1205} \item If the \token{id} attribute of a
-\token{unitDefinition} element contains \texttt{volume} the
-element must contain a single \token{unit} element containing a
-\token{kind} attribute value of \texttt{dimensionless},
-\texttt{litre} or \texttt{metre}. See
-section~\ref{sec:built-in-units}.
-
-\sbmlrule{1206} \item If the \token{id} attribute of a
-\token{unitDefinition} element contains \texttt{volume} and the
-the enclosed \token{unit} element \token{kind} attribute contains
-\texttt{litre} then the \token{exponent} attribute must be 1 (can
-default to 1). See section~\ref{sec:built-in-units}.
-
-\sbmlrule{1207} \item If the \token{id} attribute of a
-\token{unitDefinition} element contains \texttt{volume} and the
-the enclosed \token{unit} element \token{kind} attribute contains
-\texttt{metre} then the \token{exponent} attribute must be 3. See
-section~\ref{sec:built-in-units}.
-
-\sbmlrule{1208} \item If the \token{id} attribute of a
-\token{unitDefinition} element contains \texttt{time} then the
-element must contain a single \token{unit} element containing
-either:
-\begin{itemize}
-
-\item a \token{kind} attribute value of \texttt{second} and
-\token{exponent} attribute value of 1 (can default to 1); or
-
-\item a \token{kind} attribute value of \texttt{dimensionless}
-with arbitrary \token{exponent} attribute value.
-
-\end{itemize}
-
-See section~\ref{sec:built-in-units}.
-
-\end{enumerate}
-
-\subsection*{\Compartment}
-
-The value of the \token{spatialDimensions} attribute of a
-\token{compartment} element is known as the `spatial dimensions'
-in this section.
-
-\begin{enumerate}
+\end{enumerate} \subsection*{\class{Compartment}} \begin{enumerate}
 
 \sbmlrule{1300}
-\item The \token{size} attribute must not be set
-if \token{spatialDimensions} is zero. See
-section~\ref{sec:compartment-units}.
-
-%\item The \token{units} attribute must not be set if
-%\token{spatialDimensions} is zero.  (this has not been confirmed
-%yet - watch this space).  ''I required units to be
-%'''dimensionless''' if it's set. --[[Ben Kovitz]]''
-
 \sbmlrule{1301}
-\item A \token{compartment} element with
-attribute \token{spatialDimensions} set to 0 must have the
-\token{units} attribute set to \texttt{dimensionless}, or the
-\token{id} attribute value of a \token{unitDefinition} element
-that defines a variant of \texttt{dimensionless}. See
-section~\ref{sec:compartment-units}.
-
-\sbmlrule{1302} \item The \token{constant} field of a
-\token{compartment} element must default to or be set to
-\texttt{true} if the value of the \token{spatialDimensions} field
-is 0. See section~\ref{sec:compartment-constant}.
-
+\sbmlrule{1302}
 \sbmlrule{1303}
-\item The value of the \token{outside} attribute of a
-\token{compartment} element must contain the value of a
-\token{id} field of another \token{compartment}. See
-section~\ref{sec:compartment-outside}.
-
 \sbmlrule{1304}
-\item The graph of links between compartments implied by the
-\token{outside} attributes must be acyclic.  See
-section~\ref{sec:compartment-outside}.
-
 \sbmlrule{1305}
-\item A \token{compartment} element with
-attribute \token{spatialDimensions} set to 1 must have the
-\token{units} attribute set to \texttt{dimensionless}, \texttt{length},
-\texttt{metre}, or the \token{id} attribute value of a
-\token{unitDefinition} element that defines a variant of
-\texttt{metre} with an exponent value of 1 or a variant of \texttt{dimensionless}. See
-section~\ref{sec:compartment-units}.
-
 \sbmlrule{1306}
-\item A \token{compartment} element with
-attribute \token{spatialDimensions} set to 2 must have the
-\token{units} attribute set to \texttt{dimensionless}, \texttt{area} or the \token{id}
-attribute value of a \token{unitDefinition} element that defines a
-variant of \texttt{metre} with an exponent value of 2 or a variant of \texttt{dimensionless}. See
-section~\ref{sec:compartment-units}.
-
 \sbmlrule{1307}
-\item A \token{compartment} element with
-attribute \token{spatialDimensions} set to 3 must have the
-\token{units} attribute set to \texttt{dimensionless}, \texttt{volume} or the
-\token{id} attribute value of a \token{unitDefinition} element
-that defines a variant of \texttt{metre} with an exponent value
-of 3 or a variant of \texttt{litre} or a variant of \texttt{dimensionless}. See
-section~\ref{sec:compartment-units}.
+\sbmlrule{1308}
 
-\sbmlrule{9999} \item The \token{compartmentType} attribute, when
-present, on a \token{compartment} element should contain the same
-value as an \token{id} attribute on a \token{compartmentType}
-element. See Section~\ref{sec:compartment-compartment-type}.
-
-\end{enumerate} \subsection*{\Species} \begin{enumerate}
+\end{enumerate} \subsection*{\class{Species}} \begin{enumerate}
 
 \sbmlrule{1400}
-\item The \token{compartment} attribute
-on a \token{species} element must contain the value of an \token{id}
-attribute on a
-\\ \token{compartment} element.  This \token{id} value is known as
-the `\emph{compartment}' in this section.  The value of the
-\token{spatialDimensions} attribute of the compartment is known
-as the `\emph{spatial dimensions}' in this section. See
-Section~\ref{sec:species-compartment}.
-
-\sbmlrule{1001}
-\item By implication of rule 1400 a model
-that has a species must also have at least one compartment because
-the compartment attribute on species is not optional.
-
 \sbmlrule{1401}
-\item The \token{spatialSizeUnits} attribute must not be present
-if the \token{hasOnlySubstanceUnits} attribute is true.  See
-Section~\ref{sec:species-units}.
-
 \sbmlrule{1402}
-\item The \token{spatialSizeUnits} attribute must not be present
-if the spatial dimensions is zero.  See
-Section~\ref{sec:species-units}.
-
+\sbmlrule{1403} % FIXME is it supposed to be here?
 \sbmlrule{1404}
-\item The \token{initialConcentration} attribute must not be
-present if the spatial dimensions is zero.  See
-Section~\ref{sec:initialAmount}.
+\sbmlrule{1405}
+\sbmlrule{1406}
+\sbmlrule{1407}
+\sbmlrule{1408}
+\sbmlrule{1409}
+\sbmlrule{1410}
+\sbmlrule{1411}
+\sbmlrule{1412}
 
-\sbmlrule{1405} \item If the spatial dimensions of a
-\token{species} element is 1 then the \token{spatialSizeUnits}
-attribute must a value of `\texttt{dimensionless}',
-`\texttt{length}', `texttt{metre}' or the \token{id} value of a
-\token{unitDefinition} element that defines a variant of
-`\texttt{metre}' with an exponent value of 1 or a variant of
-\texttt{dimensionless}. See Section~\ref{sec:species-units}.
-
-\sbmlrule{1406} \item If the spatial dimensions of a
-\token{species} element is 2 then the \token{spatialSizeUnits}
-attribute must a value of `\texttt{dimensionless}',`\texttt{area}'
-or the \token{id} value of a \token{unitDefinition} element that
-defines a variant of `texttt{metre}' with an exponent value of 2
-or a variant of \texttt{dimensionless}. See
-Section~\ref{sec:species-units}.
-
-\sbmlrule{1407} \item If the spatial dimensions of a
-\token{species} element is 3 then the \token{spatialSizeUnits}
-attribute must a value of `\texttt{dimensionless}',
-`\texttt{volume}', `texttt{litre}' or the \token{id} value of a
-\token{unitDefinition} element that defines a variant of
-`texttt{metre}' with an exponent value of 3 or a variant of
-\texttt{dimensionless}. See Section~\ref{sec:species-units}.
-
-\sbmlrule{1408} \item The \token{substanceUnits} attribute must
-contain either \texttt{dimensionless}, \texttt{kilogram},
-\texttt{substance}, \texttt{item}, \texttt{moles} or the values of
-\token{id} attributes of \token{unitDefinition} elements that
-define variants (i.e. have only arbitrary \token{scale},
-\token{multiplier} and \token{offset} values) of \texttt{item},
-\texttt{moles}, \texttt{kilogram} or \texttt{dimensionless}. See
-Section~\ref{sec:species-units}.
-
-\sbmlrule{9999}
-\item The \token{initialConcentration} and \token{initialAmount}
-attributes must not be present on the same element at the same
-time.  They are mutually exclusive.  See
-Section~\ref{sec:initialAmount}.
-
-\sbmlrule{9999} \item Consider a \token{species} element that has
-a \token{boundaryCondition} attribute of false and there exists a
-\token{species} attribute on a \token{speciesReference} element
-which contains the value of the \token{species} element's
-\token{id} attribute. (The species concentration is determined by
-a reaction.) In this case there must not exist a \token{variable}
-attribute of a rule element that contains the \token{id}
-attribute value on the \token{species} element. (A species cannot
-be determined by rules and reactions at the same time). See
-Section~\ref{sec:species-constant}.
-
-\sbmlrule{9999}
-\item The \token{speciesType} attribute, when present, on a
-\token{species} element should contain the same value as an
-\token{id} attribute on a \token{speciesType} element. See
-Section~\ref{sec:species-species-type}.
-
-\sbmlrule{9999} \item In any \Species structure, that has a
-\token{speciesType} field value, the values of a pair of \token{speciesType}
-and \token{compartment} fields must be unique in the set of
-all \Species structures. See
-Section~\ref{sec:species-species-type}.
-
-\end{enumerate} \subsection*{\Parameter} \begin{enumerate}
+\end{enumerate} \subsection*{\class{Parameter}} \begin{enumerate}
 
 \sbmlrule{1500}
-\item The \token{units} field must
-contain one of the following: a value from the unit kind
-enumeration (eg \texttt{metre}), a value from the built-in units
-table e.g. \texttt{substance} or the value of a \token{id}
-attribute of a \token{unitDefinition} element.  See
-Section~\ref{sec:parameter-units}.
 
-\end{enumerate} \subsection*{\token{Initial Assignment}} \begin{enumerate}
+\end{enumerate} \subsection*{\class{InitialAssignment}} \begin{enumerate}
 
-\sbmlrule{9999}
-\item The \token{symbol} attribute of a
-\token{initialAssignment} element must contain the value of a
-\token{id} attribute of a \token{compartment}, \token{species},
-or \token{parameter} element.  See
-Sections~\ref{sec:initialAssignment}.
+\sbmlrule{1900}
+\sbmlrule{1901}
+\sbmlrule{1902}
 
-\sbmlrule{9999} \item Two or more \token{symbol} attributes of
-\token{initialAssignment} elements must not contain the same
-value.  See Sections~\ref{sec:initialAssignment}.
-
-\sbmlrule{9999} \item The \token{symbol} attribute of a
-\token{initialAssignment} element and the \token{variable}
-attribute of an\\ \token{assignmentRule} must not contain the same
-value.  See sections~\ref{sec:initialAssignment}.
-
-\end{enumerate} \subsection*{\Reaction} \begin{enumerate}
+\end{enumerate} \subsection*{\class{Reaction}} \begin{enumerate}
 
 \sbmlrule{1600}
-\item A reaction must contain at least one
-\token{speciesReference} element (either in the products or
-reactants lists).  See Section~\ref{subsec:speciesreference}.
 
-\sbmlrule{9999}
-\item Consider a \token{ci} element which
-contains the value of an \token{id} field of a \token{species}
-element where the \token{ci} element is contained within any
-MathML element within a \token{reaction} element (i.e. part of
-stoichiometry math and kinetic law elements). For all such
-\token{ci} elements its content must also be contained in a
-\token{species} attribute (on a \token{speciesReference} and
-\token{modifierSpeciesReference} element) within the given
-\token{reaction} element. (All species used in MathML in a
-reaction must occur on a simple species reference element of that
-reaction.) See section~\ref{subsec:speciesreference}
-and\ref{subsec:kinetic-law}.
-
-\end{enumerate} \subsection*{\SimpleSpeciesReference} \begin{enumerate}
+\end{enumerate} \subsection*{\class{SpeciesReference} and \class{ModifierSpeciesReference}} \begin{enumerate}
 
 \sbmlrule{1601}
-\item The value of a \token{species}
-attribute of a \token{speciesReference} and
-\token{modifierSpeciesReference} element must contain the value of
-a \token{id} attribute of a \token{species} element.  See
-section~\ref{subsec:speciesreference}
-and\ref{subsec:modifierreference}.
-
-\textbf{\SpeciesReference}
-
 \sbmlrule{1602}
-\item When a \token{species} element has a
-\token{constant} attribute value of true and a
-\token{boundaryCondition} attribute of false then there must be
-no \token{speciesReference} element's \token{species} attribute
-that contains the value of the \token{species} element's
-\token{id} attribute. Section~\ref{sec:species-constant}.
-
 \sbmlrule{1603}
-\item The \token{stoichiometry} attribute
-and \token{stoichiometryMath} element are mutually exclusive. See
-section~\ref{subsec:speciesreference}.
 
-\end{enumerate} \subsection*{\KineticLaw} \begin{enumerate}
+\end{enumerate} \subsection*{\class{KineticLaw}} \begin{enumerate}
 
-\sbmlrule{1604} \item The \token{substanceUnits} attribute must
-contain either \texttt{dimensionless}, \texttt{kilogram},
-\texttt{substance}, \texttt{item}, \texttt{moles} or the values of
-\token{id} attributes of \token{unitDefinition} elements that
-define variants of \\
-\texttt{dimensionless}, \texttt{kilogram},
-\texttt{item} or \texttt{mole}. See
-section~\ref{subsec:kinetic-law}.
+\sbmlrule{1604}
+\sbmlrule{1605}
+\sbmlrule{1606}
 
-\sbmlrule{1605} \item The \token{timeUnits} attribute must
-contain either \texttt{dimensionless}, \texttt{time},
-\texttt{second} or the values of \token{id} attributes of
-\token{unitDefinition} elements that define variants of
-\texttt{second} or \texttt{dimensionless}.  See
-section~\ref{subsec:kinetic-law}.
+\end{enumerate} \subsection*{\class{StoichiometryMath}} \begin{enumerate}
 
-\end{enumerate} \subsection*{\AssignmentRule and \RateRule} \begin{enumerate}
+\sbmlrule{1607}
 
-\sbmlrule{1700} \item The \token{variable} attribute of a
-\token{assignmentRule} element must only contain the value of a
-\token{id} attribute of a \token{compartment}, \token{species},
-or \token{parameter} element.  See
-Sections~\ref{sec:assignmentrule}.
+\end{enumerate} \subsection*{\class{AssignmentRule} and \class{RateRule}} \begin{enumerate}
 
-\sbmlrule{1701} \item The \token{variable} attribute of a
-\token{rateRule} element must only contain the value of a
-\token{id} attribute of a \token{species}, \token{compartment},
-or \token{parameter} element.  See Sections~\ref{sec:raterule}.
-
+\sbmlrule{1700}
+\sbmlrule{1701}
 \sbmlrule{1702}
-\item The \token{constant} attribute of
-a \token{compartment}, \token{species}, or \token{parameter}
-element must be false when referred to by the \token{variable}
-attribute of an \token{assignmentRule} element. See
-Sections~\ref{sec:assignmentrule}.
-
 \sbmlrule{1703}
-\item The \token{constant} attribute of
-a \token{compartment}, \token{species}, or \token{parameter}
-element must be false when referred to by the \token{variable}
-attribute of an \token{rateRule} element. See
-Sections~\ref{sec:raterule}.
 
-\sbmlrule{9999} The combined set of \token{initialAssignment},
+% FIXME shouldn't there be a 1704 that's like 1703 but talks about RateRule?
+
+% FIXME decide what to do about the following:
+
+\item[9999.] The combined set of \token{initialAssignment},
 \token{assignmentRule} and \token{kineticLaw} elements form a set
 of assignment statements that should be considered as a whole. The
 combined set of assignment statements should not contain algebraic
@@ -10188,53 +9913,30 @@ assign the symbol contained in their \token{variable} field.
 \token{id} field of the enclosing \token{reaction} element. See
 Section~\ref{sec:ruleconstraints}.
 
-\end{enumerate} \subsection*{\AlgebraicRule} \begin{enumerate}
+\end{enumerate} \subsection*{\class{AlgebraicRule}} \begin{enumerate}
+  
+\item[9999.] SBML models cannot be overdetermined as defined in
+the specification.  See the detailed exposition of this rule in
+Section~\ref{sec:ruleconstraints}.
 
-\sbmlrule{9999}
-\item SBML models cannot be over
-determined as defined in the specification.  See the detailed
-exposition of this rule in Section~\ref{sec:ruleconstraints}.
-
-\end{enumerate} \subsection*{\Event} \begin{enumerate}
+\end{enumerate} \subsection*{\class{Event}} \begin{enumerate}
 
 \sbmlrule{1800}
-\item The \token{timeUnits} attribute
-must contain either \texttt{time}, \texttt{second} or the values
-of \token{id} attributes of \\ \token{unitDefinition} elements
-that define variants of \texttt{second}. See
-Section~\ref{sec:event-timeunits}
-
 \sbmlrule{1801}
-\item A boolean operators or value must be
-used as the root of an expression tree that forms the
-\token{trigger} field of an \token{event} structure;
 
-\end{enumerate} \subsection*{\\EventAssignment}
-\begin{enumerate}
+\end{enumerate} \subsection*{\class{EventAssignment}} \begin{enumerate}
 
 \sbmlrule{1802}
-\item The \token{variable} attribute of
-an \token{e\EventAssignment} must contain the value of a \token{id}
-attribute of a \\ \token{compartment}, \token{species}, or
-\token{parameter} element.  See Section~\ref{sec:eventassignment}.
-
 \sbmlrule{1803}
-\item The \token{constant} attribute of
-the \token{compartment}, \token{species}, or \token{parameter}
-element must be false.  See Section~\ref{sec:eventassignment}.
-
-\sbmlrule{9999}
-\item The value of a \token{variable} attribute on
-a \EventAssignment structure cannot be the same as the
-value of a \token{variable} attribute on a \AssignmentRule
-structure.  See Section~\ref{sec:eventassignment}.
 
 \end{enumerate}
 
-The number 1403 is a placeholder for a rule that applies in
-Level~2 Version~1 but not in Level~2 Version~2.  This rule was as
-allows: the \token{initialConcentration} attribute must not be
-present if the \token{hasOnlySubstanceUnits} attribute is true.
+%The number 1403 is a placeholder for a rule that applies in
+%Level~2 Version~1 but not in Level~2 Version~2.  This rule was as
+%allows: the \token{initialConcentration} attribute must not be
+%present if the \token{hasOnlySubstanceUnits} attribute is true.
+
+
 \end{blockChanged}
 \clearpage
 

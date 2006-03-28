@@ -6566,7 +6566,7 @@ Consider the following representation of an enzymatic reaction:
 \end{reaction}
 The following is the minimal SBML document encoding the model shown above:
 
-\sbmlexample{example1.xml}
+\sbmlexample{enzymekinetics.xml}
 
 In this example, the model has the identifier
 \val{EnzymaticReaction}.  The model contains one compartment (with
@@ -7013,7 +7013,7 @@ The following example SBML model encodes this approximate form.
 %-----------------------------------------------------------------------------
 \subsection{Example Involving Combinations of
   \token{boundaryCondition} and \token{constant} Values on \class{Species}
-  with \class{RateRule} structures}
+  with \class{RateRule} Structures}
 \label{sec:constantspecieseg}
 %-----------------------------------------------------------------------------
 
@@ -7128,184 +7128,79 @@ above:
 \end{blockChanged}
 
 %-----------------------------------------------------------------------------
-\subsection{Example of translation from a multi-compartmental model to ODEs}
+\subsection{Example of Translation from a Multi-Compartmental Model to ODEs}
 \label{sec:odeeg}
 %-----------------------------------------------------------------------------
 
-This section contains a model with 2 compartments, 4 reactions and 2 rate rules.
-The model is followed by its complete translation into ordinary
-differential equations.  The model is shown in
-figure~\ref{fig:multicomp}.
+\begin{blockChanged}
+
+This section contains a model with 2 compartments and 4 reactions.
+The model is derived from Lotka-Volterra, with in addition a
+reversible transport step.  When instantiated, this model displays
+dampened oscillations of three of the species.
 
 \begin{figure}[htb]
-  \vspace*{20pt}
+  \vspace*{5pt}
   \centering
-  \includegraphics[scale=0.67]{figs/multicomp}
+  \begin{picture}(260,60)
+    \put(0,10){\framebox(255,50)[tl]{ cytosol}}
+    \put(10,19){\framebox(105,29)[tl]{ nucleus}}
+    \put(24,26){$
+        X + Y_{1n} \yields^{\cit k\sub{1}} 2\,Y_{1n}
+        \eqbm^{\cit K\sub{T}} 2\,Y_{1c} + 2\,Y_2 
+        \yields^{\cit k\sub{2}} 4\,Y_2 \yields^{\cit k\sub{3}} \emptyset
+        $}
+  \end{picture}
+  \vspace*{-8pt}
   \caption{A example multi-compartmental model.}
   \label{fig:multicomp}
 \end{figure}
 
-Reaction equations are in substance per time units.  Species variables are in
-concentrations.
-Species $X_0$ and $X_4$ are boundary conditions.  The volume of compartment $V_1$
-and the concentration of $X_0$ vary according to rules.
+The model \token{LotkaVolterra\_tranport} is illustrated in
+Figure~\ref{fig:multicomp}.  The SBML representation of the model
+is shown below, and is followed by its complete translation into
+ordinary differential equations.  In this SBML model, the reaction
+equations are in substance per time units.  The reactions have
+also been simplified to reduce common stoichiometric factors.  The
+species variables are in concentration units; their initial
+quantities are declared using the attribute \token{initialAmount}
+on the \token{species} definitions, but since the attribute
+\token{hasOnlySubstanceUnits} is \emph{not} set to true, the
+symbols of the species represent their concentrations.  The
+species with identifier \val{X} is a boundary condition.  Note the
+attribute \token{speciesType}=\val{Y} that tells us species
+\val{Y1n} and \val{Y1c} are pools of the same participant, but
+located in different compartments.
 
-The SBML for this model is the following:
+\sbmlexample{multicomp.xml}
 
-\begin{blockChanged}
-\begin{small}
-\tightspacing
-\begin{verbatim}
-<?xml version="1.0" encoding="UTF-8"?>
-<sbml xmlns="http://www.sbml.org/sbml/level2/version2" level="2" version="2">
-    <model id="ODEExampleModel">
-        <listOfCompartments>
-            <compartment id="V0" size="10"/>
-            <compartment id="V1" size="1" constant="false"/>
-        </listOfCompartments>
-        <listOfSpecies>
-            <species id="X0" initialConcentration="0" compartment="V0"
-                boundaryCondition="true" />
-            <species id="S1" initialConcentration="0" compartment="V0"/>
-            <species id="S2" initialConcentration="0" compartment="V0"/>
-            <species id="S3" initialConcentration="0" compartment="V1"/>
-            <species id="X4" initialConcentration="0" compartment="V1"
-                boundaryCondition="true" constant="true"/>
-        </listOfSpecies>
-        <listOfParameters>
-            <parameter id="K0" value="0.1"/>
-            <parameter id="K1" value="0.5"/>
-            <parameter id="K2" value="0.1"/>
-            <parameter id="K3" value="0.5"/>
-            <parameter id="Kv" value="0.5"/>
-            <parameter id="Kin" value="0.1"/>
-        </listOfParameters>
-        <listOfRules>
-            <rateRule variable="X0">
-                <math xmlns="http://www.w3.org/1998/Math/MathML">
-                    <ci> Kin </ci>
-                </math>
-            </rateRule>
-            <rateRule variable="V1">
-                <math xmlns="http://www.w3.org/1998/Math/MathML">
-                    <ci> Kv </ci>
-                </math>
-            </rateRule>
-        </listOfRules>
-        <listOfReactions>
-            <reaction id="reaction_1" reversible="false">
-                <listOfReactants>
-                    <speciesReference species="X0"/>
-                </listOfReactants>
-                <listOfProducts>
-                    <speciesReference species="S1"/>
-                </listOfProducts>
-                <kineticLaw>
-                    <math xmlns="http://www.w3.org/1998/Math/MathML">
-                        <apply>
-                            <times/>
-                            <ci> K0 </ci>
-                            <ci> X0 </ci>
-                         </apply>
-                    </math>
-                </kineticLaw>
-            </reaction>
-            <reaction id="reaction_2" reversible="false">
-                <listOfReactants>
-                    <speciesReference species="S1"/>
-                </listOfReactants>
-                <listOfProducts>
-                    <speciesReference species="S2"/>
-                </listOfProducts>
-                <kineticLaw>
-                    <math xmlns="http://www.w3.org/1998/Math/MathML">
-                        <apply>
-                            <times/>
-                            <ci> K1 </ci>
-                            <ci> S1 </ci>
-                         </apply>
-                    </math>
-                </kineticLaw>
-            </reaction>
-            <reaction id="reaction_3" reversible="false">
-                <listOfReactants>
-                    <speciesReference species="S2"/>
-                </listOfReactants>
-                <listOfProducts>
-                    <speciesReference species="S3"/>
-                </listOfProducts>
-                <kineticLaw>
-                    <math xmlns="http://www.w3.org/1998/Math/MathML">
-                        <apply>
-                            <times/>
-                            <ci> K2 </ci>
-                            <ci> S2 </ci>
-                         </apply>
-                    </math>
-                </kineticLaw>
-            </reaction>
-            <reaction id="reaction_4" reversible="false">
-                <listOfReactants>
-                    <speciesReference species="S3"/>
-                </listOfReactants>
-                <listOfProducts>
-                    <speciesReference species="X4"/>
-                </listOfProducts>
-                <kineticLaw>
-                    <math xmlns="http://www.w3.org/1998/Math/MathML">
-                        <apply>
-                            <times/>
-                            <ci> K3 </ci>
-                            <ci> S3 </ci>
-                         </apply>
-                    </math>
-                </kineticLaw>
-            </reaction>
-        </listOfReactions>
-    </model>
-</sbml>
-\end{verbatim}
-\end{small}
+The ODE translation of this model is as follows.  The species
+variables in the following equations are all in terms of
+concentrations.  First, we give the values of the constant
+parameters:
+\begin{align*}
+  k_1 &= 2500 \\
+  k_2 &= 2500 \\
+  K_3 &= 25000\\
+  K_T &= 2500 \\
+\intertext{Initial conditions of variables:}
+  V_n & = 1 \\
+  V_c & = 5 \\
+  X   & = Y1_n = Y2 = 1
+\end{align*}
+
+And finally, the differential equations:
+\begin{align*}
+  \D\frac{d X}{d t}    &= 0 \\[5pt]
+  \D\frac{d Y1_n}{d t} &= \D\frac{k_1 X Y1_n V_n - k_T (Y1_n - Y1_c) V_c}{V_n}
+    && \text{reactions production and transport} \\[5pt]
+  \D\frac{d Y1_c}{d t} &= \D\frac{k_T (Y1_n - Y1_c) V_c - k_2 Y1_c Y2 V_c}{V_c}
+    && \text{reactions transport and transformation} \\[5pt]
+  \D\frac{d Y2}{d t}   &= \D\frac{k_2 Y1_c Y2 V_c - k_3 Y2 V_c}{V_c} 
+    && \text{reactions transformation and degradation} \\
+\end{align*}
+
 \end{blockChanged}
-
-The ODE translation of this model is as follows assuming all species variables
-contain the species concentration:
-
-Parameters and Constants:
-
-\begin{equation*}
-  \begin{array}{l}
-    X_4 = 0 \\ \\[-4pt]
-    V_0 = 10 \\ \\[-4pt]
-    K_0 = 0.1\\ \\[-4pt]
-    K_1 = 0.5\\ \\[-4pt]
-    K_2 = 0.1\\ \\[-4pt]
-    K_3 = 0.5\\ \\[-4pt]
-    K_{in} = 0.1\\ \\[-4pt]
-    K_v = 0.5\\ \\[-4pt]
-  \end{array}
-\end{equation*}
-
-Initial Conditions of Variables:
-
-\begin{equation*}
-  \begin{array}{l}
-    V_1 = 1 \\ \\[-4pt]
-    X_0 = S_1 = S_2 = S_3 = 0
-  \end{array}
-\end{equation*}
-
-Differential Equations:
-
-\begin{equation*}
-  \begin{array}{ll}
-    \D\frac{d V_1}{d t} = K_v & \mbox{rule} \\ \\[-4pt]
-    \D\frac{d X_0}{d t} = K_{in} & \mbox{rule} \\ \\[-4pt]
-    \D\frac{d S_1}{d t} = \D\frac{K_0 X_0 - K_1 S_1}{V_0} & \mbox{reactions 1 and 2} \\ \\[-4pt]
-    \D\frac{d S_2}{d t} = \D\frac{K_1 S_1 - K_2 S_2}{V_0} & \mbox{reactions 2 and 3} \\ \\[-4pt]
-    \D\frac{d S_3}{d t} = \D\frac{K_2 S_2 - K_3 S_3}{V_1} & \mbox{reactions 3 and 4} \\ \\[-4pt]
-  \end{array}
-\end{equation*}
 
 
 %-----------------------------------------------------------------------------
@@ -7828,7 +7723,7 @@ The model also includes two cytosolic proteins that buffer calcium via the
 \end{small}
 
 %-----------------------------------------------------------------------------
-\subsection{Example using \SpeciesType structures}
+\subsection{Example Using \SpeciesType Structures}
 \label{sec:speciesType-eg}
 %-----------------------------------------------------------------------------
 

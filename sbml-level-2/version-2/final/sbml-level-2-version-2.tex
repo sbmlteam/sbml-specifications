@@ -732,7 +732,7 @@ document where each of these components is described in more detail.
                         &                               &                               & \textbf{New in}\\
     \textbf{Component}  & \textbf{Section}              & \textbf{Starting page}        & \textbf{Version 2?}\\
     \midrule
-    Function definition & \ref{sec:functions}           & \pageref{sec:functions}\\ 
+    Function definition & \ref{sec:functiondefinition}  & \pageref{sec:functiondefinition}\\ 
     Unit definition     & \ref{sec:unitdefinitions}     & \pageref{sec:unitdefinitions}\\
     Compartment type    & \ref{sec:compartmentType}     & \pageref{sec:compartmentType} & Yes\\
     Compartment         & \ref{sec:compartments}        & \pageref{sec:compartments}\\
@@ -1670,7 +1670,7 @@ Although many SBML components also feature two other fields named
 Mathematical expressions in SBML Level~2 are represented using
 MathML~2.0~\citep{w3c:2000b}, the XML standard for describing
 mathematics in machine-readable format.  It is used in the
-definitions of functions (Section~\ref{sec:functions}), rules
+definitions of functions (Section~\ref{sec:functiondefinition}), rules
 (Section~\ref{sec:rules}), initial assignments
 (Section~\ref{sec:initialAssignment}), constraints
 (Section~\ref{sec:constraints}), reaction kinetics
@@ -1877,7 +1877,7 @@ containing structure in which the \token{ci} is used:
 \begin{itemize}
 
 \item If a \token{ci} element appears in the body of a function definition
-  \changed{(Section~\ref{sec:functions})}, the
+  \changed{(Section~\ref{sec:functiondefinition})}, the
   referenced identifier must be either (i) one of the declared arguments to
   that function, or (ii) the identifier of a previously defined function.
 
@@ -1910,7 +1910,7 @@ containing structure in which the \token{ci} is used:
     \token{ci} element, it represents a call to that function.  Function
     references in MathML occur in the context of using MathML's
     \token{apply} and often involve supplying arguments to the function;
-    see Section~\ref{sec:functions}.
+    see Section~\ref{sec:functiondefinition}.
 
   \item \changed{\emph{Reaction identifier}: When a reaction
     identifier occurs in a \token{ci} element, it represents the
@@ -2391,14 +2391,13 @@ reactions into a system of coupled differential equations.
 
 %-----------------------------------------------------------------------------
 \subsection{Function Definitions}
-\label{sec:functions}
+\label{sec:functiondefinition}
 %-----------------------------------------------------------------------------
 
-% FIXME 2nd sentence is confusing.  should probably talk about <ci>?
-
 The \FunctionDefinition structure associates an identifier with a
-function definition.  This identifier can then be used in any subsequent
-MathML \token{apply} elements.  \FunctionDefinition is shown in
+function definition.  This identifier can then be used as
+\changed{the function called in subsequent MathML} \token{apply}
+elements.  \FunctionDefinition is shown in
 Figure~\ref{fig:mathdefinition}.
 
 \begin{figure}[htb]
@@ -2415,18 +2414,35 @@ Figure~\ref{fig:mathdefinition}.
   \label{fig:functionDefinition}
 \end{figure}
 
+\begin{blockChanged}
+Function definitions in SBML (also informally known as
+``user-defined functions'') have relatively limited capabilities.
+As is made more clear below, a function cannot reference
+parameters or other model quantities outside of itself; values
+must be passed as parameters to the function.  Moreover, recursive
+and mutually-recursive functions are not permitted.  The purpose
+of these limitations is to balance power against complexity of
+implementation.  With the restrictions as they are, function
+definitions could be implemented as textual substitutions---they
+are simply macros.  Software implementations may therefore not
+need the full function-definition machinery typically associated
+with programming languages.
+\end{blockChanged}
+
 The \FunctionDefinition structure has three fields: \token{id},
 \token{name} and \token{math}.  Their purposes are explained in the
 following subsections.
+
 
 \subsubsection{The \token{id} and \token{name} Fields}
 
 The \token{id} and \token{name} fields have types \primtype{SId}
 and \primtype{string}, respectively, and operate in the manner
 described in Section~\ref{sec:idnameattribs}.  \changed{MathML
-\texttt{ci} elements in an SBML model can refer to the function defined by a
-\FunctionDefinition using the value of its \token{id}
-field.}
+\token{ci} elements in an SBML model can refer to the
+function defined by a \FunctionDefinition using the value of its
+\token{id} field.}
+
 
 \subsubsection{The \token{math} Field}
 \label{sec:function-definition-math}
@@ -2436,17 +2452,30 @@ field.}
 
 The \token{math} field is a container for MathML content that
 defines the function.  The content of this field can only be a
-MathML \texttt{lambda} element.  This is the only place in SBML
-where a \texttt{lambda} element can be used. The function is only
-available for use in other MathML elements that follow the
-\FunctionDefinition structure in an SBML model.  (These
-restrictions prevent recursive and mutually-recursive functions
-from being expressed.)  \changed{The \texttt{lambda} element
-must begin with zero or more \texttt{bvar} elements, followed
-by any other of the elements in the MathML subset listed in
-Section~\ref{sec:mathmlsubset} \emph{except} \texttt{lambda}.
-(I.e., a \texttt{lambda} element cannot contain another
-\texttt{lambda} element.)}
+MathML \token{lambda} element.  The \token{lambda} element must
+begin with zero or more \token{bvar} elements, followed by any
+other of the elements in the MathML subset listed in
+Section~\ref{sec:mathmlsubset} \emph{except} \token{lambda}.
+(I.e., a \token{lambda} element cannot contain another
+\token{lambda} element.)  This is the only place in SBML where a
+\token{lambda} element can be used.  \changed{The function defined
+by a \FunctionDefinition is only available for use in other MathML
+elements that \emph{follow} the \FunctionDefinition definition in
+the model.  (These restrictions prevent recursive and
+mutually-recursive functions from being expressed.)}
+
+\begin{blockChanged}
+A further restriction on the content of the \token{math} field is
+that it cannot contain references to variables other than the
+variables declared to the \token{lambda} itself.  That is, the
+contents of MathML \token{ci} elements inside the body of the
+\token{lambda} can only be the variables declared by its
+\token{bvar} elements, or the identifiers of other
+\FunctionDefinition{}s defined earlier in the model, or predefined
+MathML functions, operators, and constants.  This implies that
+functions must be written so that all variables or parameters they
+may need are passed to them via their function parameters.
+\end{blockChanged}
 
 
 \begin{blockChanged}
@@ -2454,8 +2483,9 @@ Section~\ref{sec:mathmlsubset} \emph{except} \texttt{lambda}.
 
 The following abbreviated SBML example shows a \FunctionDefinition
 structure defining \token{pow3} as the name of a function
-computing the mathematical expression $x^{3}$:
-\end{blockChanged}
+computing the mathematical expression $x^{3}$, and after that, the
+invocation of that function in the mathematical formula of a rate
+law.  Note how the invocation of the function uses its identifier
 \begin{example}
 <model>
     ...
@@ -2472,8 +2502,24 @@ computing the mathematical expression $x^{3}$:
         </math>
     </functionDefinition>
     ...
+    <listOfReactions>
+        <reaction id="reaction_1">
+            ...
+            <kineticLaw>
+                <math xmlns="http://www.w3.org/1998/Math/MathML">
+                    <apply>
+                        <ci> pow3 </ci>
+                        <ci> S1 </ci>
+                     </apply>
+                </math>
+            </kineticLaw>
+            ...
+        </reaction>
+    </listOfReactions>
+    ...
 </model>
 \end{example}
+\end{blockChanged}
 
 
 %-----------------------------------------------------------------------------
@@ -8247,7 +8293,7 @@ XPPAUT.
 \item The top-level \Model structure can contain an optional list of
   global user-defined functions expressed in MathML and organized in new
   structures of type \FunctionDefinition.  (Sections~\ref{sec:model}
-  and \ref{sec:functions}.)
+  and \ref{sec:functiondefinition}.)
 
 \item The top-level \Model structure can contain an optional list of
   event definitions organized in structures of type \Event.  Events

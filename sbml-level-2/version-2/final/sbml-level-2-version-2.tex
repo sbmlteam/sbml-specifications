@@ -674,7 +674,7 @@ The meaning of each component is as follows:
     ability to define parameters that are global to a model as
     well as parameters that are local to a single reaction.}
 
-\item \changed{\emph{Initial Assignment} : A mathematical
+\item \changed{\emph{Initial Assignment}: A mathematical
 expression used to determine the initial conditions of a model.
 This type of structure can only be used to define how the value of
 a variable can be calculated from other values and variables at
@@ -1052,8 +1052,8 @@ the \token{notes} and \token{annotation} fields in
   \centering
   \begin{classbox}{\textsl{SBase}}
     metaid: ID \{ use="optional" \} \\
-    notes: (ANY : \{ namespace="http://www.w3.org/1999/xhtml" \}) \{ minOccurs="0" \} \\
-    annotation: (ANY) \{ minOccurs="0" \} \\
+    notes: (ANY : \{ namespace="http://www.w3.org/1999/xhtml" \}) \{ minOccurs="0" maxOccurs="1" \} \\
+    annotation: (ANY) \{ minOccurs="0" maxOccurs="1" \} \\
   \end{classbox}
   \caption{The definition of \SBase.  Text enclosed in braces next
     to field types (e.g., \token{\{minOccurs="0"\}}) indicates
@@ -1693,8 +1693,10 @@ inverse trigonometric functions to use.}
 \subsubsection{Subset of MathML Used in SBML Level 2}
 \label{sec:mathmlsubset}
 
-The subset of MathML elements used in SBML Level~2 is similar to that used by
-CellML~\changed{\citep{hedley:2001b}} and is itemized below:
+The subset of MathML elements used in SBML Level~2 is similar to
+that used by CellML~\changed{\citep{hedley:2001b}, another model
+definition language with similar goals as SBML.  The MathML
+elements permitted in SBML are} itemized below:
 \begin{itemize}\setlength{\parskip}{-0.2ex}
 
 \item \emph{token}: \token{cn}, \token{ci}, \token{csymbol}, \token{sep}
@@ -2463,84 +2465,168 @@ structure defining $pow3(x)$ as representing $x^{3}$:
 \label{sec:unitdefinitions}
 %-----------------------------------------------------------------------------
 
-Units may be supplied in a number of contexts in an SBML model. The units
-of the following mathematical entities can be specified explicitly: constants,
-initial conditions, symbols in formulas and the results of formulas.
-Rather than having to give a complete unit definition
-on every structure, SBML provides a facility
-for defining identified units which can be reused throughout a model.
-In addition, by default, SBML mathematical entities have units composed from
-built-in units in a consistent fashion (see Sections~\ref{sec:built-in-units},
-\ref{sec:compartment-units}, \ref{sec:species-units} and~\ref{subsec:kinetic-law}).
-By redefining the built-in units it is possible to change the units
-used throughout a model in a simple and consistent manner.
+\begin{blockChanged}
 
-The SBML \UnitDefinition  and
-\Unit structures enable combinations of units to
-be given abbreviated names, and enable built-in units to be redefined.
-The definitions of \UnitDefinition  and
-\Unit are shown in
+Units of measurement may be supplied in a number of contexts in an
+SBML model.  The units of the following mathematical entities can
+be specified explicitly: the size of a compartment, the initial
+amount of a species, the units of constant and variable parameter
+values, the units of time and of substance in which a reaction
+rate is expressed, the units of time in an event's execution
+delay, and the results of mathematical formulas.  Rather than
+requiring a complete unit definition on every structure, SBML
+provides a facility for defining named units that can be
+referenced throughout a model.  In addition, every kind of SBML
+mathematical entity has units assigned to it from a set of
+built-in defaults (see Section~\ref{sec:built-in-units} below, and
+also Sections~\ref{sec:compartment-units}, \ref{sec:species-units}
+and~\ref{subsec:kinetic-law}).  By redefining these built-in
+default units, it is possible to change the units used throughout
+a model in a simple and consistent manner.
+
+The SBML unit definition facility uses two classes of objects,
+\UnitDefinition and \Unit.  Their definitions are shown in
 Figure~\vref{fig:unitdefinition}.
 
 \begin{figure}[htb]
   \centering
-  \includegraphics[scale = 0.68]{figs/unitdefinition}
+  \begin{classbox}{UnitDefinition}
+    id: SId                           \\
+    name: string \{ use="optional" \} \\
+    unit: Unit[1..*]                  \\
+  \end{classbox}
+  \hspace*{2em}
+  \begin{classbox}{Unit}  
+    kind: UnitKind                                      \\
+    exponent: integer \{ use="optional" default="1" \}  \\
+    scale: integer \{ use="optional" default="0" \}     \\
+    multiplier: double \{ use="optional" default="1" \} \\
+    offset: double \{ use="optional" default="0" \}     \\
+  \end{classbox}
   \caption{The definition of \UnitDefinition and \Unit. Following UML
     notation, additional fields
     that are inherited from a base class, in this case \SBase, are not shown.}
   \label{fig:unitdefinition}
 \end{figure}
 
+The approach to defining units in SBML is compositional; for
+example, $meter\ second^{\,-2}$ is constructed by combining a
+\Unit object representing $meter$ with another \Unit object
+representing $second^{\,-2}$.  The combination is wrapped inside a
+\UnitDefinition, which provides for assigning an identifier and
+optional name to the combination.  The identifier can then be
+referenced from elsewhere in a model.
 
-\subsubsection{The \UnitDefinition Structure}
+\end{blockChanged}
+
+
+\subsubsection{The \class{UnitDefinition} Structure}
 \label{sec:unitdefinition-structure}
 
-An instance of a \UnitDefinition consists of an \token{id}
-field of type \primtype{SId}, an optional string field \token{name}
-and a list of structures of type \Unit.  As mentioned in
-Section~\ref{sec:identifiers}, unit identifiers defined by the
-\token{id} field are considered to be in a separate global
-namespace distinct from the namespace of other identifiers in a
-model; thus, unit identifiers cannot collide with the identifiers
-of species, compartments, reactions, etc. \changed{The \token{id}
-field must not contain a value from Table~\ref{tab:unitkind}, the
-table of \primtype{UnitKind} values, ensuring that the units listed
-in that table can always be referenced throughout a model.}
+\begin{blockChanged}
 
-The approach to defining units in SBML is compositional; for example,
-$meter\ second^{\,-2}$ is constructed by combining, within the same
-\UnitDefinition \Unit list, a \Unit structure representing
-$meter$ with a \Unit structure representing $second^{\,-2}$.
-The \Unit structure is described in the next subsection.
+A unit definition in SBML consists of an instance of a
+\UnitDefinition object.  
 
 
-\subsubsection{The \Unit Structure}
+\paragraph{The \token{id} and \token{name} Fields}
+
+The \token{id} and \token{name} fields have types \primtype{SId}
+and \primtype{string}, respectively, and operate in the manner
+summarized in Section~\ref{sec:idnameattribs}.  There are three
+crucial differences between unit identifiers and most other
+identifiers in SBML:
+\begin{enumerate}
+  
+\item The \token{id} of a \Unit definition must not contain a
+  value from Table~\ref{tab:unitkind} (\ie the enumeration of
+  predefined \primtype{UnitKind} values).  This constraint simply
+  prevents the redefinition of the base units.
+
+\item Unit identifiers defined by the \token{id} field reside in a
+  separate global namespace distinct from the namespace of other
+  identifiers in a model; thus, unit identifiers cannot collide
+  with the identifiers of species, compartments, reactions, etc.
+  
+\item There is a set of predefined identifiers for the built-in
+  default units in SBML; these identifiers are \val{substance},
+  \val{volume}, \val{area}, \val{length}, and \val{time}.  Using
+  one of these values for \token{id} in a \UnitDefinition has the
+  effect of redefining the model-wide default units for the
+  corresponding quantities.  We discuss this in more detail in
+  Section~\ref{sec:built-in-units}.
+
+\end{enumerate}
+
+\paragraph{The List of \class{Unit}s}
+
+A \UnitDefinition object must contain one or more \Unit objects
+within the \token{unit} container.  In the XML form of SBML, this
+container becomes a \token{listOfUnits} element.
+Section~\ref{sec:unit-structure} explains the meaning and use of
+\Unit.
+
+\paragraph{Example}
+
+The following skeleton of a unit definition illustrates an example
+use of \UnitDefinition:
+
+\begin{example}
+<listOfUnitDefinitions>
+    <unitDefinition id="unit1">
+        ...
+    </unitDefinition>
+    <unitDefinition id="unit2">
+        ...
+    </unitDefinition>
+</listOfUnitDefinitions>
+\end{example}
+
+\end{blockChanged}
+
+
+\subsubsection{The \class{Unit} Structure}
 \label{sec:unit-structure}
 
-The \Unit data structure has one required field,
-\token{kind}, whose value must be taken from \primtype{UnitKind}, an
-enumeration of base units.  The possible values of
-\primtype{UnitKind} are given in Table~\vref{tab:unitkind}.
+\begin{blockChanged}
+  
+The vast majority of modeling situations requiring new SBML unit
+definitions involve simple multiplicative combinations of base
+units and factors.  An example of this might be ``moles per litre
+per second''.  What distinguishes these sorts of simpler unit
+definitions from more complex ones is that they be expressed
+without the use of an additive offset from a zero point.  The use
+of offsets complicates all unit definition system, yet the
+real-life cases requiring offsets are few (and in fact, to the
+best of our knowledge, only involve temperature).  Consequently,
+the SBML unit system has been consciously designed in a way that
+attempts to simplify implementation of unit support for the most
+common cases in systems biology, at the cost of an asymmetry in
+unit calculations introduced when offsets are used.  The two cases
+(without offsets, and with) are described separately below.
 
-%\changed{A \Unit data structure is a component of a
-%\UnitDefinition.  A \Unit structure defines a
-%variant of another unit or simply a reference to another unit. The
-%other unit must be defined elsewhere either in the enclosing
-%\Model with a \UnitDefinition structure or in the
-%SBML specification. To define a variant of, or simply reference,
-%a unit defined in the SBML specification, the \Unit structure has a
-%optional field, \token{kind}, whose value must be taken from
-%\primtype{UnitKind}, an enumeration of base units. The possible
-%values of \primtype{UnitKind} are given in Table~\vref{tab:unitkind}.
-%To define a variant of, or simply reference, a unit defined with a
-%\UnitDefinition structure, \Unit has an optional
-%\primtype{SId} field, \token{definition}, which must refer to a
-%\UnitDefinition structure.}
+A \Unit structure represents a (possibly transformed) reference to
+a base unit chosen from \primtype{UnitKind}
+(Table~\ref{tab:unitkind}).  The field \token{kind} indicates the
+chosen base unit, whereas the four fields \token{exponent},
+\token{scale}, \token{multiplier}, and \token{offset} define how
+the base unit is being transformed.
+
+
+\paragraph{The \token{kind} Field}
+
+\end{blockChanged}
+
+The \Unit data structure has one required field, \token{kind},
+whose value must be taken from \primtype{UnitKind}, an enumeration
+of base units.  The possible values of \primtype{UnitKind} are
+given in Table~\vref{tab:unitkind}.
 
 \begin{table}[bht]
   \centering
   \ttfamily
   \small
+  \setlength{\arraycolsep}{8pt}
   \begin{tabular}{llllll}
     \toprule
     ampere      & farad & joule     & lux       & radian   & volt   \\
@@ -2564,7 +2650,7 @@ enumeration of base units.  The possible values of
     commonly used in SBML's areas of application that they
     are included as predefined unit names.  (The standard SI unit of
     mass is in fact the kilogram, and volume is
-    defined in terms of cubic meters.)}
+    defined in terms of cubic metres.)}
   \label{tab:unitkind}
 \end{table}
 
@@ -2582,104 +2668,183 @@ enumeration of base units.  The possible values of
 %\UnitDefinition structure. Such directed graphs must be
 %acyclic.)}
 
-%\changed{The formula for a single transformation represented by a
-%\Unit structure is as follows (where $u$ is the original
-%unit and $u_\emph{new}$ is the new unit):
-%\begin{equation}
-%\label{eq:single-unit-transformation}
-%  u_\emph{new} = (\emph{multiplier} \times 10^\emph{scale}
-%  \times u)^\emph{exponent} + \emph{offset}
-%\end{equation}}
-%The optional \token{exponent} field on \Unit represents an exponent
-%on the unit.  Its default value is ``\token{1}'' (one).  For the
-%example mentioned at the beginning of this section, $second^{\,-2}$ would
-%be obtained by using \texttt{kind="second"} and \texttt{exponent="-2"}.  A
-%\Unit structure also has an optional \token{scale} field; its value
-%must be an integer exponent for a power of ten multiplier used to set the
-%scale of the unit.  For example, a unit having a \token{kind} value of
-%``\token{gram}'' and a \token{scale} value of ``\token{-3}''
-%signifies $10^{-3} * gram$, or milligrams.  The default value of
-%\texttt{scale} is ``\token{0}'' (zero), because $10^0 = 1$.
-%
-%\changed{The optional \token{multiplier} field can be used to
-%multiply the original unit by a real-numbered factor; this enables
-%the definition of units that are not power-of-ten multiples of SI
-%units.}  For instance, a \token{multiplier} of 0.3048 could be
-%used to define ``foot'' as a measure of length in terms of a
-%metre.  The \token{multiplier} field has a default value of
-%``\token{1}'' (one).  Finally, the \token{offset} field is
-%used to represent the addition of a constant in the transformation
-%of the \token{kind} unit.  For example, an \token{offset} value
-%of ``\token{32.0}'' would be needed to define Fahrenheit in
-%terms of degrees Celsius.  The \token{offset} field has a default
-%value of ``\token{0}'' (zero).
-
 Note that the set of acceptable values for the field \token{kind}
-does not include units defined by \UnitDefinition
-structures.  This means that the units definition feature in SBML
-is not hierarchial---user-defined units cannot be built on top of
-other user-defined units, only on top of base units.  (SBML
-differs from CellML in this respect; CellML allows the
-construction of hierarchial unit definitions.)
+does \emph{not} include units defined by \UnitDefinition
+structures.  This means that the units definition \changed{system}
+in SBML is not hierarchial: user-defined units cannot be built on
+top of other user-defined units, only on top of base units.  SBML
+differs from CellML~\changed{\cite{hedley:2001b}} in this respect;
+CellML allows the construction of hierarchial unit definitions.
 
-A \Unit structure represents a (possibly transformed)
-reference to a base unit chosen from \primtype{UnitKind}.  The
-formula for a single transformation represented by a \Unit
-structure is as follows (where $u$ is the original base unit and
-$u_\emph{new}$ is the new unit):
-\begin{equation*}
-  u_\emph{new} = (\emph{multiplier} \times 10^\emph{scale}
-  \times u^\emph{exponent}) + \emph{offset}
-\end{equation*}
-The optional \token{exponent} field on \Unit represents an
-exponent on the unit.  Its default value is ``\token{1}''
-(one).  For the example mentioned at the beginning of this
-section, $second^{\,-2}$ would be obtained by using
-\texttt{kind="second"} and \texttt{exponent="-2"}.  A \Unit
-structure also has an optional \token{scale} field; its value
-must be an integer exponent for a power of ten multiplier used to
-set the scale of the unit.  For example, a unit having a
-\token{kind} value of ``\token{gram}'' and a \token{scale}
-value of ``\token{-3}'' signifies $10^{-3} * gram$, or
-milligrams.  The default value of \texttt{scale} is
-``\token{0}'' (zero), because $10^0 = 1$.
-
-The optional \token{multiplier} field can be used to multiply the
-\token{kind} unit by a real-numbered factor; this enables the
-definition of units that are not power-of-ten multiples of SI
-units.  For instance, a \token{multiplier} of 0.3048 could be
-used to define ``foot'' as a measure of length in terms of a
-metre.  The \token{multiplier} field has a default value of
-``\token{1}'' (one).  Finally, the \token{offset} field is
-used to represent the addition of a constant in the transformation
-of the \token{kind} unit.  For example, an \token{offset} value
-of ``\token{32.0}'' would be needed to define Fahrenheit in
-terms of degrees Celsius.  The \token{offset} field has a default
-value of ``\token{0}'' (zero).
-
-The composition of $n$ \Unit structures within a
-\UnitDefinition to create more complex units involves a
-linear product according to the following formula:
 
 \begin{blockChanged}
-\begin{equation} \label{eq:multiple-unit-transformation}
-  u_\emph{new} = m_1 \times \ldots \times m_n
-  \times 10^{s_1} \times \ldots \times 10^{s_n}
-  \times u^{e_1} \times \ldots \times u^{e_n}
-\end{equation}
-\end{blockChanged}
 
-%\begin{blockChanged}
-%Formula~\ref{eq:single-unit-transformation}, representing
-%a \Unit structure, $u$ refers to either a member of the
-%\primtype{UnitKind} enumeration through the \token{kind} field or to
-%a \UnitDefinition through the \token{definition} field.
-%In the latter case both
-%Formulas~\ref{eq:single-unit-transformation}
-%and~\ref{eq:multiple-unit-transformation} are applied recursively
-%to each \UnitDefinition until a \primtype{UnitKind} unit is
-%reached.
-%\end{blockChanged}
+\paragraph{The \token{exponent}, \token{scale} and \token{multiplier} Fields}
+
+The optional \token{exponent} field on \Unit represents an
+exponent on the unit.  Its default value is ``\token{1}'' (one).
+A \Unit structure also has an optional \token{scale} field; its
+value must be an integer exponent for a power-of-ten multiplier
+used to set the scale of the unit.  For example, a unit having a
+\token{kind} value of ``\token{gram}'' and a \token{scale} value
+of ``\token{-3}'' signifies $10^{-3} * gram$, or milligrams.  The
+default value of \token{scale} is ``\token{0}'' (zero), because
+$10^0 = 1$.  Lastly, the optional \token{multiplier} field can be
+used to multiply the \token{kind} unit by a real-numbered factor;
+this enables the definition of units that are not power-of-ten
+multiples of SI units.  For instance, a \token{multiplier} of
+0.3048 could be used to define ``foot'' as a measure of length in
+terms of a metre.  The \token{multiplier} field has a default
+value of ``\token{1}'' (one).
+
+In the following explanation of the use of these fields, we limit
+discussion to the case where offsets are not required (\ie when
+\token{offset} in a \Unit definition is not set, or is set to
+\val{0}).
+
+\newcommand{\xnew}{x}
+\newcommand{\xold}{x_\emph{base}}
+\newcommand{\unew}{u}
+\newcommand{\uold}{u_\emph{base}}
+
+The unit system allows model quantities to be expressed in units
+other than the base units of Table~\ref{tab:unitkind}.  For
+analyses and computations, the consumer of the model (be it a
+software tool or a human) will want to convert all model
+quantities back to the base units.  The relationship between a
+quantity $\xnew$ in units $\unew$ to a quantity $\xold$ in base
+units $\uold$ (when the relationship does not require the use of
+zero offsets) is
+\begin{equation}
+  \xold \, \uold = \xnew \, \unew \cdot \left( w \frac{\uold}{\unew} \right)
+\label{eq:new-to-old}
+\end{equation}
+where the dot ($\cdot$) represents simple scalar multiplication
+and $w$ is a numerical factor.  The $\unew$ terms on the
+right-hand side cancel, leaving a value in units of $\uold$.
+Numerically, the value is equal to $\xnew \cdot w$.  The factor
+$w$ is determined as follows:
+\begin{equation}
+  \unew = (\token{multiplier} \cdot 10^\token{scale} \cdot \uold)^\token{exponent}
+\label{eq:single-unit-no-offset}
+\end{equation}
+The variables \token{multiplier}, \token{scale}, and
+\token{exponent} in the equation above correspond to the fields
+with the same names in the \Unit structure defined in
+Figure~\ref{fig:unitdefinition}.
+Equation~\ref{eq:single-unit-no-offset} asserts a mathematical
+relationship between a given unit $\uold$ and another unit
+$\unew$.  The exponent may make it more difficult to grasp the
+relationship immediately; suppose for the moment than
+\token{exponent}=\val{1}, then it is easy to see that
+\begin{equation*}
+  \unew = \token{multiplier} \cdot 10^\token{scale} \cdot \uold 
+\end{equation*}
+which means that $w = \token{multiplier} \cdot 10^\token{scale}$
+in Equation~\ref{eq:new-to-old}.  To take a concrete example, one
+foot expressed in terms of the metre (a base unit) requires
+\token{multiplier}=\val{0.3048}, \token{exponent}=\val{1}, and
+\token{scale}=\val{0} (the default):
+\begin{align*}
+  \text{foot} = 0.3048 \cdot 10^0 \cdot \text{metre} \\
+\intertext{leading to a conversion between quantities of}
+  \xold \, \text{metres} = 0.3048 \cdot \xnew \, \text{feet} 
+\end{align*}
+
+The case above is the simplest possible situation, involving the
+transformation of quantities from a single defined unit $\unew$
+into a quantity expressed in a single base unit $\uold$.  If,
+instead, multiple base units $u_1, u_2, \ldots, u_n$ are involved,
+the following equation holds (where the $m_i$ terms are the
+\token{multiplier} values, the $s_i$ terms are the \token{scale}
+values, and the $x_i$ terms are the \token{exponent} values):
+\begin{align}
+  u_\emph{new} &= (m_1 \cdot 10^{s_1} \cdot u_1)^{x_1} \cdot 
+  (m_2 \cdot 10^{s_2} \cdot u_2)^{x_2} \cdot \ldots \cdot (m_n \cdot
+  10^{s_n} \cdot u_n)^{x_n} \notag
+  \\[2pt]
+               &= m_1^{x_1} \cdot m_2^{x_2} \cdot \ldots \cdot m_n^{x_n}
+  \cdot 10^{s_1 x_1} \cdot 10^{s_2 x_2} \cdot \ldots \cdot 10^{s_n x_n}
+  \cdot u_1^{x_1} \cdot u_2^{x_2} \cdot \ldots \cdot u_n^{x_n} \notag
+  \\[2pt]
+               &= m_1^{x_1} \cdot m_2^{x_2} \cdot \ldots \cdot m_n^{x_n}
+  \cdot 10^{(s_1 x_1 + s_2 x_2 + \ldots + s_n x_n)} 
+  \cdot u_1^{x_1} \cdot u_2^{x_2} \cdot \ldots \cdot u_n^{x_n}
+\label{eq:multip-units-no-offset}
+\end{align}
+The use of this unit transformation expression is analogous to
+Equation~\ref{eq:single-unit-usage}:
+\begin{align}
+  \xold \uold &= \xnew \, \unew
+  \cdot \left( m_1^{x_1} \cdot m_2^{x_2} \cdot \ldots \cdot m_n^{x_n}
+  \cdot 10^{(s_1 x_1 + s_2 x_2 + \ldots + s_n x_n)} 
+  \cdot u_1^{x_1} \cdot u_2^{x_2} \cdot \ldots \cdot u_n^{x_n}
+  \right)
+\label{eq:multip-unit-usage}
+\end{align}
+
+Some additional points are worth discussing about the unit scheme
+introduced so far.  First, the equations above are formulated with
+the assumption that the base units do not require an additive
+offset as part of their definition.  This is true for all the base
+units, except the temperature units (Celsius and kelvin) under one
+condition.  This condition is when a temperature value rather than
+a temperature \emph{change} is being considered.  \emph{When
+  temperature values are being considered, then a different
+  interpretation must be made}, as discussed below.  In all other
+cases, including when temperature degrees or intervals are being
+discussed, the straightforward unit transformation scheme
+described so far applies.
+
+A second point, related to the first, is that care is needed to
+avoid seemingly-obvious but incorrect translations of units
+described in textbooks.  The scheme above makes it easy to
+formulate statements such as ``1 foot = 0.3048 metres'' in the
+most natural way.  However, the most common expression of the
+relationship between Fahrenheit and Celsius temperatures, ``(T in
+Fahrenheit) = 1.8 $\cdot$ (T in Celsius) + 32'' might lead one to
+think that defining Fahrenheit degrees in terms of Celsius degrees
+involves using \token{multiplier}=\val{1.8}.  \emph{Not so}, when
+degree changes are being considered and not temperature values.
+Converting \emph{temperature values} is different from expressing
+a relationship between degree measurements.  The proper value for
+the multiplier in the latter case is $5/9$, \ie
+\token{multiplier}=\val{0.555556} (where we picked an arbitrary
+decimal precision).  If, on the other hand, the actual temperature
+is relevant to a quantity (\eg if a model uses a quantity that has
+particular values at particular temperatures), then offsets must
+be defined and the unit definition must be interpreted in a
+different way, described below.
+
+
+\paragraph{The \token{offset} Field}
+
+The \token{offset} field is used to represent the addition of a
+constant in the transformation of the \token{kind} unit.  For
+example, an \token{offset} value of ``\token{32.0}'' would be
+needed to define Fahrenheit in terms of degrees Celsius.  The
+\token{offset} field has a default value of ``\token{0}'' (zero).
+
+When an offset is used in an SBML unit definition, the definition
+must be interpreted in a different way.  
+
+\emph{INCOMPLETE PENDING RESOLUTION OF OFFSETS DEBATE.}
+
+
+\paragraph{Examples}
+
+\begin{blockChanged}
+The following example defines minutes in terms of seconds:
+\begin{example}
+<listOfUnitDefinitions>
+    <unitDefinition id="minute">
+        <listOfUnits>
+            <unit kind="second" multiplier="60"/>
+        </listOfUnits>
+    </unitDefinition>
+</listOfUnitDefinitions>
+\end{example}
+\end{blockChanged}
 
 The following example illustrates the definition of an abbreviation named
 ``\token{mmls}'' for the units $mmol\ l^{-1}\ s^{-1}$:
@@ -2696,52 +2861,35 @@ The following example illustrates the definition of an abbreviation named
 </listOfUnitDefinitions>
 \end{example}
 
-The following example defines Fahrenheit:
+%The following example defines Fahrenheit:
 
-\begin{example}
-<unitDefinition id="Fahrenheit">
-     <listOfUnits>
-         <unit kind="Celsius" multiplier="1.8" offset="32"/>
-     </listOfUnits>
-</unitDefinition>
-\end{example}
-
-%\begin{blockChanged}
-%The following example defines minutes in terms of seconds and then
-%hours in terms of minutes.
-%
 %\begin{example}
-%<unitDefinition id="Minute">
-%     <listOfUnits>
-%         <unit kind="second" multiplier="60"/>
-%     </listOfUnits>
-%</unitDefinition>
-%<unitDefinition id="Hour">
-%     <listOfUnits>
-%         <unit definition="Minute" multiplier="60"/>
-%     </listOfUnits>
-%</unitDefinition>
+%<listOfUnitDefinitions>
+%    <unitDefinition id="Fahrenheit">
+%         <listOfUnits>
+%             <unit kind="Celsius" multiplier="1.8" offset="32"/>
+%         </listOfUnits>
+%    </unitDefinition>
+%</listOfUnitDefinitions>
 %\end{example}
-%\end{blockChanged}
+
 
 \subsubsection{Built-in Units}
 \label{sec:built-in-units}
 
 There are five special unit names in SBML, listed in
-Table~\vref{tab:builtin}, corresponding to the five types of quantities or
-\emph{built-in units} that play roles in biochemical reactions: amount of
-substance, volume, area, length and time.
-All SBML mathematical entities apart from parameters have default units.
-These default units are composed from the set of \emph{built-in units}.
-Further SBML defines defaults for the
-built-in units, listed in the third column of Table~\ref{tab:builtin}, all with
-default \texttt{scale} and \texttt{offset} values of zero and a default
-\texttt{multiplier} value of one.
+Table~\vref{tab:builtin}, corresponding to the five types of
+quantities or that play roles in biochemical reactions: substance,
+volume, area, length and time.  All SBML mathematical entities
+apart from parameters have default units drawn from these
+predefined values.  Table~\ref{tab:builtin} lists the default
+values; all of the defaults have \token{multiplier}=\val{1},
+\token{scale}=\val{0} and \token{offset}=\val{0}.  
 
 \begin{table}[htb]
   \centering
   \small
-  \setlength{\tabcolsep}{4.5pt}
+  \setlength{\tabcolsep}{8pt}
   \begin{tabular}{lll>{\ttfamily}l}
     \toprule
     \textbf{Name} & \textbf{Possible Scalable Units} & \textbf{Default Units}\\
@@ -2757,9 +2905,9 @@ default \texttt{scale} and \texttt{offset} values of zero and a default
   \label{tab:builtin}
 \end{table}
 
-A field that defines the units for a mathematical entity (e.g.,
-the field \token{units} on \Parameter) can refer to a
-named unit chosen from among the following:
+A field that defines the units for a mathematical entity (\eg the
+field \token{units} on \Parameter) can refer to a named unit
+chosen from among the following:
 \begin{itemize}
 \item The predefined units from Table~\vref{tab:unitkind},
 \item New units defined in unit definitions, and
@@ -2768,16 +2916,39 @@ named unit chosen from among the following:
 Table~\ref{tab:builtin}.
 \end{itemize}
 
-Within certain limits, a model may change the built-in units by reassigning
-the keywords ``\token{substance}'', ``\token{length}'', ``\token{area}'',
-``\token{time}'', and ``\token{volume}'' in a \UnitDefinition.  The
-second column in Table~\ref{tab:builtin} lists the set of units that should be
-used in redefining a given built-in unit.
 
-The following example illustrates how to change the built-in units of volume
-to be \changed{millilitres}.  If this definition appeared in a model, the units of
-volume on all components that did not explicitly specify different units
-would be changed to \changed{millilitres}.
+\paragraph{Redefinition of Built-In Units}
+
+Table~\ref{tab:builtin} also lists alternative base units that are
+allowed as the basis of redefined values.  For example, a
+redefinition of the built-in unit of time must be based on units
+of seconds.  Within certain limits, a model may change the
+built-in units by reassigning the keywords \token{substance},
+\token{length}, \token{area}, \token{time}, and \token{volume} in
+a \UnitDefinition.  The limitations on redefinitions of base units
+are the following:
+\begin{enumerate}
+
+\item The \UnitDefinition of a redefined built-in unit can only
+  contain a single \Unit object within it.
+  
+\item The value of the \token{unitKind} field in the \Unit object
+  must be drawn from one of the values in the second column of the
+  appropriate row of Table~\ref{tab:builtin}.
+  
+\item The value of the \token{exponent} field in the \Unit object
+  must be \val{1}.
+
+\end{enumerate}
+
+
+\paragraph{Examples}    
+
+The following example illustrates how to change the built-in units
+of volume to be \changed{millilitres}.  If this definition
+appeared in a model, the units of volume on all components that
+did not explicitly specify different units would be changed to
+\changed{millilitres}.
 
 \begin{blockChanged}
 \begin{example}
@@ -2802,9 +2973,12 @@ is defined in SBML.  Sections~\ref{sec:ci-token}, \ref{sec:species-units} and
 \ref{subsec:kinetic-law} have particularly important notes about the usage
 of units in SBML.
 
+\end{blockChanged}
+
+
 %-----------------------------------------------------------------------------
 \begin{blockChanged}
-\subsection{CompartmentType}
+\subsection{Compartment Types}
 \label{sec:compartmentType}
 %-----------------------------------------------------------------------------
 
@@ -2900,13 +3074,12 @@ Figure~\vref{fig:compartment}.
   \begin{classbox}{Compartment}
     id: SId \\
     name: string \{ use="optional" \} \\
-    compartmentType: SId \{ use="optional" \} \\
+    \changed{compartmentType: SId \{ use="optional" \}} \\
     spatialDimensions: integer \{ maxInclusive="3" minInclusive="0" use="optional" default="3" \} \\
     size: double \{ use="optional" \} \\
     units: SId \{ use="optional" \} \\
     outside: SId \{ use="optional" \} \\
     constant: boolean \{ use="optional" default="true" \} \\
-    \changed{sboTerm: SBOTerm \{ use="optional" \}} \\
   \end{classbox}
   \caption{The definition of \Compartment.  Following UML notation,
     additional fields
@@ -2928,6 +3101,30 @@ parts of an SBML model definition can refer to it.  A compartment can also
 have an optional \token{name} field of type \primtype{string}.  Identifiers
 and names \changed{must} be used according to the guidelines described in
 Section~\ref{sec:idnameattribs}.
+
+
+\begin{blockChanged}
+\subsubsection{The \token{compartmentType} Field}
+\label{sec:compartment-compartment-type}
+
+Each compartment in a model may optionally be designated as
+belonging to a particular compartment type. The optional field
+\token{compartmentType} of type \primtype{SId} is used identify the
+compartment type represented by the \Compartment structure.
+The field's value must be the identifier of an existing
+\CompartmentType structure.  If the
+\token{compartmentType} field is not present on a particular
+compartment definition, a unique virtual compartment type is assumed for
+that compartment, and no other compartment can belong to that
+compartment type.
+
+The values of \token{compartmentType} attributes on compartments
+have no effect on the numerical interpretation of a model.
+Simulators and other numerical analysis software may ignore
+\token{compartmentType} attributes.
+
+\end{blockChanged}
+
 
 \subsubsection{The \token{spatialDimensions} Field}
 
@@ -3061,28 +3258,6 @@ compartments.  (As discussed in Section~\ref{sec:level-3}, we expect that
 SBML Level~3 will introduce the ability to define geometries and spatial
 qualities.)
 
-\begin{blockChanged}
-\subsubsection{The \token{compartmentType} Field}
-\label{sec:compartment-compartment-type}
-
-Each compartment in a model may optionally be designated as
-belonging to a particular compartment type. The optional field
-\token{compartmentType} of type \primtype{SId} is used identify the
-compartment type represented by the \Compartment structure.
-The field's value must be the identifier of an existing
-\CompartmentType structure.  If the
-\token{compartmentType} field is not present on a particular
-compartment definition, a unique virtual compartment type is assumed for
-that compartment, and no other compartment can belong to that
-compartment type.
-
-The values of \token{compartmentType} attributes on compartments
-have no effect on the numerical interpretation of a model.
-Simulators and other numerical analysis software may ignore
-\token{compartmentType} attributes.
-
-\end{blockChanged}
-
 
 \subsubsection{Examples}
 
@@ -3122,7 +3297,7 @@ compartment A, one would write:
 
 %-----------------------------------------------------------------------------
 \begin{blockChanged}
-\subsection{SpeciesType}
+\subsection{Species Types}
 \label{sec:speciesType}
 %-----------------------------------------------------------------------------
 
@@ -3211,7 +3386,20 @@ is shown in Figure~\vref{fig:species}.
 
 \begin{figure}[htb]
   \centering
-  \includegraphics[scale = 0.68]{figs/specie}
+  \begin{classbox}{Species}
+    id: SId \\
+    name: string \{ use="optional" \} \\
+    \changed{speciesType: SId \{ use="optional" \}} \\
+    compartment: SId \\
+    initialAmount: double \{ use="optional" \} \\
+    inintialConcentration: double \{ use="optional" \} \\
+    substanceUnits: SId \{ use="optional" \} \\
+    spatialSizeUnits: SId \{ use="optional" \} \\
+    hasOnlySubstanceUnits: boolean \{ use="optional" default="false" \} \\
+    boundaryCondition: boolean \{ use="optional" default="false" \} \\
+    charge: integer \{ use="optional" \} \changed{\emph{deprecated}}\\
+    constant: boolean \{ use="optional" default="false" \} \\
+  \end{classbox}
   \caption{The definition of \Species.  Following UML notation,
     additional fields
     that are inherited from a base class, in this case \SBase, are not shown.}
@@ -3236,17 +3424,6 @@ optional \token{name} field, of type \primtype{string}.  The \token{name}
 and \token{id} fields \changed{must} be used as described in
 Section~\ref{sec:idnameattribs}.
 
-\subsubsection{The \token{compartment} Field}
-\label{sec:species-compartment}
-
-The required field \token{compartment}, also of type \primtype{SId},
-is used to identify the compartment in which the species is
-located.  The field's value must be the identifier of an existing
-\Compartment structure.  It is important to note that there
-is no default value for the \token{compartment} field on
-\Species; every species in an SBML model must be assigned a
-compartment, and consequently, a model must define at least one
-compartment if that model contains any species.
 
 \begin{blockChanged}
 \subsubsection{The \token{speciesType} Field}
@@ -3279,7 +3456,24 @@ effect on the numerical interpretation of a model. Simulators
 and other numerical analysis software may ignore
 \token{speciesType} attributes.
 
+% FIXME mention something about how prev sbml versions didn't have
+% this, and implications
+
 \end{blockChanged}
+
+
+\subsubsection{The \token{compartment} Field}
+\label{sec:species-compartment}
+
+The required field \token{compartment}, also of type \primtype{SId},
+is used to identify the compartment in which the species is
+located.  The field's value must be the identifier of an existing
+\Compartment structure.  It is important to note that there
+is no default value for the \token{compartment} field on
+\Species; every species in an SBML model must be assigned a
+compartment, and consequently, a model must define at least one
+compartment if that model contains any species.
+
 
 \subsubsection{The \token{initialAmount} and \token{initialConcentration} Fields}
 \label{sec:initialAmount}
@@ -3843,6 +4037,8 @@ subtypes, \AlgebraicRule, \AssignmentRule and
 correspond to the cases \emph{Algebraic}, \emph{Assignment}, and
 \emph{Rate} described above respectively.
 
+% FIXME: SBOTTerm spelling error
+
 \begin{figure}[htb]
   \centering
   \includegraphics[scale = 0.68]{figs/rule}
@@ -4316,7 +4512,12 @@ shows the definition of the \Constraint data structure.
 \begin{figure}[htb]
   \begin{blockChanged}
   \centering
-  \includegraphics[scale = 0.68]{figs/constraint}
+  \small
+  \begin{classbox}{Constraint}
+    math: Math \{ namespace="http://www.w3.org/1998/Math/MathML" \} \\
+    message: (ANY: \{ namespace="http://www.w3.org/1999/xhtml" \}) \{ minOccurs="0" maxOccurs="1" \} \\
+    sboTerm: SBOTerm \{ use="optional" \} \\
+  \end{classbox}
   \caption{The definition of \Constraint.
     Following UML notation fields
     that are inherited from a base class are not shown.}
@@ -8306,8 +8507,6 @@ facilities the correct encoding of models based on dimensionless
 experimental data.
 
 \item \emph{Substance units can be mass derived}
-
-\emph{FIX ME - this needs to be sorted out}
 
 In Version 2 the \emph{substance} built-in unit can be derived
 directly from kilogram rather from mole.  This facilitates the

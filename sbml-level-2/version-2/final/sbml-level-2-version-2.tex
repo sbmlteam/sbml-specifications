@@ -2810,83 +2810,86 @@ discussion to the case where offsets are not required (\ie when
 \token{offset} in a \Unit definition is not set, or is set to
 \val{0}).
 
-\newcommand{\xnew}{x}
-\newcommand{\xold}{x_\emph{base}}
-\newcommand{\unew}{u}
-\newcommand{\uold}{u_\emph{base}}
+\newcommand{\xnew}{\ensuremath{x}\xspace}
+\newcommand{\xbase}{\ensuremath{x_b}\xspace}
+\newcommand{\unew}{\ensuremath{\{u\}}\xspace}
+\newcommand{\ubase}{\ensuremath{\{u_b\}}\xspace}
 
 The unit system allows model quantities to be expressed in units
 other than the base units of Table~\ref{tab:unitkind}.  For
 analyses and computations, the consumer of the model (be it a
 software tool or a human) will want to convert all model
-quantities back to the base units.  The relationship between a
-quantity $\xnew$ in units $\unew$ to a quantity $\xold$ in base
-units $\uold$ (when the relationship does not require the use of
-zero offsets) is
+quantities to base SI units for purposes such as verifying the
+consistency of units throughout the model.  Suppose we begin with
+a quantity having numerical value \xnew when expressed in units
+\unew.  The relationship between \xnew and a quantity \xbase
+expressed in base units \ubase is
 \begin{equation}
-  \xold \, \uold = \xnew \, \unew \cdot \left( w \frac{\uold}{\unew} \right)
+  \xbase \, \ubase = \xnew \, \unew \left( \frac{w \, \ubase}{\unew} \right)
 \label{eq:new-to-old}
 \end{equation}
-where the dot ($\cdot$) represents simple scalar multiplication
-and $w$ is a numerical factor.  The $\unew$ terms on the
-right-hand side cancel, leaving a value in units of $\uold$.
-Numerically, the value is equal to $\xnew \cdot w$.  The factor
-$w$ is determined as follows:
+The term in the parentheses on the right-hand side is a factor for
+converting a quantity in units \unew to another quantity in units
+\ubase.  The ratio of units leads to canceling of \unew in the
+equation above and leaves a quantity in units \ubase.  It remains
+to define this factor.  In terms of the SBML unit system, it is:
 \begin{equation}
-  \unew = (\token{multiplier} \cdot 10^\token{scale} \cdot \uold)^\token{exponent}
+  \unew = (\token{multiplier} \cdot 10^\token{scale} \cdot \ubase)^\token{exponent}
 \label{eq:single-unit-no-offset}
 \end{equation}
+where the dot ($\cdot$) represents simple scalar multiplication.
 The variables \token{multiplier}, \token{scale}, and
 \token{exponent} in the equation above correspond to the fields
 with the same names in the \Unit structure defined in
-Figure~\ref{fig:unitdefinition}.
-Equation~\ref{eq:single-unit-no-offset} asserts a mathematical
-relationship between a given unit $\uold$ and another unit
-$\unew$.  The exponent may make it more difficult to grasp the
-relationship immediately; suppose for the moment than
-\token{exponent}=\val{1}, then it is easy to see that
+Figure~\ref{fig:unitdefinition}.  The exponent in the equation
+above may make it more difficult to grasp the relationship
+immediately; so let us suppose for the moment that
+\token{exponent}=\val{1}.  Then, it is easy to see that
 \begin{equation*}
-  \unew = \token{multiplier} \cdot 10^\token{scale} \cdot \uold 
+  \unew = \token{multiplier} \cdot 10^\token{scale} \cdot \ubase 
 \end{equation*}
-which means that $w = \token{multiplier} \cdot 10^\token{scale}$
-in Equation~\ref{eq:new-to-old}.  To take a concrete example, one
-foot expressed in terms of the metre (a base unit) requires
-\token{multiplier}=\val{0.3048}, \token{exponent}=\val{1}, and
-\token{scale}=\val{0} (the default):
+Dividing both sides by \unew produces the ratio in the
+parenthesized portion of Equation~\ref{eq:new-to-old}, which means
+that $w = \token{multiplier} \cdot 10^\token{scale}$.
+To take a concrete example, one foot expressed in terms of the
+metre (a base unit) requires \token{multiplier}=\val{0.3048},
+\token{exponent}=\val{1}, and \token{scale}=\val{0}:
 \begin{align*}
   \text{foot} = 0.3048 \cdot 10^0 \cdot \text{metre} \\
 \intertext{leading to a conversion between quantities of}
-  \xold \, \text{metres} = 0.3048 \cdot \xnew \, \text{feet} 
+  \xbase \, \text{metres} = 0.3048 \cdot \xnew \, \text{feet} 
 \end{align*}
+Given a quantity of, say, $x = 2$, the conversion results in
+$\xbase = 0.6096$.
+
+\newcommand{\uone}{\ensuremath{\{u_{b_1}\}}\xspace}
+\newcommand{\utwo}{\ensuremath{\{u_{b_2}\}}\xspace}
+\newcommand{\un}  {\ensuremath{\{u_{b_n}\}}\xspace}
 
 The case above is the simplest possible situation, involving the
-transformation of quantities from a single defined unit $\unew$
-into a quantity expressed in a single base unit $\uold$.  If,
-instead, multiple base units $u_1, u_2, \ldots, u_n$ are involved,
-the following equation holds (where the $m_i$ terms are the
+transformation of quantities from a single defined unit \unew into
+a quantity expressed in a single base unit \ubase.  If, instead,
+multiple base units $\uone, \utwo, \ldots, \un$ are involved, the
+following equation holds (where the $m_i$ terms are the
 \token{multiplier} values, the $s_i$ terms are the \token{scale}
 values, and the $x_i$ terms are the \token{exponent} values):
 \begin{align}
-  u_\emph{new} &= (m_1 \cdot 10^{s_1} \cdot u_1)^{x_1} \cdot 
-  (m_2 \cdot 10^{s_2} \cdot u_2)^{x_2} \cdot \ldots \cdot (m_n \cdot
-  10^{s_n} \cdot u_n)^{x_n} \notag
-  \\[2pt]
-               &= m_1^{x_1} \cdot m_2^{x_2} \cdot \ldots \cdot m_n^{x_n}
-  \cdot 10^{s_1 x_1} \cdot 10^{s_2 x_2} \cdot \ldots \cdot 10^{s_n x_n}
-  \cdot u_1^{x_1} \cdot u_2^{x_2} \cdot \ldots \cdot u_n^{x_n} \notag
+  \{u\} &= (m_1 \cdot 10^{s_1} \cdot \uone)^{x_1} \cdot 
+  (m_2 \cdot 10^{s_2} \cdot \utwo)^{x_2} \cdot \ldots \cdot (m_n \cdot
+  10^{s_n} \cdot \un)^{x_n} \notag
   \\[2pt]
                &= m_1^{x_1} \cdot m_2^{x_2} \cdot \ldots \cdot m_n^{x_n}
   \cdot 10^{(s_1 x_1 + s_2 x_2 + \ldots + s_n x_n)} 
-  \cdot u_1^{x_1} \cdot u_2^{x_2} \cdot \ldots \cdot u_n^{x_n}
+  \cdot \uone^{x_1} \cdot \utwo^{x_2} \cdot \ldots \cdot \un^{x_n}
 \label{eq:multip-units-no-offset}
 \end{align}
 The use of this unit transformation expression is analogous to
 Equation~\ref{eq:single-unit-no-offset}:
 \begin{align}
-  \xold \uold &= \xnew \, \unew
+  \xbase \ubase &= \xnew \, \unew
   \cdot \left( m_1^{x_1} \cdot m_2^{x_2} \cdot \ldots \cdot m_n^{x_n}
   \cdot 10^{(s_1 x_1 + s_2 x_2 + \ldots + s_n x_n)} 
-  \cdot u_1^{x_1} \cdot u_2^{x_2} \cdot \ldots \cdot u_n^{x_n}
+  \cdot \uone^{x_1} \cdot \utwo^{x_2} \cdot \ldots \cdot \un^{x_n}
   \right)
 \label{eq:multip-unit-usage}
 \end{align}
@@ -2894,14 +2897,10 @@ Equation~\ref{eq:single-unit-no-offset}:
 Some additional points are worth discussing about the unit scheme
 introduced so far.  First, the equations above are formulated with
 the assumption that the base units do not require an additive
-offset as part of their definition.  This is true for all the base
-units, except the temperature units (Celsius and kelvin) under one
-condition.  This condition is when a temperature value rather than
-a temperature \emph{change} is being considered.  \emph{When
-  temperature values are being considered, then a different
-  interpretation must be made}, as discussed below.  In all other
-cases, including when temperature degrees or intervals are being
-discussed, the straightforward unit transformation scheme
+offset as part of their definition.  \emph{When temperature values
+  in units other than kelvin are being considered, then a
+  different interpretation must be made}, as discussed below.  In
+all other cases, the straightforward unit transformation scheme
 described so far applies.
 
 A second point, related to the first, is that care is needed to

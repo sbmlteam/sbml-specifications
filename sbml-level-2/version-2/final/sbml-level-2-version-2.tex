@@ -3394,10 +3394,12 @@ The following XML fragment is an example of two
 \subsection{Compartments}
 \label{sec:compartments}
 %-----------------------------------------------------------------------------
-A \emph{compartment} in SBML represents a bounded space in which species
-are located.  Compartments do not necessarily have to correspond to actual
-structures inside or outside of a cell, although models are often designed
-that way.  The definition of \Compartment is shown in
+
+A \emph{compartment} in SBML represents a bounded space in which
+species are located.  Compartments do not necessarily have to
+correspond to actual structures inside or outside of a
+\changed{biological} cell, although models are often designed that
+way.  The definition of \Compartment is shown in
 Figure~\vref{fig:compartment}.
 
 \begin{figure}[htb]
@@ -3419,19 +3421,25 @@ Figure~\vref{fig:compartment}.
   \label{fig:compartment}
 \end{figure}
 
-It is worth pointing out that, although compartments are optional in the
-overall definition of \Model (see Section~\ref{sec:model}), every
-species in an SBML model must be located in a compartment.  This in turn
-means that if a model declares any species, the model must also declare at
-least one compartment.
+\begin{blockChanged}
+It is important to note that although compartments are optional in
+the overall definition of \Model (see Section~\ref{sec:model}),
+every species in an SBML model must be located in a compartment.
+This in turn means that if a model defines any species, the model
+must also define at least one compartment.  The reason is simply
+that species represent physical things, and therefore must exist
+\emph{somewhere}.  Compartments represent the \emph{somewhere}.
+\end{blockChanged}
+
 
 \subsubsection{The \token{id} and \token{name} Fields}
 
 \Compartment has one required field, \token{id}, of type
-\primtype{SId}, to give the compartment a unique identifier by which other
-parts of an SBML model definition can refer to it.  A compartment can also
-have an optional \token{name} field of type \primtype{string}.  Identifiers
-and names \changed{must} be used according to the guidelines described in
+\primtype{SId}, to give the compartment a unique identifier by
+which other parts of an SBML model definition can refer to it.  A
+compartment can also have an optional \token{name} field of type
+\primtype{string}.  Identifiers and names \changed{must} be used
+according to the guidelines described in
 Section~\ref{sec:idnameattribs}.
 
 
@@ -3440,15 +3448,15 @@ Section~\ref{sec:idnameattribs}.
 \label{sec:compartment-compartment-type}
 
 Each compartment in a model may optionally be designated as
-belonging to a particular compartment type. The optional field
-\token{compartmentType} of type \primtype{SId} is used identify the
-compartment type represented by the \Compartment structure.
-The field's value must be the identifier of an existing
-\CompartmentType structure.  If the
+belonging to a particular compartment type.  The optional field
+\token{compartmentType} of type \primtype{SId} is used identify
+the compartment type represented by the \Compartment structure.
+The \token{compartmentType} field's value must be the identifier
+of an existing \CompartmentType structure in the model.  If the
 \token{compartmentType} field is not present on a particular
-compartment definition, a unique virtual compartment type is assumed for
-that compartment, and no other compartment can belong to that
-compartment type.
+compartment definition, a unique virtual compartment type is
+assumed for that compartment, and no other compartment can belong
+to that compartment type.
 
 The values of \token{compartmentType} attributes on compartments
 have no effect on the numerical interpretation of a model.
@@ -3463,89 +3471,135 @@ Simulators and other numerical analysis software may ignore
 A \Compartment structure has an optional field
 \token{spatialDimensions}, whose value must be a positive integer
 indicating the number of spatial dimensions possessed by the
-compartment.  The maximum value is ``\texttt{3}'', meaning a
+compartment.  The maximum value is \val{3}, meaning a
 three-dimensional structure (a volume).  Other permissible values
-are ``\texttt{2}'' (for a two-dimensional area), ``\texttt{1}''
-(for a one-dimensional curve), and ``\texttt{0}'' (for a point).
-The default value is ``\texttt{3}''.
+are \val{2} (for a two-dimensional area), \val{1}
+(for a one-dimensional curve), and \val{0} (for a point).
+The default value is \val{3}. \changed{Note that the number
+of spatial dimensions possessed by a compartment affects certain
+aspects of the compartment's size and units-of-size; see the
+following two subsections.}
+
 
 \subsubsection{The \token{size} Field}
 \label{sec:size}
 
+\begin{blockChanged}
 Each compartment has an optional floating-point field named
 \token{size}, representing the total size of the compartment.  The
-\token{size} field enables concentrations of species to be
-calculated in the absence of geometry information.  Note in
-particular that in SBML Level~2, a missing \token{size} value does
-\emph{not} imply that the compartment size is 1.  (This is unlike
-the definition of compartment \token{volume} in SBML Level~1.)
+size may be a volume if the compartment is a three-dimensional
+one, or it may be an area, or a length.
 
+It is important to note that in SBML Level~2, a missing
+\token{size} value \emph{does not imply that the compartment size
+  is 1}.  (This is unlike the definition of compartment
+\token{volume} in SBML Level~1.)  When the
+\token{spatialDimensions} field does not have a value of \val{0},
+a missing value for \token{size} for a given compartment signifies
+that the value is either unknown, \changed{determined by an
+  \AssignmentRule or \InitialAssignment structure, not required
+  for analysis, or is available} from an external data source.
 The \token{size} field must not be present if the
-\token{spatialDimensions} field is has a value of \val{0}.
-\changed{This simply follows from the fact that a zero-dimensional
-object cannot have a size in the ordinary meaning of the word.}
-When the \token{spatialDimensions} field does not have a value of
-\val{0}, a missing value for \token{size} for a given compartment
-signifies that the value is either unknown, \changed{determined by
-an \AssignmentRule or \InitialAssignment structure, not required
-for analysis, or is available} from an external data source.
+\token{spatialDimensions} field has a value of \val{0}\changed{;
+  otherwise, a logical inconsistency would exist because a
+  zero-dimensional object cannot have a physical size.}
+
+For the reasons given above, the \token{size} field on a
+compartment must be defined as optional; however, it is extremely
+good practice to specify values for compartment sizes when such
+values are available.  There are two major technical reasons for
+this.  First, models ideally should be instantiable in a variety
+of simulation frameworks.  A commonly-used one is the discrete
+stochastic framework in which species are represented as item
+counts (\eg molecule counts).  If species' initial quantities are
+given in terms of concentrations or densities, it is impossible to
+convert the values to item counts without knowing compartment
+sizes.  Second, and more importantly, if a model contains multiple
+compartments whose sizes are not all identical to each other, it
+is impossible to quantify the reaction rate expressions without
+knowing the compartment volumes.  The reason for the latter is
+that reaction rates in SBML are defined in terms of
+\quantity{substance}/\quantity{time} (see
+Section~\ref{subsec:kinetic-law}), and when species quantities are
+given in terms of concentrations or densities, the compartment
+sizes become factors in the reaction rate expressions.
+\end{blockChanged}
+
 
 \subsubsection{The \token{units} Field}
 \label{sec:compartment-units}
 
-The units associated with the compartment's \token{size} value
-may be explicitly set using the optional field \token{units}. The
-value chosen for this field must be either one of the base units
-from Table~\vref{tab:unitkind}, or the built-in units
-``\token{volume}'', ``\token{area}'', ``\token{length}'' or
-``\token{dimensionless}'', or a new unit defined by a unit
-definition in the enclosing model.  \changed{The type of units
-assigned to the \token{units} field must also agree with the
-number of spatial dimensions of the compartment; that is, if the chosen
-units are not ``\token{dimensionless}'',  they must be either
-units of volume if the value of
-\token{spatialDimensions} is ``\token{3}'',
-units of area if the value of \token{spatialDimensions} is
-``\token{2}'', or units of length
-if the value of \token{spatialDimensions} is ``\token{1}''.  If
-\token{spatialDimensions} is ``\token{0}'', the units
-associated with the compartment's \token{size} can only be
-``\token{dimensionless}''.}
-
 \begin{blockChanged}
-The default units depends on the value of the compartment's
-\token{spatialDimensions} field according to the following rule: for
-spatial dimensions of 3, 2, 1 or 0, the compartment has the default units
-of \token{volume}, \token{area}, \token{length} and \token{dimensionless},
-respectively.  (See Table~\vref{tab:builtin} and
-Table~\vref{tab:unitkind}.)
+The units associated with the compartment's \token{size} value may
+be set explicitly using the optional field \token{units}.  The
+default units, and the kinds of units allowed as values of the
+field \token{units} interact with the number of spatial dimensions
+of the compartment.  The value of the \token{units} field of a
+\Compartment object must be one of the base units from
+Table~\vref{tab:unitkind}, or the built-in units \val{volume},
+\val{area}, \val{length} or \val{dimensionless}, or a new unit
+defined by a unit definition in the enclosing model, subject to
+the restrictions detailed in Table~\ref{tab:comp-size-units}.
 \end{blockChanged}
 
-The units of the compartment size, as defined by the \token{units} field,
-are used in the following ways:
+
+\begin{table}[bh]
+\begin{blockChanged}
+  \small
+  \centering
+  \begin{tabular}{cllll}
+    \toprule
+    \textbf{Value of field}    & \textbf{Field} \texttt{size} & \textbf{Field} \texttt{units} &  & \textbf{Default value of}\\
+    \texttt{spatialDimensions} & \textbf{allowed?}            & \textbf{allowed?}             & \textbf{Allowable kinds of units} & \textbf{field} \texttt{units}\\
+    \midrule
+    \val{3}             & yes   & yes   & units of volume, or \token{dimensionless}     & \val{volume}\\
+    \val{2}             & yes   & yes   & units of area, or \token{dimensionless}       & \val{area}\\
+    \val{1}             & yes   & yes   & units of length, or \token{dimensionless}     & \val{length}\\
+    \val{0}             & no    & no    & (no units allowed)\\
+    \bottomrule
+  \end{tabular}
+  \caption{The types of units permitted for the units of
+    compartment size. If the value of \token{spatialDimensions} is
+    \val{0}, the \token{units} field must not be present
+    because a compartment with no dimensions has no size and
+    units cannot be meaningfully associated with the
+    (non-existent) size.  \emph{Units of volume} means litres,
+    cubic metres, or units derived from them; \emph{units of area}
+    means square metres or units derived from square metres; and
+    \emph{units of length} means metres or units derived from
+    metres. (See also Table~\protect\vref{tab:builtin} and
+    Table~\protect\vref{tab:unitkind}.)}
+  \label{tab:comp-size-units}
+\end{blockChanged}
+\end{table}
+
+The units of the compartment size, as defined by the \token{units}
+field, are used in the following ways:
 \begin{itemize}
-
-\item The value of the \token{units} field is used as the units of the \token{size}
-  field of the
-  compartment structure (see Section~\ref{sec:size}).
-
-\item The value of the \token{units} field is used as the units of the
-  compartment identifier when it appears as a numerical quantity in a mathematical
-  formula expressed in MathML (discussed in Section~\ref{sec:ci-token}).
-
-\item The value of the \token{units} field is used as the units of the
-  \token{math} field \changed{provided on
-  \AssignmentRule and \InitialAssignment structures
-  for setting a compartment's size}
-  (see Section~\ref{sec:assignmentrule}).
-
-\item In a \RateRule structure that
-  sets the rate of change of the compartment's size
-  (Section~\ref{sec:raterule}), the units on the rule's \token{math} field are
-  those in the compartment's \token{units} field divided by the default
-  \quantity{time} units.  (In other words, the units for the rate of change
-  of compartment size are \quantity{compartment size}/\quantity{time} units.)
+  
+\item The value of the \token{units} field is used as the units of
+  the \token{size} field of the compartment structure (see
+  Section~\ref{sec:size}).
+  
+\item The value of the \token{units} field is used as the units of
+  the compartment identifier when it appears as a numerical
+  quantity in a mathematical formula expressed in MathML
+  (discussed in Section~\ref{sec:ci-token}).
+  
+\item The value of the \token{units} field is used as the units of
+  the \token{math} field \changed{provided on \AssignmentRule and
+    \InitialAssignment structures for setting a compartment's
+    size} (see Section~\ref{sec:assignmentrule}).
+  
+\item In a \RateRule structure that sets the rate of change of the
+  compartment's size (Section~\ref{sec:raterule}), the units on
+  the rule's \token{math} field are those in the compartment's
+  \token{units} field divided by the default \quantity{time}
+  units.  (In other words, the units for the rate of change of
+  compartment size are \quantity{compartment size}/\quantity{time}
+  units.)
 \end{itemize}
+
 
 \subsubsection{The \token{constant} Field}
 \label{sec:compartment-constant}
@@ -3553,52 +3607,60 @@ are used in the following ways:
 A \Compartment also has an optional boolean field called
 \token{constant} that indicates whether the compartment's size
 stays constant or can vary during a simulation.  A value of
-\val{false} indicates the compartment's size can be
-determined by rules (see Section~\ref{sec:rules}), and the value
-of the \token{size} field should be taken as being the initial
-size of the compartment.  The default value for the
-\token{constant} field is \val{true} because in the
-most common modeling scenarios at the time of this writing,
-compartment sizes remain constant. The \token{constant} field
-must default to or be set to \val{true} if the
-\token{spatialDimensions} field is 0.
+\val{false} indicates the compartment's size can be determined by
+rules (see Section~\ref{sec:rules}), and the value of the
+\token{size} field should be taken as being the initial size of
+the compartment.  The default value for the \token{constant} field
+is \val{true} because in the most common modeling scenarios at the
+time of this writing, compartment sizes remain constant. The
+\token{constant} field must default to or be set to \val{true} if
+the \token{spatialDimensions} field is 0.
+
 
 \subsubsection{The \token{outside} Field}
 \label{sec:compartment-outside}
 
 The optional field \token{outside} of type \primtype{SId} can be
 used to express containment relationships between compartments. If
-present, the value of \token{outside} for a given compartment
-must be \changed{the \token{id} field value of another
-compartment which encloses it}, or in other words, the compartment
-that is ``outside'' of it. This enables the representation of
-simple topological relationships between compartments, for those
+present, the value of \token{outside} for a given compartment must
+be \changed{the \token{id} field value of another compartment
+  which encloses it}, or in other words, the compartment that is
+``outside'' of it.  This enables the representation of simple
+topological relationships between compartments, for those
 simulation systems that can make use of the information (e.g., for
-drawing simple diagrams of compartments).
+drawing simple diagrams of compartments).  
 
-\changed{The directed graph formed by representing
-\Compartment structures as vertexes and the \token{outside}
-attribute values as edges must be acyclic.  If this condition were not
-imposed, a model could contain a \Compartment that
-was contained inside itself.}
+\begin{blockChanged}
+There are two restrictions on the containment relationships
+permitted in an SBML model.  First, because a compartment with
+\token{spatialDimensions} of \val{0} has no size, such a
+compartment cannot act as the container of any other compartment
+\emph{except} compartments that \emph{also} have
+\token{spatialDimensions} values of \val{0}.  Second, the directed
+graph formed by representing \Compartment structures as vertexes
+and the \token{outside} attribute values as edges must be acyclic.
+The latter condition is imposed to prevent a compartment from
+being contained inside itself.
+\end{blockChanged}
 
-Although containment relationships are partly taken into account by the
-compartmental localization of reactants and products, it is not always
-possible to determine purely from the reaction equations whether one
-compartment is meant to be located within another.  In the absence of a
-value for \token{outside}, compartment definitions in SBML Level~2 do not
-have any implied spatial relationships between each other.  For many
-modeling applications, the transfer of substances described by the
-reactions in a model sufficiently express the relationships between the
-compartments.  (As discussed in Section~\ref{sec:level-3}, we expect that
-SBML Level~3 will introduce the ability to define geometries and spatial
-qualities.)
+Although containment relationships are partly taken into account
+by the compartmental localization of reactants and products, it is
+not always possible to determine purely from the reaction
+equations whether one compartment is meant to be located within
+another.  In the absence of a value for \token{outside},
+compartment definitions in SBML Level~2 do not have any implied
+spatial relationships between each other.  For many modeling
+applications, the transfer of substances described by the
+reactions in a model sufficiently express the relationships
+between the compartments.  (As discussed in
+Section~\ref{sec:level-3}, \changed{SBML Level~3} is expected
+introduce the ability to define geometries and spatial qualities.)
 
 
 \subsubsection{Examples}
 
-The following example illustrates two
-compartments in an abbreviated SBML example of a model definition:
+The following example illustrates two compartments in an
+abbreviated SBML example of a model definition:
 
 \begin{example}
 <model>
@@ -3612,10 +3674,10 @@ compartments in an abbreviated SBML example of a model definition:
 
 \end{example}
 
-The following is an example of using \token{outside} to model a cell
-membrane.  To express that a compartment named B has a membrane that is
-modeled as another compartment M, which in turn is located within another
-compartment A, one would write:
+The following is an example of using \token{outside} to model a
+cell membrane.  To express that a compartment named B has a
+membrane that is modeled as another compartment M, which in turn
+is located within another compartment A, one would write:
 
 \begin{example}
 <model>

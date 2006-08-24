@@ -606,7 +606,7 @@ always have content.
 
 A field definition of the form \token{X : (A : B)} defines an
 element \emph{X} that contains a field \emph{A} with type
-\emph{B}.  If \emph{A} is the string \token{ANY} then the element
+\emph{B}.  If \emph{A} is the string \token{any} then the element
 \emph{X} contains an arbitrary sequence of elements.  A field
 definition of the form \token{X : ( A : B ) \{ C \}} is similar
 except that the field \emph{X} and its content is constrained by
@@ -1105,11 +1105,49 @@ the ontology and principles for the use of these terms in SBML
 models.
 
 
-% FIXME need to define ``any''
-%
-%\subsubsection{Type \primtype{ANY}}
-%\label{sec:any}
+\subsubsection{Type \primtype{any}}
+\label{sec:any}
 
+The XML Schema element type \primtype{any} is used to indicate
+that a given SBML element allows arbitrary well-formed XML
+content.  The content can be a mixture of character data and XML
+tags.  In all situations where \primtype{any} is used in SBML,
+certain additional conditions apply; for example, the content may
+be restricted to being within a specific XML namespace.  Please
+consult the relevant SBML structure definitions in the rest of
+this document.
+
+Can there be an ambiguity resulting from an embedded closing tag
+within the \primtype{any} content?  Given that the \primtype{any}
+content must be well-formed XML and that most situations in SBML
+where the type is used impose restrictions on the XML namespaces
+in which the content resides, it is difficult to construct a
+scenario where valid content would have embedded within it a
+single unbalanced closing tag of the same name as the SBML
+structure.  In other words, within (say) an SBML
+\token{<annotation>} \ldots \token{</annotation>} element content,
+an embedded \token{</annotation>} tag without a prior opening
+\token{<annotation>} would lead to an invalid XML document because
+the element tags would be imbalanced: the result would be
+\begin{example}
+<annotation> ... </annotation> ... </annotation>
+\end{example}
+This situation is actually impossible to construct in the two
+cases where the \primtype{any} content is restricted to being in
+the XHTML namespace (the \token{notes} on \SBase and
+\token{message} on \Constraint), because the corresponding tags
+(\ie \token{<notes>} and \token{<message>}) are not part of the
+XHTML namespace anyway.  Their appearance within these elements
+would be an error.  
+
+In the unlikely event that an application or user needs to embed a
+problematic element within the content, it must be escaped using
+XML's CDATA construct.  The quoting sequence begins with the
+characters \token{<![CDATA[} and ends with the character sequence
+\token{]]>}.  Here is an example:
+\begin{example}
+<notes> ... <![CDATA[</notes>]]> ... </notes>
+\end{example}
 
 
 \end{blockChanged}
@@ -1161,8 +1199,8 @@ the \token{notes} and \token{annotation} fields in
   \centering
   \begin{classbox}{\textsl{SBase}}
     metaid: ID \{ use="optional" \}                                                                 \\
-    notes: (ANY : \{ namespace="http://www.w3.org/1999/xhtml" \}) \{ minOccurs="0" maxOccurs="1" \} \\
-    annotation: (ANY) \{ minOccurs="0" maxOccurs="1" \}                                             \\
+    notes: (any : \{ namespace="http://www.w3.org/1999/xhtml" \}) \{ minOccurs="0" maxOccurs="1" \} \\
+    annotation: (any) \{ minOccurs="0" maxOccurs="1" \}                                             \\
   \end{classbox}
   \caption{The definition of \SBase.  Text enclosed in braces next
     to field types (e.g., \token{\{minOccurs="0"\}}) indicates
@@ -1205,6 +1243,7 @@ the \token{metaid}'s of objects in the SBML model.
 
 
 \subsubsection{The \token{notes} Field}
+\label{sec:notes}
 
 The field \token{notes} in \SBase is a container for
 XHTML\changed{~1.0~\citep{pemberton:2002}} content.  It is
@@ -4976,7 +5015,7 @@ shows the definition of the \Constraint data structure.
   \begin{classbox}{Constraint}
     sboTerm: SBOTerm \{ use="optional" \}                                                            \\
     math: Math \{ namespace="http://www.w3.org/1998/Math/MathML" \}                                  \\
-    message: (ANY: \{ namespace="http://www.w3.org/1999/xhtml" \}) \{ minOccurs="0" maxOccurs="1" \} \\
+    message: (any: \{ namespace="http://www.w3.org/1999/xhtml" \}) \{ minOccurs="0" maxOccurs="1" \} \\
   \end{classbox}
   \caption{The definition of \Constraint.
     Following UML notation fields

@@ -2059,22 +2059,28 @@ reserved names into the component identifier namespace.  The
 \val{text}.  The \token{definitionURL} should be set to one of the
 following predefined SBML symbol URIs:
 \begin{itemize}
-
-\item \uri{http://www.sbml.org/sbml/symbols/time}.  This represents the
-  current simulation time.  The units of the current time entity are
-  determined from the built-in \token{time} of Table~\vref{tab:builtin}.
-
-\item \uri{http://www.sbml.org/sbml/symbols/delay}.  This represents a delay
-  function.  The delay function has the form $delay(x, d)$, taking two
-  \changed{MathML expressions as} arguments.  Its value is the value of argument
-  $x$ at $d$ time units before the current time.  \changed{There are no
-  restrictions on the form of $x$.} The units of the $d$ parameter
-  are determined from the built-in \token{time}.  \changed{The value of the $d$
-  parameter, when evaluated, must be numerical and be greater than or equal to 0.}
-  The \texttt{delay} function is useful
-  for representing biological processes having a delayed response, but
-  where the detail of the processes and delay mechanism is not relevant to
-  the operation of a given model.
+  
+\item \uri{http://www.sbml.org/sbml/symbols/time}.  This
+  represents the current simulation time.  \changed{See
+  Section~\ref{sec:meaning-of-time} for more information.}  The
+  units of the current time entity are determined from the
+  built-in \token{time} of Table~\vref{tab:builtin}.
+  
+\item \uri{http://www.sbml.org/sbml/symbols/delay}.  This
+  represents a delay function.  The delay function has the form
+  $delay(x, d)$, taking two \changed{MathML expressions as}
+  arguments.  Its value is the value of argument $x$ at $d$ time
+  units before the current time.  \changed{There are no
+    restrictions on the form of $x$.} The units of the $d$
+  parameter are determined from the built-in \token{time}.
+  \changed{The value of the $d$ parameter, when evaluated, must be
+    numerical and be greater than or equal to 0.}  The
+  \emph{delay} function is useful for representing biological
+  processes having a delayed response, but where the detail of the
+  processes and delay mechanism is not relevant to the operation
+  of a given model.  \changed{See
+    Section~\ref{sec:meaning-of-time} below for additional
+    considerations surrounding the use of this \token{csymbol}.}
 
 \end{itemize}
 
@@ -2093,9 +2099,9 @@ encodes the formula $x + t$, where $t$ stands for time.
 \end{example}
 
 \begin{blockChanged}
-In the fragment above, the use of the token \texttt{t} is mostly a
+In the fragment above, the use of the token \token{t} is mostly a
 convenience for human readers---the string inside the
-\texttt{csymbol} could have been almost anything, because it is
+\token{csymbol} could have been almost anything, because it is
 essentially ignored by MathML parsers and SBML.  Some MathML and
 SBML processors will take note of the token and use it when
 presenting the mathematical formula to users, but the token used
@@ -2130,8 +2136,91 @@ intended to be dereferenced as an Internet address.  There is
 nothing actually located at the address
 \uri{http://www.sbml.org/sbml/symbols/delay}.
 
-\begin{blockChanged}
 
+\begin{blockChanged}
+\subsubsection{Simulation Time and Special Considerations}
+\label{sec:meaning-of-time}
+
+The principal use of SBML is to represent quantitative dynamical
+models whose behaviors manifest themselves over time.  In defining
+an SBML model using constructs such as reactions, time is most
+often implicit and does not need to be referred to in the
+mathematical expressions themselves.  However, sometimes an
+explicit time dependency needs to be stated, and for this purpose,
+the \emph{time} \token{csymbol} (described above in
+Section~\ref{sec:csymbol-token}) may be used.  This \emph{time}
+symbol refers to ``instantaneous current time'' in a simulation,
+frequently given the literal name $t$ in one's equations.
+
+An assumption in SBML is that ``initial time'' in a simulation is
+zero, that is, if $t_0$ is the initial time in the system, $t_0 =
+0$.  This corresponds to the most common scenario.  Initial
+conditions in SBML take effect at time $t = 0$.  There is no
+mechanism in SBML for setting the initial time to a value other
+than 0.  To refer to a different time in a model, one approach is
+to define a \Parameter for the new time variable and use an
+\AssignmentRule in which the assignment expression subtracts a
+value from the \token{csymbol} \emph{time}.  For example, if the
+desired offset is 2 time units, the MathML expression would be
+\begin{example}
+<math xmlns="http://www.w3.org/1998/Math/MathML">
+    <apply>
+        <minus/>
+        <csymbol encoding="text" definitionURL="http://www.sbml.org/sbml/symbols/time">
+            t
+        </csymbol>
+        <cn> 2 </cn>
+    </apply>
+</math>
+\end{example}
+SBML's assignment rules (Section~\ref{sec:assignmentrule}) can be
+used to express mathematical statements that hold true at all
+moments, so using an assignment rule with the expression above
+will result in the value being equal to $t - 2$ at every point in
+time.  A parameter assigned this value could then be used
+elsewhere in the model, its value could be plotted by a simulator,
+etc.
+
+At the moment a simulation begins at time $t = 0$, a model's
+\Reaction, \RateRule, \AlgebraicRule, \Event, and \Constraint
+definitions take effect.  The availability of the \emph{delay}
+\token{csymbol} (see Section~\ref{sec:csymbol-token} above)
+introduces the possibility that at $t = 0$, mathematical
+expressions in a model may draw on values of model components from
+time prior to $t = 0$.  Where can those values come from?
+\begin{itemize}
+  
+\item Initial amounts of \Species, as set by their
+  \token{initialAmount} or \token{initialConcentration} fields
+  (Section~\ref{sec:species})
+  
+\item Initial sizes of \Compartment{}s, as set by their
+  \token{size} fields (Section~\ref{sec:compartments})
+  
+\item Initial values of \Parameter{}s, as set by their
+  \token{value} fields (Section~\ref{sec:parameters})
+  
+\item \AssignmentRule{}s (Section~\ref{sec:assignmentrule})
+  
+\item \InitialAssignment{}s---note also that initial assignments
+  can override the initial values defined on species, compartments
+  and parameters (Section~\ref{sec:initialAssignment})
+
+\end{itemize}
+The constructs above all apply at times $t <= 0$.  In effect, they
+form a continuous estimate of the values of the different
+variables in a model prior to when simulation time begins at $t =
+0$.  All other SBML constructs (\Reaction, \Event, \RateRule,
+\AlgebraicRule, and \Constraint) are not active at $t < 0$.  A
+model that uses the \emph{delay} \token{csymbol} can refer to
+symbols whose values are established using the constructs above.
+A model making use of \emph{delay} expressions referring to
+symbols whose values are not defined in the necessary range of
+time prior to $t = 0$ is indeterminate.
+
+\end{blockChanged}
+
+\begin{blockChanged}
 \subsubsection{Math Expression Types}
 \label{sec:mathmltype}
 
@@ -3583,9 +3672,11 @@ following two subsections.}
 
 \begin{blockChanged}
 Each compartment has an optional floating-point field named
-\token{size}, representing the total size of the compartment.  The
-size may be a volume if the compartment is a three-dimensional
-one, or it may be an area, or a length.
+\token{size}, representing the initial total size of the
+compartment.  The size may be a volume (if the compartment is a
+three-dimensional one), or it may be an area (if the compartment
+is two-dimensional), or a length (if the compartment is
+one-dimensional).
 
 It is important to note that in SBML Level~2, a missing
 \token{size} value \emph{does not imply that the compartment size
@@ -3620,6 +3711,17 @@ that reaction rates in SBML are defined in terms of
 Section~\ref{subsec:kinetic-law}), and when species quantities are
 given in terms of concentrations or densities, the compartment
 sizes become factors in the reaction rate expressions.
+
+A compartment's initial size is set by the \token{size} field
+exactly once.  Unless subsequently changed, this value is in
+effect at all times, including simulation time $t <= 0$.  An
+\InitialAssignment or an \AssignmentRule for the same compartment
+identifier overrides this setting (see
+Sections~\ref{sec:initialAssignment}
+and~\ref{sec:assignmentrule}).  It is not an error to define both
+\token{size} on a compartment and redefine the value using an
+initial assignment or an assignment rule, but the \token{size}
+setting in that case becomes meaningless.
 \end{blockChanged}
 
 
@@ -3904,7 +4006,7 @@ exclusive; i.e., \emph{only one} can have a value on any given
 instance of a \Species structure.  \changed{Also,
 \token{initialConcentration} must not have a value if the
 species' compartment has a \token{spatialDimensions} value of
-``\texttt{0}''}. Missing \token{initialAmount} or
+\val{0}}. Missing \token{initialAmount} or
 \token{initialConcentration} values implies that their values are
 either unknown, set by an \changed{\AssignmentRule or
   \InitialAssignment} structure, not required for
@@ -3920,6 +4022,22 @@ are those defined in the \token{substanceUnits}, and the
 \quantity{size} units are those given in the
 \token{spatialSizeUnits} field as described in the next
 subsection.}
+
+\begin{blockChanged}
+A species' initial quantity is set by the \token{initialAmount} or
+\token{initialConcentration} fields exactly once.  Unless
+subsequently changed, this value is in effect at all times,
+including simulation time $t <= 0$.  An \InitialAssignment or an
+\AssignmentRule for the same species identifier overrides this
+setting (see Sections~\ref{sec:initialAssignment}
+and~\ref{sec:assignmentrule}).  It is not an error to define
+\token{initialAmount} or \token{initialConcentration} on a
+species and also redefine the value using an initial assignment or
+an assignment rule, but the \token{initialAmount} or
+\token{initialConcentration} setting in that case becomes
+meaningless.
+\end{blockChanged}
+
 
 \subsubsection{The \token{substanceUnits}, \token{spatialSizeUnits} and
     \token{hasOnlySubstanceUnits} Fields}
@@ -4168,6 +4286,20 @@ or (d) available from an external data source. If the parameter is
 not constant then the \token{value} field contains the initial
 value.}
 
+\begin{blockChanged}
+A parameter's initial value is set by the \token{value} field
+exactly once.  Unless subsequently changed, this value is in
+effect at all times, including simulation time $t <= 0$.  An
+\InitialAssignment or an \AssignmentRule for the same parameter
+identifier overrides this setting (see
+Sections~\ref{sec:initialAssignment}
+and~\ref{sec:assignmentrule}).  It is not an error to define
+\token{value} on a parameter and also redefine the value using an
+initial assignment or an assignment rule, but the \token{value} on
+the parameter definition in that case becomes meaningless.
+\end{blockChanged}
+
+
 \subsubsection{The \token{units} Field}
 \label{sec:parameter-units}
 
@@ -4188,7 +4320,7 @@ new unit defined in the list of unit definitions in the enclosing
 \Model structure.  There are no constraints on which units can be
 chosen from these sets.  There are no default units for parameters.
 
-\begin{blockChanged}
+
 \subsubsection{The \token{constant} Field}
 \label{sec:parameter-constant}
 
@@ -4374,7 +4506,7 @@ separately.  For example, there must be a \Parameter definition
 for a given parameter if there is an \InitialAssignment for that
 parameter.
 
-The effects of all \InitialAssignment objects are in general terms
+The actions of all \InitialAssignment objects are in general terms
 the same, but differ in the precise details depending on the type
 of variable being set:
 \begin{itemize}
@@ -4403,11 +4535,25 @@ of variable being set:
 
 \end{itemize}
 
+In the context of a simulation, initial assignments establish
+values that are in effect at ``initial time'' ($t = 0$).  The
+system of equations defined by a model's \Reaction{}s,
+\RateRule{}s, \AlgebraicRule{}s, \Constraint{}s, and \Event{}s can
+first be evaluated only after all initial assignments have been
+executed.  For purposes of evaluating expressions that involve the
+\emph{delay} \token{csymbol} (Section~\ref{sec:csymbol-token}),
+initial assignments are considered to apply at $t <= 0$.  In
+combination with values defined by species, compartments and
+parameters definitions, and values assigned by \AssignmentRule
+constructs, this enables delay expressions to be evaluated even
+though they may refer to values of variables taken at $t < 0$.
+(See Section~\ref{sec:meaning-of-time}.)
+
 There cannot be two initial assignments for the same symbol in a
 model; that is, a model must not contain two or more
 \InitialAssignment objects that both have the same identifier as
 their \token{symbol} field value.  A model must also not define
-initial assignments \emph{and} assignment rules simultaneously for
+initial assignments \emph{and} assignment rules for
 the same entity.  That is, there cannot be \emph{both} an
 \InitialAssignment and an \AssignmentRule for the same symbol in a
 model, because both kinds of constructs apply at the start of
@@ -4438,7 +4584,7 @@ assignment having the identifier as its \token{symbol} value and
 reassigning the value to $y$, \emph{and} (3) the identifier is
 also used in the mathematical formula of a second initial
 assignment.  What value should the second initial assignment use?
-It is the value assigned to the symbol by the first initial
+It is $y$, the value assigned to the symbol by the first initial
 assignment, not whatever value was given in the symbol's
 definition.  This follows directly from the behavior at the
 beginning of this section: if an \InitialAssignment object exists
@@ -4579,8 +4725,6 @@ subtypes, \AlgebraicRule, \AssignmentRule and
 correspond to the cases \emph{Algebraic}, \emph{Assignment}, and
 \emph{Rate} described above respectively.
 
-% FIXME: SBOTTerm spelling error
-
 \begin{figure}[htb]
   \centering
   \includegraphics[scale = 0.68]{figs/rule}
@@ -4589,6 +4733,7 @@ correspond to the cases \emph{Algebraic}, \emph{Assignment}, and
     that are inherited from a base class are not shown.}
   \label{fig:rules}
 \end{figure}
+
 
 \begin{blockChanged}
 \subsubsection{The \token{sboTerm} Field}
@@ -4641,8 +4786,8 @@ identical to the units associated with the left hand side, the
 formulas.
 
 The effects of an \AssignmentRule structure are in general terms
-the same, but differ in the precise details depending on the type of variable
-being set:
+the same, but differ in the precise details depending on the type
+of variable being set:
 \begin{itemize}
 
 \item \emph{In the case of a species}, an \AssignmentRule sets the
@@ -4678,8 +4823,21 @@ being set:
   Section~\ref{sec:parameter-units} for an explanation of how the units of the
   parameter are determined.)
 
-
 \end{itemize}
+
+\begin{blockChanged}
+In the context of a simulation, assignment rules are in effect at
+all times.  For purposes of evaluating expressions that involve
+the \emph{delay} \token{csymbol}
+(Section~\ref{sec:csymbol-token}), assignment rules are considered
+to apply at $t <= 0$.  In combination with values defined by
+species, compartments and parameters definitions, and values
+assigned by \InitialAssignment constructs, this enables delay
+expressions to be evaluated even though they may refer to values
+of variables taken at $t < 0$.  (See
+Section~\ref{sec:meaning-of-time}.)
+\end{blockChanged}
+
 
 \subsubsection{\class{RateRule}}
 \label{sec:raterule}
@@ -5085,15 +5243,21 @@ shows the definition of the \Constraint data structure.
   \end{blockMarkChanged}
 \end{figure}
 
-A \Constraint structure consists of two fields:
-\token{math}, which contains a MathML formula, and the optional
-field \token{message}, which contains a message in XHTML format that may
+A \Constraint structure consists of two fields: \token{math},
+which contains a MathML formula, and the optional field
+\token{message}, which contains a message in XHTML format that may
 be displayed to the user.  The formula contained in the
 \token{math} field should be an arbitrary function of the
 variables and parameters of the SBML model.  The formula must
-return a boolean value of \texttt{true} when the model is a
-\emph{valid} state.  \Constraint structures have effect at
-all times, i.e, $t >= 0$.
+return a boolean value of \val{true} when the model is a
+\emph{valid} state.
+
+In the context of a simulation, \Constraint structures have effect
+at all times beginning with ``initial time'', \ie for simulation
+time $t >= 0$.  They are first evaluated after any
+\InitialAssignment definitions in a model at $t = 0$ and can
+conceivably trigger at that point.  (In other words, a simulation
+could fail a constraint immediately.)
 
 \Constraint structures \emph{cannot and should not} be used
 to compute the dynamical behavior of a model as part of, for
@@ -5891,24 +6055,40 @@ Section~\ref{sec:idnameattribs} except that the \token{id} field is optional.
 \label{sec:event-trigger}
 
 The \token{trigger} field defines when the \Event structure has an
-effect on the model.  The \token{trigger} field contains a MathML boolean
-expression.  The exact instant that the expression evaluates to true is the
-time point when the \Event is \emph{fired}.  The event only fires
-when the \token{trigger} makes the transition from false to true.  The
-event will fire at any further time points when the \token{trigger} make
-this transition.
+effect on the model.  The \token{trigger} field contains a MathML
+boolean expression.  The exact instant that the expression
+evaluates to true is the time point when the \Event is
+\emph{fired}.  The event only fires when the \token{trigger} makes
+the transition from false to true.  The event will fire at any
+further time points when the \token{trigger} make this transition.
+
+\begin{blockChanged}
+An important question is whether an event can fire at initial
+simulation time, \ie $t = 0$.  The answer is no: an event can only
+be triggered immediately after $t = 0$.  The reason is that when a
+model's list of events is first evaluated at $t = 0$, all
+assignments of values to variables (species amounts, compartment
+sizes, and parameter values), all \InitialAssignment{}s and all
+\AssignmentRule{}s will have taken effect, and therefore the
+event's trigger expression cannot change value until the next time
+step.
+\end{blockChanged}
 
 
 \paragraph{The \token{delay} Field}
 \label{sec:event-delay}
 
-The optional \token{delay} field defines the length of time after
-the event has \emph{fired} that the event is \emph{executed}. The
-\token{delay} field is another MathML expression.  This
-expression should be evaluated when the rule is \emph{fired}.  The
-default value for the \token{delay} field is 0.  The value of the
-\token{delay} field should always be positive.  The units of the \token{delay}
+\begin{blockChanged}
+The optional \token{delay} field defines a mathematical expression
+used to compute the length of time after the event has
+\emph{fired} that the event is \emph{executed}.  This expression
+must be evaluated at the time the rule is \emph{fired}.  The
+default value for the \token{delay} field is 0.  The \token{delay}
+expression must always evaluate to a positive number (otherwise, a
+nonsensical situation would arise where an event is defined to
+fire before it is triggered!).  The units of the \token{delay}
 field are those given on the \token{timeUnits} field.
+\end{blockChanged}
 
 
 \paragraph{The \token{timeUnits} Field}

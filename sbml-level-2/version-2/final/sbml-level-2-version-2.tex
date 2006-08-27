@@ -1266,10 +1266,6 @@ which the RDF \token{describes} attributes contain the values of
 the \token{metaid}'s of objects in the SBML model.
 \end{blockChanged}
 
-%The form of the RDF element content in SBML should follow the form
-%described in the CellML Metadata
-%Specification~\citep{cuellar:2002}.
-
 
 \subsubsection{The \token{notes} Field}
 \label{sec:notes}
@@ -1279,20 +1275,39 @@ XHTML\changed{~1.0~\citep{pemberton:2002}} content.  It is
 intended to serve as a place for storing optional information
 intended to be seen by humans.  \changed{An example use of the
   \token{notes} field would be to contain formatted user comments}
-about the structure in which the \token{notes} field is enclosed.
+about the model component in which the \token{notes} field is enclosed.
 Every data object derived directly or indirectly from type \SBase
 can have a separate value for \token{notes}, allowing users
 considerable freedom when adding comments to their models.
 
 \begin{blockChanged}
-The content of \token{notes} must declare the use of the XHTML
-namespace.  The proper namespace URI is
-\uri{http://www.w3.org/1999/xhtml}.  There are multiple ways in
-which this can be done.  One way is to place the namespace
-declaration on the top-level \Sbml object (see
-Section~\ref{sec:sbml}) and then reference the namespace in the
-\token{notes} content.  The following example illustrates this
-approach:
+XHTML~1.0 is simply a formulation of HTML~4 in XML~1.0.  This
+means the full power of HTML formatting is available for use in
+\token{notes} content.  The intention behind requiring XHTML
+rather than plain HTML for \token{notes} content is to balance
+several conflicting goals: support an international formatting
+standard so that users have more control over the appearance of
+notes and can predict to some degree how their notes will be
+displayed in different tools and environments; chose a format for
+notes that is compatible with the XML form of SBML (plain HTML
+would not be); and achieve these goals using an approach that is
+hopefully easy enough for software developers to support using
+modern programming libraries.  Libraries for displaying and
+editing HTML content are commonly available in contemporary
+software programming environments, and software developers may
+wish to avail themselves of these facilities rather than
+implementing their own XHTML support systems.
+
+
+\paragraph{The Content of \token{notes}}
+
+The content of \token{notes} elements must declare the use of the
+XHTML namespace.  There are multiple ways in which this can be
+done.  One way is to place a namespace declaration for the XML
+namespace URI \uri{http://www.w3.org/1999/xhtml} on the top-level
+\Sbml object (see Section~\ref{sec:sbml}) and then reference the
+namespace in the \token{notes} content.  The following example
+illustrates this approach:
 
 \begin{example}
 <sbml xmlns="http://www.sbml.org/sbml/level2/version2" level="2" version="2"
@@ -1332,25 +1347,81 @@ obviates the need to prefix every element with a namespace prefix
 (\eg \token{xhtml:center} as in the prevous case).  Other
 approaches are also possible.
 
-%Section~\ref{sec:examples} provides additional examples of using
-%\token{notes} in different models.
+SBML does not require the content of \token{notes} to be any
+particular XHTML element.  The only restriction is that
+\token{notes} must not contain an XML declaration (\ie
+\token{<?xml version="1.0" encoding="UTF-8"?>}) nor a DOCTYPE
+declaration.  The notes can otherwise be can be any single or
+multiple XHTML elements, subject to the restriction that the
+character encoding cannot be changed away from UTF-8 (the encoding
+for SBML).
 
-%The question arises of what can be placed inside \token{notes}.
-%Must it be an XHTML \token{<body>}?  Can it be another container
-%such as \token{<p>}, \token{<table} or other?
 
-XHTML~1.0 is simply a formulation of HTML~4 in XML~1.0.  This
-means the full power of HTML formatting is available for use in
-\token{notes} content.  The intention behind requiring XHTML for
-\token{notes} content is to regulate the format of notes in a way
-that software developers will hopefully find easy to support, yet
-at the same time, to provide enough regulation on the format that
-users can predict to some degree how their notes will be displayed
-in different tools and environments.  Libraries for displaying and
-editing HTML content are commonly available in contemporary
-software programming environments, and software developers may
-wish to avail themselves of these facilities rather than
-implementing their own XHTML support systems.
+\paragraph{Processing \token{notes} Content}
+
+If \token{notes} can contain any of a number of possible XHTML
+elements, how should an application process the contents?  Let us
+take the case of an SBML-reading application that needs to take
+the contents and pass it to an XHTML display and/or editing
+function obtained from a third-party API library.  The content of
+the \token{notes} may not be a complete XHTML document, so the
+application will have to perform some processing before handing it
+to the XHTML editor.  How should this be done?
+
+There are actually a limited number of cases possible.  Here we
+give an example approach for handling them, although the actual
+implementation details will differ depending on various factors
+such as the requirements of the software libraries being used.
+First, if the library functions require a fully compliant XML
+document, it may be necessary to prepend an XML declaration and a
+DOCTYPE declaration to the results of the following steps.  Next,
+the application should look at the first element inside the
+\token{notes} (or rather, the first element that is not a
+comment), and then take action based on the following four
+possibilities:
+\begin{enumerate}
+  
+\item If the first element inside \token{notes} begins with
+  \token{<html xhtml="http://www.w3.org/1999/xhtml">}, the
+  application could assume that the content is a complete XHTML
+  document (minus the declarations, of course).  It could
+  therefore append this content to the XML and DOCTYPE
+  declarations mentioned above and hand it to the XHTML editing
+  function.
+  
+\item If the first element inside \token{notes} is \token{<head>},
+  the application could assume that the contents is an XHTML
+  document without the \token{<html> ... </html>} wrapper around
+  it.  It could therefore take the contents of the \token{notes}
+  element, wrap it with \token{<html
+    xhtml="http://www.w3.org/1999/xhtml">} and \token{</html>}
+  elements, append the result to the XML and DOCTYPE declarations,
+  and finally hand it to the XHTML editing function.
+  
+\item If the first element is \token{<body>}, the application
+  could take the \token{notes} contents and wrapt it with
+  \begin{example}
+<html xhtml="http://www.w3.org/1999/xhtml">
+    <head>
+        <title></title>
+    </head>\end{example}
+  and \token{</html>} elements, append the result to the XML and
+  DOCTYPE declarations, and finally hand it to the XHTML editing
+  function.
+  
+\item Finally, if the \token{notes} content begins with none of
+  the above elements, the content needs to be wrapped with
+  \begin{example}
+<html xhtml="http://www.w3.org/1999/xhtml">
+    <head>
+        <title></title>
+    </head>
+    <body>\end{example}
+  and \token{</body></html>}, the result then appended to the XML
+  and DOCTYPE declarations, and finally the combination handed to
+  the XHTML editing function.
+\end{enumerate}
+
 
 \end{blockChanged}
 

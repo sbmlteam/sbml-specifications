@@ -3033,16 +3033,18 @@ given in Table~\vref{tab:unitkind}.
   \ttfamily
   \small
   \setlength{\arraycolsep}{8pt}
+  \begin{blockChanged}
   \begin{tabular}{llllll}
     \toprule
-    ampere      & farad & joule     & lux       & radian   & volt   \\
-    becquerel   & gram  & katal     & metre     & second   & watt\\
-    candela     & gray  & kelvin    & mole      & siemens  & weber\\
-    Celsius     & henry & kilogram  & newton    & sievert\\
-    coulomb     & hertz & litre     & ohm       & steradian\\
-    \underline{dimensionless} & \underline{item} & lumen     & pascal    & tesla\\
+    ampere    & gram    & katal    & metre  & second    & watt   \\
+    becquerel & gray    & kelvin   & mole   & siemens   & weber\\
+    candela   & henry   & kilogram & newton & sievert\\
+    coulomb   & hertz   & litre    & ohm    & steradian\\
+    \underline{dimensionless} & \underline{item} & lumen & pascal & tesla\\
+     farad    & joule   & lux      & radian    & volt\\
     \bottomrule
   \end{tabular}
+  \end{blockChanged}
   \caption{The possible values of \token{kind} in a \primtype{UnitKind}
     structure.  All are names of base or derived SI
     units~\protect\citep{bipm:2000}, except for
@@ -3218,18 +3220,18 @@ not require an additive offset as part of their definition.
   considered, then a different interpretation must be made}, as
 discussed below.
 
-A second point, related to the first, is that care is needed to
-avoid seemingly-obvious but incorrect translations of units
-described in textbooks.  The scheme above makes it easy to
-formulate statements such as ``1 foot = 0.3048 metres'' in the
-most natural way.  However, the most common expression of the
-relationship between Fahrenheit and Celsius temperatures, ``(T in
-Fahrenheit) = 1.8 $\cdot$ (T in Celsius) + 32'' might lead one to
-believe that defining Fahrenheit degrees in terms of Celsius degrees
-involves using \token{multiplier}=\val{1.8}.  \emph{Not so}, when
-degree changes are being considered and not temperature values.
-Converting \emph{temperature values} is different from expressing
-a relationship between degree measurements.  The proper value for
+A second point is that care is needed to avoid seemingly-obvious
+but incorrect translations of units described in textbooks.  The
+scheme above makes it easy to formulate statements such as ``1
+foot = 0.3048 metres'' in the most natural way.  However, the most
+common expression of the relationship between temperature in
+Fahrenheit and kelvin, ``$T_{Fahrenheit} = 1.8 \cdot (T_{kelvin} -
+273.15) + 32$'' might lead one to believe that defining Fahrenheit
+degrees in terms of kelvin degrees involves using
+\token{multiplier}=\val{1.8}.  \emph{Not so}, when degree changes
+are being considered and not temperature values.  Converting
+\emph{temperature values} is different from expressing a
+relationship between degree measurements.  The proper value for
 the multiplier in the latter case is $5/9$, \ie
 \token{multiplier}=\val{0.555556} (where we picked an arbitrary
 decimal precision).  If, on the other hand, the actual temperature
@@ -3255,31 +3257,27 @@ SBML developers has emerged that a fully generalized unit scheme
 is so confusing and complicated that it actually impedes
 interoperability.  \twotwo acknowledges this reality by reducing
 and simplifying the unit system, specifically by removing the
-\token{offset} field on \Unit and describing recommended
-approaches for handling Celsius and other temperature units.  This
-is a backwards-incompatible change relative to \sbmltwoone and
-\sbmlonetwo, but it is believed to have limited real-life impact
-because so few tools and models appeared to have employed this
-feature anyway.  By simplifying the unit system to the point that
-it only involves multiplicative factors as described above, we
-expect that more software tools will be able to support the SBML
-unit system from this point forward, ultimately improving
-interoperability.
+\token{offset} field on \Unit and Celsius as a pre-defined unit,
+and by describing approaches for handling Celsius and other
+temperature units.  This is a backwards-incompatible change
+relative to \sbmltwoone and \sbmlonetwo, but it is believed to
+have limited real-life impact because so few tools and models
+appeared to have employed this feature anyway.  By simplifying the
+unit system to the point that it only involves multiplicative
+factors as described above, we expect that more software tools
+will be able to support the SBML unit system from this point
+forward, ultimately improving interoperability.
 
 We first address the question of how to handle units that
-\emph{do} require offsets.  In the SBML unit system, there are two
-situations to explore: handling the predefined Celsius unit (which
-has an implicit offset relative to the base SI unit kelvin), and
-handling user-defined units that require offsets (\eg temperature
-reported in Fahrenheit).
+\emph{do} require offsets:
 \begin{itemize}
-
+  
 \item \emph{Handling Celsius}.  A model in which certain
   quantities are temperatures measured in degrees Celsius can be
   converted straightforwardly to a model in which those
   temperatures are in kelvin.  A software tool could do this by
   performing a straightforward substitution using the following
-  formula:
+  relationship:
   \begin{linenomath}
     \begin{equation}
       T_\emph{kelvin} = T_\emph{Celsius} + 273.15
@@ -3288,21 +3286,22 @@ reported in Fahrenheit).
   \end{linenomath}
   In every mathematical formula of the model where a quantity
   (call it $x$) in degrees Celsius appears, replace $x$ with $x_k
-  + 273.15$ where $x_k$ is now in kelvin.
-
-  Of course, this transformation only needs to be performed if a
-  tool must convert the model to one using kelvin for some purpose
-  (such as verifying the units consistency of the whole model).
-
-
+  + 273.15$ where $x_k$ is now in kelvin.  An alternative approach
+  would be to use a \FunctionDefinition to define a function
+  encapsulating this relationship above and then using that in the
+  rest of the model as needed.  Since Celsius is a commonly-used
+  unit, software tools could help users by providing users with
+  the ability to express temperatures in Celsius in the tools'
+  interfaces, and making substitutions automatically when writing
+  out the SBML.
+  
 \item \emph{Handling other units requiring offsets}.  The only
-  known units (other than Celsius) requiring offsets in SBML's
-  domain of common applications are other temperature units such
-  as Fahrenheit.  Few modern scientists would employ Fahrenheit
-  degrees; therefore, this is an unusual situation.  The
-  complication inherent in converting between degrees Fahrenheit
-  and degrees Celsius or kelvin is that both a multiplier and an
-  offset are required:
+  other units requiring offsets in SBML's domain of common
+  applications are other temperature units such as Fahrenheit.
+  Few modern scientists employ Fahrenheit degrees; therefore, this
+  is an unusual situation.  The complication inherent in
+  converting between degrees Fahrenheit and kelvin is that both a
+  multiplier and an offset are required:
   \begin{linenomath}
     \begin{equation}
       T_\emph{kelvin} = \frac{T_\emph{F} + 459.67}{1.8}
@@ -8887,6 +8886,17 @@ The features introduced or changed in Version 2 are:
   unit system of \sbmltwotwo is streamlined and straightforward to
   implement, which may encourage more software developers to
   support it.
+  
+\item \emph{Celsius is no longer a predefined unit}.  Prior
+  versions of SBML defined Celsius as a unit.  With the removal of
+  the \token{offset} field from \Unit, Celsius became an
+  inconsistent unit in the system, because its definition requires
+  an offset.  It could not be related to kelvin units without
+  being treated as a special case by software applications.  A
+  majority vote by the SBML community in 2006 resulted in a
+  decision to remove Celsius to avoid the inconsistency, and
+  instead, have software tools introduce explicit conversions as
+  needed in a model.
 
 %\item \emph{Substance units can be mass derived}
 
@@ -9350,7 +9360,6 @@ consistent with these two schemas.
             <xsd:enumeration value="ampere"/>
             <xsd:enumeration value="becquerel"/>
             <xsd:enumeration value="candela"/>
-            <xsd:enumeration value="Celsius"/>
             <xsd:enumeration value="coulomb"/>
             <xsd:enumeration value="dimensionless"/>
             <xsd:enumeration value="farad"/>

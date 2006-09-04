@@ -5590,21 +5590,76 @@ below.
 
 
 \subsubsection{The \token{reversible} Field}
+\label{sec:reversible}
 
-The optional boolean field \token{reversible} indicates
-whether the reaction is reversible.  The field is optional, and if left
-unspecified in a model, it defaults to a value of \val{true}.
-Although the reversibility of a reaction is determined by its rate law, the
-need to allow rate expressions in SBML to be optional leads to the need for
-a \changed{separate} flag indicating reversibility.  Information about reversibility in the
-absence of a \token{KineticLaw} in a \Reaction is useful in certain
-kinds of structural analyses such as elementary mode analysis.  It is true
-that the presence of this information in two places (i.e., the rate
-expression and the flag \token{reversible}) leaves open the possibility of
-a model containing contradictory information, but the creation of such a
-model would indicate an error on the part of the software generating it.
-Software developers must take care to guard against logical contradictions
-in the definitions of reactions.
+\begin{blockChanged}
+The optional boolean field \token{reversible} indicates whether
+the reaction is reversible.  The default is \val{true}.
+
+To say that a reaction is \emph{reversible} is to say it can
+proceed in either the forward or the reverse direction.  Although
+the reversibility of a reaction can sometimes be deduced by
+inspecting its rate expression, this is not always the case,
+especially for complicated expressions.  Having a separate field
+supports the ability to perform some kinds of model analyses in
+the absence of performing a time-course simulation of the model.
+Moreover, the need in SBML to allow rate expressions (\ie
+\KineticLaw) to be optional leads to the need for a separate flag
+indicating reversibility.  Information about reversibility in the
+absence of a \token{KineticLaw} in a \Reaction is useful in
+certain kinds of structural analyses such as elementary mode
+analysis.
+
+Mathematically, the \token{reversible} field on \Reaction has no
+impact on the construction of the equations giving the overall
+rates of change of each species quantity in a model.  A concrete
+explanation may help illustrate this.  Suppose a model consists of
+multiple reactions, of which two particular reactions $R_f$ and
+$R_r$ are actually the forward and reverse processes of the same
+underlying reaction.  The product species of $R_f$ will
+necessarily be the reactants of $R_r$, and the reactants of $R_f$
+will be the products of $R_r$.  Let $f_f(\textbf{X})$ and
+$f_r(\textbf{X})$ be the SBML kinetic rate formulas of $R_f$ and
+$R_r$, respectively, with $\textbf{X}$ representing the species,
+parameters and compartments in the model.  For the sake of this
+discussion, suppose we are using a continuous differential
+equation framework to simulate the system of reactions.  Then for
+each species, we need to construct an expression representing the
+overall rate of change of that species' amount in the model.  This
+overall expression will be a sum of the contributions of all the
+relevant rate formulas,
+\begin{equation*}
+dS/dt =  \ldots - f_f(\textbf{X}) + f_r(\textbf{X}) + \ldots 
+\end{equation*}
+where $S$ is a reactant of $R_f$ and a product of $R_r$, and
+``\ldots'' indicates other rate formulas in the model involving
+the particular species $S$.  Now, contrast this to the case of an
+identical second SBML model, except that instead of having
+separate \Reaction definitions for the forward and reverse
+reactions, this model has a single \Reaction $R_c$ labeled as
+reversible and whose reactants and products are the same as those
+of $R_f$ in the first model.  The rate of this reaction will be a
+formula $f_c$ = $f_f(\textbf{X}) - f_r(\textbf{X})$.  In
+constructing an expression representing the overall rate of change
+for the species involved in that reaction, we will have
+\begin{equation*}
+\begin{array}{ll}
+dS/dt & = \ldots - f_c(\textbf{X}) + \ldots \\
+      & = \ldots - f_f(\textbf{X}) + f_r(\textbf{X}) + \ldots 
+\end{array}
+\end{equation*}
+In other words, the result is the same final expression for the
+rate of change of a species.
+
+The presence of reversibility information in two places (\ie, the
+rate expression and the \token{reversible} flag) leaves open the
+possibility of a model containing contradictory information, but
+the creation of such a model would indicate an error on the part
+of the software generating it.  Software developers must take care
+to guard against logical contradictions in the definitions of
+reactions.
+
+\end{blockChanged}
 
 
 \begin{blockChanged}

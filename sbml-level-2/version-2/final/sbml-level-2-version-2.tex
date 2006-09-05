@@ -2332,7 +2332,7 @@ nothing actually located at the address
 
 
 \begin{blockChanged}
-\subsubsection{Simulation Time and Special Considerations}
+\subsubsection{Simulation Time}
 \label{sec:meaning-of-time}
 
 The principal use of SBML is to represent quantitative dynamical
@@ -2346,16 +2346,17 @@ Section~\ref{sec:csymbol-token}) may be used.  This \emph{time}
 symbol refers to ``instantaneous current time'' in a simulation,
 frequently given the literal name $t$ in one's equations.
 
-An assumption in SBML is that ``initial time'' in a simulation is
-zero, that is, if $t_0$ is the initial time in the system, $t_0 =
-0$.  This corresponds to the most common scenario.  Initial
-conditions in SBML take effect at time $t = 0$.  There is no
-mechanism in SBML for setting the initial time to a value other
-than 0.  To refer to a different time in a model, one approach is
-to define a \Parameter for the new time variable and use an
-\AssignmentRule in which the assignment expression subtracts a
-value from the \token{csymbol} \emph{time}.  For example, if the
-desired offset is 2 time units, the MathML expression would be
+An assumption in SBML is that ``start time'' or ``initial time''
+in a simulation is zero, that is, if $t_0$ is the initial time in
+the system, $t_0 = 0$.  This corresponds to the most common
+scenario.  Initial conditions in SBML take effect at time $t = 0$.
+There is no mechanism in SBML for setting the initial time to a
+value other than 0.  To refer to a different time in a model, one
+approach is to define a \Parameter for the new time variable and
+use an \AssignmentRule in which the assignment expression
+subtracts a value from the \token{csymbol} \emph{time}.  For
+example, if the desired offset is 2 time units, the MathML
+expression would be
 \begin{example}
 <math xmlns="http://www.w3.org/1998/Math/MathML">
     <apply>
@@ -2375,44 +2376,72 @@ time.  A parameter assigned this value could then be used
 elsewhere in the model, its value could be plotted by a simulator,
 etc.
 
+
+\subsubsection{Initial Conditions and Special Considerations}
+\label{sec:before-t0}
+
+The availability of the \emph{delay} \token{csymbol} (see
+Section~\ref{sec:csymbol-token} above) introduces the possibility
+that at $t = 0$, mathematical expressions in a model may draw on
+values of model components from time prior to $t = 0$.  For the
+purpose of calculating the necessary initial conditions, SBML
+stipulates the following:
+\begin{enumerate}
+  
+\item The initial values provided in the definitions of
+  compartments, species and parameters apply at all time unless
+  changed by other constructs or reactions in a model.  More
+  specifically, these values are the following:
+  \begin{itemize}
+    
+  \item The initial amounts of \Species, as set by their
+    \token{initialAmount} or \token{initialConcentration} fields
+    (Section~\ref{sec:species})
+    
+  \item The initial values of \Parameter{}s, as set by their
+    \token{value} fields (Section~\ref{sec:parameters})
+
+  \item The initial sizes of \Compartment{}s, as set by their
+    \token{size} fields (Section~\ref{sec:compartments})
+
+  \end{itemize}
+  
+\item \InitialAssignment constructs
+  (Section~\ref{sec:initialAssignment}) override the initial
+  values set on compartments, species and parameters.  An
+  \InitialAssignment is in effect only for $t \leq 0$.
+  
+\item \AssignmentRule constructs
+  (Section~\ref{sec:assignmentrule}) and \AlgebraicRule
+  (Section~\ref{sec:algebraicrule}) are in effect for all time,
+  including $t \leq 0$.
+  
+\item \AlgebraicRule constructs are in effect for all time,
+  including $t \leq 0$, and they override values set by any of the
+  above-listed constructs if they involve the same symbols (\ie
+  compartments, species and parameters).
+
+\end{enumerate}
+
+The constructs above all apply at times $t \leq 0$.  In effect,
+they form a continuous estimate of the values of the different
+variables in a model prior to when simulation time begins at $t =
+0$.  All other SBML constructs (\Reaction, \Event, \RateRule, and
+\Constraint) are not active at $t < 0$.  A model that uses the
+\emph{delay} \token{csymbol} can refer to symbols whose values are
+established using the constructs above.  A model making use of
+\emph{delay} expressions referring to symbols whose values are not
+defined in the necessary range of time prior to $t = 0$ is
+indeterminate.
+
 At the moment a simulation begins at time $t = 0$, a model's
 \Reaction, \RateRule, \AlgebraicRule, \Event, and \Constraint
-definitions take effect.  The availability of the \emph{delay}
-\token{csymbol} (see Section~\ref{sec:csymbol-token} above)
-introduces the possibility that at $t = 0$, mathematical
-expressions in a model may draw on values of model components from
-time prior to $t = 0$.  Where can those values come from?
-\begin{itemize}
-
-\item Initial amounts of \Species, as set by their
-  \token{initialAmount} or \token{initialConcentration} fields
-  (Section~\ref{sec:species})
-
-\item Initial sizes of \Compartment{}s, as set by their
-  \token{size} fields (Section~\ref{sec:compartments})
-
-\item Initial values of \Parameter{}s, as set by their
-  \token{value} fields (Section~\ref{sec:parameters})
-
-\item \AssignmentRule{}s (Section~\ref{sec:assignmentrule})
-
-\item \InitialAssignment{}s---note also that initial assignments
-  can override the initial values defined on species, compartments
-  and parameters (Section~\ref{sec:initialAssignment})
-
-\end{itemize}
-The constructs above all apply at times $t \leq 0$.  In effect, they
-form a continuous estimate of the values of the different
-variables in a model prior to when simulation time begins at $t =
-0$.  All other SBML constructs (\Reaction, \Event, \RateRule,
-\AlgebraicRule, and \Constraint) are not active at $t < 0$.  A
-model that uses the \emph{delay} \token{csymbol} can refer to
-symbols whose values are established using the constructs above.
-A model making use of \emph{delay} expressions referring to
-symbols whose values are not defined in the necessary range of
-time prior to $t = 0$ is indeterminate.
+definitions then start to take effect.  For $t > 0$,
+\InitialAssignment constructs stop taking effect; they are only
+used to initialize values.
 
 \end{blockChanged}
+
 
 \begin{blockChanged}
 \subsubsection{Math Expression Types}
@@ -3879,13 +3908,33 @@ It is important to note that in SBML Level~2, a missing
 unlike the definition of compartment \token{volume} in SBML
 Level~1.)  When the \token{spatialDimensions} field does not have
 a value of \val{0}, a missing value for \token{size} for a given
-compartment signifies that the value is either unknown, determined
-by an \AssignmentRule or \InitialAssignment structure, not
-required for analysis, or is available from an external data
-source.  The \token{size} field must not be present if the
-\token{spatialDimensions} field has a value of \val{0}; otherwise,
-a logical inconsistency would exist because a zero-dimensional
-object cannot have a physical size.
+compartment signifies that the value either is unknown, or to be
+obtained from an external source, or determined by an initial
+assignment (Section~\ref{sec:initialAssignment}) or a rule
+(Section~\ref{sec:rules}) elsewhere in the model.  The \token{size}
+field must not be present if the \token{spatialDimensions} field
+has a value of \val{0}; otherwise, a logical inconsistency would
+exist because a zero-dimensional object cannot have a physical
+size.
+
+A compartment's size is set by its \token{size} field exactly
+once.  If the compartment's \token{constant} field has the value
+\val{true} (the default), then the size is fixed and cannot be
+changed except by an \InitialAssignment.  These two methods of
+setting the compartment size differ in that the \token{size} field
+can only be used to set the compartment size to a literal scalar
+value, whereas \InitialAssignment allows the value to be set using
+an arbitrary mathematical expression.  If the compartment's
+\token{constant} field has the value \val{false}, the
+compartment's size value may be overriden by an
+\InitialAssignment, \AssignmentRule or \AlgebraicRule, and in
+addition, for simulation time $t > 0$, it may also be changed by a
+\RateRule and \Event{}s.  It is not an error to define
+\token{size} on a compartment and also redefine the value using an
+initial assignment or rule, but the \token{size} value in that
+case is meaningless.  Section~\ref{sec:before-t0} provides
+additional information about the semantics of assignments, rules
+and values for simulation time $t \leq 0$.
 
 For the reasons given above, the \token{size} field on a
 compartment must be defined as optional; however, it is extremely
@@ -3906,18 +3955,6 @@ that reaction rates in SBML are defined in terms of
 Section~\ref{subsec:kinetic-law}), and when species quantities are
 given in terms of concentrations or densities, the compartment
 sizes become factors in the reaction rate expressions.
-
-A compartment's initial size is set by the \token{size} field
-exactly once.  This value is in effect prior to and at the
-beginning of simulation, \ie $t \leq 0$.  In addition, if
-\token{constant} is \token{true} then the value is in effect at
-all times. An \InitialAssignment or an \AssignmentRule for the
-same compartment identifier overrides this setting (see
-Sections~\ref{sec:initialAssignment}
-and~\ref{sec:assignmentrule}).  It is not an error to define both
-\token{size} on a compartment and redefine the value using an
-initial assignment or an assignment rule, but the \token{size}
-setting in that case becomes meaningless.
 \end{blockChanged}
 
 
@@ -3944,8 +3981,8 @@ the restrictions detailed in Table~\ref{tab:comp-size-units}.
   \centering
   \begin{tabular}{cllll}
     \toprule
-    \textbf{Value of field}    & \textbf{Field} \texttt{size} & \textbf{Field} \texttt{units} &  & \textbf{Default value of}\\
-    \texttt{spatialDimensions} & \textbf{allowed?}            & \textbf{allowed?}             & \textbf{Allowable kinds of units} & \textbf{field} \texttt{units}\\
+    \textbf{Value of field}    & \textbf{Field} \texttt{size} & \textbf{Field} \texttt{units} &  & \textbf{Default value}\\
+    \texttt{spatialDimensions} & \textbf{allowed?}            & \textbf{allowed?}             & \textbf{Allowable kinds of units} & \textbf{of field} \texttt{units}\\
     \midrule
     \val{3}             & yes   & yes   & units of volume, or \token{dimensionless}     & \val{volume}\\
     \val{2}             & yes   & yes   & units of area, or \token{dimensionless}       & \val{area}\\
@@ -3999,17 +4036,19 @@ field, are used in the following ways:
 \subsubsection{The \token{constant} Field}
 \label{sec:compartment-constant}
 
+\begin{blockChanged}
 A \Compartment also has an optional boolean field called
 \token{constant} that indicates whether the compartment's size
 stays constant or can vary during a simulation.  A value of
-\val{false} indicates the compartment's size can be determined by
-rules (see Section~\ref{sec:rules}), and the value of the
-\token{size} field should be taken as being the initial size of
-the compartment.  The default value for the \token{constant} field
-is \val{true} because in the most common modeling scenarios at the
-time of this writing, compartment sizes remain constant. The
-\token{constant} field must default to or be set to \val{true} if
-the \token{spatialDimensions} field is 0.
+\val{false} indicates the compartment's \token{size} can be
+changed by other constructs in SBML.  The default value for the
+\token{constant} field is \val{true} because in the most common
+modeling scenarios at the time of this writing, compartment sizes
+remain constant.  The \token{constant} field must default to or be
+set to \val{true} if the value of the \token{spatialDimensions}
+field is \val{0}, because a zero-dimensional compartment cannot
+ever have a size other than zero.
+\end{blockChanged}
 
 
 \subsubsection{The \token{outside} Field}
@@ -4191,22 +4230,51 @@ compartment, and consequently, a model must define at least one
 compartment if that model contains any species.
 
 
-\subsubsection{The \token{initialAmount} and \token{initialConcentration} Fields}
+\subsubsection{The \token{initialAmount} and
+  \token{initialConcentration} Fields}
 \label{sec:initialAmount}
 
 The optional fields \token{initialAmount} and
 \token{initialConcentration}, both having a data type of
 \primtype{double}, are used to set the initial quantity of the
 species in the named compartment.  These fields are mutually
-exclusive; i.e., \emph{only one} can have a value on any given
-instance of a \Species structure.  \changed{Also,
-\token{initialConcentration} must not have a value if the
-species' compartment has a \token{spatialDimensions} value of
-\val{0}}. Missing \token{initialAmount} or
-\token{initialConcentration} values implies that their values are
-either unknown, set by an \changed{\AssignmentRule or
-  \InitialAssignment} structure, not required for
-analysis, or available from an external data source.
+exclusive; \ie \emph{only one} can have a value on any given
+instance of a \Species structure.
+
+\begin{blockChanged}
+Missing \token{initialAmount} and \token{initialConcentration}
+values implies that their values either are unknown, or to be
+obtained from an external source, or determined by an initial
+assignment (Section~\ref{sec:initialAssignment}) or rule
+(Section~\ref{sec:rules}) elsewhere in the model.  In the special
+case of the species' compartment having a a
+\token{spatialDimensions} value of \val{0}, the species cannot
+have a value for \token{initialConcentration} because the concept
+of ``concentration'' breaks down when the location of a species
+has zero dimensions.
+
+A species' initial quantity is set by the \token{initialAmount} or
+\token{initialConcentration} fields exactly once.  If the species'
+\token{constant} field has the value \val{true} (the default),
+then the size is fixed and cannot be changed except by an
+\InitialAssignment.  These two methods of setting the species
+quantity differ in that the \token{initialAmount} and
+\token{initialConcentration} fields can only be used to set the
+species quantity to a literal scalar value, whereas
+\InitialAssignment allows the value to be set using an arbitrary
+mathematical expression.  If the species' \token{constant} field
+has the value \val{false}, the species' quantity value may be
+overriden by an \InitialAssignment, \AssignmentRule or
+\AlgebraicRule, and in addition, for $t > 0$, it may also be
+changed by a \RateRule and \Event{}s.  It is not an error to
+define \token{initialAmount} or \token{initialConcentration} on a
+species and also redefine the value using an initial assignment or
+a rule, but the \token{initialAmount} or
+\token{initialConcentration} setting in that case is meaningless.
+Section~\ref{sec:before-t0} provides additional information about
+the semantics of assignments, rules and values for simulation time
+$t \leq 0$.
+\end{blockChanged}
 
 The units of the value in the \token{initialAmount} field are
 set by the \token{substanceUnits} field of the species
@@ -4218,22 +4286,6 @@ are those defined in the \token{substanceUnits}, and the
 \quantity{size} units are those given in the
 \token{spatialSizeUnits} field as described in the next
 subsection.}
-
-\begin{blockChanged}
-A species' initial quantity is set by the \token{initialAmount} or
-\token{initialConcentration} fields exactly once.  This value is
-in effect prior to and at the beginning of simulation, \ie $t \leq
-0$.  In addition, if \token{constant} is \token{true} then the
-value is in effect at all times.  An \InitialAssignment or an
-\AssignmentRule for the same species identifier overrides this
-setting (see Sections~\ref{sec:initialAssignment}
-and~\ref{sec:assignmentrule}).  It is not an error to define
-\token{initialAmount} or \token{initialConcentration} on a species
-and also redefine the value using an initial assignment or an
-assignment rule, but the \token{initialAmount} or
-\token{initialConcentration} setting in that case becomes
-meaningless.
-\end{blockChanged}
 
 
 \subsubsection{The \token{substanceUnits}, \token{spatialSizeUnits} and
@@ -4335,6 +4387,7 @@ The \emph{units of the species} are used in the following ways:
 \end{itemize}
 \end{blockChanged}
 
+
 \subsubsection{The \token{constant} and \token{boundaryCondition} Fields}
 \label{sec:species-constant}
 
@@ -4380,7 +4433,7 @@ contains a translation into ODEs of a model which uses
   \begin{tabular}{lllll}
     \toprule
     \textbf{\token{constant}} & \textbf{\token{boundaryCondition}} &
-    \textbf{can have} & \textbf{can be} & \textbf{concentration} \\
+    \textbf{can have} & \textbf{can be} & \textbf{species' quantity} \\
     \textbf{value} & \textbf{value} & \textbf{assignment} & \textbf{reactant or} & \textbf{is changed by} \\
     & & \textbf{or rate rule} & \textbf{product}\\
     \midrule
@@ -4472,29 +4525,35 @@ model definition can refer to it.  A parameter can also have an optional
 be used according to the guidelines described in
 Section~\ref{sec:idnameattribs}.
 
-\subsubsection{The \token{value} Field}
 
-\changed{The optional field \token{value} determines the value
-(of type \primtype{double}) assigned to the identifer.  A missing
-\token{value} implies that the \token{value} is either (a)
-unknown; (b) determined by an \AssignmentRule or
-\InitialAssignment structure; (c) not required for analysis;
-or (d) available from an external data source. If the parameter is
-not constant then the \token{value} field contains the initial
-value.}
+\subsubsection{The \token{value} Field}
+\label{sec:parameter-value}
 
 \begin{blockChanged}
-A parameter's initial value is set by the \token{value} field
-exactly once.  This value is in effect prior to and at the
-beginning of simulation, \ie $t \leq 0$.  In addition, if
-\token{constant} is \token{true} then the value is in effect at
-all times.  An \InitialAssignment or an \AssignmentRule for the
-same parameter identifier overrides this setting (see
-Sections~\ref{sec:initialAssignment}
-and~\ref{sec:assignmentrule}).  It is not an error to define
-\token{value} on a parameter and also redefine the value using an
-initial assignment or an assignment rule, but the \token{value} on
-the parameter definition in that case becomes meaningless.
+The optional field \token{value} determines the value (of type
+\primtype{double}) assigned to the identifer.  A missing
+\token{value} implies that the \token{value} either is unknown, or
+to be obtained from an external source, or determined by an
+initial assignment (Section~\ref{sec:initialAssignment}) or a rule
+(Section~\ref{sec:rules}) elsewhere in the model.
+
+A parameter's value is set by its \token{value} field exactly
+once.  If the parameter's \token{constant} field has the value
+\val{true} (the default), then the value is fixed and cannot be
+changed except by an \InitialAssignment.  These two methods of
+setting the parameter's value differ in that the \token{value}
+field can only be used to set it to a literal scalar value,
+whereas \InitialAssignment allows the value to be set using an
+arbitrary mathematical expression.  If the parameter's
+\token{constant} field has the value \val{false}, the parameter's
+value may be overriden by an \InitialAssignment, \AssignmentRule
+or \AlgebraicRule, and in addition, for simulation time $t > 0$,
+it may also be changed by a \RateRule and \Event{}s.  It is not an
+error to define \token{value} on a parameter and also redefine the
+value using an initial assignment or rule, but the \token{value}
+in that case is meaningless.  Section~\ref{sec:before-t0} provides
+additional information about the semantics of assignments, rules
+and values for simulation time $t \leq 0$.
 \end{blockChanged}
 
 
@@ -4591,8 +4650,6 @@ The following is an example of parameters defined at the \Model level:
 \label{sec:initialAssignment}
 %-----------------------------------------------------------------------------
 
-% FIXME
-
 \sbmltwotwo provides two ways of assigning initial values to
 entities in a model.  The simplest and most basic is to set the
 values of the appropriate \token{double} fields in the relevant
@@ -4633,11 +4690,12 @@ software tools.  \InitialAssignment should be used when the other
 mechanism is insufficient for the needs of a particular model.
 
 Initial assignments have some similarities to assignment rules
-(Section~\ref{sec:assignmentrule}).  The main differences are that
-unlike \AssignmentRule, an \InitialAssignment definition only
-applies prior to and at the beginning of simulated time, \ie $t \leq
-0$ (the former apply at all times), and \InitialAssignment can set
-the value of a constant whereas an \AssignmentRule cannot.
+(Section~\ref{sec:assignmentrule}).  The main differences are (a)
+an \InitialAssignment can set the value of a constant whereas an
+\AssignmentRule cannot, and (b) unlike \AssignmentRule, an
+\InitialAssignment definition only applies up to and including the
+beginning of simulation time, \ie $t \leq 0$, while an
+\AssignmentRule applies at all times.
 
 
 \subsubsection{The \token{symbol} Field}
@@ -4735,20 +4793,20 @@ of variable being set:
 
 \end{itemize}
 
+% The following paragraph had more about the combination of
+% rate rules, assignments, etc. and t <= 0, but I think it's 
+% better to avoid repeating that here and referring back to
+% the new section explaining t <= 0 issues. [MH 2006-09-05]
+
 In the context of a simulation, initial assignments establish
 values that are in effect prior to and including the start of
-simulation time, \ie $t \leq 0$. The system of equations defined by a
-model's \Reaction{}s, \RateRule{}s, \AlgebraicRule{}s,
-\Constraint{}s, and \Event{}s can first be evaluated only after
-all initial assignments have been executed. For purposes of
-evaluating expressions that involve the \emph{delay}
-\token{csymbol} (Section~\ref{sec:csymbol-token}), initial
-assignments are considered to apply at $t \leq 0$.  In combination
-with values defined by species, compartments and parameters
-definitions, and values assigned by \AssignmentRule constructs,
-this enables delay expressions to be evaluated even though they
-may refer to values of variables taken at $t < 0$. (See
-Section~\ref{sec:meaning-of-time}.)
+simulation time, \ie $t \leq 0$.  Section~\ref{sec:before-t0}
+provides information about the interpretation of assignments,
+rules, and entity values for simulation time up to and include the
+start time $t = 0$; this is important for establishing the initial
+conditions of a simulation, especially if the model involves
+expressions containing the \emph{delay} \token{csymbol}
+(Section~\ref{sec:csymbol-token}).
 
 There cannot be two initial assignments for the same symbol in a
 model; that is, a model must not contain two or more
@@ -4853,13 +4911,11 @@ there also exists an \InitialAssignment for it \emph{and} another
 </model>
 \end{example}
 
-% this is not pathological!
-
 The value of \val{othersymbol} in the SBML excerpt above will be
-\val{4}.  The case illustrates the rule of thumb: if there is an
-initial assignment for a symbol, the value assigned to the symbol
-in its definition must be ignored and the value created by the
-initial assignment used instead.
+\val{4}.  The case illustrates the rule of thumb that if there is
+an initial assignment for a symbol, the value assigned to the
+symbol in its definition must be ignored and the value created by
+the initial assignment used instead.
 
 \end{blockChanged}
 
@@ -4923,7 +4979,7 @@ abstract \Rule structure containing only one field,
 derive subtypes of \Rule that add fields to distinguish the
 cases of algebraic, assignment and rate rules.
 Figure~\vref{fig:rules} gives the definitions of \Rule and
-the subtypes derived from it.  The figure shows there are four
+the subtypes derived from it.  The figure shows there are three
 subtypes, \AlgebraicRule, \AssignmentRule and
 \RateRule derived directly from \Rule. These
 correspond to the cases \emph{Algebraic}, \emph{Assignment}, and
@@ -5034,12 +5090,9 @@ In the context of a simulation, assignment rules are in effect at
 all times.  For purposes of evaluating expressions that involve
 the \emph{delay} \token{csymbol}
 (Section~\ref{sec:csymbol-token}), assignment rules are considered
-to apply at $t \leq 0$.  In combination with values defined by
-species, compartments and parameters definitions, and values
-assigned by \InitialAssignment constructs, this enables delay
-expressions to be evaluated even though they may refer to values
-of variables taken at $t < 0$.  (See
-Section~\ref{sec:meaning-of-time}.)
+to also apply at $t \leq 0$.  Section~\ref{sec:before-t0} provides
+additional information about the semantics of assignments, rules,
+and entity values for simulation time $t \leq 0$.
 \end{blockChanged}
 
 
@@ -5108,7 +5161,7 @@ the precise details depending on which variable is being set:
 \subsubsection{Restrictions on Rules}
 \label{sec:ruleconstraints}
 
-\changed{ SBML specifically does not stipulate the form of the
+\changed{SBML specifically does not stipulate the form of the
 algorithms that can be applied to rules and reactions.  For
 example, SBML does not specify when or how often rules should be
 evaluated.  The constraints described by rules and kinetic rate

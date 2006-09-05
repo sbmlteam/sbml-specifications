@@ -1320,18 +1320,19 @@ means the full power of HTML formatting is available for use in
 \token{notes} content.  The intention behind requiring XHTML
 (rather than, for example, plain HTML or plain text) for
 \token{notes} content is to balance several conflicting goals: (1)
-support an international formatting standard so that users have
-more control over the appearance of notes and can predict to some
-degree how their notes will be displayed in different tools and
-environments; (2) chose a format for notes that is compatible with
-the XML form of SBML (plain HTML would not be); and (3) achieve
-these goals using an approach that is hopefully easy enough for
-software developers to support using off-the-shelf programming
-libraries.  Modern libraries for displaying and editing (X)HTML
-content are commonly available in contemporary software
-programming environments, and software developers may wish to
-avail themselves of these facilities rather than implementing
-their own XHTML support systems.
+chose a format for notes that is compatible with the XML form of
+SBML (plain HTML would not be); (2) support an international
+formatting standard so that users have more control over the
+appearance of notes and can predict to some degree how their notes
+will be displayed in different tools and environments (which
+argues against using plain-text notes); and (3) achieve these
+goals using an approach that is hopefully easy enough for software
+developers to support using off-the-shelf programming libraries.
+Modern libraries for displaying and editing (X)HTML content are
+commonly available in contemporary software programming
+environments, and software developers may wish to avail themselves
+of these facilities rather than implementing their own XHTML
+support systems.
 
 
 \paragraph{XML Namespace Requirements for \token{notes}}
@@ -1395,13 +1396,10 @@ declaration nor a DOCTYPE declaration.  That is, \token{notes}
 must \emph{not} contain
   \begin{example}
 <?xml version="1.0" encoding="UTF-8"?>  \end{example}
-  nor
+  nor (where the following is only one specific example)
   \begin{example}
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">  \end{example}
-or similar content.  The practical implication of this restriction
-is that the character encoding cannot be changed away from UTF-8
-(the encoding for all of SBML).
 
 % [MH] I don't think there's any way in XML to change the encoding
 % in the middle of a document wihtout using an XML declaration, is
@@ -1412,35 +1410,33 @@ is that the character encoding cannot be changed away from UTF-8
 
 The second restriction is intended to balance freedom of content
 with the complexity of implementing software that can interpret
-the content.  The content of \token{notes} can consist only of
-the following possibilities:
+the content.  The content of \token{notes} in SBML can consist
+only of the following possibilities:
 \begin{enumerate}
-
+  
 \item A complete XHTML document (minus the XML and DOCTYPE
-  declarations, of course), that is, XHTML content beginning
-  with the \token{html} tag.  The following is a skeleton:
+  declarations, of course), that is, XHTML content beginning with
+  the \token{html} tag.  The following is an example skeleton:
   \begin{example}
 <notes>
     <html xmlns="http://www.w3.org/1999/xhtml">
     ...
     </html>
-</notes>
-  \end{example}
+</notes>\end{example}
 
 \item The \token{body} element from an XHTML document.  The
-  following is a skeleton:
+  following is an example skeleton:
   \begin{example}
 <notes>
     <body xmlns="http://www.w3.org/1999/xhtml">
     ...
     </body>
-</notes>
-  \end{example}
+</notes>\end{example}
   
 \item Any XHTML content that would be permitted within a
   \token{body} element.  Note that if this consists of multiple
   elements, each one must declarate the XML namespace separately.
-  The following is a skeleton example:
+  The following is an example skeleton example:
   \begin{example}
 <notes>
     <p xmlns="http://www.w3.org/1999/xhtml">
@@ -1449,11 +1445,9 @@ the following possibilities:
     <p xmlns="http://www.w3.org/1999/xhtml">
     ...
     </p>
-</notes>
-  \end{example}
+</notes>\end{example}
 
 \end{enumerate}
-
 Another way to summarize the restrictions above is simply to say
 that the content of an SBML \token{notes} element can be only be a
 complete \token{html} element, a \token{body} element, or whatever
@@ -1471,7 +1465,7 @@ simpler to write applications that can read and write the content.
 
 If \token{notes} can contain any of a number of possible XHTML
 elements, how should an application process or validate the
-contents? Let us take the case of an SBML-reading application that
+contents?  Let us take the case of an SBML-reading application that
 needs to take the contents and pass it to an XHTML display and/or
 editing function obtained from a third-party API library.  The
 content of the \token{notes} may not be a complete XHTML document,
@@ -1479,47 +1473,71 @@ so the application will have to perform some processing before
 handing it to the XHTML editor or validator.  How should this be
 done?
 
-There are actually a limited number of cases possible.  Here we
+Based on the three forms of \token{notes} content described in the
+previous subsection, there are only three cases possible.  Here we
 give an example approach for handling them, although the actual
 implementation details will differ depending on various factors
 such as the requirements of the software libraries being used.
+This example approach would be performed for each \token{notes} to
+be viewed or edited:
+\begin{description}
+  
+\item \emph{Step 1}. If the XHTML viewing/editing function
+  requires a fully compliant XML document, the SBML application
+  could create a temporary data object containing an appropriate
+  XML declaration and a DOCTYPE declaration; otherwise, the XML
+  data object can be initially blank.
+  
+\item \emph{Step 2}. The application should look at the first
+  element inside the \token{notes} (or rather, the first element
+  that is not an XML comment), and take action based on the
+  following three possibilities:
+  \begin{itemize}
+    
+  \item If the first element inside \token{notes} begins with
+    \token{<html xhtml="http://www.w3.org/1999/xhtml">}, the
+    application could assume that the content is a complete XHTML
+    document and insert this into the temporary data object.
+    
+  \item Else, if the first element is \token{<body>}, the
+    application should insert the following into the temporary
+    data object, 
 
-First, if the library functions require a fully compliant XML
-document, it may be necessary to prepend an XML declaration and a
-DOCTYPE declaration to the results of the following steps.  Next,
-the application should look at the first element inside the
-\token{notes} (or rather, the first element that is not a
-comment), and then take action based on the following four
-possibilities:
-\begin{enumerate}
-
-\item If the first element inside \token{notes} begins with
-  \token{<html xhtml="http://www.w3.org/1999/xhtml">}, the
-  application could assume that the content is a complete XHTML
-  document (minus the declarations, of course).  It could
-  therefore append this content to the XML and DOCTYPE
-  declarations mentioned above and hand it to the XHTML editing
-  function.
-
-\item If the first element is \token{<body>}, the application
-  could take the \token{notes} contents, wrap it with
-  \begin{example}
+    \begin{example}
 <html xhtml="http://www.w3.org/1999/xhtml">
     <head><title></title></head>\end{example}
-  and \token{</html>}, append the result to the XML and
-  DOCTYPE declarations, and finally hand it to the XHTML editing
-  function.
+    then insert the content of the \token{notes}, and finally
+    insert a closing \token{</html>}.
+    
+  \item Else, if the \token{notes} content begins with neither of
+    the above elements, the application should insert the
+    following into the temporary data object,
 
-\item Finally, if the \token{notes} content begins with none of
-  the above elements, the content needs to be wrapped with
-  \begin{example}
+    \begin{example}
 <html xhtml="http://www.w3.org/1999/xhtml">
     <head><title></title></head>
     <body>\end{example}
-  and \token{</body></html>}, the result then appended to the XML
-  and DOCTYPE declarations, and finally the combination handed to
-  the XHTML editing function.
-\end{enumerate}
+    then insert the content of the \token{notes}, and finally
+    insert \token{</body></html>} to close the XHTML document.
+  \end{itemize}
+
+\end{description}
+The result of the above would be a temporary XML data object that
+the application could then pass to the XHTML viewing/editing API
+function.
+
+% [2006-09-05 MH] was thinking of adding the following too, but
+% this seems like a too-short description, and I don't want to
+% get into all the possible issues in making sure the inversion
+% is done correctly.  Still, something to think about for the
+% future:
+%
+%Since the application performing the processing above could
+%remember which of the three cases it encountered for a given
+%\token{notes} content, upon receiving the results back from the
+%XHTML viewing/editing function, it could invert the process and
+%insert the results back into the \token{notes} object in the SBML
+%model.
 
 \end{blockChanged}
 

@@ -416,6 +416,13 @@ subject to the following provisions:
   incompatible syntactically with \twotwo.  See
   Section~\ref{sec:unitdefinitions} for more explanation of SBML
   unit definitions and the implications of this change.
+  
+\item \sbmltwoone did not define a default value for the field
+  \token{fast} on \Reaction.  In \sbmltwotwo, a default value
+  \emph{is} defined, and the value is \val{false}.  Further,
+  software tools \emph{must} respect the value or indicate to the
+  user that they do not have the capacity to do so.  See
+  Section~\ref{sec:fast}.
 
 \item \sbmltwotwo is somewhat stricter about how the content of
   \token{annotation} elements must be organized.  Previously valid
@@ -5777,6 +5784,7 @@ of the software generating it.
 
 \begin{blockChanged}
 \subsubsection{The \token{fast} Field}
+\label{sec:fast}
 
 The optional boolean field \token{fast} is another optional
 boolean field in the \Reaction data structure.  The field's
@@ -5785,20 +5793,21 @@ default value is \val{false}.
 Previous definitions of SBML indicated that software tools could
 ignore this field if they did not implement support for the
 corresponding concept; however, further research has revealed that
-this is incorrect and \token{fast} cannot be ignored.  \sbmltwotwo
-therefore stipulates that if a model has values for \token{fast},
-a software tool must be able to respect the field or else indicate
+this is incorrect and \token{fast} \emph{cannot be ignored} if it
+is set to \val{true}.  \sbmltwotwo therefore stipulates that if a
+model has any reactions with \token{fast} set to \val{true}, a
+software tool must be able to respect the field or else indicate
 to the user that it does not have the capacity to do so.
 
 When a model contains values for \token{fast} on any of its
 reactions, it is an indication that the creator of the model is
-distinguishing different time scales of reactions.  The model's
-reaction definitions are divided into two sets by the values of
-the \token{fast} fields.  The set of reactions which have values
-of \val{true} (known as \emph{fast reactions}) should be assumed
-to be operating on a time scale significantly faster than the
-other reactions (the \emph{slow reactions}).  Fast reactions are
-considered to be instantaneous relative to the slow reactions.
+distinguishing different time scales of reactions in the system.
+The model's reaction definitions are divided into two sets by the
+values of the \token{fast} fields.  The set of reactions having
+\token{fast}=\val{true} (known as \emph{fast reactions}) should be
+assumed to be operating on a time scale significantly faster than
+the other reactions (the \emph{slow reactions}).  Fast reactions
+are considered to be instantaneous relative to the slow reactions.
 
 Software tools must use a pseudo steady-state approximation for
 the set of fast reactions when constructing the system of
@@ -10873,6 +10882,202 @@ Section~\ref{sec:ruleconstraints}.
 \end{enumerate}
 
 
+%=============================================================================
+\section{Mathematical Consequences of the \token{fast} Attribute on Reaction}
+\label{apdx:consequences-of-being-fast}
+%=============================================================================
+
+\emph{(Appendix contributed by James C. Schaff, University of
+  Connecticut Health Center, Connecticut, U.S.A.)}
+
+Section~\ref{sec:fast} described the \token{fast} flag available
+on \Reaction.  In this appendix, we discuss the principles
+involved in interpreting this attribute in the context of a simple
+biochemical reaction model.  The derivation presented here is not
+fully rigorous and this section is not considered normative;
+achieving a higher level of rigor would require considerably more
+background exposition and a much longer appendix.  Nevertheless,
+we hope this section is sufficient to answer unambiguously the
+question ``How should a system of reactions be treated if some of
+the reactions have \token{fast}=\token{true}?''
+
+
+\subsection{Identification of ``Fast'' Reactions}
+
+First, it is worth noting that the identification of so-called
+\emph{fast} reactions is actually a modeling issue, not an SBML
+representation issue.  The notion of fast reactions is the
+following.  A system may be decomposable into two sets of
+reactions, where one set may have characteristic times that are
+much faster than the other time scales in the system.  An
+approximation that is sometimes useful is to assume that the fast
+reactions have kinetics that settle infinitely fast compared to
+the other reactions in the system.  In other words, the fast
+reactions are assumed to be always in equilibrium.  This is called
+a pseudo-steady state approximation (PSSA), and is also known as a
+quasi-steady state approximation (QSSA).  Given a case where the
+time-scale separation between fast and other reactions in the
+system is large, an accurate and efficient aproach for computing
+the time-course of the system behavior is to treat the fast
+reactions as being always in equilibrium.
+
+The key to succesful application of a PSSA is that there should be
+a significant separation of time scales between these fast
+reactions and other reactions in the system.  The determination of
+which reactions qualify as fast is up to the creator of the model,
+because there is currently no known general algorithm for doing
+so.
+
+
+\subsection{Simple One-Compartment Biochemical System Model}
+
+\newcommand{\Abold}{\ensuremath{\mathbf{A}}}
+\newcommand{\Bbold}{\ensuremath{\mathbf{B}}}
+\newcommand{\nbold}{\ensuremath{\mathbf{n}}}
+\newcommand{\vbold}{\ensuremath{\mathbf{v}}}
+\newcommand{\xbold}{\ensuremath{\mathbf{x}}}
+
+\newcommand{\Astar}{\ensuremath{\Abold^*}}
+\newcommand{\nstar}{\ensuremath{\nbold^*}}
+\newcommand{\vstar}{\ensuremath{\vbold^*}}
+\newcommand{\xstar}{\ensuremath{\xbold^*}}
+
+\newcommand{\xs}{\xstar\xspace}
+\newcommand{\xb}{\xbold\xspace}
+\newcommand{\vs}{\vstar\xspace}
+\newcommand{\vb}{\vbold\xspace}
+\newcommand{\ns}{\vstar\xspace}
+\newcommand{\As}{\Astar\xspace}
+\newcommand{\Ab}{\Abold\xspace}
+\newcommand{\Bb}{\Bbold\xspace}
+
+\newcommand{\boldN}{\ensuremath{\mathbf{N}}}
+\newcommand{\bN}{\boldN\xspace}
+\newcommand{\boldm}{\ensuremath{\mathbf{m}}}
+\newcommand{\bm}{\boldm\xspace}
+
+To explain how to solve a system containing fast reactions, we use
+a simple model of a biochemical reaction network located in a
+single compartment.  Let \xs represent a vector of all the species
+in the system, \vs a vector of the reaction rates, and \As the
+stoichiometry matrix, with the vector dimension being \ns.  Then
+the system can be described using the following matrix equation:
+\begin{equation*}
+  \frac{d\xstar}{dt} = \Astar \vstar (\xstar) 
+\end{equation*}
+
+This system can be optionally reduced by noting that mass
+conservation usually implies there are linear combinations of
+species quantities in the system and the value of these
+combinations do not change over time.  Identifying these
+combinations is the topic of structural analysis and is described
+in the literature~\citep{reder_1998,sauro_2003}.  Briefly, let \bN
+be defined as the left null space of \As:
+\begin{equation*}
+  \boldN \Astar = \mathbf{0}
+\end{equation*}
+Now, premultiply the previous equation by \bN to get
+\begin{equation*}
+    \boldN \dfrac{d\xstar}{dt} = \boldN \Astar \vstar (\xstar) = \mathbf{0}
+\end{equation*}
+Thus, \bN captures the space of solutions to the equation
+\begin{equation*}
+  \boldm^T \left( \frac{d\xstar}{dt} \right) = 0
+\end{equation*}
+where \bm is a vector representing the coefficients in a mass
+conservation relationship, that is, combinations of species that
+are time-invariant.  Now, let
+\begin{align*}
+  r &= \operatorname{rank}(\Astar)\\
+  n &= \operatorname{dim}(\xstar)
+\end{align*}
+Then the system has $n - r$ mass conservation relationships, each
+of which is a linear equation.  We can use these $n - r$ linear
+equations to solve for $n - r$ dependent variables in terms of $r$
+independent variables and the initial masses of all species.
+Doing that allows us to decompose \xs into $n - r$ dependent
+variables $\xbold_d$ and $r$ independent variables $\xbold_i$
+where $\mathbf{L}$ is an $(n - r) \times r$ matrix that is derived
+from \bN and represents $\xbold_d$ in terms of $\xbold_i$,
+$\mathbf{I}$ is the $r \times r$ identity matrix, and $\mathbf{T}$
+is an $n \times r$ matrix:
+\begin{equation*}
+  \xstar \equiv \begin{bmatrix} \xbold_i \\ \xbold_d \end{bmatrix}
+  = \begin{bmatrix} \mathbf{I} \\ \mathbf{L} \end{bmatrix}
+  = \mathbf{T} \xbold_i
+\end{equation*}
+Using this equation, we can define a new vector of reaction
+velocities \vb in terms of $\xbold_i$ only:
+\begin{equation*}
+  \vbold ( \xbold_i ) \equiv \vstar ( \mathbf{T} \xbold_i )
+\end{equation*}
+With this \vb, we can now write a reduced system by substituting
+terms.  First we define $\mathbf{A}$ as the $r$ independent rows
+of \Astar corresponding to $\xbold_i$.  Then:
+\begin{equation*}
+  \dfrac{d\xbold_i}{dt} = \Abold \vbold ( \xbold_i )
+\end{equation*}
+This is a set of $r$ independent differential equations in $r$
+unknowns (\ie an $r$-dimensional system).  To simplify the
+notation slightly, let
+\begin{equation*}
+  \xbold \equiv \xbold_i
+\end{equation*}
+and, thus,
+\begin{equation*}
+  \dfrac{d\xbold}{dt} = \Abold \vbold ( \xbold )
+\end{equation*}
+
+%\xb, \Ab and \vb are
+%defined as the reduced (independent) system of variables, the
+%stochiometric coefficients, the substituted rates, and the new
+
+
+\subsection{Application of a PSSA to Biochemical Systems}
+
+Assume that we have eliminated redundant variables and equations
+using the mass conservation analysis above.  Further assume that
+we have some external means of classifying some reactions in a
+given system as being \emph{fast} as discussed earlier.  We now
+need to apply this to the system under study.  We begin by
+decomposing the vector of reaction velocities \vb according to
+fast and slow reactions:
+\begin{equation*}
+  \dfrac{d\xbold}{dt} = \Abold_1 \vbold_f(\xbold) + \Abold_2 \vbold_s(\xbold)
+\end{equation*}
+We find the left null space of $\Abold_1$ (\ie the space of
+solutions to $\mathbf{m}^T[d\xbold/dt] = 0$ on a fast time scale),
+and call this matrix \Bb:
+\begin{equation*}
+  \Bbold \Abold_1 = \mathbf{0}
+\end{equation*}
+The matrix \Bb represents the linear combination of species that
+do not change on a fast time scale, \ie the slow species in the
+system.  Now, we premultiply the equation for $d\xbold/dt$ by \Bb:
+\begin{align*}
+  \Bbold \dfrac{d\xbold}{dt} &= \Bbold \Abold_1 \vbold_f(\xbold) 
+                               + \Bbold \Abold_2 \vbold_s(\xbold) \\
+                             &= \Bbold \Abold_2 \vbold_s(\xbold)
+\end{align*}
+where the second line follows from the fact that $\Bbold \Abold_1
+= \mathbf{0}$.  The above is an ordinary differential equation in
+terms of only the slow dynamics.  The remaining fast dynamics are
+handled by applying the pseudo-steady state approximation, with
+fast transients assumed to have settled with respect to the slow
+time scale.  This produces a system of nonlinear algebraic
+equations:
+\begin{equation*}
+  \Abold_1 \vbold_f = \mathbf{0}
+\end{equation*}
+The last two equations form the system of equations resulting from
+the application of the PSSA.  If $r_1 =
+\operatorname{rank}(\Abold_1)$ and $r =
+\operatorname{rank}(\Abold)$, then there will be $r_1$ degrees of
+freedom that will be determined by solving an algebraic system
+(the equation $\Abold_1 \vbold_f = \mathbf{0}$ above), and there
+will be $r - r_1$ degrees of freedom that will be determined by
+ordinary differential equations (the equation for $\Bbold\,
+d\xbold/dt$).
 
 \end{blockChanged}
 \clearpage

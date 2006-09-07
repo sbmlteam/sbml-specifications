@@ -1172,11 +1172,11 @@ The type \primtype{UnitSId} is derived from \primtype{SId}
 identifiers of units (Section~\ref{sec:unitdefinition-structure})
 and for references to unit identifiers in SBML object structures.
 The purpose of having a separate data type for such identifiers is
-to allow their scope to be separated from the scope of other
-identifiers in the system.  The equality of \primtype{UnitSId}
-values is determined by an exact character sequence match; \ie
-comparisons of these identifiers must be performed in a
-case-sensitive manner.
+enable the space of possible unit identifier values to be
+separated from the space of all other identifier values in SBML.
+The equality of \primtype{UnitSId} values is determined by an
+exact character sequence match; \ie comparisons of these
+identifiers must be performed in a case-sensitive manner.
 
 
 \subsubsection{Type \primtype{SBOTerm}}
@@ -1222,48 +1222,6 @@ certain additional conditions apply; for example, the content may
 be restricted to being within a specific XML namespace.  Please
 consult the relevant SBML structure definitions in the rest of
 this document.
-
-% FIXME
-
-% Mike I commented out the following as it is (a) confused, (b) confusing and
-% (c) a tutorial on XML.  Note that <a> </a> </a> is just badly formed XML,
-% and that <a> <b> </b> </a> and <a><![CDATA[<b></b>]]></a> have entirely different
-% semantics.  CDATA is simply a way of escaping XML tokens in XML content
-% it isn't an embedding mechanism there is no difference between
-% <![CDATA[<b>]]> and &lt;b&gt;
-
-%Can there be an ambiguity resulting from an embedded closing tag
-%within the \primtype{any} content?  Given that the \primtype{any}
-%content must be well-formed XML and that most situations in SBML
-%where the type is used impose restrictions on the XML namespaces
-%in which the content resides, it is difficult to construct a
-%scenario where valid content would have embedded within it a
-%single unbalanced closing tag of the same name as the SBML
-%structure.  In other words, within (say) an SBML
-%\token{<annotation>} \ldots \token{</annotation>} element content,
-%an embedded \token{</annotation>} tag without a prior opening
-%\token{<annotation>} would lead to an invalid XML document because
-%the element tags would be imbalanced: the result would be
-%\begin{example}
-%<annotation> ... </annotation> ... </annotation>
-%\end{example}
-%This situation is actually impossible to construct in the two
-%cases where the \primtype{any} content is restricted to being in
-%the XHTML namespace (the \token{notes} on \SBase and
-%\token{message} on \Constraint), because the corresponding tags
-%(\ie \token{<notes>} and \token{<message>}) are not part of the
-%XHTML namespace anyway.  Their appearance within these elements
-%would be an error.
-%
-%In the unlikely event that an application or user needs to embed a
-%problematic element within the content, it must be escaped using
-%XML's CDATA construct.  The quoting sequence begins with the
-%characters \token{<![CDATA[} and ends with the character sequence
-%\token{]]>}.  Here is an example:
-%\begin{example}
-%<notes> ... <![CDATA[</notes>]]> ... </notes>
-%\end{example}
-
 
 \end{blockChanged}
 
@@ -1950,7 +1908,7 @@ software packages leeway in assigning component identifiers.
 
 \begin{blockChanged}
 
-\subsubsection{Identifiers, Names, and \class{SBase}}
+\subsubsection{Why \token{id} and \token{name} Are Not Defined on \class{SBase}}
 \label{sec:why-not-on-sbase}
 
 % [MH 2006-03-06] Most of the following issues could be addressed
@@ -1966,26 +1924,6 @@ Although many SBML components also feature two other fields named
 \token{id} and \token{name}, these fields are purposefully not defined on
 \SBase.  There are several reasons for this.
 \begin{itemize}
-  
-\item The identifier field is optional on some SBML components and
-  required on others.  Putting \token{id} on \SBase would make it
-  impossible to accommodate both cases: the \token{id} defined by
-  \SBase would have to be mandatory, and therefore it would force
-  identifiers to be mandatory on all components.
-  
-% Andrew, the point below is separate from point above, so I'm
-% reverting this to being a separate bullet item, and changed the
-% wording to distinguish the cases a little more.
-  
-\item The \SBase abstract type is used as the base type for
-  certain structures such as \Unit, \AssignmentRule,
-  \AlgebraicRule, etc., which do not have identifiers at all
-  because these structures do not need to be referenced by other
-  structures.  If instead \SBase had an \token{id} field, all
-  objects of these other types in a model would then need to be
-  assigned unique identifiers.  This would be a needless burden on
-  software developers to generate additional identifiers for
-  objects that in practice never need them.
 
 \item The presence of an SBML identifier field (\token{id})
   necessarily requires specifying scoping rules for the
@@ -1996,22 +1934,36 @@ Although many SBML components also feature two other fields named
   to have an \token{id} field, then the specification of \SBase
   would need a default scoping rule and this would then have to be
   overloaded on derived classes that needed different scoping.
-  This would make the SBML specification needlessly complex.
+  This would make the SBML specification more complex.
 
-\item Because \SBase is the base type of the
-  \token{listOf\rule{0.5in}{0.5pt}} lists (see
-  Section~\ref{sec:type-inheritance-hierarchy}), putting
-  \token{id} on \SBase would require all of these lists in a model
-  to be given identifers.  This would again be pointless because
-  these lists are only syntactic constructs; they cannot carry a
-  value or be referenced by the rest of an SBML model.
-
-\item Because the \Sbml top-level object is derived from \SBase,
-  it too would have to be assigned a mandatory identifier.  Again,
-  there is no functional reason to have an identifier on this
-  object (it is outside the model!).  With respect to the
-  \token{name} field, \SBase does not have a \token{name} simply
-  because such a field is paired with an \token{id} field.
+\item The identifier field is optional on some SBML components and
+  required on most others.  If \token{id} was defined as optional
+  on \SBase, most component classes would separately have to
+  redefine \token{id} as being mandatory.  This is hardly an
+  improvement over the current arrangement.  Conversely, if
+  \token{id} was defined as mandatory on \SBase, it would prevent
+  the field from being optional on those components where it
+  \emph{is} currently optional.
+  
+\item The \SBase abstract type is used as the base type for
+  certain structures such as \Sbml, \Unit, \AssignmentRule,
+  \AlgebraicRule, etc., which do not have identifiers at all
+  because these structures do not need to be referenced by other
+  structures.  If \SBase had a mandatory \token{id} field,
+  \emph{all} objects of these other types in a model would then
+  need to be assigned unique identifiers.  Similarly, because
+  \SBase is the base type of the \token{listOf\rule{0.5in}{0.5pt}}
+  lists (see Section~\ref{sec:type-inheritance-hierarchy}),
+  putting \token{id} on \SBase would require all of these lists in
+  a model to be given identifers.  This would be a needless burden
+  on software developers, tools, and SBML users, requiring them to
+  generate and store additional identifiers for objects that never
+  need them.
+  
+\item \SBase does not have a \token{name} simply because such a
+  field is always paired with an \token{id} field.  Without
+  \token{id} on \SBase, it does not make sense to have
+  \token{name}.
 
 \end{itemize}
 
@@ -3037,7 +2989,7 @@ benefit of SBO labels.
 \subsubsection{Examples}
 
 The following abbreviated SBML example shows a \FunctionDefinition
-structure defining \token{pow3} as the \change{identifier} of a function
+structure defining \token{pow3} as the \changed{identifier} of a function
 computing the mathematical expression $x^{3}$, and after that, the
 invocation of that function in the mathematical formula of a rate
 law.  Note how the invocation of the function uses its identifier
@@ -4280,9 +4232,6 @@ The value of \token{speciesType} attributes on species have no
 effect on the numerical interpretation of a model. Simulators
 and other numerical analysis software may ignore
 \token{speciesType} attributes.
-
-% FIXME mention something about how prev sbml versions didn't have
-% this, and implications
 
 \end{blockChanged}
 
@@ -5595,15 +5544,15 @@ for flux balance analysis.
 
 The results of a simulation of a model containing a constraint are
 invalid from any simulation time at and after a point when the
-function given by the \token{math} returns a value of
-\val{false}. (Invalid simulation results do not make a
-prediction of the behavior of the biochemical reaction network
-represented by the model.)  The precise behavior of simulation
-tools is left undefined with respect to constraints. If invalid
-results are detected with respect to a given constraint, the
-\token{message} field may optionally be displayed to the user.
-Software tools are not required to display the message, but it is
-recommended as a matter of best practice. The simulation tool may
+function given by the \token{math} returns a value of \val{false}.
+(Invalid simulation results do not make a prediction of the
+behavior of the biochemical reaction network represented by the
+model.)  The precise behavior of simulation tools is left
+undefined with respect to constraints.  If invalid results are
+detected with respect to a given constraint, the \token{message}
+field may optionally be displayed to the user.  Software tools are
+not required to display the message, but it is recommended that
+they do so as a matter of best practice.  The simulation tool may
 also halt the simulation or clearly delimit in output data the
 simulation time point at which the simulation results become
 invalid.
@@ -7270,14 +7219,15 @@ translate their private terms to and from SBO terms when writing
 and reading SBML, respectively.
 
 
-% FIXME
-% There needs to be a section heading here, because the following
-% don't logically belong as part of the previous section.  So I'm
-% reinserting it [MH] but we can try to find a different title.
+% AF previously removed the following subsection heading, but
+% I believe there needs to be a section heading here, because
+% the following  don't logically belong as part of the previous
+% section.  So I'm reinserting it but with a different title. [MH]
 
-\subsection{Additional Discussion}
+\subsection{Discussion}
 
-Here we discuss some additional points about the SBO-based approach.
+Here we discuss some additional points about the SBO-based
+approach.
 
 \subsubsection{Frequency of Change in the Ontology}
 \label{sec:sbo-frequency-of-change}

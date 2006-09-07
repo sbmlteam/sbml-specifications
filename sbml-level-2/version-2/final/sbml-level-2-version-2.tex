@@ -106,7 +106,9 @@
 \newcommand{\sbmltwoone}  {SBML \twoone}
 \newcommand{\sbmltwotwo}  {SBML \twotwo}
 
+\newcommand{\xmlschema}   {XML~Schema\xspace}
 \newcommand{\xmlschemaone}{XML Schema~1.0\xspace}
+\newcommand{\mathml}      {MathML\xspace}
 \newcommand{\mathmltwo}   {MathML~2.0\xspace}
 
 \newcommand{\dblquote}{\verb|"|}
@@ -1044,9 +1046,24 @@ examples of legal literal \primtype{double} values:
 \end{tabular}
 \end{center}
 
-The restriction on floating point fields in the SBML XML namespace
+As will become clear in the rest of this document, SBML uses the
+\mathmltwo standard for expressing mathematical
+formulas~\citep{w3c:2000b}.  
+
+
+MathML happens to define numerical
+quantities differently
+
+
+In order to avoid an inconsistency between MathML content within
+SBML elements, and the rest of SBML, the \sbmltwotwo specification
+imposes a restriction on the value space of numbers appearing in
+MathML.
+
+The restriction on floating point fields elsewhere in SBML
 differs from the restrictions on floating point numbers defined in
-the \mathmltwo standard for content in the MathML XML namespace.
+the \mathmltwo namespace.
+
 Strictly according to the \mathmltwo standard, the values of
 content \token{cn} elements do not have to conform to any specific
 floating point or integer representations designed for CPU
@@ -1975,38 +1992,53 @@ Although many SBML components also feature two other fields named
 \label{sec:formulas}
 %-----------------------------------------------------------------------------
 
+% I no longer understand why we need to bother with this long list
+% here.  It only seems to make it harder to read.  There's no
+% value added, in my mind, so I'm commenting it out. [2006-09-06 MH]
+%
+%It is used in the
+%definitions of functions (Section~\ref{sec:functiondefinition}), rules
+%(Section~\ref{sec:rules}), initial assignments
+%(Section~\ref{sec:initialAssignment}), constraints
+%(Section~\ref{sec:constraints}), reaction kinetics
+%(Section~\ref{subsec:kinetic-law}), stoichiometries
+%(Section~\ref{subsec:speciesreference}) and events
+%(Section~\ref{sec:events}). The \FunctionDefinition, \KineticLaw,
+%\StoichiometryMath, \EventAssignment,
+%\changed{\InitialAssignment, \Constraint}, and
+%\Rule structures each have a single MathML \token{math}
+%subelement.  \changed{The \Event structure has two \token{math} elements, one
+%inside a subelement named \token{trigger} and the other inside
+%a subelement named \token{delay}.  The \FunctionDefinition's single
+%\token{math} element is limited to containing only a single MathML
+%\token{lambda} element.}
+
+\begin{blockChanged}
 Mathematical expressions in SBML Level~2 are represented using
-\mathmltwo~\citep{w3c:2000b}, the XML standard for describing
-mathematics in machine-readable format.  It is used in the
-definitions of functions (Section~\ref{sec:functiondefinition}), rules
-(Section~\ref{sec:rules}), initial assignments
-(Section~\ref{sec:initialAssignment}), constraints
-(Section~\ref{sec:constraints}), reaction kinetics
-(Section~\ref{subsec:kinetic-law}), stoichiometries
-(Section~\ref{subsec:speciesreference}) and events
-(Section~\ref{sec:events}). The \FunctionDefinition, \KineticLaw,
-\StoichiometryMath, \EventAssignment,
-\changed{\InitialAssignment, \Constraint}, and
-\Rule structures each have a single MathML \token{math}
-subelement.  \changed{The \Event structure has two \token{math} elements, one
-inside a subelement named \token{trigger} and the other inside
-a subelement named \token{delay}.  The \FunctionDefinition's single
-\token{math} element is limited to containing only a single MathML
-\token{lambda} element.}
+\mathmltwo~\citep{w3c:2000b}.  MathML is an international standard
+for encoding mathematical expressions using XML.  There are two
+principal facets of MathML, one for encoding content (\ie the
+semantic interpretation of a mathematical expression), and another
+for encoding presentation or display characteristics.  SBML only
+makes direct use of a subset of the content portion of MathML.  
+By borrowing a separately-developed XML standard, we can avoid
+having to define a specialized syntax for mathematical expressions
+in SBML and simultaneously leverage existing intellectual and
+technological work already done in the MathML community.  However,
+it is not possible to produce a completely smooth and conflict-free
+interface between MathML and other standards used by SBML (in
+particular, \xmlschema).  Two specific issues and their
+resolutions are discussed in Sections~\ref{sec:cn-token} below.
 
 The XML namespace URI for all MathML elements is
-\uri{http://www.w3.org/1998/Math/MathML}.  [See the W3C document by
-\citet{bray:1999} for more information about using XML namespaces.]  The
-examples \changed{throughout this specification} illustrate the use of this
-namespace and MathML in SBML.
-
-\changed{The semantic interpretation of MathML in the context of
-SBML follows the \mathmltwo standard.  In particular, the
-semantics of MathML functions follow the definitions
-laid out by \cite{abramowitz:1997} and \cite{zwillinger:1988}.
-Readers are directed to these sources and the MathML specification
-for information about such things as which principle values of the
-inverse trigonometric functions to use.}
+\uri{http://www.w3.org/1998/Math/MathML}.  Everywhere MathML
+content is allowed in SBML, the MathML elements must be properly
+placed within the \mathmltwo namespace.  In XML, this can be
+accomplished in a number of ways, and the examples throughout this
+specification illustrate the use of this namespace and MathML in
+SBML.  [Please refer to the W3C document by \citet{bray:1999} for
+more technical information about using XML namespaces.]
+\end{blockChanged}
 
 
 \subsubsection{Subset of MathML Used in SBML Level 2}
@@ -2014,8 +2046,8 @@ inverse trigonometric functions to use.}
 
 The subset of \mathmltwo elements used in SBML Level~2 is similar to
 that used by CellML~\changed{\citep{hedley:2001b}, another model
-definition language with similar goals as SBML.  The MathML
-elements permitted in SBML are} itemized below:
+definition language with similar goals as SBML.  The subset of MathML
+elements used in SBML is listed below:}
 \begin{itemize}\setlength{\parskip}{-0.2ex}
 
 \item \emph{token}: \token{cn}, \token{ci}, \token{csymbol},
@@ -2057,18 +2089,28 @@ elements permitted in SBML are} itemized below:
 
 The inclusion of logical operators, relational operators,
 \token{piecewise}, \token{piece}, and \token{otherwise} elements
-facilitates the encoding of discontinuous expressions.  Elements
-for representing partial differential calculus are not included.
-We anticipate that the requirements for partial differential
-calculus will be addressed in proposals for SBML Level~3 geometry
-representations (see Section~\ref{sec:level-3}).
+facilitates the encoding of discontinuous expressions.
+\changed{Note that MathML} elements for representing partial
+differential calculus are not included.  We anticipate that the
+requirements for partial differential calculus will be addressed
+in proposals for future SBML geometry representations (see
+Section~\ref{sec:level-3}).
 
-\changed{Parsers should take particular note of the MathML
-semantics of the N-ary operators \token{plus}, \token{times},
-\token{and}, \token{or} and \token{xor}, when they are used
-with different numbers of arguments.  The MathML
+\changed{As defined by \mathmltwo, the semantic interpretation of
+the mathematical functions listed above follows the definitions
+of the functions laid out by \cite{abramowitz:1997} and
+\cite{zwillinger:1988}.  Readers are directed to these sources
+and the MathML specification for information about such things
+as which principle values of the inverse trigonometric functions
+to use.}
+
+\changed{Software authors should take particular note of the
+MathML semantics of the N-ary operators \token{plus},
+\token{times}, \token{and}, \token{or} and \token{xor}, when
+they are used with different numbers of arguments.  The MathML
 specification~\citep{w3c:2000b} appendix C.2.3 describes the
-semantics for these operators with zero, one, and more arguments.}
+semantics for these operators with zero, one, and more
+arguments.}
 
 The following are the only attributes permitted on MathML elements
 in SBML:
@@ -2090,45 +2132,38 @@ and to avoid conflicts in the interpretation of the type of token
 elements.
 
 
-\subsubsection{\changed{Handling of Whitespace}}
-\label{sec:whitespace}
-
 \begin{blockChanged}
-\mathmltwo defines ``whitespace'' in the same way as XML does,
-\ie the space character (Unicode hexadecimal code 0020),
-horizontal tab (code 0009), newline or line feed (code 000A), and
-carriage return (code 000D).  In MathML, the content of elements
-such as \token{cn} and \token{ci} (described below) can be
-surrounded by whitespace characters.  Prior to using the content,
-this whitespace is ``trimmed'' from both ends: all whitespace at
-the beginning and end of the content is
-removed~\cite{ausbrooks:2003}.
-
-For example, in a MathML element \texttt{<cn> 42 </cn>}, the amount of
-white space on either side of the ``\texttt{42}'' inside the \texttt{<cn>}
-\ldots\ \texttt{</cn>} container does not matter.  Prior to interpreting
-the content, the whitespace is removed altogether.
-\end{blockChanged}
-
-
-\subsubsection{Use of \token{cn} Elements in MathML Expressions in SBML}
+\subsubsection{Numbers and \token{cn} Elements}
 \label{sec:cn-token}
+\label{sec:mathml-value-space}
 
-% FIXME put a bit more in the lead-in paragraph, such as about the
-% use of type=.  The cn is not fully explained anywhere else in
-% the spec.
+In MathML, literal numbers are written as the content portion of a
+particular element called \token{cn}.  This element takes an
+optional attribute, \token{type}, used to indicate the \emph{type}
+of the number (such as whether it is meant to be an integer or a
+floating-point quantity).  Here is an example of its use:
+\begin{example}
+<math xmlns="http://www.w3.org/1998/Math/MathML">
+    <apply>
+        <times/>
+        <cn type="integer"> 42 </cn>
+        <cn type="real"> 3.3 </cn>
+    </apply>
+</math>
+\end{example}
 
-\changed{The content of a \token{cn} element must be a number. The
-number can be preceded and succeeded by whitespace.}
+The content of a \token{cn} element must be a number.  The number
+can be preceded and succeeded by whitespace (see
+Section~\ref{sec:mathml-whitespace}).  The following are the only
+permissible values for the \token{type} attribute on MathML
+\token{cn} elements: \val{e-notation}, \val{real}, \val{integer},
+and \val{rational}.  The value of the \token{type} attribute
+defaults to \val{real} if it is not specified on a given
+\token{cn} element.
 
-The following are the only permissible values for the
-\token{type} attribute on MathML \token{cn} elements:
-``\token{e-notation}'', ``\token{real}'',
-``\token{integer}'', and ``\token{rational}''.  The
-value of the \token{type} attribute defaults to
-``\token{real}''.
 
-\begin{blockChanged}
+\paragraph{Value Space Restrictions on \token{cn} Content}
+
 SBML imposes certain restrictions on the value space of numbers
 allowed in MathML expressions.  According to the \mathmltwo
 specification, the values of the content of \token{cn} elements do
@@ -2137,31 +2172,38 @@ integer representations designed for CPU implementation.  For
 example, in strict MathML, the value of a \token{cn} element could
 exceed the maximum value that can be stored in a IEEE 64 bit
 floating point number (IEEE 754).  This is different from the XML
-Schema type \primtype{double} that is used in the definition
-floating point fields of structures in the SBML namespace which
-\emph{is} restricted to IEEE double-precision 64-bit floating
-point type IEEE 754-1985.  To avoid an inconsistency that would
-result between numbers elsewhere in SBML and numbers in MathML
+Schema type \primtype{double} that is used in the definition of
+floating point fields of structures in SBML, which \emph{is}
+restricted to IEEE double-precision 64-bit floating point type
+IEEE 754-1985.  To avoid an inconsistency that would result
+between numbers elsewhere in SBML and numbers in MathML
 expressions, \sbmltwotwo imposes the following restriction on
-MathML content:
+MathML content appearing in SBML:
 \begin{itemize}
-
+  
 \item Integer values (\ie the content of \token{cn} elements
   having \token{type}=\val{integer}) must conform to the
-  \primtype{int} type (Section~\ref{sec:integer})
-
+  \primtype{int} type used elsewhere in SBML
+  (Section~\ref{sec:integer})
+  
 \item Floating-point values (\ie the content of \token{cn}
   elements having \token{type}=\val{real} or
   \token{type}=\val{e-notation}) must conform to the
-  \primtype{double} type (Section~\ref{sec:double})
+  \primtype{double} type used elsewhere in SBML
+  (Section~\ref{sec:double})
 \end{itemize}
 
-A final important change to note is that MathML uses a style of
-scientific notation that differs from what is defined in XML
-Schema.  The \mathmltwo ``\token{e-notation}'' requires the
-mantissa and exponent to be separated by one \texttt{<sep/>}
-element.  The mantissa must be a real number and the exponent part
-must be a signed integer.  This leads to expressions such as
+
+\paragraph{Syntactic Differences in the Representation of Numbers
+  in Scientific Notation}
+
+It is important to note that MathML uses a style of scientific
+notation that differs from what is defined in XML Schema, and
+consequently what is used in SBML attribute values.  The
+\mathmltwo type \val{e-notation} requires the mantissa and
+exponent to be separated by one \texttt{<sep/>} element.  The
+mantissa must be a real number and the exponent part must be a
+signed integer.  This leads to expressions such as
 
 \begin{example}
 <cn type="e-notation"> 2 <sep/> -5 </cn>
@@ -2174,19 +2216,26 @@ important to note that the expression
 <cn type="e-notation"> 2e-5 </cn>
 \end{example}
 
-is \emph{not valid} in \mathmltwo.  In the SBML XML namespace,
-when an attribute value is declared to have type \primtype{double}
-(a type taken from XML Schema), the compact notation
-``\texttt{2e-5}'' is in fact allowed, but not inside the MathML
-XML namespace. (This is a regrettable difference between two
-standards that SBML replies upon, but it is not feasible to
-redefine these types within SBML because the result would be
-incompatible with parser libraries written to conform with the
-MathML and XML Schema standards.  It is also not possible to use
-XML Schema to define a data type for SBML attribute values
-permitting the use of the \token{<sep/>} notation, because XML
-attribute values cannot contain XML elements---that is,
-\token{<sep/>} cannot appear in an XML attribute value.)
+is \emph{not valid} in \mathmltwo and therefore cannot be used in
+MathML content in SBML.  However, elsewhere in SBML, when an
+attribute value is declared to have the data type
+\primtype{double} (a type taken from XML Schema), the compact
+notation \val{2e-5} is in fact allowed.  In other words, within
+MathML expressions contained in SBML (and \emph{only} within such
+MathML expressions), numbers in scientific notation must take the
+form \token{<cn type="e-notation"> 2 <sep/> -5 </cn>}, and
+everywhere else they must take the form \val{2e-5}.
+
+This is a regrettable difference between two standards that SBML
+replies upon, but it is not feasible to redefine these types
+within SBML because the result would be incompatible with parser
+libraries written to conform with the MathML and XML Schema
+standards.  It is also not possible to use XML Schema to define a
+data type for SBML attribute values permitting the use of the
+\token{<sep/>} notation, because XML attribute values cannot
+contain XML elements---that is, \token{<sep/>} cannot appear in an
+XML attribute value.)
+
 \end{blockChanged}
 
 
@@ -2259,6 +2308,28 @@ elements that can represent parameters listed in a
 \KineticLaw structure are those \token{ci} elements
 contained in the \KineticLaw structure (see
 Section~\ref{subsec:kinetic-law}).}
+
+
+\subsubsection{\changed{Handling of Whitespace}}
+\label{sec:mathml-whitespace}
+
+\begin{blockChanged}
+\mathmltwo defines ``whitespace'' in the same way as XML does, \ie
+the space character (Unicode hexadecimal code 0020), horizontal
+tab (code 0009), newline or line feed (code 000A), and carriage
+return (code 000D).  In MathML, the content of elements such as
+\token{cn} and \token{ci} can be surrounded by whitespace
+characters.  Prior to using the content, this whitespace is
+``trimmed'' from both ends: all whitespace at the beginning and
+end of the content is removed~\cite{ausbrooks:2003}.
+
+For example, in a MathML element \texttt{<cn> 42 </cn>}, the
+amount of white space on either side of the ``\texttt{42}'' inside
+the \texttt{<cn>} \ldots\ \texttt{</cn>} container does not
+matter.  Prior to interpreting the content, the whitespace is
+removed altogether.
+\end{blockChanged}
+
 
 
 \subsubsection{Use of \token{csymbol} Elements in MathML Expressions in SBML}

@@ -5591,45 +5591,32 @@ shows the definition of the \Constraint data structure.
   \end{blockMarkChanged}
 \end{figure}
 
-A \Constraint structure consists of two fields: \token{math},
-which contains a MathML formula, and the optional field
-\token{message}, which contains a message in XHTML format that may
-be displayed to the user.  The formula contained in the
-\token{math} field should be an arbitrary function of the
-variables and parameters of the SBML model.  The formula must
-return a boolean value of \val{true} when the model is a
-\emph{valid} state.
 
-In the context of a simulation, \Constraint structures have effect
-at all times beginning with ``initial time'', \ie for simulation
-time $t >= 0$.  They are first evaluated after any
-\InitialAssignment definitions in a model at $t = 0$ and can
-conceivably trigger at that point.  (In other words, a simulation
-could fail a constraint immediately.)
+\subsubsection{The \token{math} Field}
 
-\Constraint structures \emph{cannot and should not} be used to
-compute the dynamical behavior of a model as part of, for example,
-simulation. Constraints may be used as a key input to
-non-dynamical analysis, for example by expressing flux constraints
-for flux balance analysis.
+A \Constraint structure has a required field called \token{math},
+containing a MathML formula defining the condition of the
+constraint.  The formula must return a boolean value of \val{true}
+when the model is a \emph{valid} state.  The MathML formula can be
+an arbitrary expression referencing the variables and other
+entities in an SBML model.  The evaluation of \token{math} and
+behavior of constraints are described in more detail in
+Section~\ref{sec:constraint-semantics} below.
 
-The results of a simulation of a model containing a constraint are
-invalid from any simulation time at and after a point when the
-function given by the \token{math} returns a value of \val{false}.
-(Invalid simulation results do not make a prediction of the
-behavior of the biochemical reaction network represented by the
-model.)  The precise behavior of simulation tools is left
-undefined with respect to constraints.  If invalid results are
-detected with respect to a given constraint, the \token{message}
-field may optionally be displayed to the user.  Software tools are
-not required to display the message, but it is recommended that
-they do so as a matter of best practice.  The simulation tool may
-also halt the simulation or clearly delimit in output data the
-simulation time point at which the simulation results become
-invalid.
+
+\subsubsection{The \token{message} Field}
+\label{sec:constraint-message}
+
+A \Constraint structure has an optional field called
+\token{message}.  This can contain a message in XHTML format that
+may be displayed to the user when the condition of the constraint
+in \token{math} evaluates to a value of \val{false}.  Software
+tools are not required to display the message, but it is
+recommended that they do so as a matter of best practice.
 
 
 \subsubsection{The \token{sboTerm} Field}
+\label{sec:constraint-sboterm}
 
 The \Constraint structure has an optional \token{sboTerm} field of
 type \primtype{SBOTerm} (see Sections~\ref{sec:sboterm-type}
@@ -5645,6 +5632,52 @@ As discussed in Section~\ref{sec:sboTerm}, SBO labels are optional
 information on a model.  Applications are free to ignore
 \token{sboTerm} values.  A model must be interpretable without the
 benefit of SBO labels.
+
+
+\subsubsection{Semantics of Constraints}
+\label{sec:constraint-semantics}
+
+In the context of a simulation, a \Constraint has effect at all
+times beginning with ``initial time'', \ie for simulation time $t
+>= 0$.  Each \Constraint's \token{math} field is first evaluated
+after any \InitialAssignment definitions in a model at $t = 0$ and
+can conceivably trigger at that point.  (In other words, a
+simulation could fail a constraint immediately.)
+
+\Constraint structures \emph{cannot and should not} be used to
+compute the dynamical behavior of a model as part of, for example,
+simulation.  Constraints may be used as input to non-dynamical
+analysis, for example by expressing flux constraints for flux
+balance analysis.
+
+The results of a simulation of a model containing a constraint are
+invalid from any simulation time at and after a point when the
+function given by the \token{math} returns a value of \val{false}.
+(Invalid simulation results do not make a prediction of the
+behavior of the biochemical reaction network represented by the
+model.)  The precise behavior of simulation tools is left
+undefined with respect to constraints.  If invalid results are
+detected with respect to a given constraint, the \token{message}
+field (Section~\ref{sec:constraint-message}) may optionally be
+displayed to the user.  The simulation tool may also halt the
+simulation or clearly delimit in output data the simulation time
+point at which the simulation results become invalid.
+
+If a software tool reports constraint failures and/or prints
+\token{message} fields, it should report all constraints that fail
+on the same condition when a failure occurs.  In other words, if a
+model defines three constraints $c1$, $c2$, and $c3$, and at a
+given point during simulation the expressions for $c2$ and $c3$
+both return \val{false} simultaneously, a software system should
+report both $c2$ and $c3$ failing and not merely report the first
+one it detected.
+
+SBML does not impose restrictions on duplicate \Constraint
+definitions or the order of evaluation of \Constraint definitions
+in a model.  It is possible for a model to define multiple
+constraints all with the same \token{math} field.  Analysis
+software should treat them no differently that multiple distinct
+constraints.
 
 
 \subsubsection{Example}

@@ -318,7 +318,6 @@ is made publicly available at
 
 \end{blockChanged}
 
-
 \begin{blockChanged}
 %-----------------------------------------------------------------------------
 \subsection{Language Features Deprecated or Removed}
@@ -1146,9 +1145,9 @@ shown in Figure~\vref{fig:sid}.
 \end{figure}
 
 The equality of \primtype{SId} values is determined by an exact
-character sequence match; i.e., comparisons of these identifiers
+character sequence match; \ie comparisons of these identifiers
 must be performed in a case-sensitive manner.  This applies to all
-uses of \token{SId} including the identifiers of unit definitions.
+uses of \token{SId}.
 
 The \primtype{SId} is purposefully not derived from the XML
 \primtype{ID} type (Section~\ref{sec:id}).  Using XML's
@@ -1162,6 +1161,22 @@ because \mathmltwo \token{ci} elements are not of the type
 \primtype{IDREF}/\primtype{ID} linkage cannot be exploited in
 MathML constructs, the utility of the XML \primtype{ID} type is
 greatly reduced.
+
+
+\subsubsection{Type \primtype{UnitSId}}
+\label{sec:unitsid}
+
+The type \primtype{UnitSId} is derived from \primtype{SId}
+(Section~\ref{sec:sid}) and has identical syntax.  The
+\primtype{UnitSId} type is used as the data type for the
+identifiers of units (Section~\ref{sec:unitdefinition-structure})
+and for references to unit identifiers in SBML object structures.
+The purpose of having a separate data type for such identifiers is
+to allow their scope to be separated from the scope of other
+identifiers in the system.  The equality of \primtype{UnitSId}
+values is determined by an exact character sequence match; \ie
+comparisons of these identifiers must be performed in a
+case-sensitive manner.
 
 
 \subsubsection{Type \primtype{SBOTerm}}
@@ -1785,9 +1800,10 @@ appear, the common rules of usage described below apply.
 The \token{id} field is a mandatory field on most structures in
 SBML.  It is used to identify a component within the model
 definition.  Other SBML structures can refer to the component
-using this identifier.  Section~\ref{sec:sid} provides a
-definition of the data type \primtype{SId} used for the \token{id}
-field.
+using this identifier.  The data type of \token{id} is always
+either \primtype{Sid} (Section~\ref{sec:sid}) or
+\primtype{UnitSId} (Section~\ref{sec:unitsid}), depending on the
+object in question.
 
 \end{blockChanged}
 
@@ -1814,9 +1830,9 @@ may be misinterpreted by another program.  \sbmltwo must
 therefore include a specific set of rules for treating identifers
 and \changed{their scopes}.
 
-The \changed{scoping} rules in \sbmltwo are relatively straightforward
-and are intended to avoid this problem with a minimum of
-requirements on the implementation of software tools:
+The \changed{scoping} rules in \sbmltwo are relatively
+straightforward and are intended to avoid this problem with a
+minimum of requirements on the implementation of software tools:
 \begin{itemize}
 
 \item \changed{The identifiers (\ie the values of the field
@@ -1838,10 +1854,6 @@ requirements on the implementation of software tools:
     a \Reaction object instance are not visible to other objects
     outside of that reaction.}
 
-\item Unit identifiers (the values of the field \token{id} in the
-  \UnitDefinition structure) exist in a separate global namespace
-  distinct from other identifiers.
-
 \end{itemize}
 
 The set of rules above can enable software packages using either
@@ -1852,7 +1864,7 @@ to accept SBML model definitions without needing to change
 component identifiers.  Environments using a global namespace for
 parameters internally can perform manipulations of the identifiers
 of local parameter elements within reaction definitions to avoid
-name collisions.
+\changed{identifier} collisions.
 
 % [2006-04-01 AF] Removed the following because a its not >that< simple and
 % the the approach you outline is not bullet proof and I don't
@@ -1912,7 +1924,7 @@ automatically generate the values of \token{id} fields should be
 aware some systems may display the \token{id}'s to the user.
 Authors therefore may wish to take some care to have their
 software create \token{id} values that are: (a) reasonably easy
-for humans to type and read; and (b) likely to be meaningful e.g
+for humans to type and read; and (b) likely to be meaningful, \eg
 the id field is an abbreviated form of the name field value.
 
 \begin{blockChanged}
@@ -3025,7 +3037,7 @@ benefit of SBO labels.
 \subsubsection{Examples}
 
 The following abbreviated SBML example shows a \FunctionDefinition
-structure defining \token{pow3} as the name of a function
+structure defining \token{pow3} as the \change{identifier} of a function
 computing the mathematical expression $x^{3}$, and after that, the
 invocation of that function in the mathematical formula of a rate
 law.  Note how the invocation of the function uses its identifier
@@ -3080,7 +3092,7 @@ values, the units of time and of substance in which a reaction
 rate is expressed, the units of time in an event's execution
 delay, and the results of mathematical formulas.  Rather than
 requiring a complete unit definition on every structure, SBML
-provides a facility for defining named units that can be
+provides a facility for defining units that can be
 referenced throughout a model.  In addition, every kind of SBML
 mathematical entity has units assigned to it from a set of
 built-in defaults (see Section~\ref{sec:built-in-units} below, and
@@ -3098,7 +3110,7 @@ and~\ref{sec:unit-structure} below.
 \begin{figure}[htb]
   \centering
   \begin{classbox}{UnitDefinition}
-    id: SId                           \\
+    id: \markChanged{UnitSId}         \\
     name: string \{ use="optional" \} \\
     unit: Unit[1..*]                  \\
   \end{classbox}
@@ -3149,22 +3161,22 @@ A unit definition in SBML consists of an instance of a
 
 \paragraph{The \token{id} and \token{name} Fields}
 
-The \token{id} and \token{name} fields have types \primtype{SId}
-and \primtype{string}, respectively, and operate in the manner
-summarized in Section~\ref{sec:idnameattribs}.  There are three
-crucial differences between unit identifiers and most other
-identifiers in SBML:
+The required field \token{id} and optional field \token{name} have
+data types \primtype{UnitSId} and \primtype{string}, respectively.
+The \token{id} field is used to give the defined unit a unique
+identifier by which other parts of an SBML model definition can
+refer to it.  The \token{name} field is intended to be used for
+giving the unit definition an optional human-readable name; see
+Section~\ref{sec:name} for more guidelines about the use of names.
+
+There are two important restrictions and guidelines about the use
+of unit \token{id} values:
 \begin{enumerate}
 
 \item The \token{id} of a \Unit definition must not contain a
   value from Table~\ref{tab:unitkind} (\ie the enumeration of
   predefined \primtype{UnitKind} values).  This constraint simply
-  prevents the redefinition of the base units.
-
-\item Unit identifiers defined by the \token{id} field reside in a
-  separate global namespace distinct from the namespace of other
-  identifiers in a model; thus, unit identifiers cannot collide
-  with the identifiers of species, compartments, reactions, etc.
+  prevents the redefinition of the SBML base units.
 
 \item There is a set of predefined identifiers for the built-in
   default units in SBML; these identifiers are \val{substance},
@@ -3261,7 +3273,7 @@ given in Table~\vref{tab:unitkind}.
     Also, note that the gram and litre are not
     strictly part of SI; however, they are so
     commonly used in SBML's areas of application that they
-    are included as predefined unit names.  (The standard SI unit of
+    are included as predefined unit \changed{identifiers}.  (The standard SI unit of
     mass is in fact the kilogram, and volume is
     defined in terms of cubic metres.)}
   \label{tab:unitkind}
@@ -3570,7 +3582,7 @@ SBML.
 
 \paragraph{Examples}
 
-The following example illustrates the definition of an abbreviation named
+The following example illustrates the definition of an abbreviation
 \val{mmls} for the units $mmol\ l^{-1}\ s^{-1}$:
 
 \begin{example}
@@ -3589,7 +3601,7 @@ The following example illustrates the definition of an abbreviation named
 \subsubsection{Built-in Units}
 \label{sec:built-in-units}
 
-There are five special unit names in SBML, listed in
+There are five special unit \changed{identifiers} in SBML, listed in
 Table~\vref{tab:builtin}, corresponding to the five types of
 quantities or that play roles in biochemical reactions: substance,
 volume, area, length and time.  All SBML mathematical entities
@@ -3604,7 +3616,7 @@ and \token{scale}=\val{0}.
   \setlength{\tabcolsep}{8pt}
   \begin{tabular}{lll>{\ttfamily}l}
     \toprule
-    \textbf{Name} & \textbf{Possible Scalable Units} & \textbf{Default Units}\\
+    \textbf{\changed{Identifier}} & \textbf{Possible Scalable Units} & \textbf{Default Units}\\
     \midrule
     \token{substance} & \markChanged{dimensionless}, mole, item & mole\\
     \token{volume} & \markChanged{dimensionless}, litre, cubic metre & litre\\
@@ -3647,15 +3659,16 @@ are the following:
 \subsubsection{References to Units}
 
 A field that defines the units for a mathematical entity (\eg the
-field \token{units} on \Parameter) can refer to a named unit
-chosen from among the following:
+field \token{units} on \Parameter) can refer to a
+\changed{defined unit whose identifier} is chosen from among the
+following:
 \begin{itemize}
-
-\item A new unit defined in a \UnitDefinition as described at the
-  start of Section~\ref{sec:unitdefinitions};
+  
+\item A new unit identifier defined by a \UnitDefinition as
+  described at the start of Section~\ref{sec:unitdefinitions};
 
 \item The predefined units from Table~\vref{tab:unitkind}; and
-
+  
 \item The predefined units defined in
   Section~\ref{sec:built-in-units} and listed in
   Table~\ref{tab:builtin}.  (These are \val{substance},
@@ -3688,12 +3701,15 @@ did not explicitly specify different units would be changed to
 \end{example}
 \end{blockChanged}
 
-Software developers are asked to pay special attention to the units used in
-an SBML model.  Different users and developers sometimes make different
-assumptions about units, and these assumptions may not correspond to what
-is defined in SBML.  Sections~\ref{sec:ci-token}, \ref{sec:species-units} and
-\ref{subsec:kinetic-law} have particularly important notes about the usage
-of units in SBML.
+Software developers are asked to pay special attention to the
+units used in an SBML model.  Different users and developers
+sometimes make different assumptions about units, and these
+assumptions may not correspond to what is defined in SBML.  The
+numerical values in a model become meaningless if the
+corresponding units are not those being assumed.
+Sections~\ref{sec:ci-token}, \ref{sec:species-units} and
+\ref{subsec:kinetic-law} have particularly important notes about
+the usage of units in SBML.
 
 \end{blockChanged}
 
@@ -3875,7 +3891,7 @@ Figure~\vref{fig:compartment}.
     \markChanged{compartmentType: SId \{ use="optional" \}}                                           \\
     spatialDimensions: int \{ maxInclusive="3" minInclusive="0" use="optional" default="3" \} \\
     size: double \{ use="optional" \}                                                             \\
-    units: SId \{ use="optional" \}                                                               \\
+    units: \markChanged{UnitSId} \{ use="optional" \}                                                               \\
     outside: SId \{ use="optional" \}                                                             \\
     constant: boolean \{ use="optional" default="true" \}                                         \\
   \end{classbox}
@@ -4163,9 +4179,9 @@ abbreviated SBML example of a model definition:
 \end{example}
 
 The following is an example of using \token{outside} to model a
-cell membrane.  To express that a compartment named B has a
-membrane that is modeled as another compartment M, which in turn
-is located within another compartment A, one would write:
+cell membrane.  To express that a compartment \changed{with identifier \val{B}} has a
+membrane that is modeled as another compartment \changed{\val{M}}, which in turn
+is located within another compartment \changed{\val{A}}, one would write:
 
 \begin{example}
 <model>
@@ -4198,12 +4214,12 @@ is shown in Figure~\vref{fig:species}.
   \begin{classbox}{Species}
     id: SId                                                             \\
     name: string \{ use="optional" \}                                   \\
-    \markChanged{speciesType: SId \{ use="optional" \}}                     \\
+    \markChanged{speciesType: SId \{ use="optional" \}}                 \\
     compartment: SId                                                    \\
     initialAmount: double \{ use="optional" \}                          \\
     inintialConcentration: double \{ use="optional" \}                  \\
-    substanceUnits: SId \{ use="optional" \}                            \\
-    spatialSizeUnits: SId \{ use="optional" \}                          \\
+    substanceUnits: \markChanged{UnitSId} \{ use="optional" \}          \\
+    spatialSizeUnits: \markChanged{UnitSId} \{ use="optional" \}        \\
     hasOnlySubstanceUnits: boolean \{ use="optional" default="false" \} \\
     boundaryCondition: boolean \{ use="optional" default="false" \}     \\
     charge: int \{ use="optional" \} \markChanged{\emph{deprecated}}    \\
@@ -4291,9 +4307,9 @@ compartment if that model contains any species.
 The optional fields \token{initialAmount} and
 \token{initialConcentration}, both having a data type of
 \primtype{double}, are used to set the initial quantity of the
-species in the named compartment.  These fields are mutually
-exclusive; \ie \emph{only one} can have a value on any given
-instance of a \Species structure.
+species in the \changed{compartment where the species is located}.
+These fields are mutually exclusive; \ie \emph{only one} can have
+a value on any given instance of a \Species structure.
 
 \begin{blockChanged}
 Missing \token{initialAmount} and \token{initialConcentration}
@@ -4548,9 +4564,9 @@ are called ``parameters'' instead of variables in SBML.  The definition of
     id: SId                                               \\
     name: string \{ use="optional" \}                     \\
     value: double \{ use="optional" \}                    \\
-    units: SId \{ use="optional" \}                       \\
+    units: \markChanged{UnitSId} \{ use="optional" \}     \\
     constant: boolean \{ use="optional" default="true" \} \\
-    \markChanged{sboTerm: SBOTerm \{ use="optional" \}}       \\
+    \markChanged{sboTerm: SBOTerm \{ use="optional" \}}   \\
   \end{classbox}
   \caption{The definition of \Parameter. Following UML notation, additional
     fields
@@ -4616,20 +4632,22 @@ and values for simulation time $t \leq 0$.
 
 The units associated with the value of the parameter are specified
 by the field \token{units}.  \changed{These units are relevant
-when the parameter identifier appears in: (a) \RateRule,
-\AssignmentRule and \InitialAssignment structures
-setting the value of the parameter; and (b) MathML expressions.} A
-\RateRule structure that may determine the value of the
-parameter has units \quantity{parameter
-  units}/\quantity{time}, where \quantity{parameter units} are the units
-assigned to the parameter and \quantity{time} is the built-in \token{time}
-units.  The value assigned to the parameter's \token{units} field must
-be chosen from one of the following possibilities: one of the base unit
-names from Table~\vref{tab:unitkind}; one of the built-in unit names
-appearing in first column of Table~\vref{tab:builtin}; or the name of a
-new unit defined in the list of unit definitions in the enclosing
-\Model structure.  There are no constraints on which units can be
-chosen from these sets.  There are no default units for parameters.
+  when the parameter identifier appears in: (a) \RateRule,
+  \AssignmentRule and \InitialAssignment structures setting the
+  value of the parameter; and (b) MathML expressions.} A \RateRule
+structure that may determine the value of the parameter has units
+\quantity{parameter units}/\quantity{time}, where
+\quantity{parameter units} are the units assigned to the parameter
+\changed{using the \token{units} field} and \quantity{time} is the
+built-in \token{time} units.  The value assigned to the
+parameter's \token{units} field must be chosen from one of the
+following possibilities: one of the base unit identifiers from
+Table~\vref{tab:unitkind}; one of the built-in unit identifiers
+appearing in first column of Table~\vref{tab:builtin}; or the \changed{identifier}
+of a new unit defined in the list of unit definitions in the
+enclosing \Model structure.  There are no constraints on which
+units can be chosen from these sets.  There are no default units
+for parameters.
 
 
 \subsubsection{The \token{constant} Field}
@@ -5954,7 +5972,7 @@ and/or products are made using \SpeciesReference data objects.
 
 The mandatory field \token{species}, inherited from
 \SimpleSpeciesReference (Section~\ref{subsec:simplespeciesreference}),
-must refer to the name of an existing species defined in the enclosing
+must refer to the \changed{identifier} of an existing species defined in the enclosing
 \Model structure.
 \end{blockChanged}
 
@@ -5989,8 +6007,8 @@ are those listed in the \token{reactant}, \token{product} and
 structure.}
 
 The following is a simple example of a species reference for species
-``X0'', with stoichiometry 2, in a list of reactants within a reaction
-named ``J1'':
+\val{X0}, with stoichiometry 2, in a list of reactants within a reaction
+wit identifier \val{J1}:
 
 \begin{example}
 <model>
@@ -6132,6 +6150,7 @@ instance of a \Reaction component is optional; however, in general
 there is no useful default that can be substituted in place of a missing
 rate law definition in a reaction.
 
+
 \paragraph{The \token{math} field}
 
 As shown in Figure~\vref{fig:reaction}, the \KineticLaw structure has a
@@ -6165,6 +6184,7 @@ those listed in the \token{species} fields  of the
 \token{reactant}, \token{product} and \token{modifier} structures
 contained in the \Reaction structure.
 
+
 \paragraph{The \token{substanceUnits} and \token{timeUnits}
 fields}
 
@@ -6174,10 +6194,10 @@ As previously stated, the overall rate expression in the
 \token{substanceUnits} and \token{timeUnits} determine the units
 of substance and time for the reaction, respectively. The values
 of these fields must be chosen from one of the following
-possibilities: one of the base unit names from
-Table~\vref{tab:unitkind}; one of the built-in unit names
+possibilities: one of the base unit \changed{identifiers} from
+Table~\vref{tab:unitkind}; one of the built-in unit \changed{identifiers}
 appearing in the first column of Table~\vref{tab:builtin}); or the
-name of a new unit defined in the list of unit definitions in the
+\changed{identifier} of a new unit defined in the list of unit definitions in the
 enclosing \Model structure.  \changed{In the case of
 \token{substanceUnits}, the value chosen must be a scaled and/or
 multiplied variant of \token{dimensionless}, \token{moles}, or
@@ -6188,6 +6208,7 @@ must be a scaled and/or multiplied variant of \token{seconds} or
 instance, the units are taken from the defaults defined by the
 built-in ``\token{substance}'' and ``\token{time}'' of
 Table~\vref{tab:builtin}.
+
 
 \paragraph{The \token{Parameter} field}
 
@@ -6215,6 +6236,7 @@ can be changed, and therefore, such parameters always have a
 constant value.
 \end{blockChanged}
 
+
 \paragraph{The \token{sboTerm} field}
 
 \begin{blockChanged}
@@ -6228,10 +6250,11 @@ with the SBO term. The SBO term chosen should be the most precise
 (narrow) term that defines the type of kinetic law encoded by the
 structure.
 
+
 \paragraph{Example}
 
 The following is an example of a \Reaction structure that
-defines a reaction named $J_1$, in which $X_0 \rightarrow S_1$ at
+defines a reaction $J_1$, in which $X_0 \rightarrow S_1$ at
 a rate given by $k X_0 S_2$, in conventional units, where $S_2$ is
 a catalyst and $k$ is a parameter.  It demonstrates the use of
 species references and the \KineticLaw structure.  The
@@ -6363,8 +6386,8 @@ given below.
     name: string \{ use="optional" \}                                           \\
     trigger: (math : Math \{ namespace="http://www.w3.org/1998/Math/MathML" \}) \\
     delay: (math : Math \{ namespace="http://www.w3.org/1998/Math/MathML" \}) \{ minOccurs="0" maxoccurs="1" \} \\
-    timeUnits: SId \{ use="optional" \}                                         \\
-    \markChanged{sboTerm: SBOTerm \{ use="optional" \}}                             \\
+    timeUnits: \markChanged{UnitSId} \{ use="optional" \}                       \\
+    \markChanged{sboTerm: SBOTerm \{ use="optional" \}}                         \\
     eventAssignment: EventAssignment[1..*]                                      \\
   \end{classbox}
   \vspace*{2ex}
@@ -6449,14 +6472,13 @@ field are those given on the \token{timeUnits} field.
 \label{sec:event-timeunits}
 
 The optional field \token{timeUnits} determines the units of time
-that apply to the \token{delay} field.
-The value of the \token{timeUnits} field must be either
-``\token{second}'' or ``\token{dimensionless}'' from Table~\vref{tab:unitkind}, ``\token{time}'' from
-Table~\vref{tab:builtin},
-or a new unit defined by a unit definition in the enclosing model
-which must be a variant of ``\token{second}'' units.
-The default value of the \token{timeUnits} field is
-``\token{time}''.
+that apply to the \token{delay} field.  The value of the
+\token{timeUnits} field must be either ``\token{second}'' or
+``\token{dimensionless}'' from Table~\vref{tab:unitkind},
+``\token{time}'' from Table~\vref{tab:builtin}, or a new unit
+defined by a unit definition in the enclosing model which must be
+a variant of ``\token{second}'' units.  The default value of the
+\token{timeUnits} field is ``\token{time}''.
 
 
 \begin{blockChanged}
@@ -9094,9 +9116,10 @@ XPPAUT.
 
 \item Unlike in SBML Level~1, unit identifiers in Level~2 are in a separate
   namespace from the namespace used for models, functions, species,
-  compartments, reactions and parameters.  Also, the unit names
+  compartments, reactions and parameters.  Also, the unit \changed{identifiers
   ``\token{meter}'' and ``\token{liter}'' are not defined in Level~2 because
-  the SBML user community deemed them unnecessary.  Finally, \Unit
+  the SBML user community deemed these alternative spellings of
+  ``\token{metre}'' and ``\token{litre}''  unnecessary.}  Finally, \Unit
   structures now have the additional fields \token{multiplier} and
   \token{offset} to enable the definition of non-SI units.
   (Section~\ref{sec:unitdefinitions}.)
@@ -9201,6 +9224,11 @@ The features introduced or changed in Version 2 are:
   resources and record model version history is introduced. Whilst
   CellML metadata can be included in SBML the specification does
   not make any specific mention of CellML metadata.
+
+\item \emph{New type \primtype{UnitSId}}.  In \twotwo, there is a
+      new data type \primtype{UnitSId} that serves as the data
+      type for identifiers of units and the fields that refer to
+      units.  (Section~\ref{sec:unitsid}.)
 
 \item \emph{Built-in units can be dimensionless}.  In \twotwo, the
   built-in units (\eg \token{substance}, \token{volume} and

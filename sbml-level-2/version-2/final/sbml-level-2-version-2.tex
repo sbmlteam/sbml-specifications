@@ -1041,43 +1041,30 @@ followed by an integer or an error results.  The following are
 examples of legal literal \primtype{double} values:
 \begin{center}
 \begin{tabular}{llllllllll}
-\token{-1E4} & \token{234.234e3} & \token{6.02E-23} & \token{2} &
-\token{0} & \token{-0} & \token{INF} & \token{-INF} & \token{NaN}
+\token{-1E4}, & \token{234.234e3}, & \token{6.02E-23}, & \token{2}, &
+\token{0}, & \token{-0}, & \token{INF}, & \token{-INF}, & \token{NaN}
 \end{tabular}
 \end{center}
 
-As will become clear in the rest of this document, SBML uses the
-\mathmltwo standard for expressing mathematical
-formulas~\citep{w3c:2000b}.  
-
-
-MathML happens to define numerical
-quantities differently
-
-
-In order to avoid an inconsistency between MathML content within
-SBML elements, and the rest of SBML, the \sbmltwotwo specification
-imposes a restriction on the value space of numbers appearing in
-MathML.
-
-The restriction on floating point fields elsewhere in SBML
-differs from the restrictions on floating point numbers defined in
-the \mathmltwo namespace.
-
-Strictly according to the \mathmltwo standard, the values of
-content \token{cn} elements do not have to conform to any specific
-floating point or integer representations designed for CPU
-implementation.  For example the value of a \token{cn} element may
-exceed the maximum value that can be stored in a IEEE 64 bit
-floating point number (IEEE 754).  Left as-is, this would be
-inconsistent with the definition of numerical quantities allowed
-elsewhere in SBML (see Sections~\ref{sec:integer}
-and~\ref{sec:double}).  For this reason, \emph{SBML stipulates
-  that the representation of numbers in MathML expressions obey
-  the same restrictions as defined for types \primtype{int} and
-  \primtype{double}}.  We elaborate on this issue further in
-Section~\ref{sec:cn-token} and discuss additional important
-considerations.
+As described in Section~\ref{sec:formulas}, SBML uses a subset of
+the \mathmltwo standard~\citep{w3c:2000b} for expressing
+mathematical formulas in XML.  This is done by stipulating that
+the MathML language be used whenever a mathematical formula must
+be written into an SBML model.  Doing this, however, requires
+facing two problems: first, the syntax of numbers in scientific
+notation (``e-notation'') is different in MathML from that just
+described for \token{double}, and second, the value space of
+integers and floating-point numbers in MathML is not defined in
+the same way as in \xmlschemaone.  We elaborate on these issues in
+Section~\ref{sec:cn-token}; here we summarize the solution taken
+in SBML.  First, within MathML, the mantissa and exponent of
+numbers in ``e-notation'' format must be separated by one
+\texttt{<sep/>} element.  This leads to numbers of the form
+\texttt{<cn type="e-notation"> 2 <sep/> -5 </cn>}.  Second, SBML
+stipulates that the representation of numbers in MathML
+expressions obey the same restrictions on values as defined for
+types \primtype{double} and \primtype{int}
+(Section~\ref{sec:integer} above).
 
 
 \subsubsection{Type \primtype{ID}}
@@ -1424,7 +1411,8 @@ declaration nor a DOCTYPE declaration.  That is, \token{notes}
 must \emph{not} contain
   \begin{example}
 <?xml version="1.0" encoding="UTF-8"?>  \end{example}
-  nor (where the following is only one specific example)
+  nor (where the following is only one specific example of a
+  DOCTYPE declaration)
   \begin{example}
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">  \end{example}
@@ -1481,91 +1469,13 @@ that the content of an SBML \token{notes} element can be only be a
 complete \token{html} element, a \token{body} element, or whatever
 is permitted inside a \token{body} element.  In practice, this
 does not limit in any meaningful way what can be placed inside a
-\token{notes} element (\eg if an application or modeler wants to
-put a complete XHTML page, including a \token{head} element, it
-can be done by putting in everything starting with the
-\token{html} container).  However, it does make it somewhat
-simpler to write applications that can read and write the content.
-(See the following subsection.)
-
-
-\paragraph{Processing and Validating \token{notes} Content}
-
-If \token{notes} can contain any of a number of possible XHTML
-elements, how should an application process or validate the
-contents?  Let us take the case of an SBML-reading application that
-needs to take the contents and pass it to an XHTML display and/or
-editing function obtained from a third-party API library.  The
-content of the \token{notes} may not be a complete XHTML document,
-so the application will have to perform some processing before
-handing it to the XHTML editor or validator.  How should this be
-done?
-
-Based on the three forms of \token{notes} content described in the
-previous subsection, there are only three cases possible.  Here we
-give an example approach for handling them, although the actual
-implementation details will differ depending on various factors
-such as the requirements of the software libraries being used.
-This example approach would be performed for each \token{notes} to
-be viewed or edited:
-\begin{description}
-  
-\item \emph{Step 1}. If the XHTML viewing/editing function
-  requires a fully compliant XML document, the SBML application
-  could create a temporary data object containing an appropriate
-  XML declaration and a DOCTYPE declaration; otherwise, the XML
-  data object can be initially blank.
-  
-\item \emph{Step 2}. The application should look at the first
-  element inside the \token{notes} (or rather, the first element
-  that is not an XML comment), and take action based on the
-  following three possibilities:
-  \begin{itemize}
-    
-  \item If the first element inside \token{notes} begins with
-    \token{<html xhtml="http://www.w3.org/1999/xhtml">}, the
-    application could assume that the content is a complete XHTML
-    document and insert this into the temporary data object.
-    
-  \item Else, if the first element is \token{<body>}, the
-    application should insert the following into the temporary
-    data object, 
-
-    \begin{example}
-<html xhtml="http://www.w3.org/1999/xhtml">
-    <head><title></title></head>\end{example}
-    then insert the content of the \token{notes}, and finally
-    insert a closing \token{</html>}.
-    
-  \item Else, if the \token{notes} content begins with neither of
-    the above elements, the application should insert the
-    following into the temporary data object,
-
-    \begin{example}
-<html xhtml="http://www.w3.org/1999/xhtml">
-    <head><title></title></head>
-    <body>\end{example}
-    then insert the content of the \token{notes}, and finally
-    insert \token{</body></html>} to close the XHTML document.
-  \end{itemize}
-
-\end{description}
-The result of the above would be a temporary XML data object that
-the application could then pass to the XHTML viewing/editing API
-function.
-
-% [2006-09-05 MH] was thinking of adding the following too, but
-% this seems like a too-short description, and I don't want to
-% get into all the possible issues in making sure the inversion
-% is done correctly.  Still, something to think about for the
-% future:
-%
-%Since the application performing the processing above could
-%remember which of the three cases it encountered for a given
-%\token{notes} content, upon receiving the results back from the
-%XHTML viewing/editing function, it could invert the process and
-%insert the results back into the \token{notes} object in the SBML
-%model.
+\token{notes} element; for example, if an application or modeler
+wants to put a complete XHTML page, including a \token{head}
+element, it can be done by putting in everything starting with the
+\token{html} container.  However, the restrictions above do make
+it somewhat simpler to write software that can read and write the
+\token{notes} content.  Appendix~\ref{apdx:processing-notes}
+describes one possible approach to doing just that.
 
 \end{blockChanged}
 
@@ -2234,7 +2144,7 @@ standards.  It is also not possible to use XML Schema to define a
 data type for SBML attribute values permitting the use of the
 \token{<sep/>} notation, because XML attribute values cannot
 contain XML elements---that is, \token{<sep/>} cannot appear in an
-XML attribute value.)
+XML attribute value.
 
 \end{blockChanged}
 
@@ -2441,7 +2351,7 @@ the system, $t_0 = 0$.  This corresponds to the most common
 scenario.  Initial conditions in SBML take effect at time $t = 0$.
 There is no mechanism in SBML for setting the initial time to a
 value other than 0.  To refer to a different time in a model, one
-approach is to define a \Parameter for the new time variable and
+approach is to define a \Parameter for a new time variable and
 use an \AssignmentRule in which the assignment expression
 subtracts a value from the \token{csymbol} \emph{time}.  For
 example, if the desired offset is 2 time units, the MathML
@@ -11198,6 +11108,91 @@ freedom that will be determined by solving an algebraic system
 will be $r - r_1$ degrees of freedom that will be determined by
 ordinary differential equations (the equation for $\Bbold\,
 d\xbold/dt$).
+
+
+%=============================================================================
+\section{Processing and Validating \token{notes} Content}
+\label{apdx:processing-notes}
+%=============================================================================
+
+In Section~\ref{sec:notes}, we discussed the \token{notes} field
+defined on \SBase and how it can contain a number of possible
+XHTML elements.  In this appendix, we describe a general procedure
+for how application software can process such content.  We
+concentrate on the common case of an SBML-reading application that
+needs to take the contents and pass it to an XHTML display and/or
+editing function obtained from a third-party API library.  The
+content of the \token{notes} may not be a complete XHTML document,
+so the application will have to perform some processing before
+handing it to the XHTML editor or validator.  How should this be
+done?
+
+Based on the three forms of \token{notes} content described in
+Section~ref{sec:notes}, there are only three cases possible.  Here
+we give an example approach for handling them, although the actual
+implementation details will differ depending on various factors
+such as the requirements of the software libraries being used.
+This example approach would be performed for each \token{notes} to
+be viewed or edited:
+\begin{description}
+  
+\item \emph{Step 1}. If the XHTML viewing/editing function
+  requires a fully compliant XML document, the SBML application
+  could create a temporary data object containing an appropriate
+  XML declaration and a DOCTYPE declaration; otherwise, the XML
+  data object can be initially blank.
+  
+\item \emph{Step 2}. The application should look at the first
+  element inside the \token{notes} (or rather, the first element
+  that is not an XML comment), and take action based on the
+  following three possibilities:
+  \begin{itemize}
+    
+  \item If the first element inside \token{notes} begins with
+    \token{<html xhtml="http://www.w3.org/1999/xhtml">}, the
+    application could assume that the content is a complete XHTML
+    document and insert this into the temporary data object.
+    
+  \item Else, if the first element is \token{<body>}, the
+    application should insert the following into the temporary
+    data object, 
+
+    \begin{example}
+<html xhtml="http://www.w3.org/1999/xhtml">
+    <head><title></title></head>\end{example}
+    then insert the content of the \token{notes}, and finally
+    insert a closing \token{</html>}.
+    
+  \item Else, if the \token{notes} content begins with neither of
+    the above elements, the application should insert the
+    following into the temporary data object,
+
+    \begin{example}
+<html xhtml="http://www.w3.org/1999/xhtml">
+    <head><title></title></head>
+    <body>\end{example}
+    then insert the content of the \token{notes}, and finally
+    insert \token{</body></html>} to close the XHTML document.
+  \end{itemize}
+
+\end{description}
+The result of the above would be a temporary XML data object that
+the application could then pass to the XHTML viewing/editing API
+function.
+
+% [2006-09-05 MH] was thinking of adding the following too, but
+% this seems like a too-short description, and I don't want to
+% get into all the possible issues in making sure the inversion
+% is done correctly.  Still, something to think about for the
+% future:
+%
+%Since the application performing the processing above could
+%remember which of the three cases it encountered for a given
+%\token{notes} content, upon receiving the results back from the
+%XHTML viewing/editing function, it could invert the process and
+%insert the results back into the \token{notes} object in the SBML
+%model.
+
 
 \end{blockChanged}
 \clearpage

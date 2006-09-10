@@ -4927,65 +4927,69 @@ the initial assignment used instead.
 \label{sec:rules}
 %-----------------------------------------------------------------------------
 
-\emph{Rules} provide a way to create constraints on variables that
-can be used to determine the dynamical behavior of those
-variables. \emph{Rules} enable the encoding of constraints that
-cannot be expressed using reactions (Section~\ref{sec:reactions})
-nor by the assignment of an initial value to a component in a
-model. There are two orthogonal dimensions by which rules can be
-described. First, there are three different possible functional
-forms, corresponding to the following three general cases (where
-$x$ is a variable, $f$ is some arbitrary function returning a
-numeric result, $V$ is a vector of variables that does not include
-$x$, and $W$ is a vector of variables that may include $x$):
-\vspace*{1ex}
-\begin{center}
-\begin{tabular}{rll}
-\emph{Algebraic}    & left-hand side is zero:             & $0 = f(W)$\\
-\emph{Assignment}  & left-hand side is a scalar:         & $x = f(V)$\\
-\emph{Rate}         & left-hand side is a rate-of-change: & $dx/dt = f(W)$\\
-\end{tabular}
-\end{center}
+\begin{blockChanged}
+In SBML, \emph{Rules} provide a way to create additional
+constraints on the variables of a model to determine the dynamical
+behavior of those variables.  \emph{Rules} enable the encoding of
+constraints that cannot be expressed using reactions alone
+(Section~\ref{sec:reactions}) nor by the assignment of an initial
+value to a variable in a model.
 
-The second dimension concerns the role of variable $x$ in the
-equations above: $x$ can be the identifier of a compartment (to
-set its size), a species (to set its concentration \changed{or
-  amount, depending on the units of the species}), or a parameter
-(to set its value).
+SBML separates rules into three subclasses for the benefit of
+model analysis software.  The three subclasses are based on the
+following three different possible functional forms (where $x$ is
+a variable, $f$ is some arbitrary function returning a numeric
+result, $\textbf{V}$ is a vector of variables that does not
+include $x$, and $\textbf{W}$ is a vector of variables that may
+include $x$):
+\begin{center}
+  \begin{tabular}{rll}
+    \emph{Algebraic}  & left-hand side is zero:             & $0 = f(\textbf{W})$\\
+    \emph{Assignment} & left-hand side is a scalar:         & $x = f(\textbf{V})$\\
+    \emph{Rate}       & left-hand side is a rate-of-change: & $dx/dt = f(\textbf{W})$\\
+  \end{tabular}
+\end{center}
+\end{blockChanged}
 
 In their general form given above, there is little to distinguish
-between \emph{assignment} and \emph{algebraic} rules
-\changed{however there are restrictions on assignment rules that
-are described in Section~\ref{sec:ruleconstraints} (the set of
-assignment rules cannot contain algebraic loops)}. They are
+between \emph{assignment} and \emph{algebraic} rules.  They are
 treated as separate cases for the following reasons:
 \begin{itemize}
+  
+\item \emph{Assignment} rules can simply be evaluated to calculate
+  intermediate values for use in numerical methods;
+  
+\item \changed{SBML needs to place restrictions on assignment
+  rules, for example the restriction that assignment rules
+  cannot contain algebraic loops (discussed further in
+  Section~\ref{sec:ruleconstraints});}
 
-\item \emph{Assignment} rules can simply be evaluated to calculate intermediate
-  values for use in numerical methods;
+\item Some simulators do not contain numerical solvers capable of
+  solving unconstrained algebraic equations\changed{, and
+  providing more direct forms such as assignment rules may enable
+  those simulators to process models they could not process if
+  the same assignments were put in the form of general algebraic
+  equations;}
+  
+\item Those simulators that \emph{can} solve these algebraic
+  equations make a distinction between the different categories
+  listed above; and
+  
+\item Some specialized numerical analyses of models may only be
+  applicable to models that do not contain \emph{algebraic} rules.
 
-\item Some simulators do not contain numerical solvers capable of solving
-  unconstrained \emph{algebraic} equations;
-
-\item Those simulators that \emph{can} solve these \emph{algebraic}
-  equations make a distinction between the different categories listed
-  above; and
-
-\item Some specialized numerical analyses of models may only be applicable to
-  models that do not contain \emph{algebraic} rules.
 \end{itemize}
 
 The approach taken to covering these cases in SBML is to define an
-abstract \Rule structure containing only one field,
-\token{math}, to hold the right-hand side expression, then to
-derive subtypes of \Rule that add fields to distinguish the
-cases of algebraic, assignment and rate rules.
-Figure~\vref{fig:rules} gives the definitions of \Rule and
-the subtypes derived from it.  The figure shows there are three
-subtypes, \AlgebraicRule, \AssignmentRule and
-\RateRule derived directly from \Rule. These
-correspond to the cases \emph{Algebraic}, \emph{Assignment}, and
-\emph{Rate} described above respectively.
+abstract \Rule structure containing only one field, \token{math},
+to hold the right-hand side expression, then to derive subtypes of
+\Rule that add fields to distinguish the cases of algebraic,
+assignment and rate rules.  Figure~\vref{fig:rules} gives the
+definitions of \Rule and the subtypes derived from it.  The figure
+shows there are three subtypes, \AlgebraicRule, \AssignmentRule
+and \RateRule derived directly from \Rule. These correspond to the
+cases \emph{Algebraic}, \emph{Assignment}, and \emph{Rate}
+described above respectively.
 
 \begin{figure}[htb]
   \centering
@@ -4998,15 +5002,27 @@ correspond to the cases \emph{Algebraic}, \emph{Assignment}, and
 
 
 \begin{blockChanged}
+\subsubsection{The \token{math} Field}
+\label{sec:rule-math}
+
+A \Rule structure has a required field called \token{math},
+containing a MathML expression defining the mathematical formula
+of the rule.  This MathML formula must return a numerical value.
+The formula can be an arbitrary expression referencing the
+variables and other entities in an SBML model.  The interpretation
+of \token{math} and the units of the formula are described in more
+detail in Sections~\ref{sec:algebraicrule},
+\ref{sec:assignmentrule} and~\ref{sec:raterule} below.
+
+
 \subsubsection{The \token{sboTerm} Field}
+\label{sec:rule-sboterm}
 
 The \Rule structure has an optional \token{sboTerm} field of type
 \primtype{SBOTerm} (see Sections~\ref{sec:sboterm-type}
-and~\ref{sec:sboTerm}).  This means that the object classes
-derived from \Rule, namely \AlgebraicRule, \AssignmentRule, and
-\RateRule, all have \token{sboTerm} fields.  When a value is given
-to this field, it must be a valid SBO identifier referring to a
-mathematical expression defined in SBO (\ie terms derived from
+and~\ref{sec:sboTerm}).  When a value is given to this field, it
+must be a valid SBO identifier referring to a mathematical
+expression defined in SBO (\ie terms derived from
 \sbomathformula).  The \AlgebraicRule, \AssignmentRule, or
 \RateRule object should have a ``is a'' relationship with the SBO
 term, and the term should be the most precise (narrow) term that
@@ -5025,203 +5041,240 @@ benefit of SBO labels.
 
 The rule type \AlgebraicRule is used to express equations that are
 neither assignments of model variables nor rates of change.
-\AlgebraicRule does not add any fields to the basic \Rule;
-its role is simply to distinguish this case from the other cases.  An
- example of the use of \AlgebraicRule structures is given in
+\AlgebraicRule does not add any fields to the basic \Rule; its
+role is simply to distinguish this case from the other cases.  An
+example of the use of \AlgebraicRule structures is given in
 Section~\ref{sec:algeraiceg}.
+
+\begin{blockChanged}
+In the context of a simulation, algebraic rules are in effect at
+all times, $t \geq 0$.  For purposes of evaluating expressions
+that involve the \emph{delay} \token{csymbol}
+(Section~\ref{sec:csymbol-token}), algebraic rules are considered
+to apply also at $t \leq 0$.  Section~\ref{sec:before-t0} provides
+additional information about the semantics of assignments, rules,
+and entity values for simulation time $t \leq 0$.
+
+The ability to define arbitrary algebraic expressions in an SBML
+model introduces the possibility that a model is mathematically
+overdetermined by the overall system of equations constructed from
+its rules and reactions.  An SBML model must not be
+overdetermined; this is discussed in
+Section~\ref{sec:ruleconstraints} below.  
+\end{blockChanged}
 
 
 \subsubsection{\class{AssignmentRule}}
 \label{sec:assignmentrule}
 
-The rule type \AssignmentRule is used to express equations
-that set the values of variables.  The left-hand side (the
+\begin{blockChanged}
+The rule type \AssignmentRule is used to express equations that
+set the values of variables.  The left-hand side (the
 \token{variable} field) of an assignment rule can refer to the
 identifier of a species, compartment, or parameter \changed{(but
-not a reaction)}.  Two or more \RateRule or
-\AssignmentRule structures cannot have the same left-hand
-side or \token{variable} field value in an SBML model definition.
-In all cases, as would be expected, the units of the formula
-representing the right hand side, the \token{math} field, are
-identical to the units associated with the left hand side, the
-\token{variable} field, when that variable appears in other
-formulas.
-
-The effects of an \AssignmentRule structure are in general terms
-the same, but differ in the precise details depending on the type
-of variable being set:
+  not a reaction)}.  The entity identified must not have its
+\token{constant} field set to \val{true}.  The effects of an
+\AssignmentRule are in general terms the same, but differ in the
+precise details depending on the type of variable being set:
+\end{blockChanged}
 \begin{itemize}
-
+  
 \item \emph{In the case of a species}, an \AssignmentRule sets the
   referenced species' quantity (\quantity{concentration} or
-  \quantity{amount of substance})
-  to the value determined by the formula
-  in \token{math}.  The units of the formula are the \emph{units of the species} as
-  defined in Section~\ref{sec:species-units}.
-
-  \emph{Restrictions}: In a given SBML Level~2 model, there cannot be both a
+  \quantity{amount of substance}) to the value determined by the
+  formula in \token{math}.  The units of the formula in
+  \token{math} \changed{must be the same as the \emph{units of
+  the species} (Section~\ref{sec:species-units}) for the species
+  identified by the \token{variable} field of the \AssignmentRule}.
+  
+  \emph{Restrictions}: \changed{There must not be} both an
   \AssignmentRule \token{variable} field and a \SpeciesReference
-  \token{species} field having the same
-  value. (See Section~\ref{sec:reactions} for the definition of
-  \SpeciesReference.)  This means an assignment rule cannot be
-  defined for a species that is created or destroyed in a reaction.  The
-  only exception is when the given species is a boundary condition; i.e.,
-  on the \Species structure the
-  \token{boundaryCondition} field is set to \val{true}.
+  \token{species} field having the same value\changed{, unless
+  that species has its \token{boundaryCondition} field is set to
+  \val{true}}.  \changed{In other words, } an assignment rule
+  cannot be defined for a species that is created or destroyed
+  in a reaction \changed{unless that species is defined as a boundary
+  condition in the model}.
 
 \item \emph{In the case of a compartment}, an \AssignmentRule sets
-  the referenced compartment's size to the size determined by the formula
-  in \token{math}.  The overall units of the formula are the units
-  specified for the size of the compartment identified by the value of the
-  \AssignmentRule's \token{variable} field.  (See
-  Section~\ref{sec:compartment-units} for an explanation of how the units of the
-  compartment's size are determined.)
-
-\item \emph{In the case of a parameter}, an \AssignmentRule sets the
-  referenced parameter's value to that determined by the formula in
-  \token{math}.  The overall units of the formula are the units
-  defined for the parameter identified by the value of the
-  \AssignmentRule's \token{variable} field.  (See
-  Section~\ref{sec:parameter-units} for an explanation of how the units of the
-  parameter are determined.)
+  the referenced compartment's size to the \changed{value}
+  determined by the formula in \token{math}.  The overall units of
+  the formula \changed{in \token{math} must be the same as the
+  units of the size of the compartment
+  (Section~\ref{sec:compartment-units})}.
+  
+\item \emph{In the case of a parameter}, an \AssignmentRule sets
+  the referenced parameter's value to that determined by the
+  formula in \token{math}.  The overall units of the formula
+  \changed{in \token{math} must be the same as the units defined
+  for the parameter (Section~\ref{sec:parameter-units})}.
 
 \end{itemize}
 
 \begin{blockChanged}
 In the context of a simulation, assignment rules are in effect at
-all times.  For purposes of evaluating expressions that involve
-the \emph{delay} \token{csymbol}
+all times, $t \geq 0$.  For purposes of evaluating expressions
+that involve the \emph{delay} \token{csymbol}
 (Section~\ref{sec:csymbol-token}), assignment rules are considered
-to also apply at $t \leq 0$.  Section~\ref{sec:before-t0} provides
+to apply also at $t \leq 0$.  Section~\ref{sec:before-t0} provides
 additional information about the semantics of assignments, rules,
 and entity values for simulation time $t \leq 0$.
-\end{blockChanged}
 
+A model must not contain more than one \AssignmentRule or
+\RateRule object having the same value of \token{variable}; in
+other words, in the set of all assignment rules and rate rules in
+an SBML model, each variable appearing in the left-hand sides can
+only appear once.  This simply follows from the fact that an
+indeterminate system would result if a model contained more than
+one assignment rule for the same variable or both an assignment
+rule and a rate rule for the same variable.
 
-\subsubsection{\class{RateRule}}
-\label{sec:raterule}
-
-The rule type \RateRule is used to express equations that
-determine the rates of change of variables.  The left-hand side
-(the \token{variable} of a rate rule) can refer to the identifier
-of a species, compartment, or parameter \changed{(but not a
-reaction)}. Two or more \RateRule or \AssignmentRule
-structures cannot have the same left-hand side or
-\token{variable} field value in an SBML model definition. In all
-cases, as would be expected, the units of the formula representing
-the right hand side, in the \token{math} field, are of the form
-\quantity{x}/\quantity{time} where \quantity{x} are the same units
-as associated with the symbol in the \token{variable} field, when
-that variable appears in other formulas.  \quantity{time} is a
-built-in unit (see Section~\ref{sec:unitdefinitions}). The effects
-of a \RateRule are in general terms the same, but differ in
-the precise details depending on which variable is being set:
-\begin{itemize}
-
-\item \emph{In the case of a species}, a \RateRule sets the rate of
-  change of the species' quantity to the value determined by the
-  formula in \token{math}.  The overall units of the formula must be
-  \quantity{species quantity}/\quantity{time}, where the \quantity{time} units
-  are the built-in units of time described in
-  Section~\ref{sec:unitdefinitions} and the \quantity{species quantity} units
-  are the \emph{units of the species} as
-  defined in Section~\ref{sec:species-units}.
-
-  \emph{Restrictions}: In a given model, there cannot be both a
-  \SpeciesReference \token{species} field and a
-  \RateRule \token{variable} field
-  having the same
-  value. (See Section~\ref{sec:reactions} for the definition of
-  \SpeciesReference.)  \changed{This means an rate rule cannot be
-  defined for a species that is created or destroyed in a reaction.}  The
-  only exception is when the given species is a boundary condition; i.e.,
-  on the \Species structure that defines the species the
-  \token{boundaryCondition} field is set to \val{true}.
-
-\item \emph{In the case of a compartment}, a \RateRule sets the rate
-  of change of the compartment's size to the value determined by the
-  formula in \token{math}.  The overall units of the formula are
-  \quantity{size}/\quantity{time}, where the \quantity{time} units are the
-  built-in units of time described in Section~\ref{sec:unitdefinitions} and
-  the \quantity{size} units are the units of size on the compartment
-  identified by the value of the \RateRule's \token{variable}
-  field.  (See Section~\ref{sec:compartment-units} for an explanation of how the
-  units of the compartment's size are determined.)
-
-\item \emph{In the case of a parameter}, a \RateRule sets the rate
-  of change of the parameter's value to that determined by the formula in
-  \token{math}.  The overall units of the formula are of the form
-  \quantity{x}/\quantity{time} where \quantity{x} are the units
-  defined for the parameter identified by the value of the
-  \RateRule's \token{variable} field and the \quantity{time}
-  units are the built-in units of time described in Section~\ref{sec:unitdefinitions}.  (See
-  Section~\ref{sec:parameter-units} for an explanation of how the units of the
-  parameter are determined.)
-
-\end{itemize}
-
-\subsubsection{Restrictions on Rules}
-\label{sec:ruleconstraints}
-
-\changed{SBML specifically does not stipulate the form of the
-algorithms that can be applied to rules and reactions.  For
-example, SBML does not specify when or how often rules should be
-evaluated.  The constraints described by rules and kinetic rate
-laws are meant to apply collectively to the set of variable values
-for all time $t > 0$ with assignment rules and algebraic rules
-applied for $t \leq 0$ as well.}
-
-No more than one assignment or rate rule can be defined for a
-given identifier.  No assignment or rate rule can be defined for
-an identifier whose corresponding structure has the field
-\token{constant} set to \token{true}.
-
-\begin{blockChanged}
-A rule cannot be used to set the value of a reaction rate; that
-is, the value of a \token{variable} field in an \AssignmentRule or
-\RateRule cannot be the value of any \Reaction's \token{id} field.
+Similarly, a model must also not contain \emph{both} an
+\AssignmentRule and an \InitialAssignment for the same variable,
+because both kinds of constructs apply prior to and at the start
+of simulation time, \ie $t \leq 0$.  If a model contained both an
+initial assignment and an assignment rule for the same variable,
+an indeterminate system would result.  (See also
+Section~\ref{sec:initial-assignment-semantics}.)
 
 The value calculated by an \AssignmentRule object overrides the
 value assigned to the given symbol by the object defining that
 symbol.  For example, if a \Compartment's \token{size} is set in
 its definition, and the model also contains an \AssignmentRule
 having that compartment's \token{id} as its \token{variable}
-value, then the interpretation is that the \token{size} assigned
-in the \Compartment definition should be ignored and the value
-assigned based on the computation defined in the
-\AssignmentRule.
-
-This does not mean that a definition of a symbol can be omitted if
-there is an \AssignmentRule object for that symbol.  For
+value, then the \token{size} assigned in the \Compartment
+definition is ignored and the value assigned based on the
+computation defined in the \AssignmentRule.  Note that this does
+\emph{not} mean that a definition for a given symbol can be
+omitted if there is an \AssignmentRule object for it.  For
 example, there must be a \Parameter definition for a given
 parameter if there is an \AssignmentRule for that parameter.
+\end{blockChanged}
 
-A model must also not define initial assignments \emph{and}
-assignment rules simultaneously for the same entity.  That is,
-there cannot be \emph{both} an \AssignmentRule and an
-\InitialAssignment for the same symbol in a model, because both
-kinds of constructs apply prior to and at the start of simulated
-time i.e. $t \leq 0$ (allowing both to exist for a given symbol would
-result in indeterminism).  (See also
-Section~\ref{sec:initial-assignment-semantics}.)
 
-The combined set of \InitialAssignment,
-\AssignmentRule and \KineticLaw structures form a
-set of assignment statements that should be considered as a whole.
-The combined set of assignment statements should not contain
-algebraic loops: a chain of dependency between these statements
-should terminate. Formally consider the directed graph of
-assignment statements where nodes are statements and directed arcs
-exist for each occurrence of a symbol in an assignment statement
-\token{math} field. The directed arcs start from the statement
-assigning the symbol to the statements that contain the symbol in
-their math fields. Such a graph must be acyclic. (A
-\KineticLaw structure assigns to the symbol contained in
-the \token{id} field of the containing \Reaction
-structure).  Eliminating algebraic loops ensures that assignment
-statements can be evaluated any number of times without the result
-of those evaluations changing. As an example, consider the
-following equations:
+\subsubsection{\class{RateRule}}
+\label{sec:raterule}
+
+\begin{blockChanged}
+The rule type \RateRule is used to express equations that
+determine the rates of change of variables.  The left-hand side
+(the \token{variable} \changed{field}) can refer to the identifier
+of a species, compartment, or parameter \changed{(but not a
+  reaction)}.  The entity identified must not have its
+\token{constant} field set to \val{true}.  The effects of a
+\RateRule are in general terms the same, but differ in the precise
+details depending on which variable is being set:
+\end{blockChanged}
+\begin{itemize}
+  
+\item \emph{In the case of a species}, a \RateRule sets the rate
+  of change of the species' quantity (\quantity{concentration} or
+  \quantity{amount of substance}) to the value determined by the
+  formula in \token{math}.  The overall units of the formula in
+  \token{math} must be \quantity{species
+    quantity}/\quantity{time}, where the \quantity{time} units are
+  the built-in units of time described in
+  Section~\ref{sec:unitdefinitions} and the \quantity{species
+    quantity} units are the \emph{units of the species} as defined
+  in Section~\ref{sec:species-units}.
+  
+  \emph{Restrictions}: \changed{There must not be both a \RateRule
+    \token{variable} field and a \SpeciesReference \token{species}
+    field having the same value, unless that species has its
+    \token{boundaryCondition} field is set to \val{true}.  This
+    means a rate rule cannot be defined for a species that is
+    created or destroyed in a reaction, unless that species is
+    defined as a boundary condition in the model.}
+  
+\item \emph{In the case of a compartment}, a \RateRule sets the
+  rate of change of the compartment's size to the value determined
+  by the formula in \token{math}.  The overall units of the
+  formula \changed{must be} \quantity{size}/\quantity{time}, where
+  the \quantity{time} units are the built-in units of time
+  described in Section~\ref{sec:unitdefinitions} and \changed{the
+  \quantity{size} units are the units of size on the compartment
+  (Section~\ref{sec:compartment-units}).}
+
+\item \emph{In the case of a parameter}, a \RateRule sets the rate
+  of change of the parameter's value to that determined by the
+  formula in \token{math}.  The overall units of the formula
+  \changed{must be} \quantity{x}/\quantity{time}, where
+  \quantity{x} are the \changed{units of the parameter
+  (Section~\ref{sec:parameter-units})}.
+
+\end{itemize}
+
+\begin{blockChanged}
+In the context of a simulation, rate rules are in effect for
+simulation time $t > 0$.  Other types of rules and initial
+assignments are in effect at different times;
+Section~\ref{sec:before-t0} describes these conditions.
+
+As mentioned in Section~\ref{sec:assignmentrule} for
+\AssignmentRule, a model must not contain more than one \RateRule
+or \AssignmentRule object having the same value of
+\token{variable}; in other words, in the set of all assignment
+rules and rate rules in an SBML model, each variable appearing in
+the left-hand sides can only appear once.  This simply follows
+from the fact that an indeterminate system would result if a model
+contained more than one assignment rule for the same variable or
+both an assignment rule and a rate rule for the same variable.
+\end{blockChanged}
+
+
+\subsubsection{Additional Restrictions on Rules}
+\label{sec:ruleconstraints}
+
+% [2006-09-09 MH] I'm not sure the following is useful, and now
+% that we put all these conditions about t <= 0 and so on, I'm not
+% sure the following is even accurate anymore:
+%
+%SBML does not stipulate the form of the algorithms that can be
+%applied to rules and reactions.  For example, SBML does not
+%specify when or how often rules should be evaluated.
+
+% The following is now included in the subsections above and
+% is redundant here.  [2006-09-09 MH]
+%
+%A model's set of rules and reaction rate expressions are meant to
+%apply collectively to the set of variable values for all time $t >
+%0$.  Assignment rules and algebraic rules also apply for $t \leq
+%0$ in order to provide a means of estimating initial conditions
+%and values of expressions containing delays
+%(Section~\ref{sec:csymbol-token}) prior to the start of a
+%simulation.
+
+\begin{blockChanged}
+In addition to the conditions described above regarding the use of
+\AlgebraicRule, \AssignmentRule and \RateRule, SBML needs to place
+two additional restrictions on rule use.  The first concerns
+algebraic loops in the system of assignments in a model, and the
+second concerns overdetermined systems.
+
+
+\paragraph{The Model Must Not Contain Algebraic Loops}
+
+The combined set of \InitialAssignment, \AssignmentRule and
+\KineticLaw objects constitute a set of assignment statements that
+should be considered as a whole.  (A \KineticLaw object is counted
+as an assignment because it assigns a value to the symbol
+contained in the \token{id} field of the \Reaction object in which
+it is defined.)  This combined set of assignment statements must
+not contain algebraic loops---dependency chains between these
+statements must terminate.  To put this more formally, consider a
+directed graph in which nodes are assignment statements and
+directed arcs exist for each occurrence of an SBML species,
+compartment or parameter symbol in an assignment statement's
+\token{math} field.  Let the directed arcs point from the
+statement assigning the symbol to the statements that contain the
+symbol in their \token{math} field expressions.  This graph must
+be acyclic.
+
+SBML does not specify when or how often rules should be evaluated.
+Eliminating algebraic loops ensures that assignment statements can
+be evaluated any number of times without the result of those
+evaluations changing.  As an example, consider the following
+equations:
 \begin{linenomath}
 \begin{equation*}
   \begin{array}{lll}
@@ -5231,13 +5284,12 @@ following equations:
 \end{linenomath}
 If this set of equations were interpreted as a set of assignment
 statements, it would be invalid because the rule for $x$ refers to
-$x$ and the rule for $y$ refers to $z$ whilst the rule for $z$
-refers to $y$.
-\end{blockChanged}
+$x$ (exhibiting one type of loop), and the rule for $y$ refers to
+$z$ while the rule for $z$ refers back to $y$ (exhibiting another
+type of loop).
 
-The following set of equations if interpreted as assignment
-statements would be valid:
-
+Conversely, the following set of equations would constitute a
+valid set of assignment statements:
 \begin{linenomath}
 \begin{equation*}
   \begin{array}{lll}
@@ -5246,120 +5298,35 @@ statements would be valid:
 \end{equation*}
 \end{linenomath}
 
-\begin{blockChanged}
 
-A SBML model must not be overdetermined.  A SBML model that does
-not contain \AlgebraicRule structures is not over
-determined.
+\paragraph{The Model Must Not Be Overdetermined}
 
-To determine whether a continuous deterministic mathematical model
-is overdetermined we form a bipartite graph in which one set of
-vertices represent the variables and the other the set of vertices
-represent the equations. Edges in the graph link equation vertexes
-to the variable vertices so that the variables are linked to the
-equations that determine them. Edges connect each algebraic
-equation vertex to all the vertices representing variables
-occurring in the equation. For each an ordinary differential
-equation (ODE) a single edge connects the vertex representing the
-equation to the vertex representing the variable determined by the
-equation.
+An SBML model must not be overdetermined.  A SBML model that does
+not contain \AlgebraicRule structures cannot be overdetermined.
 
-A mathematical model is overdetermined if the maximal matchings
-of the bipartite graph contain disconnected vertexes representing
-equations. (If one maximal matching has this property then all the
-maximal matchings will have this property i.e. it is only
-necessary to find one maximal matching.)  A efficient algorithm
-for finding a maximal matching is described in
-\cite{hopcroft:1973}.)
+Assessing whether a given continuous, deterministic, mathematical
+model is overdetermined does not require dynamic analysis; it can
+be done by analyzing the system of equations created from the
+model.  One approach is to construct a bipartite graph in which
+one set of vertices represents the variables and the other the set
+of vertices represents the equations.  Place edges between
+vertices such that variables in the system are linked to the
+equations that determine them.  For algebraic equations, there
+will be edges between the equation and each variable occurring in
+the equation.  For ordinary differential equations (such as those
+defined by rate rules or implied by the reaction rate
+definitions), there will be a single edge between the equation and
+the variable determined by that differential equation.  A
+mathematical model is overdetermined if the maximal matchings of
+the bipartite graph contain disconnected vertexes representing
+equations.  (If one maximal matching has this property, then all
+the maximal matchings will have this property; \ie it is only
+necessary to find one maximal matching.)
+Appendix~\ref{apdx:assessing-overdetermined} describes a method of
+applying this procedure to specific SBML data objects.
 
-We can define the application of the above general statement to
-SBML by defining the mapping of SBML structures to components of
-the bipartite graph representing the model structure. In this
-mapping we consider assignment rules to be algebraic equations and
-we consider the assignment of kinetic laws to reaction variables
-to be algebraic equations.  We assume the construction of an ODE
-for each species determined by one or more reaction rate laws. The
-following mapping assumes that the model is valid in all respects
-but may be overdetermined e.g. equations cannot refer to
-undeclared variables.
-
-The bipartite graph is formed as follows:
-\begin{itemize}
-
-\item Create equation vertexes for each of the following:
-
-\begin{enumerate}
- \item a \Species structure that has the
- \token{boundaryCondition} field set to false and \token{constant}
-field set to false and which is referenced by one or more reactant
-or product lists of a \Reaction structure containing a
- \KineticLaw structure
-
-\item a \Rule structure
-
-\item a \KineticLaw structure
-\end{enumerate}
-
-\item Create variable vertexes for (a) every \Species,
- \Compartment and \Parameter structure which has the
- \token{Constant} field set to false; and (b) for every
- \Reaction structure.
-
-\item Create an edge for each case of the following:
-
-\begin{enumerate}
-\item \emph{a \Species structure that has the
- \token{boundaryCondition} field set to false and \token{constant}
- field set to false and which is referenced by the reactant or
-product lists of a \Reaction structure containing a
- \KineticLaw structure.} The edge connects the vertex
-representing the species to the vertex representing the species'
-equation (see (1) above)
-
-\item \emph{an \AssignmentRule or \RateRule.} The
-edge connects the vertex representing the \Rule to the
-vertex representing the variable referenced by the
-\token{variable} field of the rule.
-
-\item \emph{a \KineticLaw.}  The edge connects the vertex
-representing the \KineticLaw equation to the variable
-vertex representing the \Reaction containing the
-\KineticLaw.
-
-\item \emph{the occurrence of a MathML \token{ci} symbol
-referencing a variable (that is referencing a \Species,
-\token{compartment}, \token{parameter} structure which has the
-\token{constant} field set to false) within an
-\AssignmentRule or \AlgebraicRule.} The edge
-connects the vertex representing the rule to the vertex
-representing the variable.
-
-\item \emph{the occurrence of a MathML \token{ci} symbol
-referencing a \Reaction within an \AssignmentRule or
-\AlgebraicRule.}  The edge connects the vertex representing
-the rule to the vertex representing the reaction variable.
-
-\item \emph{the occurrence of a MathML \token{ci} symbol
-referencing a variable within an \AssignmentRule or
-\AlgebraicRule.} The edge connects the vertex representing
-the rule to the vertex representing the variable.  The \token{ci}
-element must either reference: (a) a \Species,
-\token{compartment} or \token{parameter} structure which has the
-\token{constant} field set to false; or (b) reference a
-\Reaction structure)
-
-\item \emph{the occurrence of a MathML \token{ci} symbol
-referencing a variable within an \KineticLaw.} The edge
-connects the vertex representing the kinetic law to the vertex
-representing the variable.  The \token{ci} element must either
-reference a \Species, \token{compartment} or
-\token{parameter} structure which has the \token{constant} field
-set to false.  In this context a \token{ci} element cannot refer
-to a \Reaction structure.
-
-\end{enumerate}
-\end{itemize}
 \end{blockChanged}
+
 
 \subsubsection{Example of Rule Use}
 \label{sec:eg-rule-use}
@@ -8710,6 +8677,7 @@ regions of a cell.
 One aspect of aspect of this allowing
 rules and reactions to have their effect conditional on the state of the model system.  For example in
 SBML Level 2 it is possible to create a rule with the effect:
+\begin{linenomath}
 \begin{equation*}
 \frac{d s}{d t} =
 \left\{
@@ -8719,12 +8687,15 @@ SBML Level 2 it is possible to create a rule with the effect:
 \end{array}
 \right.
 \end{equation*}
+\end{linenomath}
 Dynamic restructuring would enable the expression of the following example:
+\begin{linenomath}
 \begin{equation*}
 \begin{array}{ll}
 \mbox{if $s>0$} & \D\frac{d s}{d t} = y
 \end{array}
 \end{equation*}
+\end{linenomath}
 where $s$ is not determined by the rule when $s \leq 0$.
 
 %\item \emph{Rules for Initial Conditions}.  This will enable the encoding
@@ -9423,10 +9394,13 @@ one of the base unit kinds.
 
 \item page 14, Section 4.4.2: The first formula should be the
 following:
+\begin{linenomath}
 \begin{equation*}
 u_{new} = (\emph{multiplier} \times 10^{\emph{scale}} \times
 u)^{\emph{exponent}} + \emph{offset}
-\end{equation*}  This equation is superseded by modifications
+\end{equation*}
+\end{linenomath}
+This equation is superseded by modifications
 to the \Unit and \UnitDefinition structures in this specification
 \sbmltwotwo.
 
@@ -10913,6 +10887,225 @@ Section~\ref{sec:ruleconstraints}.
 
 
 %=============================================================================
+\section{Method for Assessing Whether an SBML Model is Overdetermined}
+\label{apdx:assessing-overdetermined}
+%=============================================================================
+
+\emph{(Example contributed by Sarah M. Keating, University of
+  Hertfordshire STRI, Hatfield, UK.)}
+
+As explained in Section~\ref{sec:ruleconstraints}, an SBML model
+must not be overdetermined.  It is possible to use purely static
+analysis to assess this for the system of equations implied by a
+model, by constructing a bipartite graph of the model's variables
+and equations and then searching for a maximal matching.  A
+efficient algorithm for finding a maximal matching is described by
+\cite{hopcroft:1973}.  In this appendix, we provide a concrete
+application to SBML of the general approach described in
+Section~\ref{sec:ruleconstraints}.  The approach is defined in
+terms of the ordinary differential equations (ODEs) implied by an
+SBML model; it should be understood that this use of ODEs has no
+implication about the framework actually used to simulate the
+model.
+
+
+\subsection{Definition of the Method}
+
+First, we treat both assignment rules and formulas in \KineticLaw
+objects as SBML-style algebraic equations.  (Both are essentially
+assignment statements, and assignment statements can be trivially
+converted to algebraic equations with zero on the left-hand side.)
+We also assume that an ODE is constructed for each species
+determined by one or more \Reaction's \KineticLaw \token{math}
+expressions.  Finally, we assume that the model has already been
+determined to be valid in all other respects (\eg there are no
+undefined variables in the equations), and what remains is to
+evaluate whether it is overdetermined.
+
+We construct the bipartite graph for a given SBML model as follows:
+\begin{enumerate}
+
+\item For each of the following in the model, create one vertex
+  representing an equation:
+  \begin{enumerate}
+    
+  \item Every \Species object having
+    \token{boundaryCondition}=\val{false},
+    \token{constant}=\val{false}, and which is referenced as a
+    reactant or product in one or more \Reaction objects
+    containing \KineticLaw objects
+
+  \item Every \AssignmentRule object
+
+  \item Every \RateRule object
+
+  \item Every \AlgebraicRule object
+
+  \item Every \KineticLaw object
+
+  \end{enumerate}
+  
+\item For each of the following in the model, create one vertex
+  representing a variable:
+  \begin{enumerate}
+
+  \item Every \Species object having \token{constant}=\val{false}
+  \item Every \Compartment object having \token{constant}=\val{false}
+  \item Every global \Parameter having \token{constant}=\val{false}
+  \item Every \Reaction object
+
+  \end{enumerate}
+  
+\item For each of the following, create one edge:
+  \begin{enumerate}
+    
+  \item Every vertex created in step 2(a) to that species'
+    equation vertex created in step 1(a)
+    
+  \item Every vertex created in step 1(b) to the particular vertex
+    created in steps 2(a)--2(d) that represents the variable
+    referenced by the \token{variable} field of the rule
+    
+  \item Every vertex created in step 1(c) to the particular vertex
+    created in steps 2(a)--2(d) that represents the variable
+    referenced by the \token{variable} field of the rule
+    
+  \item Every vertex created in step 1(e) to the particular vertex
+    created in step 2(d) that is the \Reaction object containing
+    that particular \KineticLaw object
+    
+  \item Every vertex created in steps 2(a)--2(d) representing an
+    identifier appearing as the content of a MathML \token{ci}
+    element within an expression of an \AssignmentRule, to the
+    vertex for that particular \AssignmentRule created in step 1(b)
+    
+  \item Every vertex created in steps 2(a)--2(d) representing an
+    identifier appearing as the content of a MathML \token{ci}
+    element within an expression of an \AlgebraicRule, to the
+    vertex for that particular \AlgebraicRule created in step 1(d)
+    
+  \item Every vertex created in steps 2(a)--2(c) representing an
+    identifier appearing as the content of a MathML \token{ci}
+    element within an expression of a \KineticLaw, to the vertex
+    for that particular \KineticLaw created in step 1(e)
+
+  \end{enumerate}
+
+\end{enumerate}
+
+
+\subsubsection{Example Application of the Method}
+
+What follows is an example of applying the method above to the
+SBML model shown below:
+
+\sbmlexample{overdetermined.xml}
+
+
+\subsubsection{Creating the Bipartite Graph}
+
+We create \emph{equation} vertices for the following:
+\begin{enumerate}
+  
+\item \emph{Every \Species object having
+    \token{boundaryCondition}=\val{false},
+    \token{constant}=\val{false}, and which is referenced as a
+    reactant or product in one or more \Reaction objects
+    containing \KineticLaw objects}.  This generates two vertices,
+  for \val{S1} and \val{S2}.
+  
+\item \emph{Every \AlgebraicRule object}.  This generates one
+  vertex, for the model's lone algebraic rule (call it
+  \val{rule}).
+
+\item \emph{Every \KineticLaw object}.  This generates one vertex,
+  for the lone kinetic law in the model (call it \val{law}).
+\end{enumerate}
+
+We create \emph{variable} vertices for the following:
+\begin{enumerate}
+  
+\item \emph{Every \Species object having
+    \token{constant}=\val{false}}.  This generates two vertices,
+  for \val{S1} and \val{S2}.
+
+\item \emph{Every \Compartment object having
+    \token{constant}=\val{false}}.  This generates one vertex,
+  for \val{cell}.
+
+\item \emph{Every \Reaction object}.  This generates one vertex,
+  for \val{R}.
+
+\end{enumerate}
+
+Note that it is not necessary to include parameters declared
+within \KineticLaw objects because they are local to a particular
+reaction and cannot be affected by rules.  With the steps above,
+we have the following set of graph nodes:
+\begin{center}
+\emph{Vertices for equations}
+\[\xymatrix{
+  *+==<0.4in,0.25in>[F]{\token{X0}}
+  & *+==<0.4in,0.25in>[F]{\token{X1}}
+  & *+==<0.4in,0.25in>[F]{\token{rule}}
+  & *+==<0.4in,0.25in>[F]{\token{law}}
+  \\
+  *+==<0.4in,0.25in>[F]{\token{X0}}
+  & *+==<0.4in,0.25in>[F]{\token{X1}}
+  & *+==<0.4in,0.25in>[F]{\token{cell}}
+  & *+==<0.4in,0.25in>[F]{\token{R}}
+}\]
+\emph{Vertices for variables}
+\end{center}
+
+Next, we create edges following the procedure described above.
+Doing so results in the following graph:
+\begin{center}
+  \emph{Vertices for equations}
+  \[\xymatrix{
+    *+==<0.4in,0.25in>[F]{\token{X0}}
+    & *+==<0.4in,0.25in>[F]{\token{X1}}
+    & *+==<0.4in,0.25in>[F]{\token{rule}}
+    & *+==<0.4in,0.25in>[F]{\token{law}}
+    \\
+    *+==<0.4in,0.25in>[F]{\token{X0}}\ar@{-}[u]\ar@{-}[urr]\ar@{-}[urrr]
+    & *+==<0.4in,0.25in>[F]{\token{X1}}\ar@{-}[u]\ar@{-}[ur]
+    & *+==<0.4in,0.25in>[F]{\token{cell}}
+    & *+==<0.4in,0.25in>[F]{\token{R}}\ar@{-}[u]
+  }\]
+  \emph{Vertices for variables}
+\end{center}
+
+The algorithm of \cite{hopcroft:1973} can now be applied to search
+for a maximal matching of the bipartite graph.  A maximal matching
+is a graph in which each vertex is connected to at most one other
+vertex and the maximum possible number of connections have been
+made.  Doing so here results in the following:
+\begin{center}
+  \emph{Vertices for equations}
+  \[\xymatrix{
+    *+==<0.4in,0.25in>[F]{\token{X0}}
+    & *+==<0.4in,0.25in>[F]{\token{X1}}
+    & *+==<0.4in,0.25in>[F]{\token{rule}}
+    & *+==<0.4in,0.25in>[F]{\token{law}}
+    \\
+    *+==<0.4in,0.25in>[F]{\token{X0}}\ar@{-}[u]
+    & *+==<0.4in,0.25in>[F]{\token{X1}}\ar@{-}[u]
+    & *+==<0.4in,0.25in>[F]{\token{cell}}
+    & *+==<0.4in,0.25in>[F]{\token{R}}\ar@{-}[u]
+  }\]
+  \emph{Vertices for variables}
+\end{center}
+
+If the maximal matching of the bipartite graph leaves any equation
+vertex unconnected, then the model is considered overdetermined.
+That is the case for the example shown here, because the equation
+vertex for \val{rule} is unconnected in the maximal matching.
+
+
+
+
+%=============================================================================
 \section{Mathematical Consequences of the \token{fast} Attribute on Reaction}
 \label{apdx:consequences-of-being-fast}
 %=============================================================================
@@ -10992,9 +11185,11 @@ single compartment.  Let \xs represent a vector of all the species
 in the system, \vs a vector of the reaction rates, and \As the
 stoichiometry matrix, with the vector dimension being \ns.  Then
 the system can be described using the following matrix equation:
+\begin{linenomath}
 \begin{equation*}
   \frac{d\xstar}{dt} = \Astar \vstar (\xstar) 
 \end{equation*}
+\end{linenomath}
 
 This system can be optionally reduced by noting that mass
 conservation usually implies there are linear combinations of
@@ -11003,24 +11198,32 @@ combinations do not change over time.  Identifying these
 combinations is the topic of structural analysis and is described
 in the literature~\citep{reder_1998,sauro_2003}.  Briefly, let \bN
 be defined as the left null space of \As:
+\begin{linenomath}
 \begin{equation*}
   \boldN \Astar = \mathbf{0}
 \end{equation*}
+\end{linenomath}
 Now, premultiply the previous equation by \bN to get
+\begin{linenomath}
 \begin{equation*}
     \boldN \dfrac{d\xstar}{dt} = \boldN \Astar \vstar (\xstar) = \mathbf{0}
 \end{equation*}
+\end{linenomath}
 Thus, \bN captures the space of solutions to the equation
+\begin{linenomath}
 \begin{equation*}
   \boldm^T \left( \frac{d\xstar}{dt} \right) = 0
 \end{equation*}
+\end{linenomath}
 where \bm is a vector representing the coefficients in a mass
 conservation relationship, that is, combinations of species that
 are time-invariant.  Now, let
+\begin{linenomath}
 \begin{align*}
   r &= \operatorname{rank}(\Astar)\\
   n &= \operatorname{dim}(\xstar)
 \end{align*}
+\end{linenomath}
 Then the system has $n - r$ mass conservation relationships, each
 of which is a linear equation.  We can use these $n - r$ linear
 equations to solve for $n - r$ dependent variables in terms of $r$
@@ -11031,32 +11234,42 @@ where $\mathbf{L}$ is an $(n - r) \times r$ matrix that is derived
 from \bN and represents $\xbold_d$ in terms of $\xbold_i$,
 $\mathbf{I}$ is the $r \times r$ identity matrix, and $\mathbf{T}$
 is an $n \times r$ matrix:
+\begin{linenomath}
 \begin{equation*}
   \xstar \equiv \begin{bmatrix} \xbold_i \\ \xbold_d \end{bmatrix}
   = \begin{bmatrix} \mathbf{I} \\ \mathbf{L} \end{bmatrix} \xbold_i
   = \mathbf{T} \xbold_i
 \end{equation*}
+\end{linenomath}
 Using this equation, we can define a new vector of reaction
 velocities \vb in terms of $\xbold_i$ only:
+\begin{linenomath}
 \begin{equation*}
   \vbold ( \xbold_i ) \equiv \vstar ( \mathbf{T} \xbold_i )
 \end{equation*}
+\end{linenomath}
 With this \vb, we can now write a reduced system by substituting
 terms.  First we define $\mathbf{A}$ as the $r$ independent rows
 of \Astar corresponding to $\xbold_i$.  Then:
+\begin{linenomath}
 \begin{equation*}
   \dfrac{d\xbold_i}{dt} = \Abold \vbold ( \xbold_i )
 \end{equation*}
+\end{linenomath}
 This is a set of $r$ independent differential equations in $r$
 unknowns (\ie an $r$-dimensional system).  To simplify the
 notation slightly, let
+\begin{linenomath}
 \begin{equation*}
   \xbold \equiv \xbold_i
 \end{equation*}
+\end{linenomath}
 and, thus,
+\begin{linenomath}
 \begin{equation*}
   \dfrac{d\xbold}{dt} = \Abold \vbold ( \xbold )
 \end{equation*}
+\end{linenomath}
 
 %\xb, \Ab and \vb are
 %defined as the reduced (independent) system of variables, the
@@ -11072,23 +11285,29 @@ given system as being \emph{fast} as discussed earlier.  We now
 need to apply this to the system under study.  We begin by
 decomposing the vector of reaction velocities \vb according to
 fast and slow reactions:
+\begin{linenomath}
 \begin{equation*}
   \dfrac{d\xbold}{dt} = \Abold_1 \vbold_f(\xbold) + \Abold_2 \vbold_s(\xbold)
 \end{equation*}
+\end{linenomath}
 We find the left null space of $\Abold_1$ (\ie the space of
 solutions to $\mathbf{m}^T[d\xbold/dt] = 0$ on a fast time scale),
 and call this matrix \Bb:
+\begin{linenomath}
 \begin{equation*}
   \Bbold \Abold_1 = \mathbf{0}
 \end{equation*}
+\end{linenomath}
 The matrix \Bb represents the linear combination of species that
 do not change on a fast time scale, \ie the slow species in the
 system.  Now, we premultiply the equation for $d\xbold/dt$ by \Bb:
+\begin{linenomath}
 \begin{align*}
   \Bbold \dfrac{d\xbold}{dt} &= \Bbold \Abold_1 \vbold_f(\xbold) 
                                + \Bbold \Abold_2 \vbold_s(\xbold) \\
                              &= \Bbold \Abold_2 \vbold_s(\xbold)
 \end{align*}
+\end{linenomath}
 where the second line follows from the fact that $\Bbold \Abold_1
 = \mathbf{0}$.  The above is an ordinary differential equation in
 terms of only the slow dynamics.  The remaining fast dynamics are
@@ -11096,9 +11315,11 @@ handled by applying the pseudo-steady state approximation, with
 fast transients assumed to have settled with respect to the slow
 time scale.  This produces a system of nonlinear algebraic
 equations:
+\begin{linenomath}
 \begin{equation*}
   \Abold_1 \vbold_f = \mathbf{0}
 \end{equation*}
+\end{linenomath}
 The last two equations form the system of equations resulting from
 the application of the PSSA.  If $r_1 =
 \operatorname{rank}(\Abold_1)$ and $r =

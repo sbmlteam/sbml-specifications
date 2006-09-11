@@ -2289,6 +2289,7 @@ following predefined SBML symbol URIs:
 
 The following examples demonstrate these concepts.  The XML fragment below
 encodes the formula $x + t$, where $t$ stands for time.
+
 \begin{example}
 <math xmlns="http://www.w3.org/1998/Math/MathML">
     <apply>
@@ -2317,6 +2318,7 @@ rendering purposes only and can be ignored by the parser.
 
 As a further example, the following XML fragment encodes the equation
 $k + delay(x, 0.1)$ or alternatively $k_t + x_{t - 0.1}$:
+
 \begin{example}
 <math xmlns="http://www.w3.org/1998/Math/MathML">
     <apply>
@@ -2366,6 +2368,7 @@ use an \AssignmentRule in which the assignment expression
 subtracts a value from the \token{csymbol} \emph{time}.  For
 example, if the desired offset is 2 time units, the MathML
 expression would be
+
 \begin{example}
 <math xmlns="http://www.w3.org/1998/Math/MathML">
     <apply>
@@ -2377,6 +2380,7 @@ expression would be
     </apply>
 </math>
 \end{example}
+
 SBML's assignment rules (Section~\ref{sec:assignmentrule}) can be
 used to express mathematical statements that hold true at all
 moments, so using an assignment rule with the expression above
@@ -2389,70 +2393,97 @@ etc.
 \subsubsection{Initial Conditions and Special Considerations}
 \label{sec:before-t0}
 
-The availability of the \emph{delay} \token{csymbol} (see
-Section~\ref{sec:csymbol-token} above) introduces the possibility
-that at $t = 0$, mathematical expressions in a model may draw on
-values of model components from time prior to $t = 0$.  For the
-purpose of calculating the necessary initial conditions, SBML
-stipulates the following:
+%Although SBML does not define the simulation or other algorithms
+%that may be applied to a model, the SBML specification must define
+%a consistent interpretation of the various possible constructs in
+%a model.  
+
+The identifiers of \Species, \Compartment, \Parameter, and
+\Reaction object instances in a given SBML model refer to the main
+variables in the model.  Depending on certain attributes of these
+objects (\eg the \token{constant} flag on species, compartments
+and parameters---this and other conditions are explained in the
+relevant sections elsewhere in this document), some of the
+variables may have constant value throughout a simulation, and
+others' values may change.  These changes in values over time are
+determined by the system of equations constructed from the model's
+reaction, assignment, rule and event definitions.
+
+As described in Section~\ref{sec:meaning-of-time}, an SBML model's
+simulation is assumed to begin at $t = 0$.  The availability of
+the \emph{delay} \token{csymbol} (Section~\ref{sec:csymbol-token})
+introduces the possibility that at $t = 0$, mathematical
+expressions in a model may draw on values of model components from
+time \emph{prior} to $t = 0$.  A simulator may therefore need to
+begin calculations at some point in time $t_i \leq 0$ deemed
+sufficiently far before $t = 0$ to allow the calculation of
+necessary values for delay expressions in the model.  If there are
+no delays in the model, then $t_i = 0$.
+
+The following is how the definitions of the model should be
+applied:
 \begin{enumerate}
-  
-\item The initial values provided in the definitions of
-  compartments, species and parameters apply at all time unless
-  changed by other constructs or reactions in a model.  More
-  specifically, these values are the following:
+
+\item At time $t_i$:
   \begin{itemize}
     
-  \item The initial amounts of \Species, as set by their
-    \token{initialAmount} or \token{initialConcentration} fields
-    (Section~\ref{sec:species})
-    
-  \item The initial values of \Parameter{}s, as set by their
-    \token{value} fields (Section~\ref{sec:parameters})
-
-  \item The initial sizes of \Compartment{}s, as set by their
-    \token{size} fields (Section~\ref{sec:compartments})
+  \item The values of all \Species, \Compartment, and \Parameter
+    objects whose identifiers are not the subject of an
+    \InitialAssignment are assigned by the definition of the
+    object in the model; else, \InitialAssignment values are
+    computed and assigned as the relevant \Species quantity,
+    \Compartment size, or \Parameter value.  All assignments are
+    performed once and thereafter are in effect for $t \geq t_i$.
+    If an object is defined with \token{constant}=\val{false}, its
+    value may be changed by other constructs or reactions in a
+    model; if \token{constant}=\val{true}, the rest of the steps
+    described below cannot change the value.
 
   \end{itemize}
   
-\item \InitialAssignment constructs
-  (Section~\ref{sec:initialAssignment}) override the initial
-  values set on compartments, species and parameters.  An
-  \InitialAssignment is in effect only for $t \leq 0$.
+\item For time $t \geq t_i$:
+  \begin{itemize}
+    
+  \item \AssignmentRule and \AlgebraicRule definitions are in
+    effect from this point in time forward.  These may influence
+    the values of \Species quantity, \Compartment size, or
+    \Parameter value.  (Note that there cannot be an
+    \AssignmentRule for an identifier that is also the subject of
+    an \InitialAssignment; see
+    Sections~\ref{sec:initialAssignment}
+    and~\ref{sec:assignmentrule}.)
+
+  \end{itemize}
   
-\item \AssignmentRule constructs
-  (Section~\ref{sec:assignmentrule}) and \AlgebraicRule
-  (Section~\ref{sec:algebraicrule}) are in effect for all time,
-  including $t \leq 0$.
+\item At time $t = 0$:
+  \begin{itemize}  
+    
+  \item The system of equations constructed by combining
+    \AssignmentRule equations, \AlgebraicRule equations, \RateRule
+    equations, and the equations constructed from the \Reaction
+    definitions in the model, used to obtain the initial
+    conditions for the numerical solver algorithms.
+    
+  \item \Constraint definitions begin to take effect.  (The result
+    may be a constraint violation; see
+    Section~\ref{sec:constraints}.)
+
+  \end{itemize}
   
-\item \AlgebraicRule constructs are in effect for all time,
-  including $t \leq 0$, and they override values set by any of the
-  above-listed constructs if they involve the same symbols (\ie
-  compartments, species and parameters).
+\item For time $t > 0$:
+  \begin{itemize}
 
-\end{enumerate}
+  \item \RateRule definitions begin to take effect.
 
-The constructs above all apply at times $t \leq 0$.  In effect,
-they form a continuous estimate of the values of the different
-variables in a model prior to when simulation time begins at $t =
-0$.  All other SBML constructs (\Reaction, \Event, \RateRule, and
-\Constraint) are not active at $t < 0$.  A model that uses the
-\emph{delay} \token{csymbol} can refer to symbols whose values are
-established using the constructs above.  A model making use of
-\emph{delay} expressions referring to symbols whose values are not
-defined in the necessary range of time prior to $t = 0$ is
-indeterminate.
+  \item \Event definitions begin to take effect.
 
-At the moment a simulation begins at time $t = 0$, a model's
-\Reaction, \RateRule, \AlgebraicRule, \Event, and \Constraint
-definitions then start to take effect.  For $t > 0$,
-\InitialAssignment constructs stop taking effect; they are only
-used to initialize values.
+  \item System simulation proceeds.
 
-\end{blockChanged}
+  \end{itemize}
+
+\end{enumerate}  
 
 
-\begin{blockChanged}
 \subsubsection{Math Expression Types}
 \label{sec:mathmltype}
 
@@ -4274,7 +4305,7 @@ species quantity to a literal scalar value, whereas
 \InitialAssignment allows the value to be set using an arbitrary
 mathematical expression.  If the species' \token{constant} field
 has the value \val{false}, the species' quantity value may be
-overriden by an \InitialAssignment and changed by \AssignmentRule
+overriden by an \InitialAssignment or changed by \AssignmentRule
 or \AlgebraicRule, and in addition, for $t > 0$, it may also be
 changed by a \RateRule and \Event{}s.  It is not an error to
 define \token{initialAmount} or \token{initialConcentration} on a
@@ -4555,7 +4586,7 @@ field can only be used to set it to a literal scalar value,
 whereas \InitialAssignment allows the value to be set using an
 arbitrary mathematical expression.  If the parameter's
 \token{constant} field has the value \val{false}, the parameter's
-value may be overriden by an \InitialAssignment and changed by
+value may be overriden by an \InitialAssignment or changed by
 \AssignmentRule or \AlgebraicRule, and in addition, for simulation
 time $t > 0$, it may also be changed by a \RateRule and \Event{}s.
 It is not an error to define \token{value} on a parameter and also
@@ -5525,11 +5556,10 @@ benefit of SBO labels.
 \label{sec:constraint-semantics}
 
 In the context of a simulation, a \Constraint has effect at all
-times beginning with ``initial time'', \ie for simulation time $t
->= 0$.  Each \Constraint's \token{math} field is first evaluated
-after any \InitialAssignment definitions in a model at $t = 0$ and
-can conceivably trigger at that point.  (In other words, a
-simulation could fail a constraint immediately.)
+times $t >= 0$.  Each \Constraint's \token{math} field is first
+evaluated after any \InitialAssignment definitions in a model at
+$t = 0$ and can conceivably trigger at that point.  (In other
+words, a simulation could fail a constraint immediately.)
 
 \Constraint structures \emph{cannot and should not} be used to
 compute the dynamical behavior of a model as part of, for example,
@@ -6616,6 +6646,7 @@ assignment $k_2 = 0$ at the point when $P_1 \leq t$:
 A complete example of a model using events is given in Section~\ref{sec:eventeg}.
 
 \subsubsection{Detailed Semantics of Events}
+\label{sec:events-semantics}
 
 The description of events above describes the action of events in isolation from
 each other.  This section describes how events interact.  Events whose \token{trigger}

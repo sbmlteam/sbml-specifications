@@ -4443,41 +4443,13 @@ The \emph{units of the species} are used in the following ways:
 \subsubsection{The \token{constant} and \token{boundaryCondition} Fields}
 \label{sec:species-constant}
 
-% the initial value of a species can be defined by an initial assignment
-% irrespective of the value of the constant field.
-
-The \Species structure has an optional boolean field named
-\token{constant} used to indicate whether the concentration of
-that species can vary during a simulation.  The default value is
-\val{false}, indicating that the species' concentration can be
-determined by reactions and rules.
-
-Another optional field defined for \Species is
-\token{boundaryCondition}.  By default, when a species is a
-product or reactant of one or more reactions, its concentration is
-determined by those reactions.  In SBML, it is possible to
-indicate that a given species' concentration is \emph{not}
-determined by the set of reactions even when that species occurs
-as a product or reactant; i.e., the species is on the
-\emph{boundary} of the reaction system but is a component of the
-rest of the model.  The boolean field \token{boundaryCondition}
-can be used to indicate this.  The value of the field defaults to
-\val{false}, indicating the species \emph{is} part of the
-reaction system.  Table~\ref{tab:specieattrib} shows how to
-interpret the combined values of the \token{boundaryCondition} and
-\token{constant} fields.  In practice, a \token{boundaryCondition}
-value of \val{true} means a differential equation derived
-from the reaction definitions should not be generated for the
-species.  A model must not contain an \AssignmentRule or \RateRule
-structure that determines the value of a species if the \Species
-structure has \token{boundaryCondition} set to (or defaulting to)
-\val{false} and the species is a reactant and product of a
-reaction.  The example model in
-section~\ref{sec:constantspecieseg} contains all four possible
-combinations of the \token{boundaryCondition} and \token{constant}
-fields on \token{species} elements.  Section~\ref{sec:odeeg}
-contains a translation into ODEs of a model which uses
-\token{boundaryCondition} and \token{constant} fields.
+\begin{blockChanged}
+The \Species structure has two optional boolean fields named
+\token{constant} and \token{boundaryCondition}, used to indicate
+whether and how the quantity of that species can vary during a
+simulation.  Table~\ref{tab:specieattrib} shows how to interpret
+the combined values of the \token{boundaryCondition} and
+\token{constant} fields.
 
 \begin{table}[ht]
   \centering
@@ -4486,19 +4458,65 @@ contains a translation into ODEs of a model which uses
     \toprule
     \textbf{\token{constant}} & \textbf{\token{boundaryCondition}} &
     \textbf{can have} & \textbf{can be} & \textbf{species' quantity} \\
-    \textbf{value} & \textbf{value} & \textbf{assignment} & \textbf{reactant or} & \textbf{is changed by} \\
+    \textbf{value} & \textbf{value} & \textbf{assignment} &
+    \textbf{reactant or} & \textbf{can be changed by} \\
     & & \textbf{or rate rule} & \textbf{product}\\
     \midrule
-    true & true & no & yes & never changes\\
-    false & true & yes & yes & rule \\
-    true & false & no & no & never changes \\
-    false & false & yes & yes & reactions or rule but not both \\
+    true & true & no & yes & (never changes)\\
+    false & true & yes & yes & rules and events \\
+    true & false & no & no & (never changes) \\
+    false & false & yes & yes & reactions \emph{or} rules (but not both), and events \\
     \bottomrule
   \end{tabular}
   \caption{How to interpret the values of the \token{constant} and
     \token{boundaryCondition} fields of the \Species structure.}
   \label{tab:specieattrib}
 \end{table}
+
+By default, when a species is a product or reactant of one or more
+reactions, its quantity is determined by those reactions.  In
+SBML, it is possible to indicate that a given species' quantity is
+\emph{not} determined by the set of reactions even when that
+species occurs as a product or reactant; \ie \changed{the species
+is on the \emph{boundary} of the reaction system, and its
+quantity is not determined by the reactions.}  The boolean field
+\token{boundaryCondition} can be used to indicate this.  The value
+of the field defaults to \val{false}, indicating the species
+\emph{is} part of the reaction system.
+
+The \token{constant} field indicates whether the species' quantity
+can be changed at all, regardless of whether by reactions, rules,
+or constructs other than \InitialAssignment.  The default value is
+\val{false}, indicating that the species' quantity can be changed.
+Note that the initial quantity of a species can be set by an
+\InitialAssignment irrespective of the value of the
+\token{constant} field.
+
+In practice, a \token{boundaryCondition} value of \val{true} means
+a differential equation derived from the reaction definitions
+should not be generated for the species.  However, the species'
+quantity may still be changed by \AssignmentRule, \RateRule,
+\AlgebraicRule, \Event, and \InitialAssignment constructs if its
+\token{constant} field is \val{false}.  Conversely, if the
+species' \token{constant} field is \val{true}, then its value
+cannot be changed by anything except \InitialAssignment.
+
+A species having \token{boundaryCondition}=\val{false} and
+\token{constant}=\val{false} can appear as a product and/or
+reactant of one or more reactions in the model.  If the species is
+a reactant or product of a reaction, it must not also appear as
+the target of any \AssignmentRule or \RateRule structure in the
+model.  If instead the species has \token{constant}=\val{true},
+then it cannot appear as a reactant or product, or as the target
+of any \AssignmentRule or \RateRule structure in the model.
+\end{blockChanged}
+
+The example model in section~\ref{sec:constantspecieseg} contains
+all four possible combinations of the \token{boundaryCondition}
+and \token{constant} fields on \token{species} elements.
+Section~\ref{sec:odeeg} gives an example of how one can translate
+into ODEs a model that uses \token{boundaryCondition} and
+\token{constant} fields.
 
 \subsubsection{The \token{charge} Field}
 \label{sec:charge}
@@ -11278,7 +11296,6 @@ valid SBML.
 %   \val{true}, it cannot also have a value for \token{initialConcentration}.
 %   (References: L2V1 Section 4.6.3; L2V2 Section~\ref{sec:species}.)
 
-
 \sbmlrule{1400}
 \sbmlrule{1401}
 \sbmlrule{1402}
@@ -11291,6 +11308,7 @@ valid SBML.
 \sbmlrule{1410}
 \sbmlrule{1411}
 \sbmlrule{1412}
+\sbmlrule{1413}
 
 \end{enumerate} \subsection{\class{Parameter} Validation} \begin{enumerate}
 

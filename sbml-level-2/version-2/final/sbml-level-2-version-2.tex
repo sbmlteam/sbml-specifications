@@ -2787,7 +2787,7 @@ attributes placed in the SBML namespace do not conform to the
 
 Readers may wonder why the SBML top-level XML element uses both a
 namespace URI identifying the SBML level and version, as well as
-separate XML attributes encoding the level and version.  Why is
+separate XML attributes giving the level and version.  Why is
 the information duplicated?  There are several reasons.  First,
 XML is only one possible serialization of SBML (albeit an
 extremely popular one at this time).  Though most of this document
@@ -5836,11 +5836,11 @@ Section~\ref{sec:idnameattribs}.
 The reactant species, product species and modifier species that
 participate in a reaction are declared using lists of
 \SpeciesReference and/or \ModifierSpeciesReference instances
-stored in the fields \token{reactant}, \token{product} and
-\token{modifiers}, respectively.  The \SpeciesReference and
+stored in \token{listOfReactants}, \token{listOfProducts} and
+\token{listOfModifiers}.  The \SpeciesReference and
 \ModifierSpeciesReference structures are described in more detail
 in Sections~\ref{subsec:speciesreference}
-and~\ref{subsec:modifierreference} below.  
+and~\ref{subsec:modifierreference} below.
 
 Certain restrictions are placed on the appearance of species in
 reaction definitions:
@@ -5879,13 +5879,12 @@ Section~\ref{subsec:kinetic-law} below.
 Note that the inclusion of a \KineticLaw structure in an instance
 of a \Reaction component is optional; however, in general there is
 no useful default that can be substituted in place of a missing
-rate expression in a reaction.  Moreover, a reaction's rate
-cannot be defined in any other way in SBML---initial assignments
-(Section~\ref{sec:initialAssignment}), rules
-(Section~\ref{sec:rules}), events (Section~\ref{sec:events}) and
-other constructs in SBML cannot be used to set the reaction rate
-separately.  Nevertheless, for some modeling applications, this
-can be perfectly acceptable.
+rate expression in a reaction.  Moreover, a reaction's rate cannot
+be defined in any other way in SBML---\InitialAssignment,
+\AssignmentRule, \RateRule, \AlgebraicRule, \Event, and other
+constructs in SBML cannot be used to set the reaction rate
+separately.  Nevertheless, for some modeling applications,
+reactions without any defined rate can be perfectly acceptable.
 
 
 \paragraph{The \token{reversible} field}
@@ -5904,9 +5903,8 @@ the absence of performing a time-course simulation of the model.
 Moreover, the need in SBML to allow rate expressions (\ie
 \KineticLaw) to be optional leads to the need for a separate flag
 indicating reversibility.  Information about reversibility in the
-absence of a \token{KineticLaw} in a \Reaction is useful in
-certain kinds of structural analyses such as elementary mode
-analysis.
+absence of a \KineticLaw in a \Reaction is useful in certain kinds
+of structural analyses such as elementary mode analysis.
 
 Mathematically, the \token{reversible} field on \Reaction has no
 impact on the construction of the equations giving the overall
@@ -5932,7 +5930,7 @@ relevant rate formulas,
 \end{equation*}
 \end{linenomath}
 where $S$ is a reactant species of $R_f$ and a product of $R_r$,
-$n$ is the overall stoichiometry of $S$ in $R_f$ (which by
+$n$ is the effective stoichiometry of $S$ in $R_f$ (which by
 implication must be the same as its stoichiometry in $R_r$), and
 ``\ldots'' indicates other rate formulas in the model involving
 the particular species $S$.  Now, contrast this to the case of an
@@ -5944,7 +5942,6 @@ of $R_f$ in the first model.  The rate of this reaction will be a
 formula $f_c$ = $f_f(\mathbf{X}) - f_r(\mathbf{X})$.  In
 constructing an expression representing the overall rate of change
 for the species $S$ involved in that reaction, we will have
-
 \begin{linenomath}
 \begin{equation*}
 \begin{aligned}
@@ -5959,17 +5956,17 @@ rate of change of a species.  Although in this simple example we
 used an expression for $f_c$ that had clearly separated terms, in
 the general case the expression may have a more complicated form.
 
-Note that labeling a reaction as being irreversible represents an
-assertion that the reaction always proceeds in the given forward
-direction.  (Why else would it be flagged as irreversible?)  This
-implies that the rate expression in the \KineticLaw always has a
-non-negative value during simulations.  Simulation tools could
-provide a means of optionally testing that this condition holds.
-The presence of reversibility information in two places (\ie the
-rate expression and the \token{reversible} flag) leaves open the
-possibility of a model containing contradictory information, but
-the creation of such a model would indicate an error on the part
-of the software generating it.
+Note that labeling a reaction as irreversible is an assertion that
+the reaction always proceeds in the given forward direction.  (Why
+else would it be flagged as irreversible?)  This implies the rate
+expression in the \KineticLaw always has a non-negative value
+during simulations.  Software tools could provide a means of
+optionally testing that this condition holds.  The presence of
+reversibility information in two places (\ie the rate expression
+and the \token{reversible} flag) leaves open the possibility that
+a model could contain contradictory information, but the creation
+of such a model would be an error on the part of the software
+generating it.
 
 
 \paragraph{The \token{fast} field}
@@ -6035,15 +6032,16 @@ most precise (narrow) term that defines the mathematical framework
 used in the reaction.
 
 As discussed in Section~\ref{sec:model-sboterm}, the value given
-to \token{sboTerm} on a model's \Reaction objects interacts with
-the SBO labels on the \Model element.  If the \Model's
-\token{sboTerm} field has a value, it should be interpreted to
-mean that all the reactions in a model assume the same modeling
-framework.  In that case, the \token{sboTerm} labels on individual
-reactions may be omitted, but only the \Reaction SBO labels can be
-thus omitted; the SBO labels on \KineticLaw within \Reaction must
-still be supplied, as must the terms on other components of the
-model, in order to characterize the model completely.  (See
+to \token{sboTerm} on a \Reaction object interacts with the value
+of the \token{sboTerm} field on the \Model element.  If the
+\Model's \token{sboTerm} field has a value, it should be
+interpreted to mean that all the reactions in a model assume the
+same modeling framework.  In that case, the \token{sboTerm} labels
+on individual reactions may be omitted, but only the \Reaction
+\token{sboTerm} labels can be thus omitted; the \token{sboTerm}
+field on \KineticLaw within \Reaction must still be given a value,
+as must the terms on other components of the model, in order to
+characterize the model completely.  (See
 Section~\ref{sec:model-sboterm} for more discussion about this
 topic.)
 
@@ -6073,7 +6071,7 @@ Figure~\vref{fig:reaction}, is an abstract type that serves as the
 parent class of both \SpeciesReference and
 \ModifierSpeciesReference.  It is used simply to hold the fields
 \token{species}, \token{id}, \token{name}, and \token{sboTerm}
-that are common to the latter structures.
+that are common to the latter two structures.
 
 
 \paragraph{The \token{id} and \token{name} fields}
@@ -6147,11 +6145,11 @@ The \Reaction structure provides a way to express which species
 act as reactants and which species act as products in a reaction.
 In a given reaction, references to those species acting as
 reactants and/or products are made using instances of
-\SpeciesReference structures in the \token{reactant} and
-\token{product} lists of the \Reaction object.  The
-\SpeciesReference structure inherits the mandatory field
-\token{species} and optional fields \token{id}, \token{name}, and
-\token{sboTerm}, from the parent type \SimpleSpeciesReference; see
+\SpeciesReference structures in \Reaction's lists of reactants and
+products.  The \SpeciesReference structure inherits the mandatory
+field \token{species} and optional fields \token{id},
+\token{name}, and \token{sboTerm}, from the parent type
+\SimpleSpeciesReference; see
 Section~\ref{subsec:simplespeciesreference} for their definitions.
 It also defines two new fields, \token{stoichiometry} and
 \token{stoichiometryMath}, described below.
@@ -6283,26 +6281,25 @@ inhibitor).  In SBML, all such species are simply called
 \emph{modifiers} without regard to the detailed role of those
 species in the model.  The \Reaction structure provides a way to
 express which species act as modifiers in a given reaction.  This
-is the purpose of the \token{modifier} field in \Reaction; this
-field is a list of \ModifierSpeciesReference structures defined in
-Figure~\vref{fig:reaction}.
+is the purpose of the list of modifiers available in \Reaction.
+The list contains instances of \ModifierSpeciesReference
+structures.
 
-The \ModifierSpeciesReference structure inherits the mandatory
-field \token{species} and optional fields \token{id},
-\token{name}, and \token{sboTerm}, from the parent type
-\SimpleSpeciesReference; see
+As shown in Figure~\vref{fig:reaction}, the
+\ModifierSpeciesReference structure inherits the mandatory field
+\token{species} and optional fields \token{id}, \token{name}, and
+\token{sboTerm}, from the parent type \SimpleSpeciesReference; see
 Section~\ref{subsec:simplespeciesreference} for their precise
 definitions.
 
-The value of the \token{species} field must be the identifier of a
-species defined in the enclosing \Model; this species is
-designated as a modifier for the current reaction.  A reaction may
-have any number of modifiers.  It is permissible for a modifier
-species to appear simultaneously in the list of reactants and
-products of the same reaction where it is designated as a
-modifier, as well as to appear in the list of reactants, products
-and modifiers of other reactions in the model.
-
+The value of the \token{species} field must be the
+identifier of a species defined in the enclosing \Model; this
+species is designated as a modifier for the current reaction.
+A reaction may have any number of modifiers.  It is permissible
+for a modifier species to appear simultaneously in the list of
+reactants and products of the same reaction where it is designated
+as a modifier, as well as to appear in the list of reactants,
+products and modifiers of other reactions in the model.
 
 
 \subsubsection{The \class{KineticLaw} structure}
@@ -6314,29 +6311,32 @@ Figure~\vref{fig:reaction}, \KineticLaw has fields called
 \token{math}, \token{parameter} and \token{sboTerm}, described
 below.
 
-Note that previous definitions of SBML included two additional
-fields called \token{substanceUnits} and \token{timeUnits}, which
-enabled the \quantity{substance}/\quantity{time} units of the
-reaction rate expression to be defined on a per-reaction basis.
-\sbmltwotwo removes these fields for several reasons.  First, the
-introduction in \sbmltwotwo of (a) mass and dimensionless units as
-possible units of \quantity{substance}, and (b) the ability to use
-reaction identifiers in mathematical formulas, lead to the
-potential for creating valid models in which the units of
-mathematical formulas could nevertheless not be verified to be
-consistent without outside knowledge.  Removing these fields does
-not completely remove the potential for creating problematic
-models, but it removes a particularly easy way of creating them.
-Second, the ability to change the units of a reaction leads to
-unintuitive and difficult-to-reconcile systems of equations, yet
-the feature adds little functionality to SBML.  The absence of
+Previous definitions of SBML included two additional fields called
+\token{substanceUnits} and \token{timeUnits}, which allowed the
+\quantity{substance}/\quantity{time} units of the reaction rate
+expression to be defined on a per-reaction basis.  \sbmltwotwo
+removes these fields for several reasons.  First, the introduction
+in \sbmltwotwo of mass and dimensionless units as possible units
+of \quantity{substance}, coupled with the previous facility for
+defining the units of each reaction separately and the ability to
+use non-integer stoichiometries, lead to the possibility of
+creating a valid model whose reactions nevertheless could not be
+integrated into a system of equations without outside knowledge
+for converting the quantities used.  (As a simple example,
+consider if one reaction is defined to be in grams per second and
+another in moles per second, and species are given in moles:
+converting from mass to moles would require knowing the molecular
+mass of the species.)  Second, the ability to change the units of
+a reaction provided the potential of creating unintuitive and
+difficult-to-reconcile systems of equations, yet the feature added
+little functionality to SBML.  The \emph{absence} of
 \token{substanceUnits} does not prevent the definition of any
-reactions; it only requires the generator of the model to be
-explicit about any necessary conversion factors.  Third, few
+reactions; it only results in requiring the generator of the model
+to be explicit about any necessary conversion factors.  Third, few
 software tools have ever correctly implemented support for
-\token{substanceUnits}, making the use of this field in a model an
-impediment to interoperability.  Fourth, examination of real-life
-models revealed that a frequent reason for using
+\token{substanceUnits}, which made the use of this field in a
+model an impediment to interoperability.  Fourth, examination of
+real-life models revealed that a frequent reason for using
 \token{substanceUnits} was to set the units of all reactions to
 the same set of substance units, which is better achieved by
 setting the model-wide values of \val{substance}.
@@ -6349,9 +6349,8 @@ has a field called \token{math} for holding a MathML formula
 defining the rate of the reaction.  The expression in \token{math}
 may refer to species identifiers, as discussed in
 Section~\ref{sec:ci-token}.  The only species identifiers that can
-be used in \token{math} are those listed in the \token{species}
-fields of the \token{reactant}, \token{product} and
-\token{modifier} structures contained in the \Reaction structure.
+be used in \token{math} are those declared in the lists of
+reactants, products and modifiers in the \Reaction structure.
 
 Section~\ref{sec:about-kinetic-laws} provides important
 discussions about the meaning and interpretation of SBML ``kinetic
@@ -6387,9 +6386,9 @@ laws''.
 
 \paragraph{The list of parameters}
 
-An instance of a \KineticLaw type structure can contain zero or
-more \Parameter structures (Section~\ref{sec:parameters}) which
-define new parameters whose identifiers can be used in the
+An instance of a \KineticLaw type structure can contain a list of
+zero or more \Parameter structures (Section~\ref{sec:parameters})
+which define new parameters whose identifiers can be used in the
 \token{math} formula.  As discussed in
 Section~\ref{sec:identifiers}, reactions introduce local
 namespaces for parameter identifiers.  This means that within a
@@ -6403,24 +6402,23 @@ parameters (Section~\ref{sec:parameters}).  This simplifies the
 SBML language and reduces the number of unique types of data
 objects.  However, there is a difference between local and global
 parameters: in the case of parameters defined locally to a
-\KineticLaw, the \token{constant} field in the parameter
-definition must not be assigned a value of \val{false}---it must
-always be \val{true} (either explicitly or left to its default
-value).  There is no mechanism by which the value of a parameter
-local to a reaction can be changed, and therefore, such parameters
-always have a constant value.
+\KineticLaw, there is no means by which the parameter values can
+be changed.  Consequently, such parameters' values are always
+constant, and the \token{constant} field in their definitions must
+always have a value of \val{true} (either explicitly or left to
+its default value).
 
 
 \paragraph{The \token{sboTerm} field}
 
-The \KineticLaw structure has an optional \primtype{SBOTerm}
-field, \token{sboTerm} (see Section~\ref{sec:sboTerm}).  This
-field when present must contain a Systems Biology Ontology (SBO;
-\sboref) term identifier referring to a kinetic law SBO term, that
-is a term derived from \sboratelaw.  The \KineticLaw structure
-should have a ``is a'' relationship with the SBO term. The SBO
-term chosen should be the most precise (narrow) term that defines
-the type of kinetic law encoded by the structure.
+The \KineticLaw structure has an optional field called
+\token{sboTerm} of type \primtype{SBOTerm} (see
+Section~\ref{sec:sboTerm}).  When a value is given to this field,
+the value must be an SBO identifier referring to a term from the
+\sboratelaw vocabulary defined in SBO.  The relationship is of the
+form ``the kinetic law \emph{is a} X'', where X is the SBO term.
+The SBO term chosen should be the most precise (narrow) term that
+defines the type of kinetic law encoded by the structure.
 
 
 \paragraph{Example}
@@ -6545,13 +6543,13 @@ words, we have created matter out of nothing!
 
 The problem lies in the use of concentrations as the measure of
 what is transfered by the reaction, because concentrations depend
-on volumes and the scenario involves unequal volumes.  The problem
-is not limited to using concentrations or volumes; the same
-problem also exists when using density, \ie
+on volumes and the scenario involves multiple unequal volumes.
+The problem is not limited to using concentrations or volumes; the
+same problem also exists when using density, \ie
 \quantity{mass}/\quantity{volume}, and dependency on other spatial
-distributions (\ie over areas or lengths).  What must be done
-instead is to consider the number of ``items'' being acted upon by
-a reaction process irrespective of their distribution in space
+distributions (\ie areas or lengths).  What must be done instead
+is to consider the number of ``items'' being acted upon by a
+reaction process irrespective of their distribution in space
 (volume, area or length).  An ``item'' in this context may be a
 molecule, particle, mass, or other ``thing'', as long as the
 substance measurement is independent of the size of the space in
@@ -6565,8 +6563,9 @@ $n_{S_2}$ are straightforward:
 \end{equation*}
 \end{linenomath}
 Given numbers of items, it is then easy to recover concentrations
-by dividing the item counts by volume: $[S_1] = n_{S_1}/V_1$ and
-$[S_2] = n_{S_2}/V_2$.
+by dividing the item counts of each species by the volume of the
+compartment in which the species is located: $[S_1] = n_{S_1}/V_1$
+and $[S_2] = n_{S_2}/V_2$.
 
 The need to support multicompartment models requires that the
 reaction rates in SBML to be expressed in terms of
@@ -6629,7 +6628,7 @@ The second rate expression becomes
   r_2 = -k_2 \cdot [S_2] \cdot V_2 \\
 \end{equation*}
 \end{linenomath}
-The expressions $r_1$ and $r_2$ are what would be written in SBML
+The expressions $r_1$ and $r_2$ are what would be written in
 \KineticLaw \token{math} definitions for the two reactions in this
 system.  The formulas give the speed of each reaction in terms of
 the substance change over time.  The reader of the SBML model
@@ -6699,24 +6698,27 @@ rate constants have units involving concentration rather than item
 counts.  For example, the second-order rate constant in a
 mass-action rate law has units of 1/($M \cdot s$), which is to
 say,
-\quantity{volume}/(\quantity{substance}$\cdot$\quantity{time}).
+\quantity{volume}/(\quantity{substance}$\cdot$\quantity{time});
+this constant is then multiplied by two concentration terms.
 Reaction definitions in SBML models can be constructed by taking
 such expressions and multiplying them by the volume of the
 compartment in which the reactants are located.  By contrast, if
-we were to simply insert species as item counts into such rate
-laws, it would in most cases be incorrect.  At the very least, the
-constants in the equations would need to be converted in some way
-to make such expressions valid.
-
-A full SBML example of translating a complete multicompartmental model
-into ODEs is given in Section~\ref{sec:odeeg}.
+we were to simply replace concentrations of species by item counts
+in such rate laws, it would in most cases be incorrect.  At the
+very least, the constants in the equations would need to be
+converted in some way to make such expressions valid.
 
 The preceding discussion of problems involving rate laws concerns
 modeling approaches that use continuous quantities.  There is an
 alternative approach to modeling that instead treats species as
-discrete populations~\cite{wilkinson_2006}.  In those cases, the
+discrete populations~\citep{wilkinson_2006}.  In those cases, the
 rate expressions already use substance or item counts rather than
 concentrations and there is no need to convert them.
+
+A full SBML example of translating a complete multicompartmental
+model into ODEs is given in Section~\ref{sec:odeeg}.  An example
+of translating a discrete model is given in
+Section~\ref{sec:discrete-eg}.
 
 
 \paragraph{Advanced cases}
@@ -6738,34 +6740,37 @@ Suppose we have a simple reaction system consisting of only
   S_1 + S_2 \rightarrow S_3
 \end{equation*}
 \end{linenomath}
-where $S_1$, $S_2$ and $S_3$ are located in separate compartments
-with volumes $V_1$, $V_2$ and $V_3$, and the rate expression is
-given as $k \cdot [S_1] \cdot [S_2]$.  (In reality, one would
-not use such a rate law in this case, but for the sake of this
-example, let us ignore the fact that a mass-action rate law would
-actually involve an assumption that all reactants are in a
-well-mixed solution.)  Some straightforward examination of the
+where $S_1$, $S_2$ and $S_3$ are each located in separate
+compartments with volumes $V_1$, $V_2$ and $V_3$, and the rate
+expression is given as $k \cdot [S_1] \cdot [S_2]$.  (In reality,
+one would not use such a rate law in this case, but for the sake
+of this example, let us ignore the fact that a mass-action rate
+law would actually involve an assumption that all reactants are in
+a well-mixed solution.)  A straightforward examination of the
 possibilities eventually leads to the conclusion that in order to
 take account of the multiple volumes, the rate expressions in
 terms of \quantity{substance}/\quantity{time} have to be written
 as
 \begin{linenomath}
 \begin{equation*}
-  \frac{dn_{S_i}}{dt} = -k' \cdot ([S_1] \cdot V_1) \cdot ([S_2] \cdot V_2)\\
+  \frac{dn_{S_i}}{dt} = -k'(V_1,V_2) \cdot 
+    \bigl([S_1] \cdot V_1\bigr) \cdot \bigl([S_2] \cdot V_2\bigr)\\
 \end{equation*}
 \end{linenomath}
-The crux of the problem is that the new factor $k'$ is not the
-original $k$; to make the overall units of the expression work
-out, $k'$ must depend on the volumes in some way, and its value
-must change if $V_1$ or $V_2$ changes.  It is no longer a standard
-rate constant.  In an SBML model, it is easy to define an
+The crux of the problem is that the new factor $k'(V_1,V_2)$ is
+not the original $k$; to make the overall units of the expression
+work out, $k'(V_1,V_2)$ must be a function of the volumes, and its
+value must change if $V_1$ or $V_2$ changes.  It is no longer a
+standard rate constant.  In an SBML model, it is easy to define an
 \AssignmentRule to compute the value of $k'$ based on $k$, $V_1$,
 $V_2$, and possibly other variables in the system as needed, but
 only the modeler can determine the proper formula for their
 particular modeling situation.  (For example, the modeler may know
 that in their hypothesized physical system, the reaction actually
-takes place completely in one or the other compartment, and
-therefore the factor should be designed accordingly.)
+takes place completely in one or the other compartment and
+therefore the factor should be designed accordingly, or perhaps
+the reaction takes place on a membrane between compartments and a
+scaling factor based on the area should be used.)
 
 Thus, although these models can be represented in SBML,
 constructing the correct rate expression in terms of
@@ -6817,16 +6822,17 @@ recipe.
 \label{subsec:reaction-as-symbol}
 
 The value of the \token{id} field of a \Reaction structure can be
-used as the content of a MathML \token{ci} element. Such a
-\token{ci} element or symbol represents the rate of the given
-reaction as given by the \KineticLaw structure of the reaction.
-The symbol has the units of \quantity{substance/time}.
+used as the content of a \token{ci} element in MathML formulas
+elsewhere in the model. Such a \token{ci} element or symbol
+represents the rate of the given reaction as given by the
+\KineticLaw structure of the reaction.  The symbol has the units
+of \quantity{substance/time}.
 
-A \KineticLaw structure forms an assignment statement assigning
-the evaluated value of the \token{math} field to the symbol value
-contained in the \Reaction \token{id} field.  No other structure
-can assign a value to such a reaction symbol; \ie the
-\token{variable} fields of \InitialAssignment, \RateRule,
+A \KineticLaw structure in effect forms an assignment statement
+assigning the evaluated value of the \token{math} field to the
+symbol value contained in the \Reaction \token{id} field.  No
+other structure can assign a value to such a reaction symbol; \ie
+the \token{variable} fields of \InitialAssignment, \RateRule,
 \AssignmentRule and \EventAssignment structures cannot contain the
 value of a \Reaction \token{id} field.
 

@@ -2417,7 +2417,7 @@ etc.
 
 The identifiers of \Species, \Compartment, \Parameter, and
 \Reaction object instances in a given SBML model refer to the main
-variables in the model.  Depending on certain attributes of these
+variables in a model.  Depending on certain attributes of these
 objects (\eg the \token{constant} flag on species, compartments
 and parameters---this and other conditions are explained in the
 relevant sections elsewhere in this document), some of the
@@ -2444,12 +2444,13 @@ applied:
 \item At time $t_i$:
   \begin{itemize}
     
-  \item The values of all \Species, \Compartment, and \Parameter
-    objects whose identifiers are not the subject of an
-    \InitialAssignment are assigned by the definition of the
-    object in the model; else, \InitialAssignment values are
-    computed and assigned as the relevant \Species quantity,
-    \Compartment size, or \Parameter value.  All assignments are
+  \item The value of every \Species, \Compartment, and \Parameter
+    object whose identifier is \emph{not} the subject of an
+    \InitialAssignment is assigned by the definition of that
+    object in the model; conversely, the value of every \Species,
+    \Compartment, and \Parameter object whose identifier \emph{is}
+    the subject of an \InitialAssignment is computed and assigned
+    by that \InitialAssignment.  All assignments of both kinds are
     performed once and thereafter are in effect for $t \geq t_i$.
     If an object is defined with \token{constant}=\val{false}, its
     value may be changed by other constructs or reactions in a
@@ -2478,27 +2479,38 @@ applied:
   \item The system of equations constructed by combining
     \AssignmentRule equations, \AlgebraicRule equations, \RateRule
     equations, and the equations constructed from the \Reaction
-    definitions in the model, used to obtain the initial
-    conditions for the numerical solver algorithms.
+    definitions in the model, are used to obtain the initial
+    conditions for the numerical solver algorithms.  (Note that
+    there cannot be both an \AssignmentRule and a \RateRule for
+    the same identifier, or both an \AssignmentRule and an
+    \InitialAssignment for the same identifier; see
+    Section~\ref{sec:assignmentrule}.)
     
-  \item \Constraint definitions begin to take effect.  (The result
-    may be a constraint violation; see
+  \item \Constraint definitions can begin to take effect.  (The
+    result may be a constraint violation; see
     Section~\ref{sec:constraints}.)
 
   \end{itemize}
   
 \item For time $t > 0$:
   \begin{itemize}
-
-  \item \RateRule definitions begin to take effect.
-
-  \item \Event definitions begin to take effect.
+    
+  \item \RateRule definitions can begin to take effect.
+    
+  \item \Event definitions can begin to take effect.  (Note that
+    an \Event cannot be defined to change the value of a variable
+    that is also the subject of an \AssignmentRule; see
+    Section~\ref{sec:events}.)
 
   \item System simulation proceeds.
 
   \end{itemize}
 
 \end{enumerate}  
+
+To reiterate: in modeling situations that do not involve the use
+of the \emph{delay} \token{csymbol}, $t_i = 0$, but this does not
+alter the steps above.
 
 
 \subsubsection{Math expression types}
@@ -4108,13 +4120,15 @@ A \Compartment also has an optional boolean field called
 \token{constant} that indicates whether the compartment's size
 stays constant or can vary during a simulation.  A value of
 \val{false} indicates the compartment's \token{size} can be
-changed by other constructs in SBML.  The default value for the
-\token{constant} field is \val{true} because in the most common
-modeling scenarios at the time of this writing, compartment sizes
-remain constant.  The \token{constant} field must default to or be
-set to \val{true} if the value of the \token{spatialDimensions}
-field is \val{0}, because a zero-dimensional compartment cannot
-ever have a size.
+changed by other constructs in SBML.  A value of \token{true}
+indicates the compartment's \token{size} cannot be changed by any
+other construct except \InitialAssignment.  The default value for
+the \token{constant} field is \val{true} because in the most
+common modeling scenarios at the time of this writing, compartment
+sizes remain constant.  The \token{constant} field must default to
+or be set to \val{true} if the value of the
+\token{spatialDimensions} field is \val{0}, because a
+zero-dimensional compartment cannot ever have a size.
 \end{blockChanged}
 
 
@@ -4534,9 +4548,11 @@ A species having \token{boundaryCondition}=\val{false} and
 reactant of one or more reactions in the model.  If the species is
 a reactant or product of a reaction, it must not also appear as
 the target of any \AssignmentRule or \RateRule structure in the
-model.  If instead the species has \token{constant}=\val{true},
-then it cannot appear as a reactant or product, or as the target
-of any \AssignmentRule or \RateRule structure in the model.
+model.  If instead the species has
+\token{boundaryCondition}=\val{false} and
+\token{constant}=\val{true}, then it cannot appear as a reactant
+or product, or as the target of any \AssignmentRule, \RateRule or
+\EventAssignment structure in the model.
 \end{blockChanged}
 
 The example model in section~\ref{sec:constantspecieseg} contains
@@ -4663,9 +4679,10 @@ for simulation time $t \leq 0$.
 The units associated with the value of the parameter are specified
 by the field \token{units}.  \changed{These units are relevant
   when the parameter identifier appears in: (a) \RateRule,
-  \AssignmentRule and \InitialAssignment structures setting the
-  value of the parameter; and (b) MathML expressions.} A \RateRule
-structure that may determine the value of the parameter has units
+  \AssignmentRule, \InitialAssignment and \EventAssignment
+  structures setting the value of the parameter; and (b) MathML
+  expressions elsewhere in the model.} A \RateRule structure that
+may determine the value of the parameter has units
 \quantity{parameter units}/\quantity{time}, where
 \quantity{parameter units} are the units assigned to the parameter
 \changed{using the \token{units} field} and \quantity{time} is the
@@ -4673,11 +4690,11 @@ built-in \token{time} units.  The value assigned to the
 parameter's \token{units} field must be chosen from one of the
 following possibilities: one of the base unit identifiers from
 Table~\vref{tab:unitkind}; one of the built-in unit identifiers
-appearing in first column of Table~\vref{tab:builtin}; or the \changed{identifier}
-of a new unit defined in the list of unit definitions in the
-enclosing \Model structure.  There are no constraints on which
-units can be chosen from these sets.  There are no default units
-for parameters.
+appearing in first column of Table~\vref{tab:builtin}; or the
+\changed{identifier} of a new unit defined in the list of unit
+definitions in the enclosing \Model structure.  There are no
+constraints on which units can be chosen from these sets.  There
+are no default units for parameters.
 
 
 \subsubsection{The \token{constant} field}
@@ -4858,6 +4875,9 @@ having that compartment's \token{id} as its \token{symbol} value,
 then the interpretation is that the \token{size} assigned in the
 \Compartment definition should be ignored and the value assigned
 based on the computation defined in the \InitialAssignment.
+Initial assignments can take place for \Compartment, \Species and
+\Parameter objects regardless of the value of their
+\token{constant} field.
 
 This does not mean that a definition of a symbol can be omitted if
 there is an \InitialAssignment object for that symbol; the symbols
@@ -4918,12 +4938,12 @@ initial assignments \emph{and} assignment rules for the same
 entity.  That is, there cannot be \emph{both} an
 \InitialAssignment and an \AssignmentRule for the same symbol in a
 model, because both kinds of constructs apply prior to and at the
-start of simulated time (allowing both to exist for a given symbol
+start of simulated time---allowing both to exist for a given symbol
 would result in indeterminism).  (See also
 Section~\ref{sec:ruleconstraints}.)
 
-The ordering of \InitialAssignment objects is not significant. The
-combined set of \InitialAssignment, \AssignmentRule and
+The ordering of \InitialAssignment objects is not significant.
+The combined set of \InitialAssignment, \AssignmentRule and
 \KineticLaw objects form a set of assignment statements that must
 be considered as a whole.  The combined set of assignment
 statements should not contain algebraic loops: a chain of
@@ -4947,10 +4967,10 @@ assignment.  What value should the second initial assignment use?
 It is $y$, the value assigned to the symbol by the first initial
 assignment, not whatever value was given in the symbol's
 definition.  This follows directly from the behavior at the
-defined at the beginning of this section: if an \InitialAssignment
-object exists for a given symbol, then the symbol's value is
-overridden by that initial assignment.  (The order of the two
-initial assignments in the model is irrelevant.)
+defined at the beginning of this section and in
+Section~\ref{sec:before-t0}: if an \InitialAssignment object
+exists for a given symbol, then the symbol's value is overridden
+by that initial assignment.
 
 
 \subsubsection{Example}
@@ -5171,11 +5191,11 @@ Section~\ref{sec:ruleconstraints} below.
 The rule type \AssignmentRule is used to express equations that
 set the values of variables.  The left-hand side (the
 \token{variable} field) of an assignment rule can refer to the
-identifier of a species, compartment, or parameter \changed{(but
-  not a reaction)}.  The entity identified must not have its
-\token{constant} field set to \val{true}.  The effects of an
-\AssignmentRule are in general terms the same, but differ in the
-precise details depending on the type of variable being set:
+identifier of a \Species, \Compartment, or \Parameter object in
+the model (but not a reaction).  The entity identified must not
+have its \token{constant} field set to \val{true}.  The effects of
+an \AssignmentRule are in general terms the same, but differ in
+the precise details depending on the type of variable being set:
 \end{blockChanged}
 \begin{itemize}
   
@@ -5401,8 +5421,10 @@ valid set of assignment statements:
 
 \paragraph{The model must not be overdetermined}
 
-An SBML model must not be overdetermined.  A SBML model that does
-not contain \AlgebraicRule structures cannot be overdetermined.
+An SBML model must not be overdetermined; that is, a model must
+not define more equations than there are unknowns in a model.  An
+SBML model that does not contain \AlgebraicRule structures cannot
+be overdetermined.
 
 Assessing whether a given continuous, deterministic, mathematical
 model is overdetermined does not require dynamic analysis; it can
@@ -5418,7 +5440,7 @@ defined by rate rules or implied by the reaction rate
 definitions), there will be a single edge between the equation and
 the variable determined by that differential equation.  A
 mathematical model is overdetermined if the maximal
-matchings~\cite{chartrand_1977} of the bipartite graph contain
+matchings~\citep{chartrand_1977} of the bipartite graph contain
 disconnected vertexes representing equations.  (If one maximal
 matching has this property, then all the maximal matchings will
 have this property; \ie it is only necessary to find one maximal
@@ -5431,17 +5453,17 @@ a method of applying this procedure to specific SBML data objects.
 \subsubsection{Example of rule use}
 \label{sec:eg-rule-use}
 
-This section contains an example set of rules.  Consider the following
-set of equations:
+This section contains an example set of rules.  Consider the
+following set of equations:
 \begin{equation*}
   \begin{array}{lll}
-    k = \dfrac{k_3}{k_2}, & s_2 = \dfrac{k \, x}{1 + k_2}, & A = 0.10 \, x
+    k = \dfrac{k_3}{k_2}, & s_2 = \dfrac{k \cdot x}{1 + k_2}, & A = 0.10 \cdot x
   \end{array}
 \end{equation*}
-This can be encoded by the following scalar rule set (where the definitions
-of \texttt{x}, \texttt{s}, \texttt{k}, \texttt{k2}, \texttt{k3} and \texttt{A} are
-assumed to be located elsewhere in the model and not shown in this
-abbreviated example):
+This can be encoded by the following scalar rule set (where the
+definitions of \texttt{x}, \texttt{s}, \texttt{k}, \texttt{k2},
+\texttt{k3} and \texttt{A} are assumed to be located elsewhere in
+the model and not shown in this abbreviated example):
 
 \begin{example}
     <listOfRules>
@@ -7145,6 +7167,8 @@ It is possible for events to \emph{fire} other events, \ie an
 event assignment can cause an event to \emph{fire}, therefore it
 is possible for a model to be entirely encoded in \Event
 structures.
+
+\end{blockChanged}
 
 It is entirely possible for two events to be \emph{executed}
 simultaneously in simulated time.  It is assumed that, although

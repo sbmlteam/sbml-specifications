@@ -4773,8 +4773,8 @@ constant or the initial value of a variable from the values of
   \begin{blockMarkChanged}
   \begin{classbox}{InitialAssignment}
     symbol: SId                                                     \\
-    sboTerm: SBOTerm \{ use="optional" \}                           \\
     math: Math \{ namespace="http://www.w3.org/1998/Math/MathML" \} \\
+    sboTerm: SBOTerm \{ use="optional" \}                           \\
   \end{classbox}
   \caption{The definition of \InitialAssignment.
     Following UML notation fields
@@ -5557,9 +5557,9 @@ shows the definition of the \Constraint data structure.
   \centering
   \small
   \begin{classbox}{Constraint}
-    sboTerm: SBOTerm \{ use="optional" \}                                                            \\
     math: Math \{ namespace="http://www.w3.org/1998/Math/MathML" \}                                  \\
     message: (any: \{ namespace="http://www.w3.org/1999/xhtml" \}) \{ minOccurs="0" maxOccurs="1" \} \\
+    sboTerm: SBOTerm \{ use="optional" \}                                                            \\
   \end{classbox}
   \caption{The definition of \Constraint.
     Following UML notation fields
@@ -6841,14 +6841,14 @@ given below.
     trigger: (math : Math \{ namespace="http://www.w3.org/1998/Math/MathML" \}) \\
     delay: (math : Math \{ namespace="http://www.w3.org/1998/Math/MathML" \}) \{ minOccurs="0" maxoccurs="1" \} \\
     timeUnits: \markChanged{UnitSId} \{ use="optional" \}                       \\
-    \markChanged{sboTerm: SBOTerm \{ use="optional" \}}                         \\
     eventAssignment: EventAssignment[1..*]                                      \\
+    \markChanged{sboTerm: SBOTerm \{ use="optional" \}}                         \\
   \end{classbox}
   \vspace*{2ex}
   \begin{classbox}{EventAssignment}
     variable: SId                                                              \\
-    \markChanged{sboTerm: SBOTerm \{ use="optional" \}}                            \\
     math: Math \{ namespace="http://www.w3.org/1998/Math/MathML" \}            \\
+    \markChanged{sboTerm: SBOTerm \{ use="optional" \}}                            \\
   \end{classbox}
   \caption{The definitions of \Event and \EventAssignment.
     Following UML notation, additional fields that are inherited
@@ -6960,43 +6960,63 @@ benefit of SBO labels.
 \label{sec:eventassignment}
 
 The \token{eventAssignment} field consists of a non-empty list of
-\EventAssignment structures.  This field is implemented as
-a \token{listOfEventAssignments} element containing one or more
-\token{eventAssignment} elements.  The \EventAssignment
-structures represent variable assignments that have effect when
-the event is \emph{executed}.
+\EventAssignment structures.  This field is implemented as a
+\token{listOfEventAssignments} element containing one or more
+\token{eventAssignment} elements.  The \EventAssignment structures
+represent variable assignments that have effect when the event is
+\emph{executed}.
 
 
 \begin{blockChanged}
 \subsubsection{\class{EventAssignment}}
 
 The \EventAssignment structure is shown in Figure~\ref{fig:event}.
+It contains three fields: \token{variable}, \token{math} and
+\token{sboTerm}, described below.
 
 
 \paragraph{The \token{variable} field}
 
-The \token{variable} field is of type \primtype{SId} and contains
-the identifier of a variable, \ie a compartment, species or
-parameter.  The value of the component referenced by this
-identifier is changed by the \EventAssignment to the value
-computed by the \token{math} field; see below.
+The \token{variable} field is of type \primtype{SId} and can
+contain the identifier of a \Compartment, \Species or \Parameter
+instance defined in the model.  When the event fires, the value of
+the model component identified by \token{variable} is changed by
+the \EventAssignment to the value computed by the \token{math}
+field; that is, a species' quantity, compartment's size or
+parameter's value are reset to the value computed by \token{math}.
 
-The \token{variable} field must not contain the identifier of a
-reaction.  The values of the \token{variable} field must be unique
-among the set of \EventAssignment structures within an \Event
-structure.  The structure referenced by the \token{variable} field
-must have its \token{constant} field set to \val{false}.
+Certain restrictions are placed on what can appear in
+\token{variable}:
+\begin{itemize}
+  
+\item The object identified by the value of the \token{variable}
+  field must not have its \token{constant} field set to or default
+  to \val{true}.  (Constants cannot be affected by events.)
+  
+\item The \token{variable} field must not contain the identifier
+  of a reaction; only species, compartment and parameter values
+  may be set by an \Event.
+  
+\item The value of every \token{variable} field must be unique
+  among the set of \EventAssignment structures within a given
+  \Event structure.  In other words, a single event cannot have
+  multiple \EventAssignment{}s assigning the same variable.  (All
+  of them would be performed at the same time, when that
+  particular \Event triggers, resulting in indeterminacy.)
+  Separate \Event instances can refer to the same variable.
+  
+\item A variable cannot be assigned a value in an \EventAssignment
+  object instance and also be assigned a value by an
+  \AssignmentRule, \ie the value of the \token{variable} attribute
+  in an \EventAssignment instance cannot be the same as the value
+  of a \token{variable} attribute in a \AssignmentRule instance.
+  (Assignment rules hold at all times, therefore it would be
+  inconsistent to also define an event that reassigns the value of
+  the same variable.)
+
+\end{itemize}
+
 \end{blockChanged}
-
-\changed{A variable cannot be assigned a value in an
-\EventAssignment structure and be assigned a value by an
-\AssignmentRule structure, \ie the value of a
-\token{variable} attribute on a \EventAssignment structure
-cannot be the same as the value of a \token{variable} attribute
-on a \AssignmentRule structure.  This restriction is
-imposed because in the invalid case the EventAssignment is
-redundant because the variable would assume the value of given by
-the \AssignmentRule.}
 
 
 \begin{blockChanged}
@@ -7040,29 +7060,30 @@ variable appears in other formulas. However, the precise details,
 which are identical to those of \AssignmentRule structures,
 depend on the variable that is being set:
 \begin{itemize}
-
-\item \emph{In the case of a species}, an \EventAssignment sets the
-  referenced species' quantity (\quantity{concentration} or
-  \quantity{amount of substance})
-  to the value determined by the formula
-  in \token{math}.  The units of the formula are the \emph{units of the species} as
-  defined in Section~\ref{sec:species-units}.
-
-\item \emph{In the case of a compartment}, an \EventAssignment sets
-  the referenced compartment's size to the size determined by the formula
-  in \token{math}.  The overall units of the formula are the units
-  specified for the size of the compartment identified by the value of the
-  \EventAssignment's \token{variable} field.  (See
-  Section~\ref{sec:compartment-units} for an explanation of how the units of the
-  compartment's size are determined.)
-
-\item \emph{In the case of a parameter}, an \EventAssignment sets the
-  referenced parameter's value to that determined by the formula in
-  \token{math}.  The overall units of the formula are the units
-  defined for the parameter identified by the value of the
-  \EventAssignment's \token{variable} field.  (See
-  Section~\ref{sec:parameter-units} for an explanation of how the units of the
-  parameter are determined.)
+  
+\item \emph{In the case of a species}, an \EventAssignment sets
+  the referenced species' quantity (\quantity{concentration} or
+  \quantity{amount of substance}) to the value determined by the
+  formula in \token{math}.  The units of the formula are the
+  \emph{units of the species} as defined in
+  Section~\ref{sec:species-units}.
+  
+\item \emph{In the case of a compartment}, an \EventAssignment
+  sets the referenced compartment's size to the size determined by
+  the formula in \token{math}.  The overall units of the formula
+  are the units specified for the size of the compartment
+  identified by the value of the \EventAssignment's
+  \token{variable} field.  (See
+  Section~\ref{sec:compartment-units} for an explanation of how
+  the units of the compartment's size are determined.)
+  
+\item \emph{In the case of a parameter}, an \EventAssignment sets
+  the referenced parameter's value to that determined by the
+  formula in \token{math}.  The overall units of the formula are
+  the units defined for the parameter identified by the value of
+  the \EventAssignment's \token{variable} field.  (See
+  Section~\ref{sec:parameter-units} for an explanation of how the
+  units of the parameter are determined.)
 
 \end{itemize}
 
@@ -7092,38 +7113,52 @@ assignment $k_2 = 0$ at the point when $P_1 \leq t$:
 </event>
 \end{example}
 
-A complete example of a model using events is given in Section~\ref{sec:eventeg}.
+A complete example of a model using events is given in
+Section~\ref{sec:eventeg}.
+
 
 \subsubsection{Detailed semantics of events}
 \label{sec:events-semantics}
 
-The description of events above describes the action of events in isolation from
-each other.  This section describes how events interact.  Events whose \token{trigger}
-expression is true at the start of a simulation do not \emph{fire} at the start of the simulation.
-Events \emph{fire} only when the trigger \emph{becomes} true, i.e. the trigger expression
-transitions from false to true.  It is possible for events to \emph{fire} other events, i.e. an
-event assignment can cause an event to \emph{fire}, therefore it is possible for model to be entirely
-encoded in \Event structures.
+\begin{blockChanged}
+The description of events above describes the action of events in
+isolation from each other.  This section describes how events
+interact.
 
-\changed{\emph{Any} transition of a \token{trigger} expression
-from false to true will cause an \token{event} to \emph{fire}.
-Consider an \token{event} $E$ with delay $d$ where the
-\token{trigger} expression makes a transition from false to true
-at times $t_1$ and $t_2$.  The \EventAssignment structure
-will have effect at $t_1+d$ and $t_2+d$ irrespective of the
-relative times of $t_1$ and $t_2$. For example events can
-``overlap'' so that $t_1 < t_2 < t_1+d$ still causes an event
-assignments to occur at $t_1+d$ and $t_2+d$.}
+Events whose \token{trigger} expression is true at the start of a
+simulation do not \emph{fire} at the start of the simulation ($t =
+0$).  Events \emph{fire} only when the trigger \emph{becomes}
+true, \ie the trigger expression transitions from false to true,
+which cannot happen at $t = 0$ but can happen at $t > 0$.
 
-It is entirely possible for two events to be \emph{executed} simultaneously in simulated time.
-It is assumed that, although the precise time at which these events are \emph{executed} is not
-resolved beyond the given point in simulated time, the order in which the events occur is resolved.
-This order can be significant in determining the overall outcome of a given simulation. SBML Level
-2 does not define the algorithm for determining this order (the tie-breaking algorithm).  As a
-result, the results of simulations involving events may vary when simultaneous events occur during
-simulation.  It is anticipated that future versions or levels of SBML will define a specific set
-of tie-breaking algorithms and a mechanism for models to indicate which algorithm should be
-applied during simulation.
+Any transition of a \token{trigger} expression from \val{false} to
+\val{true} will cause an \token{event} to \emph{fire}.  Consider
+an \token{event} $E$ with delay $d$ where the \token{trigger}
+expression makes a transition from false to true at times $t_1$
+and $t_2$.  The \EventAssignment structure will have effect at
+$t_1+d$ and $t_2+d$ irrespective of the relative times of $t_1$
+and $t_2$. For example events can ``overlap'' so that $t_1 < t_2 <
+t_1+d$ still causes an event assignments to occur at $t_1+d$ and
+$t_2+d$.
+
+It is possible for events to \emph{fire} other events, \ie an
+event assignment can cause an event to \emph{fire}, therefore it
+is possible for a model to be entirely encoded in \Event
+structures.
+
+It is entirely possible for two events to be \emph{executed}
+simultaneously in simulated time.  It is assumed that, although
+the precise time at which these events are \emph{executed} is not
+resolved beyond the given point in simulated time, the order in
+which the events occur is resolved.  This order can be significant
+in determining the overall outcome of a given simulation. SBML
+Level 2 does not define the algorithm for determining this order
+(the tie-breaking algorithm).  As a result, the results of
+simulations involving events may vary when simultaneous events
+occur during simulation.  It is anticipated that future versions
+or levels of SBML will define a specific set of tie-breaking
+algorithms and a mechanism for models to indicate which algorithm
+should be applied during simulation.
 
 Despite the absence of a specific tie-breaking algorithm, SBML
 event simulation is constrained as follows. When an event $X$

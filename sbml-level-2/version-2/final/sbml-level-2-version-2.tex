@@ -6526,7 +6526,6 @@ sake of simplicity, assume $S_1$ is in a diluted solution and thus
 that the activity of $S_1$ can be taken to be equal to its
 concentration $[S_1]$.  The rate expression will therefore be $k
 \cdot [S_1]$.  Then:
-
 \begin{linenomath}
 \begin{equation*}
   \frac{d[S_2]}{dt} = -\frac{d[S_1]}{dt} = k \cdot [S_1]
@@ -6828,9 +6827,8 @@ recipe.
 The discussion so far has assumed that all of the species
 appearing in a given reaction's rate expression had the same
 units, whether they be concentration or amounts or other.
-However, \Species objects can each declare units separately, which
-means that in principle, a reaction rate expression may involve
-species each having different units.  What happens then?
+However, \Species objects can each declare units separately.  What
+happens then?
 
 It is important to realize that implicit conversions in this
 situation are not defined in SBML.  A species identifier appearing
@@ -6844,28 +6842,95 @@ include the conversion factor as part of the value of
 \token{stoichiometry} or \token{stoichiometryMath} in the
 \SpeciesReference for that species.
 
-%An example may help illustrate this.  Suppose we have a model
-%consisting of one reaction, $A + B \rightarrow C$, in a single
-%compartment of volume $V$, where species $A$ is given in items and
-%species $B$ in moles, the speed of the reaction is given by a
-%standard mass-action rate law with second-order rate constant $k$,
-%and the \token{substance} units of the model are the SBML default
-%of moles.  The SBML kinetic law will be $k \cdot A \cdot B \cdot
-%V$ and its units will be moles/second.  Expressed as differential
-%equations, the rates of change of $A$ and $B$ will be
-%\begin{equation*}
-%  \begin{aligned}
-%    r &= k \cdot A \cdot B \cdot V\\
-%    \dfrac{dA}{dt} &= -1 \cdot r\\
-%    \dfrac{dB}{dt} &= -6.023e23 \cdot r\\
-%  \end{aligned}
-%\end{equation*}
-                                        
-%If we
-%want to construct differential equations for the rates of change
-%of $A$ and $B$
+An example may help illustrate this.  Suppose we have a system of
+two biochemical reactions with mass-action kinetics, written in
+the traditional form
+\begin{equation} \label{eq:two-reactions}
+  \begin{aligned}
+    A + 2\,B & \yields^{k_1} C\\
+    C        & \yields^{k_2} 3\,A
+  \end{aligned}
+\end{equation}
+Assume the reactions take place in a single compartment of volume
+$V$, but now let us throw a wrench into the problem: suppose that
+the species in the model are defined with mixed units as follows:
+\begin{center}
+  \begin{tabular}{ll}
+    $A$  & is in millimoles\\
+    $B$  & is in grams\\
+    $C$  & is in items
+  \end{tabular}
+\end{center}
+When biochemical reaction equations of the form
+\eqref{eq:two-reactions} above are usually written, the units of
+species' quantities are implicitly assumed to be the same, and
+therefore the stoichiometries in the reaction equations
+\eqref{eq:two-reactions} represent simple ratios between the
+quantities of the species in those units.  If instead the initial
+quantities of the species are given in mixed units as in the
+present example, the quantities not only need to be in proper
+stoichiometric relationships, the units also have to be made
+consistent.  In SBML, this is done by appropriately setting the
+\token{stoichiometry} field value in the species references of the
+lists of reactants, products and modifiers in a \Reaction.  This
+then permits a properly balanced system of equations to be
+constructed for each species' rate of change of quantity.
 
-%SBML stoichiometries are not strictly biochemical stoichiometries;
+Continuing with the present example, the SBML ``kinetic law''
+formulas for the reaction rates will be written as expected,
+\begin{equation*}
+  \begin{aligned}
+    r_1 &= {k_1}' \cdot A \cdot B^2 \cdot V\\
+    r_2 &= {k_2}' \cdot C \cdot V
+  \end{aligned}
+\end{equation*}
+where the formula units are the default of moles/second.  When
+these formulas are combined into overall expressions for the rates
+of change of $A$, $B$, and $C$, the result is
+\begin{equation*}
+  \begin{aligned}
+    \dfrac{dA}{dt} &= -a_1 \cdot r_1 + a_2 \cdot r_2\\[5pt]
+    \dfrac{dB}{dt} &= -b_1 \cdot r_1\\[5pt]
+    \dfrac{dC}{dt} &= +c_1 \cdot r_1 - c_2 \cdot r_2
+  \end{aligned}
+\end{equation*}
+where
+\begin{center}
+  \begin{tabular}{lll}
+    $a_1$ & is the SBML stoichiometry of $A$ in reaction 1\\
+    $a_2$ & is the SBML stoichiometry of $A$ in reaction 2\\
+    $b_1$ & is the SBML stoichiometry of $B$ in reaction 1\\
+    $c_1$ & is the SBML stoichiometry of $C$ in reaction 1\\
+    $c_2$ & is the SBML stoichiometry of $C$ in reaction 2\\
+  \end{tabular}
+\end{center}
+We use the term \emph{SBML stochiometries} to highlight the fact
+that in this example set of mixed-units species, the values may
+not be identical to the biochemical stoichiometries in the
+reaction equations \eqref{eq:two-reactions}.  And just what are
+these \emph{SBML stoichiometries}?  In the kind of mixed-units
+situation faced in this example, they must encompass both the
+biochemical stoichiometries and any necessary unit conversions.
+Thus:
+\begin{center}
+  \vspace*{-2ex}
+  \begin{tabular}{lll}
+    $a_1$ = 1000 & (each second, 1000 millimoles of A are consumed)\\
+    $a_2$ = 3000 & (each second, 3000 millimoles of A are produced)\\
+    $b_1$ = $2 \cdot m_B$,  where $m_B$ is the molecular mass of
+    $B$  & (each second, 2 moles of B are consumed)\\
+    $c_1$ = $6.02 \times 10^{23}$ & (each second, $6.02 \times
+    10^{23}$ items of C are produced)\\
+    $c_2$ = $6.02 \times 10^{23}$ & (each second, $6.02 \times
+    10^{23}$ items of C are consumed)
+  \end{tabular}
+\end{center}
+
+Finally, note that if the species units \emph{were} the same
+throughout (and in most models they are), the unit conversion
+aspects of the SBML stoichiometries would become unity, leaving
+only the expected biochemical stoichiometry values.  Isn't that
+nice?
 
 
 

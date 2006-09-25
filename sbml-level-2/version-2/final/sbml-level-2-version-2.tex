@@ -1952,9 +1952,11 @@ elements used in SBML is listed below:}
 
 \item \emph{token}: \token{cn}, \token{ci}, \token{csymbol},
   \token{sep}
-
+  
 \item \emph{basic content}: \token{apply}, \token{piecewise},
-  \token{piece}, \token{otherwise}
+  \token{piece}, \token{otherwise}, \token{lambda} (the use of the
+  last is restricted to \FunctionDefinition; see
+  Section~\ref{sec:function-definition-math})
 
 \item \emph{relational operators}: \token{eq}, \token{neq},
   \token{gt}, \token{lt}, \token{geq}, \token{leq}
@@ -2025,7 +2027,6 @@ in SBML (in addition to the \token{xmlns} attribute on
 \item \token{type} on \token{cn} elements.
 
 \end{itemize}
-
 Missing values for these attributes are to be treated in the same
 way as defined by MathML.  These restrictions on attributes are
 designed to confine the MathML elements to their default semantics
@@ -4383,17 +4384,16 @@ non-zero and \token{hasOnlySubstanceUnits} has the value
 \val{false}.  The \emph{units of the species} are of the form
 \quantity{substance} if \token{spatialDimensions} is zero
 \emph{or} \token{hasOnlySubstanceUnits} has the value \val{true}.
-(This dependence on the spatial dimensions of the compartment is
-due to the fact that a zero-dimensional compartment cannot support
-concentrations or densities.)  The units of \quantity{substance}
-are those defined by the \token{substanceUnits} field, and the
-\quantity{size} units are those defined by the
-\token{spatialSizeUnits} field of a \Species instance.
+(This dependence is due to the fact that a zero-dimensional
+compartment cannot support concentrations or densities.)  The
+units of \quantity{substance} are those defined by the
+\token{substanceUnits} field, and the \quantity{size} units are
+those defined by the \token{spatialSizeUnits} field of a \Species
+instance.
 \end{blockChanged}
 
-\begin{table}[ht]
+\begin{table}[htb]
 \begin{blockChanged}
-  \vspace*{1ex}
   \centering
   \small
   \begin{tabular}{lll}
@@ -4497,7 +4497,10 @@ the combined values of the \token{boundaryCondition} and
     \bottomrule
   \end{tabular}
   \caption{How to interpret the values of the \token{constant} and
-    \token{boundaryCondition} fields of the \Species structure.}
+    \token{boundaryCondition} fields of the \Species structure.
+    Note that column four is specifically about reactants and
+    products and \emph{not} also about species acting as
+    modifiers; the latter are by definition unchanged by reactions.}
   \label{tab:specieattrib}
 \end{table}
 
@@ -4811,7 +4814,10 @@ object can be the identifier (\ie the value of the \token{id}
 field) of a \Compartment, \Species or \Parameter elsewhere in the
 model.  The purpose of the \InitialAssignment is to define the
 initial value of the constant or variable referred to by the
-\token{symbol} field.
+\token{symbol} field.  (The field's name is \token{symbol} rather
+than \token{variable} because it may assign values to constants as
+well as variables in a model; see
+Section~\ref{sec:initial-assignment-semantics} below.)
 
 An initial assignment cannot be made to reaction identifiers, that
 is, the \token{symbol} field value of an \InitialAssignment cannot
@@ -4910,10 +4916,10 @@ In the context of a simulation, initial assignments establish
 values that are in effect prior to and including the start of
 simulation time, \ie $t \leq 0$.  Section~\ref{sec:before-t0}
 provides information about the interpretation of assignments,
-rules, and entity values for simulation time up to and include the
-start time $t = 0$; this is important for establishing the initial
-conditions of a simulation, especially if the model involves
-expressions containing the \emph{delay} \token{csymbol}
+rules, and entity values for simulation time up to and including
+the start time $t = 0$; this is important for establishing the
+initial conditions of a simulation, especially if the model
+involves expressions containing the \emph{delay} \token{csymbol}
 (Section~\ref{sec:csymbol-token}).
 
 There cannot be two initial assignments for the same symbol in a
@@ -5134,9 +5140,7 @@ above respectively.
 
 \begin{blockChanged}
 \subsubsection{Common fields in \abstractclass{Rule}}
-\label{sec:rule-math}
-\label{sec:rule-fields}
-\label{sec:rule-sboterm}
+\label{sec:rule-math}\label{sec:rule-fields}\label{sec:rule-sboterm}
 
 The subtypes derived from \Rule inherit two fields: \token{math}
 and \token{sboTerm}.
@@ -5359,17 +5363,14 @@ both an assignment rule and a rate rule for the same variable.
 \end{blockChanged}
 
 
+\begin{blockChanged}
 \subsubsection{Additional restrictions on rules}
 \label{sec:ruleconstraints}
 
-% [2006-09-09 MH] I'm not sure the following is useful, and now
-% that we put all these conditions about t <= 0 and so on, I'm not
-% sure the following is even accurate anymore:
-%
 %SBML does not stipulate the form of the algorithms that can be
 %applied to rules and reactions.  For example, SBML does not
 %specify when or how often rules should be evaluated.
-
+%
 % The following is now included in the subsections above and
 % is redundant here.  [2006-09-09 MH]
 %
@@ -5381,12 +5382,14 @@ both an assignment rule and a rate rule for the same variable.
 %(Section~\ref{sec:csymbol-token}) prior to the start of a
 %simulation.
 
-\begin{blockChanged}
-In addition to the conditions described above regarding the use of
-\AlgebraicRule, \AssignmentRule and \RateRule, SBML needs to place
-two additional restrictions on rule use.  The first concerns
-algebraic loops in the system of assignments in a model, and the
-second concerns overdetermined systems.
+The design goal of SBML rule semantics is to ensure that a model's
+simulation and analysis results will not be dependent on when or
+how often rules are evaluated.  To achieve this, SBML needs to
+place two additional restrictions on rule use in addition to the
+conditions described above regarding the use of \AlgebraicRule,
+\AssignmentRule and \RateRule.  The first concerns algebraic loops
+in the system of assignments in a model, and the second concerns
+overdetermined systems.
 
 
 \paragraph{The model must not contain algebraic loops}

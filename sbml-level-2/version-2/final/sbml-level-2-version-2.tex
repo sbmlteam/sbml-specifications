@@ -2150,54 +2150,62 @@ preceded and succeeded by whitespace.} The set of possible
 identifiers that can appear in a \token{ci} element depends on the
 containing structure in which the \token{ci} is used:
 \begin{itemize}
-
-\item If a \token{ci} element appears in the body of a function definition
-  \changed{(Section~\ref{sec:functiondefinition})}, the
-  referenced identifier must be either (i) one of the declared arguments to
+  
+\item If a \token{ci} element appears in the body of \changed{a
+  \FunctionDefinition object
+  (Section~\ref{sec:functiondefinition})}, the referenced
+  identifier must be either (i) one of the declared arguments to
   that function, or (ii) the identifier of a previously defined
-  function in the model.
-
-\item \changed{In all other situations, the referenced identifier must be the
-  identifier of a species, compartment, parameter, function or reaction declared in
-  the model.}  The following are the only possible interpretations of using
-  such an identifier in SBML:
+  \changed{\FunctionDefinition object} in the model.
+  
+\item \changed{In all other situations, the referenced identifier
+    must be the identifier of a \Species, \Compartment,
+    \Parameter, \FunctionDefinition or \Reaction object defined in
+    the model.}  The following are the only possible
+  interpretations of using such an identifier in SBML:
   \begin{itemize}
-
-  \item \emph{Species identifier}: When a species identifier occurs in a
-    \token{ci} element, it represents the quantity (\quantity{amount of substance}
-    or \quantity{concentration}) of that species.
-    The units associated with a species identifier are
-    \emph{the units of the species}, defined in
-    Section~\ref{sec:species-units}.
-
-  \item \emph{Compartment identifier}: When a compartment identifier occurs
-    in a \token{ci} element, it represents the size of the compartment.
-    The units associated with the size of the compartment are those
-    given on the \Compartment structure that declares the identifier;
-    see Section~\ref{sec:compartment-units}.
-
-  \item \emph{Parameter identifier}: When a parameter identifier occurs in
-    a \token{ci} element, it represents the \changed{numerical} value assigned to that
-    parameter.  The units associated with the parameter value are the units
+    
+  \item \emph{Species identifier}: When a \changed{\Species}
+    identifier occurs in a \token{ci} element, it represents the
+    quantity \changed{of that species in terms of either
+      \quantity{amount of substance} or \quantity{concentration},
+      depending on the definition of that species; see
+      Section~\ref{sec:species-units}.}
+    
+  \item \emph{Compartment identifier}: When a
+    \changed{\Compartment} identifier occurs in a \token{ci}
+    element, it represents the size of the compartment.  The units
+    associated with the size of the compartment are those given on
+    the \Compartment structure that declares the identifier; see
+    Section~\ref{sec:compartment-units}.
+    
+  \item \emph{Parameter identifier}: When a \changed{\Parameter}
+    identifier occurs in a \token{ci} element, it represents the
+    \changed{numerical} value assigned to that parameter.  The
+    units associated with the parameter value are the units
     assigned in its instance of a \Parameter structure; see
     Section~\ref{sec:parameter-units}.
-
-  \item \emph{Function identifier}: When a function identifier occurs in a
-    \token{ci} element, it represents a call to that function.  Function
-    references in MathML occur in the context of using MathML's
-    \token{apply} and often involve supplying arguments to the function;
-    see Section~\ref{sec:functiondefinition}.
-
-  \item \changed{\emph{Reaction identifier}: When a reaction
-    identifier occurs in a \token{ci} element, it represents the
-    rate of the reaction, which is given by the kinetic law of the
-    reaction if present.  The units associated with the reaction
-    value are the units assigned to the \KineticLaw structure
-    contained within the \Reaction structure; see
-    Section~\ref{subsec:kinetic-law}.  (The units of the reaction
-    identifier follow the defaults described in
-    Section~\ref{subsec:kinetic-law} when the \KineticLaw
-    structure is not present.)}
+    
+  \item \emph{Function identifier}: When a
+    \changed{\FunctionDefinition} identifier occurs in a
+    \token{ci} element, it represents a call to that function.
+    Function references in MathML occur in the context of using
+    MathML's \token{apply} and often involve supplying arguments
+    to the function; see Section~\ref{sec:functiondefinition}.
+    
+  \item \changed{\emph{Reaction identifier}: When a \Reaction
+      identifier occurs in a \token{ci} element, it represents the
+      rate of that reaction as termined by the mathematical
+      formula in the \KineticLaw object within the \Reaction.  The
+      units associated with the reaction are
+      \quantity{substance}/\quantity{time}, with the
+      \quantity{substance} and \quantity{time} units established
+      by the values of the SBML built-in units \val{substance} and
+      \val{time}, respectively.  These units may be redefined in
+      model; see Section~\ref{sec:built-in-units}.  If the
+      reaction definition has no \KineticLaw, the use of the
+      reaction identifier is an error, perhaps indicating that the
+      model is incomplete.}
 
   \end{itemize}
 
@@ -3587,14 +3595,14 @@ The following example illustrates the definition of an abbreviation
 \subsubsection{Built-in units}
 \label{sec:built-in-units}
 
-There are five special unit \changed{identifiers} in SBML, listed in
-Table~\vref{tab:builtin}, corresponding to the five types of
-quantities or that play roles in biochemical reactions: substance,
+There are five special unit \changed{identifiers} in SBML, listed
+in Table~\vref{tab:builtin}, corresponding to the five types of
+quantities that can play roles in SBML reactions: substance,
 volume, area, length and time.  All SBML mathematical entities
 apart from parameters have default units drawn from these
 predefined values.  Table~\ref{tab:builtin} lists the default
-values; all of the defaults have \token{multiplier}=\val{1}
-and \token{scale}=\val{0}.
+values; all of the defaults have \token{multiplier}=\val{1} and
+\token{scale}=\val{0}.
 
 \begin{table}[htb]
   \centering
@@ -6832,7 +6840,7 @@ recipe.
 %it becomes very powerful, simplyfying everything.
 
 
-\paragraph{Mixed units}
+\paragraph{Mixed species units}
 
 The discussion so far has assumed that all of the species
 appearing in a given reaction's rate expression had the same
@@ -6845,10 +6853,10 @@ situation are not defined in SBML.  A species identifier appearing
 in a mathematical expression has the units attributed to that
 species (see Section~\ref{sec:species-units} for a definition of
 the \emph{the units of the species}).  If a reaction contains
-species having different units, the creator of the SBML model must
-explicitly incorporate the necessary conversions to make the units
-of the rate expression consistent.  The most appropriate way is to
-include the conversion factor as part of the value of
+species each having different units, the creator of the SBML model
+must explicitly incorporate the necessary conversions to make the
+units of the rate expression consistent.  The most appropriate way
+is to include the conversion factor as part of the value of
 \token{stoichiometry} or \token{stoichiometryMath} in the
 \SpeciesReference for that species.
 
@@ -6866,25 +6874,27 @@ $V$, but now let us throw a wrench into the problem: suppose that
 the species in the model are defined with mixed units as follows:
 \begin{center}
   \begin{tabular}{ll}
-    $A$  & is in millimoles\\
-    $B$  & is in grams\\
-    $C$  & is in items
+    $A$  & is in millimoles per litre\\
+    $B$  & is in grams per litre\\
+    $C$  & is in items per litre
   \end{tabular}
 \end{center}
 When biochemical reaction equations of the form
-\eqref{eq:two-reactions} above are usually written, the units of
-species' quantities are implicitly assumed to be the same, and
+\eqref{eq:two-reactions} above are written, the units of species'
+quantities usually are implicitly assumed to be the same, and
 therefore the stoichiometries in the reaction equations
 \eqref{eq:two-reactions} represent simple ratios between the
-quantities of the species in those units.  If instead the initial
-quantities of the species are given in mixed units as in the
-present example, the quantities not only need to be in proper
-stoichiometric relationships, the units also have to be made
-consistent.  In SBML, this is done by appropriately setting the
-\token{stoichiometry} field value in the species references of the
-lists of reactants, products and modifiers in a \Reaction.  This
-then permits a properly balanced system of equations to be
-constructed for each species' rate of change of quantity.
+quantities of the species in those units.  (\emph{``One mole of
+  this and two moles of that react to produce one mole of that
+  other.''})  If instead the initial quantities of the species are
+given in mixed units, as in the present example, the quantities
+not only need to be in proper stoichiometric relationships, the
+units also have to be made consistent.  In SBML, this is done by
+appropriately setting the \token{stoichiometry} field value in the
+species references of the lists of reactants, products and
+modifiers in a \Reaction.  This then permits a properly balanced
+system of equations to be constructed for each species' rate of
+change of quantity.
 
 Continuing with the present example, the SBML ``kinetic law''
 formulas for the reaction rates will be written as expected,
@@ -6894,7 +6904,8 @@ formulas for the reaction rates will be written as expected,
     r_2 &= {k_2}' \cdot C \cdot V
   \end{aligned}
 \end{equation*}
-where the formula units are the default of moles/second.  When
+where ${k_2}' = k_2$ for this particular example but ${k_1}'$ will
+depend on other units as described in the paragraphs below.  When
 these formulas are combined into overall expressions for the rates
 of change of $A$, $B$, and $C$, the result is
 \begin{equation*}
@@ -6915,33 +6926,130 @@ where
   \end{tabular}
 \end{center}
 We use the term \emph{SBML stochiometries} to highlight the fact
-that in this example set of mixed-units species, the values may
+that in this example involving mixed-units species, the values may
 not be identical to the biochemical stoichiometries in the
 reaction equations \eqref{eq:two-reactions}.  And just what are
-these \emph{SBML stoichiometries}?  In the kind of mixed-units
+the \emph{SBML stoichiometries}?  In the kind of mixed-units
 situation faced in this example, they must encompass both the
 biochemical stoichiometries and any necessary unit conversions.
-Thus:
-\begin{center}
-  \vspace*{-2ex}
-  \begin{tabular}{lll}
-    $a_1$ = 1000 & (each second, 1000 millimoles of A are consumed)\\
-    $a_2$ = 3000 & (each second, 3000 millimoles of A are produced)\\
-    $b_1$ = $2 \cdot m_B$,  where $m_B$ is the molecular mass of
-    $B$  & (each second, 2 moles of B are consumed)\\
-    $c_1$ = $6.02 \times 10^{23}$ & (each second, $6.02 \times
-    10^{23}$ items of C are produced)\\
-    $c_2$ = $6.02 \times 10^{23}$ & (each second, $6.02 \times
-    10^{23}$ items of C are consumed)
-  \end{tabular}
-\end{center}
+Thus, letting $m_B$ stand for the molecular mass of $B$:
 
-Finally, note that if the species units \emph{were} the same
+\begin{tabular}{lll}
+  $a_1$ = 1000 
+  & (each reaction event, 1 mole of $A$ is consumed, with $A$ expressed in millimoles)\\
+
+  $a_2$ = 3000
+  & (each reaction event, 3 moles of $A$ are produced, with $A$ expressed in millimoles)\\
+
+  $b_1$ = $2 \cdot m_B$
+  & (each reaction event, 2 moles of $B$ are consumed, with $B$ expressed in grams)\\
+
+  $c_1$ = $6.02 \cdot 10^{23}$
+  & (each reaction event, 1 mole of $C$ is produced, expressed as item counts)\\
+
+  $c_2$ = $6.02 \cdot 10^{23}$
+  & (each reaction event, 1 mole of $C$ is consumed, expressed as item counts)\\
+
+\end{tabular}
+
+and 
+
+\begin{tabular}{l}
+${k_1}'$ = $k_1 \cdot 1/{m_B}^2 \cdot 10^{-3}$  
+\end{tabular}
+
+What happens if the definition of the SBML built-in unit
+\val{substance} is changed in the model to be millimoles?  Then
+the stoichiometries must be changed to the following:
+
+\begin{tabular}{lll}
+  $a_1$ = 1
+  & (each reaction event, 1 millimole of $A$ is consumed, expressed in millimoles)\\
+
+  $a_2$ = 3
+  & (each reaction event, 3 millimoles of $A$ are produced, expressed in millimoles)\\
+
+  $b_1$ = $2 \cdot 10^{-3} \cdot m_B$
+  & (each reaction event, 2 millimoles of $B$ are consumed, expressed in grams)\\
+
+  $c_1$ = $6.02 \cdot 10^{20}$
+  & (each reaction event, 1 millimole of $C$ is produced, expressed as item counts)\\
+
+  $c_2$ = $6.02 \cdot 10^{20}$
+  & (each reaction event, 1 millimole of $C$ is consumed, expressed as item counts)\\
+\end{tabular}
+
+and
+
+\begin{tabular}{l}
+  ${k_1}'$ = $k_1 \cdot (10^3/m_B)^2$
+\end{tabular}
+
+What happens if instead the definition of the SBML built-in unit
+\val{substance} is changed in the model to be \val{item}?  Then
+the stoichiometries must be changed to the following:
+
+\begin{tabular}{lll}
+  $a_1$ = $1/(6.02 \cdot 10^{20})$
+  & (each reaction event, 1 item of $A$ is consumed, expressed in millimoles)\\
+
+  $a_2$ = $3/(6.02 \cdot 10^{20})$
+  & (each reaction event, 3 items of $A$ are produced, expressed in millimoles)\\
+
+  $b_1$ = $2 \cdot 1/(6.02 \cdot 10^{23}) \cdot m_B$
+  & (each reaction event, 2 items of $B$ are consumed, expressed in grams)\\
+
+  $c_1$ = 1
+  & (each reaction event, 1 items of $C$ is produced, expressed as item counts)\\
+
+  $c_2$ = 1
+  & (each reaction event, 1 items of $C$ is consumed, expressed as item counts)\\
+\end{tabular}
+
+and
+
+\begin{tabular}{l}
+  ${k_1}'$ = $k_1 \cdot 6.02 \cdot 10^{20} \cdot \left(\dfrac{6.02 \cdot
+  10^{23}}{m_B}\right)^2$
+\end{tabular}
+
+And finally, what happens if the definition of the SBML built-in
+unit \val{substance} is changed in the model to be \val{gram}?
+Then the stoichiometries must be changed again, to the following:
+
+\begin{tabular}{lll}
+  $a_1$ = $1000 \cdot m_A$
+  & (each reaction event, 1 gram of $A$ is consumed, expressed in millimoles)\\
+
+  $a_2$ = $3000 \cdot m_A$
+  & (each reaction event, 3 grams of $A$ are produced, expressed in millimoles)\\
+
+  $b_1$ = 2
+  & (each reaction event, 2 grams of $B$ are consumed, expressed in grams)\\
+
+  $c_1$ = $6.02 \cdot 10^{23} \cdot m_C$
+  & (each reaction event, 1 gram of $C$ is produced, expressed as item counts)\\
+
+  $c_2$ = $6.02 \cdot 10^{23} \cdot m_C$
+  & (each reaction event, 1 gram of $C$ is consumed, expressed as item counts)\\
+\end{tabular}
+
+and
+
+\begin{tabular}{l}
+  ${k_1}'$ = $k_1 \cdot 10^{-3} \cdot m_A$
+\end{tabular}
+
+where $m_A$, $m_B$, and $m_C$ are the molecular masses of species
+$A$, $B$, and $C$, respectively.
+
+In all of these cases, the computation of ${k_1}'$ would be
+handled nicely by using an \InitialAssignment construct.  And
+finally, note that if the species units \emph{were} the same
 throughout (and in most models they are), the unit conversion
 aspects of the SBML stoichiometries would become unity, leaving
 only the expected biochemical stoichiometry values.  Isn't that
 nice?
-
 
 
 \subsubsection{Use of reaction identifiers in mathematical expressions}
@@ -11693,3 +11801,39 @@ function.
 % Local Variables:
 % fill-column: 66
 % End:
+
+Here it pays to reflect more carefully about what a reaction is.
+A reaction represents a process occuring over time.  the process
+acts on the reactants, transforming them in some way into the
+products.  the transformation may be anything from a change in
+the nature of the reactants to a simple relocation without any
+change to the nature of the reactants; for the purpose of talking
+about the speed of the reaction it does not matter.
+
+The ``kinetic law'' is a statement about the speed at which the
+process takes place, or more precisely, the frequency of the
+events occuring in this process.  It is by default in terms of
+moles per second, which has some intuitive appeal when dealing
+with chemical substances.  But notice that a ``mole'' is actually
+a statement about numbers of ``things'': it is 6.02e23 of whatever
+is involved.  In the case of chemical species, it is molecules of
+the substance.  To say ``one mole of'' is a shorthand way of
+saying ``6.02e23 molecules of''.  Thus, a reaction expressed as
+``X moles per second'' is a statement that the process involves
+``(X times 6.02e23) items per second''.
+
+1 kg/sec is 1 kg/sec
+
+If in a reaction, the units of the species are the same as the
+reaction's substance units (default mole, redefinable by
+redefining ``substance''; sec section x), then the stoichiometries
+represent simply the ratios of the participating species: 1 mole
+of this to 2 moles of that, and so on.  If instead the species are
+given in different units, then the species quantities must be
+converted to be consistent with the units of the reaction.  Thus,
+the SBML stoichiometry may then have to incorporate a conversion:
+the stoichiometry will represent the product of the biochemical
+reaction stoichiometry and a ratio between the species substance
+and the reaction substance.
+
+don't forget units of reaction id

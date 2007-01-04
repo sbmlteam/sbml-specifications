@@ -1,20 +1,44 @@
 \documentclass{sbmlspec}
 
-% change coloring isn' working.
+% Change coloring wasn't working properly, especially at page breaks,
+% and plus there were so many text changes that most pages were red
+% anyway.  So in the end we turned off the \change and \blockChanged
+% macros and only marked things in the UML boxes and in the XML Schema.
+% The \markChanged and \blockMarkChanged macros are basically duplicates
+% of the \changed and \blockChanged macros, but defined so that the
+% latter change be turned off while preserving the coloring in the
+% UML boxes and Schema.  Exception: the color is turned off if producing
+% a grayscale copy.
 
 \renewcommand{\changed}[1]{#1}
 \renewenvironment{blockChanged}{}{}
 
-\newcommand{\markChanged}[1]{\textcolor{\changedColor}{#1}}
-\newenvironment{blockMarkChanged}{\color{\changedColor}}{\color{black}}
+\ifgrayscalespec
+  \newcommand{\markChanged}[1]{#1}
+  % Ah-ha, you may be tempted to simply define the following as empty,
+  % instead of changing the color to black, wouldn't you?  But that
+  % lead to an unexpected result: Latex will introduce small but
+  % visible extra vertical space around the text it wraps.  I have 
+  % no idea why.  Keeping the color change but using black acts as
+  % a no-op that works around this weirdness.  
+  \newenvironment{blockMarkChanged}{\color{black}}{\color{black}}
+\else
+  \newcommand{\markChanged}[1]{\textcolor{\changedColor}{#1}}
+  \newenvironment{blockMarkChanged}{\color{\changedColor}}{\color{black}}
+\fi
 
-% Special commands for linking the SBML component classes.  The following
-% defines a special command of the form \Foo for any SBML type that has a
-% UML box in the spec.  Note that SId is not in this list -- it doesn't
-% have a UML class definition.
+% Special commands for linking the SBML component classes in this document.
+% The following defines a special command of the form \Foo for any SBML
+% type that has a UML box in the spec.  Note that SId is not in this
+% list -- it doesn't have a UML class definition.
 
 \newcommand{\defRef}[2]{\class{\hyperref[#2]{#1}}\xspace}
 \newcommand{\absDefRef}[2]{\abstractclass{\hyperref[#2]{#1}}\xspace}
+
+\ifgrayscalespec
+  \renewcommand{\defRef}[2]{\textbf{\class{#1}}\xspace}
+  \renewcommand{\absDefRef}[2]{\textbf{\abstractclass{#1}}\xspace}
+\fi
 
 \newcommand{\SBase}{\absDefRef{Sbase}{sec:sbase}}
 \newcommand{\Sbml}{\defRef{Sbml}{sec:sbml}}
@@ -94,6 +118,22 @@
   pdftitle={Systems Biology Markup Language (SBML) Level 2: Structures and Facilities for Model Definitions},
   pdfauthor={Andrew Finney, Michael Hucka, and Nicolas Le Novere}}
 
+% Switch which copy of the logo file we use, depending on various
+% factors.
+
+\ifgrayscalespec
+  \newcommand{\logofilebasename}{sbml-logo-gray}
+\else
+  \newcommand{\logofilebasename}{sbml-logo}
+\fi
+
+\ifx\pdfoutput\undefined%
+  \newcommand{\SBMLLogoFile}{\logofilebasename}
+\else
+  % Request the JPG format specifically, because the resulting
+  % quality in the final output is best.
+  \newcommand{\SBMLLogoFile}{\logofilebasename.jpg}
+\fi
 
 \begin{document}
 
@@ -146,11 +186,7 @@ The XML Schema for \sbmltwotwo is available at\\
 
 \vfill
 
-\ifx\pdfoutput\undefined%
-  \centerline{\includegraphics[width=2.5in]{sbml-logo}}%
-\else
-  \centerline{\includegraphics[width=2.5in]{sbml-logo.jpg}}%
-\fi
+\centerline{\includegraphics[width=2.5in]{\SBMLLogoFile}}%
 
 \clearpage
 
@@ -5742,6 +5778,7 @@ reaction are recorded in the SBML \Reaction \changed{structure and
 Figure~\vref{fig:reaction}.
 
 \begin{figure}[htb]
+  \vspace*{-0.5ex}
   \centering
   \begin{classbox}{Reaction}
     id: SId                                                          \\
@@ -8162,6 +8199,8 @@ before assuming that the contained data is encoded in the format.
 %=============================================================================
 
 An outline of the format syntax is shown below.
+
+\vspace*{0.1ex}
 
 \begin{example}
 <SBML_ELEMENT +++ metaid="SBML_META_ID" +++ >

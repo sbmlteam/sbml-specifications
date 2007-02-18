@@ -27,7 +27,7 @@ Notes about producing output files
 To produce grayscale output without modifying the source file, invoke
 latex with a command of the following form:
 
-pdflatex "\newcommand\UseOption{grayscale}\input{sbml-level-2-version-2}"
+pdflatex "\newcommand\UseOption{grayscale}\input{sbml-level-2-version-3}"
 
 
 

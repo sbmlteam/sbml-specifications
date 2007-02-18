@@ -1,0 +1,871 @@
+% Emacs: -*- TeX-master: "sbml-level-2-version-3"; fill-column: 66 -*-
+
+\section{A standard format for the \token{annotation} field}
+\label{sec:finney-novere}
+\label{sec:annotation-standard}
+
+This section describes the standard non-proprietary format for
+\token{annotation} elements when (a) referring to controlled
+vocabulary terms and database identifiers which define and
+describe biological and biochemical entities; and (b) describing
+the creator of a model and its modification history. Such a
+structured format should facilitate the generation of models
+compliant with the MIRIAM guidelines for model
+curation~\citep{le_novere:2005}.
+
+This format should \emph{not} be used to refer to SBO terms
+(Section~\ref{sec:sboTerm}), because SBO defines terms about
+mathematical modeling constructs and not the biological and
+biochemical entities that the mathematics represent.
+
+This format describes the form of one of the top level elements
+that could reside in a given \token{annotation} structure. As such
+this format is compliant with the constraints placed on the form
+of annotation elements described in
+Section~\ref{sec:annotation-use}.
+
+
+\subsection{Motivation}
+
+The SBML structures described elsewhere in this document do not
+have any biochemical or biological semantics.  The format
+described in this section provides a scheme for linking SBML
+structures to external resources so that those structures can have
+such semantics.  The motivation for the introduction of this
+scheme is similar to that given for the introduction of
+\token{sboTerm} however this scheme is significantly more
+flexible.
+
+
+\subsection{XML Namespaces in the standard annotation}
+
+This format uses a restricted form of Dublin
+Core~\citep{DCMI:2003} and BioModels qualifier elements (see
+\url{http://sbml.org/wiki/Biomodels_Qualifiers}) embedded in
+RDF~\citep{w3c:2004}. It uses a number of external XML standards
+and associated XML namespaces.
+Table~\ref{tab:namespaces-for-standard-annotation} lists these
+namespaces and relevant documentation on those namespaces.  The
+format constrains the order of elements in these namespaces beyond
+the constraints defined in the standard definitions for those
+namespaces.  For each standard listed, the format only uses a
+subset of the possible syntax defined by the given standard.  Thus
+it is possible for an \token{annotation} element to include XML
+that is compliant with those external standards but is not
+compliant with the format described here.  Parsers wishing to
+support this format should be aware that a valid
+\token{annotation} element may contain an \token{rdf:RDF} element
+which is not compliant with the format described here.  A parser
+should check that all aspects of the syntax defined here before
+assuming that the contained data is encoded in the format.
+
+\begin{table}[bh]
+  \vspace*{3ex}
+  \small
+  \centering
+  \begin{edtable}{tabular}{lll}
+    \toprule
+& Namespace URI & Definition Document \\
+    \midrule
+    \token{dc} & \uri{http://purl.org/dc/elements/1.1/} & \citep{powell:2003}\\
+    \token{rdf} & \uri{http://www.w3.org/1999/02/22-rdf-syntax-ns\#} & \citep{w3c:2004b} \\
+    \token{dcterms} & \uri{http://purl.org/dc/terms/} & \citep{kokkelink:2002}\\
+    & & \citep{DCMIUB:2005} \\
+    \token{vcard} & \uri{http://www.w3.org/2001/vcard-rdf/3.0\#} & \citep{iannella:2001} \\
+    \token {bqbiol} & \uri{http://biomodels.net/biology-qualifiers/} \\
+    \token {bqmodel} & \uri{http://biomodels.net/model-qualifiers/} \\
+    \bottomrule
+  \end{edtable}
+  \vspace*{-0.95ex}
+  \caption{The XML standards used in the SBML standard format for annotation.
+  The namespace prefix are shown to indicate only the prefix used in the main text.}
+  \label{tab:namespaces-for-standard-annotation}
+\end{table}
+
+%=============================================================================
+\subsection{General syntax for the standard annotation}
+%=============================================================================
+
+An outline of the format syntax is shown below.
+
+\vspace*{0.1ex}
+
+\begin{example}
+<SBML_ELEMENT +++ metaid="SBML_META_ID" +++ >
+  +++
+  <annotation>
+    +++
+    <rdf:RDF
+      xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns\#"
+      xmlns:dc="http://purl.org/dc/elements/1.1/"
+      xmlns:dcterm="http://purl.org/dc/terms/"
+      xmlns:vcard="http://www.w3.org/2001/vcard-rdf/3.0\#"
+      xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" \\
+      xmlns:bqmodel="http://biomodels.net/model-qualifiers/" \\
+    >
+      <rdf:Description rdf:about="#SBML_META_ID">
+        [MODEL_HISTORY]
+        <RELATION_ELEMENT>
+          <rdf:Bag>
+            <rdf:li rdf:resource="URI" />
+            ...
+          </rdf:Bag>
+        </RELATION_ELEMENT>
+        ...
+      </rdf:Description>
+      +++
+    </rdf:RDF>
+    +++
+  </annotation>
+  +++
+</SBML_ELEMENT>
+\end{example}
+
+The above outline shows the order of the elements. The capitalized
+identifiers refer to generic strings of a particular type:
+\texttt{SBML\_ELEMENT} refers to any SBML element name that can
+contain an \token{annotation} element; \texttt{SBML\_META\_ID} is
+a XML \primtype{ID} string; \texttt{RELATION\_ELEMENT} refers to
+element names in either the namespace
+\uri{http://biomodels.net/biology-qualifiers/} or
+\uri{http://biomodels.net/model-qualifiers/}; and \texttt{URI} is
+a URI.  \texttt{[MODEL\_HISTORY]} refers to an optional section
+described in Section~\ref{sec:model-history-annotation} which can
+only be present within SBML model elements. `\texttt{+++}' is a
+placeholder for either no content or valid XML syntax that is not
+defined by the standard annotation scheme but is consistent with
+the relevant standards for the enclosing elements. `\texttt{...}'
+is a placeholder for zero or more elements of the same form as the
+immediately preceding element.  The precise form of whitespace and
+the XML namespace prefix definitions is not constrained however
+the elements and attributes must be in the namespaces shown. The
+rest of this section describes the format formally in English.
+
+In this format the annotation of an element is located in a single
+\token{rdf:RDF} element contained within an SBML
+\token{annotation} element. The annotation element can contain
+other elements in any order as described in Section
+\emph{\ref{sec:annotation-use}}.  The format described in this
+section only defines the form of the \token{rdf:RDF} element. The
+containing SBML \SBase element must have a \token{metaid} field
+value. (As this attribute is of the type \primtype{ID} its value
+must unique to the entire SBML document.)
+
+The first element of the \token{rdf:RDF} element must be an
+\token{rdf:Description} element with an \token{rdf:about}
+attribute. (This format doesn't define the form of subsequent
+elements of the \token{rdf:RDF} element.) The value of the
+\token{rdf:about} attribute must be of the form
+\texttt{\#<string>} where the string component is equal to the
+value of the \token{metaid} field of the containing SBML element.
+
+The \token{rdf:Description} element can contain only an optional
+model history section (see
+Section~\ref{sec:model-history-annotation}) followed by a sequence
+of zero or more BioModels relation elements. The optional model
+history section can only be present within an SBML \Model element.
+The specific type of the relation elements will vary depending on
+the relationship between the SBML component and referenced
+information or resource.
+
+Although Section~\ref{sec:qualified-dc-annotation} describes the
+detailed semantics of each of the relation element types, the
+content of these elements follows the same form.  The BioModels
+qualifiers relation elements must only contain a single
+\token{rdf:Bag} element which in turn must only contain one or
+more \token{rdf:li} elements.  The \token{rdf:li} elements must
+only have a \token{rdf:resource} attribute containing a URI
+referring to an information resource (See
+Section~\ref{sec:uri-in-annotation}).
+
+Annotations in this format can be located at different depths
+within a model component as is appropriate.
+
+%=============================================================================
+\subsection{Use of URIs}
+\label{sec:uri-in-annotation}
+%=============================================================================
+
+The format represents a set of relationships between the SBML
+element and the resources referred to by the contained
+\token{rdf:resource} attribute values.  The BioModels relation
+elements simply define the type of the relationship.
+
+For instance a \Species element representing a protein could be
+annotated with a reference to the database UniProt by the
+\uri{http://www.uniprot.org/\#P12999} resource identifier,
+identifying exactly the protein described by the \Species element.
+This identifier maps to a unique entry in UniProt which is never
+deleted from the database. In the case of UniProt, this is the
+``accession'' of the entry. When the entry is merged with another
+one, both ``accession'' are conserved. Similarly in a controlled
+vocabulary resource, each term is associated with a perennial
+identifier. The UniProt entry also possess an ``entry name'' (the
+Swiss-Prot ``identifier''), a ``protein name'', ``synonyms'' etc.
+Only the ``accession'' is perennial and should be used.
+
+The value of a \texttt{rdf:resource} attribute is a URI that both
+uniquely identifies the resource, and the data in the resource. In
+this case the resource constraining the identifier precedes the
+'\#' symbol and the term or database identifier follows the '\#'
+symbol. In the above example, the resource
+\uri{http://www.uniprot.org/} includes the entry P12999.
+
+The value of the \texttt{rdf:resource} attribute is a URI, not a
+URL; as such, a URI does not have to reference a physical web
+object but simply identifies a controlled vocabulary term or
+database object (a URI is a label that, in this case, just happens
+to look like a URL). For instance, a true URL for an Internet
+resource such as \uri{http://www.uniprot.org/entry/P12999} might
+correspond to the URI \uri{http://www.uniprot.org/\#P12999}.
+
+SBML does not specify how a parser is to interpret a URI. In the
+case of a transformation into a physical URL, there could be
+several solutions. For instance, the URI
+\uri{http://www.geneontology.org/\#GO:0007268} can be translated
+into:
+
+\noindent \uri{http://www.ebi.ac.uk/ego/DisplayGoTerm?selected=GO:0007268}\\
+\noindent \uri{http://www.godatabase.org/cgi-bin/amigo/go.cgi?view=details\&query=GO:0007268}\\
+\noindent
+\uri{http://www.informatics.jax.org/searches/GO.cgi?id=GO:0007268}
+
+Similarly the URI \uri{http://www.ec-code.org/\#3.5.4.4}
+can refer to:
+
+\noindent \uri{http://www.ebi.ac.uk/intenz/query?cmd=SearchEC\&ec=3.5.4.4}\\
+\noindent \uri{http://www.expasy.org/cgi-bin/nicezyme.pl?3.5.4.4}\\
+\noindent \uri{http://www.chem.qmul.ac.uk/iubmb/enzyme/EC3/5/4/4.html}\\
+\noindent \uri{http://www.genome.jp/dbget-bin/www\_bget?ec:3.5.4.4}\\
+\noindent etc.
+
+To enable interoperability, the community has agreed on an initial
+set of standardized valid URI syntax rules which may be used
+within the standard annotation format. This set of rules is not
+part of the SBML standard but will grow independently from
+specific SBML Levels and Versions. As the set changes a given URI
+syntax rule will not be modified although the physical resource
+associated with the rule may change. These URIs will always be
+composed as \texttt{resource\#id}. The web page
+\url{http://sbml.org/wiki/MIRIAM_URI_Set} lists URI syntaxes and
+possible physical links to controlled vocabulary and databases.
+Each entry contains a list of SBML and relation elements in which
+the given URI can be appropriately embedded. To enable consistent
+and thus useful links to external resources, the URI syntax rule
+set must have a consistent view of the concepts represented by the
+different SBML elements for the purposes of this format.  For
+example as the rule set is designed to link SBML biological and
+biochemical resources the rule set assumes that a \Species element
+represents the concept of a biochemical entity type rather than
+mathematical symbol. The URI rule list will evolve with the
+evolution of databases and resources. The annotation format
+described in this section does not require a simple parser of this
+format to access this list.
+
+
+%=============================================================================
+\subsection{Relation elements}
+\label{sec:qualified-dc-annotation}
+%=============================================================================
+
+To enable the format to encode different types of relationships
+between SBML elements and resources, different BioModel qualifier
+elements are used to enclose a set of \token{rdf:li} elements. The
+relation elements imply a specific relationship between the
+enclosing SBML element and the resources referenced by the
+\token{rdf:li} elements.
+
+The detailed semantics (i.e. from the perspective of automatic
+parser) of the relation elements is defined by the URI list at
+\url{http://sbml.org/wiki/MIRIAM_URI_Set}, and thus is outside the
+scope of SBML. The URI list generally assumes that the biological
+entity represented by the element is the concept linked to the
+reference resource.
+
+Several relation elements with a given tag, enclosed in the same
+SBML element, each represent an alternative annotation to the SBML
+element. For example two \class{bqbiol:hasPart} elements within a
+\class{Species} SBML element represent two different sets of
+references to the parts making up the the chemical entity
+represented by the species. (The species is not made up of all the
+entities represented by all the references combined).
+
+The complete list of the qualifier elements in the Biomodels
+qualifier namespaces is documented at
+\url{http://sbml.org/wiki/Biomodels_Qualifiers}. The list is
+divided into two namespaces one for model qualifiers
+\uri{http://biomodels.net/biology-qualifiers/} (prefix used here
+\token{bqbiol}) and the other for biological qualifiers
+\uri{http://biomodels.net/model-qualifiers/}) (prefix used here
+\token{bqmodel}.  This list will only grow i.e no element will be
+removed from the list. The following is the list of elements at
+the time of writing:
+
+%\begin{figure}[htb]
+%  \vspace*{2pt}
+%  \centering
+%\[
+%%\begin{CD}
+%\textrm{SBML Element}  @>{qualifier}>> \textrm{Referenced Resource} \\
+%@VV{represents}V                @VV{represents}V \\
+%\textrm{Biological Entity A}   @>{relationship}>>
+%\textrm{Biological Entity B}
+%%\end{CD}
+%\]
+%  \caption{How the relationship between biological
+%  entities are defined using relations between resources}
+%  \label{fig:lenovere-annotation}
+%\end{figure}
+
+\begin{itemize}
+
+\item \token{bqmodel:is} The modeling object encoded by the SBML
+  component is the subject of the referenced resource. For
+  instance, this qualifier might be used to link the model to a
+  model database.
+
+\item \token{bqmodel:isDescribedBy} The modeling object
+  encoded by the SBML component is described by
+  the referenced resource. This relation might be used to link
+  SBML components to the literature that describes this model or
+  this kinetic law.
+
+\item \token{bqbiol:is} The biological entity represented by the
+  SBML component is the subject of the referenced resource. This
+  relation might be used to link a reaction to its exact
+  counterpart in KEGG or Reactome for instance.
+
+\item \token{bqbiol:hasPart} The biological entity represented by
+  the SBML component includes the subject of the referenced
+  resource, either physically or logically. This relation might be
+  used to link a complex to the description of its components.
+
+\item \token{bqbiol:isPartOf} The biological entity represented by
+  the SBML component is a physical or logical part of the subject
+  of the referenced resource. This relation might be used to link
+  a component to the description of the complex is belongs to.
+
+\item \token{bqbiol:isVersionOf} The biological entity represented
+  by the SBML component is a version or an instance of the subject
+  of the referenced resource.
+
+\item \token{bqbiol:hasVersion} The subject of the referenced
+  resource is a version or an instance of the biological entity
+  represented by the SBML component.
+
+\item \token{bqbiol:isHomologTo} The biological entity represented
+  by the SBML component is homolog, to the subject of the
+  referenced resource, i.e. they share a common ancestor.
+
+\item \token{bqbiol:isDescribedBy} The biological entity
+  represented by the SBML component is described by the referenced
+  resource. This relation should be used for instance to link a
+  species or a parameter to the literature that describes the
+  quantity of the species or the value of the parameter.
+
+\end{itemize}
+
+%In all cases using the biology qualifiers, the `object' of the
+%relation is the biological or biochemical object represented by
+%the enclosing SBML element. In the cases of the model qualifiers,
+%the `object' of the relation is the model component encoded by the
+%enclosing SBML element. The resources referenced by the
+%\class{rdf:li} elements contained within the relation element are
+%the `object' of the relation.
+
+
+%===============================================================
+\subsection{Model history}
+\label{sec:model-history-annotation}
+%================================================================
+
+When enclosed in an SBML \Model element, the format described in
+previous sections can include additional elements to describe the
+history of the model.  This history data must occur immediately
+before the first BioModels relation elements.  These additional
+elements encode information on the model creator and a sequence of
+dates recording changes to the model. The syntax for this section
+is outlined below.
+
+\begin{example}
+<dc:creator rdf:parseType="Resource">
+  <rdf:Bag>
+    <rdf:li rdf:parseType="Resource">
+      [[
+      +++
+      <vCard:N rdf:parseType="Resource">
+        <vCard:Family>FAMILY_NAME</vCard:Family>
+        <vCard:Given>GIVEN_NAME</vCard:Given>
+      </vCard:N>
+      +++
+      [<vCard:EMAIL>EMAIL_ADDRESS</vCard:EMAIL>]
+      +++
+      [<vCard:ORG>
+        <vCard:Orgname>ORGANIZATION_NAME</vCard:Orgname>
+      </vCard:ORG>]
+      +++
+      ]]
+    </rdf:li>
+    ...
+  </rdf:Bag>
+</dc:creator>
+<dcterms:created rdf:parseType="Resource">
+  <dcterms:W3CDTF>DATE<dcterms:W3CDTF>
+</dcterms:created>
+{<dcterms:modified rdf:parseType="Resource">
+  <dcterms:W3CDTF>DATE<dcterms:W3CDTF>
+</dcterms:modified>}
+\end{example}
+
+The order of elements is as shown above except that elements of
+the format contained between \texttt{[[} and \texttt{]]} can occur
+in any order.  The capitalized identifiers refer to generic
+strings of a particular type: \texttt{FAMILY\_NAME} is the family
+name of a person who created the model; \texttt{GIVEN\_NAME} is
+the first name of the same person who created the model;
+\texttt{EMAIL\_ADDRESS} is the email address of the same person
+who created the model; and \texttt{ORGANIZATION\_NAME} is the name
+of the organization with which the same person who created the
+model is affiliated \texttt{DATE} is a date in W3C date
+format~\citep{wolf:1998}. \texttt{W3CDTF}, \texttt{N},
+\texttt{ORG} and \texttt{EMAIL} are literal strings. The elements
+of the format contained between \texttt{[} and \texttt{]} are
+optional. `\texttt{+++}' is a placeholder for either no content or
+valid XML syntax that is not defined by the standard annotation
+scheme but is consistent with the relevant standards for the
+enclosing elements. `\texttt{...}' is a placeholder for zero or
+more elements of the same form as the immediately preceding
+element. The precise form of whitespace and the XML namespace
+prefix definitions is not constrained.  The remaining text in this
+section describes the syntax formally in English.
+
+The additional elements of the model history sub-format consist in
+sequence of a \token{dc:creator} element, a
+\token{dcterms:created} element and zero or more
+\token{dcterms:modified} elements.  All these elements must have
+the attribute \token{rdf:parseType} set to \texttt{Resource}.
+
+The \token{dc:creator} element describes the person who created
+the SBML encoding of the model and contains a single
+\token{rdf:Bag} element.  The \token{rdf:Bag} element can contain
+any number of elements however the first element must be a
+\token{rdf:li} element.  The \token{rdf:li} element can contain
+any number of elements in any order.  The set of elements
+contained with the \token{rdf:li} element can include the
+following informative elements: \token{vCard:N},
+\token{vCard:EMAIL} and \token{vCard:ORG}.  The \token{vCard:N}
+contains the name of the creator and must consist of a sequence of
+two elements: \token{vCard:Family} and the \token{vCard:Given}
+whose content is the family (surname) and given (first) names of
+the creator respectively.  The \token{vCard:N} must have the
+attribute \token{rdf:parseType} set to \texttt{Resource}.  The
+content of the \token{vCard:EMAIL} element must be the email
+address of the creator.  The content of the \token{vCard:ORG}
+element must contain a single \token{vCard:Orgname} element.  The
+\token{vCard:Orgname} element must contain the name of an
+organization to which the creator is affiliated.
+
+The \token{dcterms:created} and \token{dcterms:modified} elements
+must each contain a single \token{dcterms:W3CDTF} element whose
+content is a date in W3C date format~\citep{wolf:1998} which is a
+a profile of (restricted form of) ISO 8601.
+
+
+%================================================================
+\subsection{Examples}
+%=================================================================
+
+The following shows the annotation of a model with model creation
+data and links to external resources:
+
+\begin{example}
+<model metaid="_180340" id="GMO" name="Goldbeter1991_MinMitOscil">
+    <annotation>
+        <rdf:RDF
+                xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns\#"
+                xmlns:dc="http://purl.org/dc/elements/1.1/"
+                xmlns:dcterms="http://purl.org/dc/terms/"
+                xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0\#"
+                xmlns:bqbiol="http://biomodels.net/biology-qualifiers/"
+                xmlns:bqmodel="http://biomodels.net/model-qualifiers/"
+        >
+            <rdf:Description rdf:about="#_180340">
+                <dc:creator rdf:parseType="Resource">
+                    <rdf:Bag>
+                        <rdf:li rdf:parseType="Resource">
+                            <vCard:N rdf:parseType="Resource">
+                                <vCard:Family>Shapiro</vCard:Family>
+                                <vCard:Given>Bruce</vCard:Given>
+                            </vCard:N>
+                            <vCard:EMAIL>bshapiro@jpl.nasa.gov</vCard:EMAIL>
+                            <vCard:ORG>
+                                <vCard:Orgname>NASA Jet Propulsion Laboratory</vCard:Orgname>
+                            </vCard:ORG>
+                        </rdf:li>
+                    </rdf:Bag>
+                </dc:creator>
+                <dcterms:created rdf:parseType="Resource">
+                    <dcterms:W3CDTF>2005-02-06T23:39:40</dcterms:W3CDTF>
+                </dcterms:created>
+                <dcterms:modified rdf:parseType="Resource">
+                    <dcterms:W3CDTF>2005-09-13T13:24:56</dcterms:W3CDTF>
+                </dcterms:modified>
+                <bqmodel:is>
+                    <rdf:Bag>
+                        <rdf:li rdf:resource="http://www.ebi.ac.uk/biomodels/#BIOMD0000000003"/>
+                    </rdf:Bag>
+                </bqmodel:is>
+                <bqmodel:isDescribedBy>
+                     <rdf:Bag>
+                         <rdf:li rdf:resource="http://www.pubmed.gov/#1833774"/>
+                     </rdf:Bag>
+                <bqmodel:isDescribedBy>
+                <bqbiol:isVersionOf>
+                    <rdf:Bag>
+                        <rdf:li rdf:resource="http://www.genome.jp/kegg/pathway/#hsa04110"/>
+                        <rdf:li rdf:resource="http://www.reactome.org/#69278"/>
+                    </rdf:Bag>
+                </bqbiol:isVersionOf>
+        </rdf:Description>
+    </rdf:RDF>
+</annotation>
+\end{example}
+
+The following example shows a \Reaction structure annotated
+with a reference to its exact Reactome counterpart.
+
+\begin{example}
+<reaction id="cdc2Phospho" metaid="jb007">
+  <annotation>
+    <rdf:RDF
+      xmlns:bqbiol="http://biomodels.net/biology-qualifiers/"
+      xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns\#"
+    >
+      <rdf:Description rdf:about="#jb007">
+        <bqbiol:is>
+          <rdf:Bag>
+            <rdf:li rdf:resource="http://www.reactome.org/\#170156"/>
+          </rdf:Bag>
+        </bqbiol:is>
+      </rdf:Description>
+    </rdf:RDF>
+  </annotation>
+  <listOfReactants>
+    <speciesReference species="cdc2"/>
+  </listOfReactants>
+  <listOfProducts>
+    <speciesReference species="cdc2-Y15P"/>
+  </listOfProducts>
+  <listOfModifiers>
+    <modifierSpeciesReference species="wee1"/>
+  </listOfModifiers>
+</reaction>
+\end{example}
+
+The following example describes a species that represents a
+complex between the protein calmodulin and calcium ions:
+
+\begin{example}
+<species id="Ca_calmodulin" metaid="cacam">
+  <annotation>
+    <rdf:RDF
+      xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns\#"
+      xmlns:bqbiol="http://biomodels.net/biology-qualifiers/"
+    >
+      <rdf:Description rdf:about="\#cacam">
+        <bqbiol:hasPart>
+          <rdf:Bag>
+            <rdf:li rdf:resource="http://www.uniprot.org/\#P62158"/>
+            <rdf:li rdf:resource="http://www.genome.jp/kegg/compound/\#C00076"/>
+          </rdf:Bag>
+        </bqbiol:hasPart>
+      </rdf:Description>
+    </rdf:RDF>
+  </annotation>
+</species>
+\end{example}
+
+The following example describes a species that represents either
+``Calcium/calmodulin-dependent protein kinase type II alpha
+chain'' or ``Calcium/calmodulin-dependent protein kinase type II
+beta chain''. This is the case for instance in the somatic
+cytoplasm of striatal medium-size spiny neurons, where both are
+present but they cannot be functionally differentiated.
+
+\begin{example}
+<species id="calcium_calmodulin" metaid="cacam">
+  <annotation>
+    <rdf:RDF
+      xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns\#"
+      xmlns:bqbiol="http://biomodels.net/biology-qualifiers/"
+    >
+      <rdf:Description rdf:about="\#cacam">
+        <bqbiol:hasVersion>
+          <rdf:Bag>
+            <rdf:li rdf:resource="http://www.uniprot.org/\#Q9UQM7"/>
+            <rdf:li rdf:resource="http://www.uniprot.org/\#Q13554"/>
+          </rdf:Bag>
+        </bqbiol:hasVersion>
+      </rdf:Description>
+    </rdf:RDF>
+  </annotation>
+</species>
+\end{example}
+
+The above approach should not be used to describe ``any
+Calcium/calmodulin-dependent protein kinase type II chain'',
+because such an annotation requires referencing the products of
+other genes such as gamma or delta. All the known proteins could
+be enumerated, but such an approach would almost surely lead to
+inaccuracies because biological knowledge continues to evolve.
+Instead, the annotation should refer to generic information such
+as Ensembl family ENSF00000000194 ``CALCIUM/CALMODULIN DEPENDENT
+KINASE TYPE II CHAIN'' or PIR superfamily PIRSF000594
+``Calcium/calmodulin-dependent protein kinase type~II''.
+
+%While with \texttt{HasVersion}, the described component could
+%represent several alternative, with \texttt{isVersionOf} the
+%described component is one of the alternative understated by the
+%referenced resource.
+
+The following two examples show how to use the qualifier
+\texttt{is Version Of}. The first example is the relationship
+between a reaction and an EC code. An EC code describes an
+enzymatic activity and an enzymatic reaction involving a
+particular enzyme can be seen as an instance of this activity. For
+instance the following reaction represents the phosphorylation of
+a glutamate receptor by a complex calcium/calmodulin kinase II.
+
+\begin{example}
+<reaction id="NMDAR_phosphorylation" metaid="thx1138">
+  <annotation>
+    <rdf:RDF
+      xmlns:bqbiol="http://biomodels.net/biology-qualifiers/"
+      xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns\#"
+    >
+      <rdf:Description rdf:about="#thx1138">
+        <bqbiol:isVersionOf>
+          <rdf:Bag>
+            <rdf:li rdf:resource="http://www.ec-code.org/\#2.7.1.17"/>
+          </rdf:Bag>
+        </bqbiol:isVersionOf>
+      </rdf:Description>
+    </rdf:RDF>
+  </annotation>
+  <listOfReactants>
+    <speciesReference species="NMDAR"/>
+  </listOfReactants>
+  <listOfProducts>
+    <speciesReference species="P-NMDAR"/>
+  </listOfProducts>
+  <listOfModifiers>
+    <modifierSpeciesReference species="CaMKII"/>
+  </listOfModifiers>
+  <kineticLaw>
+    <math xmlns="http://www.w3.org/1998/Math/MathML">
+      <apply>
+        <times/>
+        <ci>CaMKII</ci>
+        <ci>kcat</ci>
+        <apply>
+          <divide/>
+          <ci>NMDAR</ci>
+          <apply>
+            </times>
+            <ci>NMDAR</ci>
+            <ci>Km</ci>
+          </apply>
+        </apply>
+      </apply>
+    </math>
+    <listOfParameters>
+      <parameter id="kcat" value="1"/>
+      <parameter id="Km" value="5e-10"/>
+    </listOfParameters>
+  </kineticLaw>
+</reaction>
+\end{example}
+
+The second example of the use of \class{isVersionOf} is the
+complex between Calcium/calmodulin-dependent protein kinase type
+II alpha chain and Calcium/calmodulin, that is only one of the
+``calcium- and calmodulin-dependent protein kinase complexes''
+described by the Gene Ontology term GO:0005954.
+
+\begin{example}
+<species id="CaCaMKII" metaid="C8H10N4O2">
+  <annotation>
+    <rdf:RDF
+      xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns\#"
+      xmlns:bqbiol="http://biomodels.net/biology-qualifiers/"
+    >
+      <rdf:Description rdf:about="\#C8H10N4O2">
+        <bqbiol:isVersionOf>
+          <rdf:Bag>
+            <rdf:li rdf:resource="http://www.geneontology.org/\#GO:0005954"/>
+          </rdf:Bag>
+        </bqbiol:isVersionOf>
+      </rdf:Description>
+    </rdf:RDF>
+  </annotation>
+</species>
+\end{example}
+
+The previous case is different form the following one, although they
+could seem similar at first sight. The
+``Calcium/calmodulin-dependent protein kinase type II alpha
+chain'' is a part of the above mentioned ``calcium- and
+calmodulin-dependent protein kinase complex''.
+
+\begin{example}
+<species id="CaMKIIalpha" metaid="C10H14N2">
+  <annotation>
+    <rdf:RDF
+      xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns\#"
+      xmlns:bqbiol="http://biomodels.net/biology-qualifiers/"
+    >
+      <rdf:Description rdf:about="\#C10H14N2">
+        <bqbiol:isPartOf>
+          <rdf:Bag>
+            <rdf:li rdf:resource="http://www.geneontology.org/\#GO:0005954"/>
+          </rdf:Bag>
+        </bqbiol:isPartOf>
+      </rdf:Description>
+    </rdf:RDF>
+  </annotation>
+</species>
+\end{example}
+
+It is possible describe a component with several alternative sets
+of qualified annotations. For instance, the following species
+represents a pool of  GMP, GDP and GDP. We annotate it with the
+three corresponding KEGG compound identifiers but also with the
+three corresponding ChEBI identifiers.  The two alternative
+annotations are encoded in separate \token{hasVersion} qualifier
+elements.
+
+\begin{example}
+<species id="GXP" metaid="GXP">
+  <annotation>
+    <rdf:RDF
+      xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns\#"
+      xmlns:bqbiol="http://biomodels.net/biology-qualifiers/"
+    >
+      <rdf:Description rdf:about="\#GXP">
+        <bqbiol:hasVersion>
+          <rdf:Bag>
+            <rdf:li rdf:resource="http://www.ebi.ac.uk/chebi/\#CHEBI:17345"/>
+            <rdf:li rdf:resource="http://www.ebi.ac.uk/chebi/\#CHEBI:17552"/>
+            <rdf:li rdf:resource="http://www.ebi.ac.uk/chebi/\#CHEBI:17627"/>
+          </rdf:Bag>
+        </bqbiol:hasVersion>
+        <bqbiol:hasVersion>
+          <rdf:Bag>
+            <rdf:li rdf:resource="http://www.genome.jp/kegg/compound/\#C00035"/>
+            <rdf:li rdf:resource="http://www.genome.jp/kegg/compound/\#C00044"/>
+            <rdf:li rdf:resource="http://www.genome.jp/kegg/compound/\#C00144"/>
+          </rdf:Bag>
+        </bqbiol:hasVersion>
+      </rdf:Description>
+    </rdf:RDF>
+  </annotation>
+</species>
+\end{example}
+
+The following example presents a reaction being actually the
+combination of three different elementary molecular reactions. We
+annotate it with the three corresponding KEGG reactions, but also
+with the three corresponding enzymatic activities.  Again the two
+\class{hasPart} elements represent two alternative annotations.
+The process represented by the \class{Reaction} structure is
+composed of three parts, and  not six parts.
+
+\begin{example}
+<reaction id="adenineProd" metaid="adeprod">
+  <annotation>
+    <rdf:RDF
+      xmlns:bqbiol="http://biomodels.net/biology-qualifiers/"
+      xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns\#"
+    >
+      <rdf:Description rdf:about="\#adeprod">
+        <bqbiol:hasPart>
+          <rdf:Bag>
+            <rdf:li rdf:resource="http://www.ec-code.org/\#2.5.1.22"/>
+            <rdf:li rdf:resource="http://www.ec-code.org/\#3.2.2.16"/>
+            <rdf:li rdf:resource="http://www.ec-code.org/\#4.1.1.50"/>
+          </rdf:Bag>
+        </bqbiol:hasPart>
+        <bqbiol:hasPart>
+          <rdf:Bag>
+            <rdf:li rdf:resource="http://www.genome.jp/kegg/reaction/\#R00178"/>
+            <rdf:li rdf:resource="http://www.genome.jp/kegg/reaction/\#R01401"/>
+            <rdf:li rdf:resource="http://www.genome.jp/kegg/reaction/\#R02869"/>
+          </rdf:Bag>
+        </bqbiol:hasPart>
+      </rdf:Description>
+    </rdf:RDF>
+  </annotation>
+</reaction>
+\end{example}
+
+It is possible to mix different URIs in a given set. The
+following example presents two alternative annotations of the human
+hemoglobin, the first with ChEBI heme and the second with KEGG
+heme.
+
+\begin{example}
+<species id="heme" metaid="heme">
+  <annotation>
+    <rdf:RDF
+      xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns\#"
+      xmlns:bqbiol="http://biomodels.net/biology-qualifiers/"
+    >
+     <rdf:Description rdf:about="\#heme">
+       <bqbiol:hasPart>
+         <rdf:Bag>
+           <rdf:li rdf:resource="http://www.uniprot.org/\#P69905"/>
+           <rdf:li rdf:resource="http://www.uniprot.org/\#P68871"/>
+           <rdf:li rdf:resource="http://www.ebi.ac.uk/chebi/\#CHEBI:17627">
+         </rdf:Bag>
+       </bqbiol:hasPart>
+       <bqbiol:hasPart>
+         <rdf:Bag>
+          <rdf:li rdf:resource="http://www.uniprot.org/\#P69905"/>
+           <rdf:li rdf:resource="http://www.uniprot.org/\#P68871"/>
+           <rdf:li rdf:resource="http://www.genome.jp/kegg/compound/\#C00032"/>
+         </rdf:Bag>
+       </bqbiol:hasPart>
+     </rdf:Description>
+   </rdf:RDF>
+  </annotation>
+</species>
+\end{example}
+
+As formally defined above it is possible to use different
+qualifiers in the same annotation element. The following
+phosphorylation is annotated by its exact KEGG counterpart and by
+the generic GO term ``phosphorylation''.
+
+\begin{example}
+<reaction id="phosphorylation" metaid="phosphorylation">
+  <annotation>
+    <rdf:RDF
+      xmlns:bqbiol="http://biomodels.net/biology-qualifiers/"
+      xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns\#"
+    >
+      <rdf:Description rdf:about="\#phosphorylation">
+        <bqbiol:is>
+          <rdf:Bag>
+            <rdf:li rdf:resource="http://www.genome.jp/kegg/reaction/\#R03313" />
+          </rdf:Bag>
+        </bqbiol:is>
+        <bqbiol:isVersionOf>
+          <rdf:Bag>
+            <rdf:li rdf:resource="http://www.geneontology.org/\#GO:0016310" />
+          </rdf:Bag>
+        </bqbiol:isVersionOf>
+      </rdf:Description>
+    </rdf:RDF>
+  </annotation>
+</reaction>
+\end{example}

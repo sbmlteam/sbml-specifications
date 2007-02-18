@@ -1,0 +1,507 @@
+% Emacs: -*- TeX-master: "sbml-level-2-version-3"; fill-column: 66 -*-
+
+\section{Example models expressed in XML using SBML}
+\label{sec:xml-rep}
+\label{sec:examples}
+
+In this section, we present several examples of complete models
+encoded in XML using SBML Level~2.
+
+%Our approach to translating
+%the UML-based structure definitions presented in the previous
+%sections is described elsewhere~\citep{hucka:2000b}.
+%Appendix~\ref{apdx:schemas} gives the full listing of an XML
+%Schema corresponding to SBML Level~2.
+
+
+%-----------------------------------------------------------------------------
+\subsection{A simple example application of SBML}
+\label{sec:modeleg}
+%-----------------------------------------------------------------------------
+
+Consider the following representation of an enzymatic reaction:
+\begin{linenomath}
+\begin{reaction}\centering\notag
+  E + S \eqbm^{\cit k\sub{on}}_{\cit k\sub{off}} ES \yields^{\cit k\sub{cat}} E + P
+\end{reaction}
+\end{linenomath}
+The following is the minimal SBML document encoding the model shown above:
+
+\sbmlexample{enzymekinetics.xml}
+
+In this example, the model has the identifier
+\val{EnzymaticReaction}.  The model contains one compartment (with
+identifier \val{cytosol}), four species (with identifiers
+\val{ES}, \val{P}, \val{S}, and \val{E}), and two reactions
+(\val{veq} and \val{vcat}).  The elements in the
+\token{listOfReactants} and \token{listOfProducts} in each
+reaction refer to the names of elements listed in the
+\token{listOfSpecies}.  The correspondences between the various
+elements is explicitly stated by the \token{speciesReference}
+elements.
+
+The model also features local parameter definitions in each
+reaction.  In this case, the three parameters (\val{kon},
+\val{koff}, \val{kcat}) all have unique identifiers and they could
+also have just as easily been declared global parameters in the
+model.  Local parameters frequently become more useful in larger
+models, where it may become tedious to assign unique identifiers
+for all the different parameters.
+
+
+%-----------------------------------------------------------------------------
+\subsection{Example involving units}
+\label{apdx:units-eg}
+%-----------------------------------------------------------------------------
+
+The following model uses the units features of SBML Level~2. In
+this model, the default value of \token{substance} is changed to
+be mole units with a scale factor of $-3$, or millimoles.  This
+sets the default substance units in the model.  The \token{size}
+and \token{time} built-ins are left to their defaults, meaning
+size is in litres and time is in seconds.  The result is that, in
+this model, kinetic law formulas define rates in millimoles per
+second and the species identifiers in them represent concentration
+values in millimoles per litres.  All the \token{species} elements
+set the initial amount of every given species to 1 millimole.  The
+parameters \val{vm} and \val{km} are defined to be in millimoles
+per litres per second, and milliMoles per litres, respectively.
+
+\sbmlexample{units.xml}
+
+
+%-----------------------------------------------------------------------------
+\subsection{Example of a discrete version of a simple dimerization reaction}
+\label{sec:discrete-eg}
+%-----------------------------------------------------------------------------
+
+\emph{(Model contributed by Darren J. Wilkinson, Newcastle
+  University, Newcastle upon Tyne, UK.)}
+
+This example illustrates subtle differences between models
+formulated for use in a continuous simulation framework (\eg using
+differential equations) and those intended for a discrete
+simulation framework.  The model shown here is suitable for use
+with a discrete stochastic simulation algorithm of the sort
+developed by \cite{gillespie:1977}.  In such an approach, species
+are described in terms of molecular counts and stimulation
+proceeds by computing the probability of the time and identity of
+the next reaction, then updating the species amounts
+appropriately.
+
+The model involves a simple dimerization reaction for a protein
+named \val{P}:
+\begin{linenomath}
+\begin{equation*}
+    2 P  \leftrightarrow  P_2
+\end{equation*}
+\end{linenomath}
+The SBML representation is shown below.  There are several
+important points to note.  First, the species \val{P} and \val{P2}
+declare they are always in discrete amounts by using the flag
+\token{hasOnlySubstanceUnits}=\val{true}.  This indicates that
+when the species identifiers appear in mathematical formulas, the
+units are \quantity{substance}, not the default of
+\quantity{substance}/\quantity{size}.  A second point is that, as
+a result, the corresponding ``kinetic law'' formulas do not need
+volume corrections.  In Gillespie's approach, the constants in the
+rate expressions (here, \val{c1} and \val{c2}) contain a
+contribution from the kinetic constants of the reaction and the
+size of the compartment in which the reactions take place.
+Finally, it is worth noting the rate expression for the forward
+reaction is a second-order mass-action reaction, but it is the
+\emph{discrete} formulation of such a reaction
+rate~\citep{gillespie:1977}.
+
+\sbmlexample{dimerization.xml}
+
+This example also illustrates the need to provide additional
+information in a model so that software tools using different
+mathematical frameworks can properly interpret it.  In this case,
+a simulation tool designed for continuous ODE-based simulation
+would likely misinterpret the model (in particular the reaction
+rate formulas), unless it deduced that a discrete stochastic
+simulation was intended.  One of the purposes of SBO annotations
+(Section~\ref{sec:sboTerm}) is to enable such interpretation
+without the need for deduction.
+
+
+%-----------------------------------------------------------------------------
+\subsection{Example involving assignment rules}
+\label{apdx:rules-eg}
+%-----------------------------------------------------------------------------
+
+This section contains a model that simulates a system containing a
+fast reaction.  This model uses rules to express the mathematics
+of the fast reaction explicitly rather than using the \token{fast}
+field on a reaction element.  The system modeled is
+\begin{linenomath}
+\begin{equation*}
+  \begin{array}{@{}ccc@{}}
+    X_0 & \overset{\underrightarrow{k_1 X_0}}{}           & S_1 \\[6pt]
+    S_1 & \overset{\underrightarrow{k_f S_1 - k_r S_2}}{} & S_2 \\[6pt]
+    S_2 & \overset{\underrightarrow{k_2 S_2}}{}           & X_1 \\[6pt]
+  \end{array}
+\end{equation*}
+\begin{equation*}
+    k_1 = 0.1, \quad k_2 = 0.15, \quad k_f = K_{eq} 10000, \quad k_r = 10000, \quad K_{eq} = 2.5.
+\end{equation*}
+\end{linenomath}
+where $X_0$, $S_1$, and $S_2$ are species in concentration units,
+and $k_1$, $k_2$, $k_f$, $k_r$, and $K_{eq}$ are parameters.  This
+system of reactions can be approximated with the following new
+system:
+\begin{linenomath}
+\begin{equation*}
+  \begin{array}{@{}ccc@{}}
+    X_0 & \overset{\underrightarrow{k_1 X_0}}{} & T \\[6pt]
+    T & \overset{\underrightarrow{k_2 S_2}}{} & X_1\\[6pt]
+  \end{array}
+\end{equation*}
+\begin{equation*}
+\begin{aligned}
+    S_1 &= \dfrac{T}{1 + K_{eq}} \\[6pt]
+    S_2 &= K_{eq} S_1
+  \end{aligned}
+\end{equation*}
+\end{linenomath}
+
+where $T$ is a new species.  The following example SBML model
+encodes the second system.
+
+\sbmlexample{assignmentrules.xml}
+
+
+%-----------------------------------------------------------------------------
+\subsection{Example involving algebraic rules}
+\label{sec:algeraiceg}
+%-----------------------------------------------------------------------------
+
+This section contains an example model that contains an
+\AlgebraicRule structure.  The model contains a different
+formulation of the fast reaction described in
+Section~\ref{apdx:rules-eg}.  The system described in
+Section~\ref{apdx:rules-eg} can be approximated with the following
+system:
+\begin{linenomath}
+\begin{equation*}
+  \begin{array}{@{}ccc@{}}
+    X_0 & \overset{\underrightarrow{k_1 X_0}}{} & T \\[6pt]
+    T & \overset{\underrightarrow{k_2 S_1}}{} & X_1
+  \end{array}
+\end{equation*}
+\begin{equation*}
+    S_2 = K_{eq} S_1\\[10pt]
+\end{equation*}
+\end{linenomath}
+with the constraint:
+\begin{linenomath}
+\begin{equation*}
+    S_1 + S_2 - T = 0
+\end{equation*}
+\end{linenomath}
+
+The following example SBML model encodes this approximate form.
+
+\sbmlexample{algebraicrules.xml}
+
+
+%-----------------------------------------------------------------------------
+\subsection{Example with combinations of
+  \token{boundaryCondition} and \token{constant} values on \class{Species}
+  with \class{RateRule} structures}
+\label{sec:constantspecieseg}
+%-----------------------------------------------------------------------------
+
+In this section, we discuss a model that includes four species,
+each with a different combination of values for their
+\token{boundaryCondition} and \token{constant} fields.  The model
+represents a hypothetical system containing one reaction,
+\begin{linenomath}
+\begin{equation*}
+  \begin{array}{@{}ccc@{}}
+    S_1 + S_2 & \overset{\underrightarrow{k_1 S_1 S_2 S_3}}{} & S_4 \\ \\[-4pt]
+  \end{array}
+\end{equation*}
+\end{linenomath}
+where $S_3$ is a species that catalyzes the conversion of species
+$S_1$ and $S_2$ into $S_4$.  $S_1$ and $S_2$ are on the boundary
+of the system (\ie $S_1$ and $S_2$ are reactants but their values
+are not determined by a kinetic law).  The value of $S_1$ in the
+system is determined over time by the rate rule:
+\begin{linenomath}
+\begin{equation*}
+  \dfrac{d S_1}{d t} = k_2
+\end{equation*}
+\end{linenomath}
+The values of constant parameters in the system are:
+\begin{linenomath}
+\begin{equation*}
+    S_2 = 1, \quad S_3 = 2, \quad k_1 = 0.5, \quad k_2 = 0.1
+  \end{equation*}
+\end{linenomath}
+and the initial values of species are:
+\begin{linenomath}
+\begin{equation*}
+    S_1 = 0, \quad S_4 = 0
+\end{equation*}
+\end{linenomath}
+
+The value of $S_1$ varies over time so in SBML $S_1$ has a
+\token{constant} field with a default value of \val{false}.  The
+values of $S_2$ and $S_3$ are fixed so in SBML they have a
+\token{constant} field values of \val{true}.  $S_3$ only occurs as
+a modifier so the value of its \token{boundaryCondition} field can
+default to \val{false}.  $S_4$ is a product whose value is
+determined by a kinetic law and therefore in the SBML
+representation has \val{false} (the default) for both its
+\token{boundaryCondition} and \token{constant} fields.
+
+The following is the SBML rendition of the model shown above:
+
+\sbmlexample{boundarycondition.xml}
+
+
+%-----------------------------------------------------------------------------
+\subsection{Example of translation from a multi-compartmental model to ODEs}
+\label{sec:odeeg}
+%-----------------------------------------------------------------------------
+
+This section contains a model with 2 compartments and 4 reactions.
+The model is derived from Lotka-Volterra, with the addition of a
+reversible transport step.  When observed in a time-course
+simulation, three of this model's species display damped
+oscillations.
+
+\begin{figure}[htb]
+  \vspace*{5pt}
+  \centering
+  \begin{picture}(260,60)
+    \put(0,10){\framebox(255,50)[tl]{ cytosol}}
+    \put(10,19){\framebox(105,29)[tl]{ nucleus}}
+    \put(24,26){$
+        X + Y_{1n} \yields^{\cit k\sub{1}} 2\,Y_{1n}
+        \eqbm^{\cit K\sub{T}} 2\,Y_{1c} + 2\,Y_2
+        \yields^{\cit k\sub{2}} 4\,Y_2 \yields^{\cit k\sub{3}} \emptyset
+        $}
+  \end{picture}
+  \vspace*{-8pt}
+  \caption{A example multi-compartmental model.}
+  \label{fig:multicomp}
+\end{figure}
+
+Figure~\ref{fig:multicomp} illustrates the arrangement of
+compartments and reactions in the model
+\token{LotkaVolterra\_tranport}.  The text of the SBML
+representation of the model is shown below, and it is followed by
+its complete translation into ordinary differential equations.  In
+this SBML model, the reaction equations are in substance per time
+units.  The reactions have also been simplified to reduce common
+stoichiometric factors.  The species variables are in
+concentration units; their initial quantities are declared using
+the attribute \token{initialAmount} on the \token{species}
+definitions, but since the attribute \token{hasOnlySubstanceUnits}
+is \emph{not} set to true, the identifiers of the species
+represent their concentrations when those identifiers appear in
+mathematical expressions elsewhere in the model.  Note that the
+species whose identifier is \val{X} is a boundary condition, as
+indicated by the attribute \token{boundaryCondition}=\val{true} in
+its definition.  The attribute \token{speciesType}=\val{Y} in the
+definitions of \val{Y1n} and \val{Y1c} indicates that these
+species are pools of the same participant, but located in
+different compartments.
+
+\sbmlexample{multicomp.xml}
+
+The ODE translation of this model is as follows.  First, we give
+the values of the constant parameters:
+\begin{linenomath}
+\begin{equation*}
+  k_1 = 2500, \quad k_2 = 2500, \quad K_3 = 25000, \quad K_T = 2500
+\end{equation*}
+\end{linenomath}
+Next, here are the initial conditions of the variables.  The
+species variables $X$, $Y_{1n}$, $Y_{1c}$, and $Y_2$ in the following
+equations are all in terms of concentrations, and we use $V_n$ to
+represent for the size of compartment \val{nucleus} and $V_c$ to
+represent for the size of compartment \val{cytoplasm}:
+\begin{linenomath}
+\begin{equation*}
+  V_n = 1, \quad V_c = 5, \quad X = 1, \quad Y_{1n} = 1, \quad Y_{1c} = 0, \quad Y_2 = 1
+\end{equation*}
+\end{linenomath}
+And finally, here are the differential equations:
+\begin{linenomath}
+\begin{align*}
+  \dfrac{d X}{d t}    &= 0 \\[6pt]
+  V_n \dfrac{d Y_{1n}}{d t} &= k_1 \cdot X \cdot Y_{1n} \cdot V_n - K_T \cdot (Y_{1n} - Y_{1c}) \cdot V_c
+    && \text{reactions production and transport} \\[6pt]
+  V_c \dfrac{d Y_{1c}}{d t} &= K_T \cdot (Y_{1n} - Y_{1c}) \cdot V_c - k_2 \cdot Y_{1c} \cdot Y_2 \cdot V_c
+    && \text{reactions transport and transformation} \\[6pt]
+  V_c \dfrac{d Y_2}{d t}   &= k_2 \cdot Y_{1c} \cdot Y_2 \cdot V_c - k_3 \cdot Y_2 \cdot V_c
+    && \text{reactions transformation and degradation}
+\end{align*}
+\end{linenomath}
+
+As formulated here, this example assumes constant volumes.  If the
+sizes of the compartments \val{cytoplasm} or \val{nucleus} could
+change during simulation, then it would be preferable to use a
+different approach to constructing the differential equations.  In
+this alternative approach, the ODEs would compute substance change
+rather than concentration change, and the concentration values
+would be computed using separate equations.  This approach is used
+in Section~\ref{sec:about-kinetic-laws}.
+
+
+%-----------------------------------------------------------------------------
+\subsection{Example involving function definitions}
+\label{sec:functioneg}
+%-----------------------------------------------------------------------------
+
+This section contains a model that uses the function definition
+feature of SBML.  Consider the following hypothetical system:
+\begin{linenomath}
+\begin{equation*}
+  \begin{array}{@{}ccc@{}}
+    S_1 & \overset{\underrightarrow{f(S_1)}}{} & S_2 \\ \\[-4pt]
+  \end{array}
+\end{equation*}
+\end{linenomath}
+where
+\begin{linenomath}
+\begin{equation*}
+    f(x) = 2 \times x
+\end{equation*}
+\end{linenomath}
+
+The following is the XML document that encodes the model shown
+above:
+
+\sbmlexample{functiondef.xml}
+
+
+%-----------------------------------------------------------------------------
+\subsection{Example involving \emph{delay} functions}
+\label{sec:delayeg}
+%-----------------------------------------------------------------------------
+
+The following is a simple model illustrating the use of $delay$ to
+represent a gene that suppresses its own expression.  The model
+can be expressed in a single rule:
+\begin{linenomath}
+\begin{equation*}
+  \frac{d P}{d t} = \dfrac{ \dfrac{1}{1 + m (P_{delayed})^q} - P }{ \tau }
+\end{equation*}
+\end{linenomath}
+where
+\begin{linenomath}
+\begin{equation*}
+\begin{array}{rl}
+P_{delayed} & \mbox{is } delay(P, \Delta_t) \mbox{ or P at } t - \Delta_t\\
+P & \mbox{is protein concentration}\\
+\tau & \mbox{is the response time}\\
+m & \mbox{is a multiplier or equilibrium constant}\\
+q & \mbox{is the Hill coefficient}\\
+\end{array}
+\end{equation*}
+\end{linenomath}
+and the species quantities are in concentration units.
+The text of an SBML encoding of this model is given below:
+
+\sbmlexample{delay.xml}
+
+
+%-----------------------------------------------------------------------------
+\subsection{Example involving events}
+\label{sec:eventeg}
+%-----------------------------------------------------------------------------
+
+This section presents a simple model system that demonstrates the
+use of events in SBML.  Consider a system with two genes, $k_1$
+and $k_2$.  $k_1$ is initially on and $k_2$ is initially off.
+When turned on, the two genes lead to the production of two
+products, $P_1$ and $P_2$, respectively, at a fixed rate.  When
+$P_1$ reaches a given concentration, $k_2$ switches off.  This
+system can be represented mathematically as follows:
+\begin{linenomath}
+\begin{eqnarray*}
+  \dfrac{d P_1}{d t} & = & k_1 - P_1\\[3pt]
+  \dfrac{d P_2}{d t} & = & k_2 - P_2\\
+  k_2 & = &
+    \begin{cases}
+      0 & \text{when $P_1 \leq \tau$},\\
+      1 & \text{when $P_1 > \tau$}.
+    \end{cases}
+\end{eqnarray*}
+\end{linenomath}
+
+The initial values are:
+\begin{linenomath}
+\begin{equation*}
+  k_1 = 1, \quad k_2 = 0, \quad \tau = 0.25, \quad P_1 = 0, \quad P_2 = 0
+\end{equation*}
+\end{linenomath}
+
+The SBML Level 2 representation of this as follows:
+
+\sbmlexample{events.xml}
+
+
+%-----------------------------------------------------------------------------
+\subsection{Example involving two-dimensional compartments}
+\label{sec:two-dimensional-eg}
+%-----------------------------------------------------------------------------
+
+The following example is a model that uses a two-dimensional
+compartment.  It is a fragment of a larger model of calcium
+regulation across the plasma membrane of a cell.  The model
+includes a calcium influx channel, \val{Ca\_channel}, and a
+calcium-extruding PMCA pump, \val{Ca\_Pump}.  It also includes two
+cytosolic proteins that buffer calcium via the
+\val{CalciumCalbindin\_gt\_BoundCytosol} and
+\val{CalciumBuffer\_gt\_BoundCytosol} reactions.  Finally, the
+rate expressions in this model do not include explicit factors of
+the compartment volumes; instead, the various rate constants are
+assume to include any necessary corrections for volume.
+
+\sbmlexample{twodimensional.xml}
+
+
+%%-----------------------------------------------------------------------------
+%\subsection{Example Using \SpeciesType Structures}
+%\label{sec:speciesType-eg}
+%%-----------------------------------------------------------------------------
+
+%The following example is a model that uses \SpeciesType structures to indicate
+%that 2 pools of biochemical entities (\emph{species}) located in different compartments
+%contain the same type of entity (\emph{speciesType}).
+
+%\begin{small}
+%\tightspacing
+%\begin{verbatim}
+%<?xml version="1.0" encoding="UTF-8"?>
+%<sbml xmlns="http://www.sbml.org/sbml/level2/version2" level="2" version="2">
+%<model id="malate_aspartate_shuttle2">
+%    <listOfCompartments>
+%        <compartment id="Cytosol"/>
+%        <compartment id="Mitochondrial_Matrix"/>
+%    </listOfCompartments>
+%    <listOfSpeciesTypes>
+%        <speciesType id="Aspartate"/>
+%    </listOfSpeciesTypes>
+%    <listOfSpecies>
+%        <species
+%            id="Aspartate_in_Cytosol"
+%            speciesType="Aspartate"
+%            compartment="Cytosol"/>
+%        <species
+%            id="Aspartate_in_Mitochondrial_Matrix"
+%            speciesType="Aspartate"
+%            compartment="Mitochondrial_Matrix"/>
+%    </listOfSpecies>
+%</model>
+%</sbml>
+%\end{verbatim}
+%\end{small}
+
+

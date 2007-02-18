@@ -1,0 +1,84 @@
+% Emacs: -*- TeX-master: "sbml-level-2-version-3"; fill-column: 66 -*-
+
+\section{Processing and validating \token{notes} content}
+\label{apdx:processing-notes}
+
+In Section~\ref{sec:notes}, we discussed the \token{notes} field
+defined on \SBase and how it can contain a number of possible
+XHTML elements.  In this appendix, we describe a general procedure
+for how application software can process such content.  We
+concentrate on the common case of an SBML-reading application that
+needs to take the contents and pass it to an XHTML display and/or
+editing function obtained from a third-party API library.  The
+content of the \token{notes} may not be a complete XHTML document,
+so the application will have to perform some processing before
+handing it to the XHTML editor or validator.  How should this be
+done?
+
+Based on the three forms of \token{notes} content described in
+Section~\ref{sec:notes}, there are only three cases possible.
+Here we give an example approach for handling them, although the
+actual implementation details will differ depending on various
+factors such as the requirements of the software libraries being
+used.  This example approach would be performed for each
+\token{notes} to be viewed or edited:
+\begin{description}
+  
+\item \emph{Step 1}. If the XHTML viewing/editing function
+  requires a fully compliant XML document, the SBML application
+  could create a temporary data object containing an appropriate
+  XML declaration and a DOCTYPE declaration; otherwise, the XML
+  data object can be initially blank.
+  
+\item \emph{Step 2}. The application should look at the first
+  element inside the \token{notes} (or rather, the first element
+  that is not an XML comment), and take action based on the
+  following three possibilities:
+  \begin{itemize}
+    
+  \item If the first element inside \token{notes} begins with
+    \token{<html xhtml="http://www.w3.org/1999/xhtml">}, the
+    application could assume that the content is a complete XHTML
+    document and insert this into the temporary data object.
+    
+  \item Else, if the first element is \token{<body>}, the
+    application should insert the following into the temporary
+    data object, 
+
+    \begin{example}
+<html xhtml="http://www.w3.org/1999/xhtml">
+    <head><title></title></head>\end{example}
+    then insert the content of the \token{notes}, and finally
+    insert a closing \token{</html>}.
+    
+  \item Else, if the \token{notes} content begins with neither of
+    the above elements, the application should insert the
+    following into the temporary data object,
+
+    \begin{example}
+<html xhtml="http://www.w3.org/1999/xhtml">
+    <head><title></title></head>
+    <body>\end{example}
+    then insert the content of the \token{notes}, and finally
+    insert \token{</body></html>} to close the XHTML document.
+  \end{itemize}
+
+\end{description}
+The result of the above would be a temporary XML data object that
+the application could then pass to the XHTML viewing/editing API
+function.
+
+% [2006-09-05 MH] was thinking of adding the following too, but
+% this seems like a too-short description, and I don't want to
+% get into all the possible issues in making sure the inversion
+% is done correctly.  Still, something to think about for the
+% future:
+%
+%Since the application performing the processing above could
+%remember which of the three cases it encountered for a given
+%\token{notes} content, upon receiving the results back from the
+%XHTML viewing/editing function, it could invert the process and
+%insert the results back into the \token{notes} object in the SBML
+%model.
+
+

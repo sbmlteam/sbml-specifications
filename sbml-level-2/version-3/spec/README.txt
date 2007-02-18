@@ -20,17 +20,30 @@
 
 
 
+----------------------------------
+Notes about producing output files
+----------------------------------
+
+To produce grayscale output without modifying the source file, invoke
+latex with a command of the following form:
+
+pdflatex "\newcommand\UseOption{grayscale}\input{sbml-level-2-version-2}"
 
 
 
 
 
--------------------------------------------
+
+
+
+
+
+----------------------------------------------------------------------
 File author: M. Hucka
 Last Modified: $Date$
 Last Modified By: $Author$
 $Source$
--------------------------------------------
+----------------------------------------------------------------------
 
 # The following is for [X]Emacs users.  Please leave in place.
 # Local Variables:

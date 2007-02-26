@@ -4312,119 +4312,75 @@ after the occurrence of the condition which invokes it.  The
 operation of an \Event structure is divided into two phases (even
 when the event is not delayed): one when the event is \emph{fired}
 and the other when the event is \emph{executed}. The \Event type
-is defined in Figure~\vref{fig:event}.  Both \Event and
-\EventAssignment are derived from \SBase (see
-Section~\ref{sec:sbase}).  An example of a model which uses events
-is given below.
+is defined in Figure~\vref{fig:event}.  \changed{The structures
+  \Event, \Trigger, \Delay and \EventAssignment are derived from
+  \SBase{} }\changed{(see Section~\ref{sec:sbase})}.  An example
+of a model which uses events is given below.
 
 \begin{figure}[htb]
   \centering
+  \begin{blockChanged}
   \begin{classbox}{Event}
-    id: SId                                                                     \\
-    name: string \{ use="optional" \}                                           \\
-    trigger: (math : Math \{ namespace="http://www.w3.org/1998/Math/MathML" \}) \\
-    delay: (math : Math \{ namespace="http://www.w3.org/1998/Math/MathML" \}) \{ minOccurs="0" maxoccurs="1" \} \\
-    timeUnits: UnitSId \{ use="optional" \}                       \\
-    eventAssignment: EventAssignment[1..*]                                      \\
-    sboTerm: SBOTerm \{ use="optional" \}                         \\
+    id: SId  \{ use="optional" \}                                   \\
+    name: string \{ use="optional" \}                               \\
+    trigger: Trigger                                                \\
+    delay: Delay \{ minOccurs="0" maxoccurs="1" \}                  \\
+    eventAssignment: EventAssignment[1..*]                          \\
+  \end{classbox} \\
+  \vspace*{2ex}
+  \begin{classbox}{Trigger}
+    math: Math \{ namespace="http://www.w3.org/1998/Math/MathML" \} \\
+  \end{classbox}
+  \vspace*{2ex}
+  \begin{classbox}{Delay}
+    math: Math \{ namespace="http://www.w3.org/1998/Math/MathML" \} \\
   \end{classbox}
   \vspace*{2ex}
   \begin{classbox}{EventAssignment}
-    variable: SId                                                              \\
-    math: Math \{ namespace="http://www.w3.org/1998/Math/MathML" \}            \\
-    sboTerm: SBOTerm \{ use="optional" \}                        \\
+    variable: SId                                                   \\
+    math: Math \{ namespace="http://www.w3.org/1998/Math/MathML" \} \\
   \end{classbox}
-  \caption{The definitions of \Event and \EventAssignment.
-    Following UML notation, additional fields that are inherited
-    from a base class, in this case \SBase, are not shown.}
+  \end{blockChanged}
+  \caption{The definitions of \Event, \Trigger, \Delay and
+    \EventAssignment.  Following UML notation, additional fields
+    that are inherited from a base class, in this case \SBase, are
+    not shown.}
   \label{fig:event}
 \end{figure}
 
 
 \subsubsection{\class{Event}}
-\label{sec:event-sboterm}
 
 An \Event definition has three required parts: an identifier, a
-trigger condition and at least one \EventAssignment. In addition
-there is an optional delay expression.  These are described below.
+trigger condition and at least one \EventAssignment.  \changed{In
+  addition, an event can include an optional delay.  These various
+  aspects of \Event are described below.}
 
 
 \paragraph{The \token{id} and \token{name} fields}
 \label{sec:event-id-name}
 
-These optional fields are available to support external references
-to event structures.  These fields operate in the manner described
-in Section~\ref{sec:idnameattribs} except that the \token{id}
-field is optional.
+\begin{blockChanged}
+
+As with most components in SBML, an \Event has \token{id} and
+\token{name} fields, but in the case of \Event, both are optional.
+These fields operate in the manner described in
+Section~\ref{sec:idnameattribs}.
+
+\end{blockChanged}
 
 
-\paragraph{The \token{trigger} field}
-\label{sec:event-trigger}
+\paragraph{The \token{sboTerm} field on \class{Event}}
+\label{sec:event-sboterm}
 
-The \token{trigger} field defines when the \Event structure has an
-effect on the model.  The \token{trigger} field contains a MathML
-boolean expression.  The exact instant that the expression
-evaluates to true is the time point when the \Event is
-\emph{fired}.  The event only fires when the \token{trigger} makes
-the transition from false to true.  The event will fire at any
-further time points when the \token{trigger} make this transition.
-
-An important question is whether an event can fire prior to or at
-initial simulation time, \ie $t \leq 0$.  The answer is no: an
-event can only be triggered immediately after initial simulation
-time \ie $t > 0$.
-
-% Mike - the reason for this is now is that its very hard to implement
-% event handling t < 0 !!
-
-% Old text:
-%The reason is that when a
-%model's list of events is first evaluated at $t = 0$, all
-%assignments of values to variables (species amounts, compartment
-%sizes, and parameter values), all \InitialAssignment{}s and all
-%\AssignmentRule{}s will have taken effect, and therefore the
-%event's trigger expression cannot change value until the next time
-%step.
-
-
-\paragraph{The \token{delay} field}
-\label{sec:event-delay}
-
-The optional \token{delay} field defines a mathematical expression
-used to compute the length of time after the event has
-\emph{fired} that the event is \emph{executed}.  This expression
-must be evaluated at the time the rule is \emph{fired}.  The
-default value for the \token{delay} field is 0.  The \token{delay}
-expression must always evaluate to a positive number (otherwise, a
-nonsensical situation would arise where an event is defined to
-fire before it is triggered!).  The units of the \token{delay}
-field are those given on the \token{timeUnits} field.
-
-
-\paragraph{The \token{timeUnits} field}
-\label{sec:event-timeunits}
-
-The optional field \token{timeUnits} determines the units of time
-that apply to the \token{delay} field.  The value of the
-\token{timeUnits} field must be either ``\token{second}'' or
-``\token{dimensionless}'' from Table~\vref{tab:unitkind},
-``\token{time}'' from Table~\vref{tab:builtin}, or a new unit
-defined by a unit definition in the enclosing model which must be
-a variant of ``\token{second}'' units.  The default value of the
-\token{timeUnits} field is ``\token{time}''.
-
-
-\paragraph{The \token{sboTerm} field}
-
-The \Event structure has an optional \token{sboTerm} field of type
-\primtype{SBOTerm} (see Sections~\ref{sec:sboterm-type}
-and~\ref{sec:sboTerm}).  The term is associated with the trigger
-condition on the event.  When a value is given to this field, it
-must be a valid SBO referring to a mathematical expression (\ie
-terms derived from \sbomathformula).  The \Event's trigger should
-have a ``is a'' relationship with the SBO term, and the term
-should be the most precise (narrow) term that captures the form of
-the trigger formula in the model.
+\changed{As with all SBML components derived from \SBase, an
+\Event has an optional field \token{sboTerm} of type
+\primtype{SBOTerm} }\changed{ (see Sections~\ref{sec:sboterm-type}
+and~\ref{sec:sboTerm}).}  When a value is given to this
+field, it must be a valid term derived from \sboevent in SBO.  The
+\Event should have an ``is a'' relationship with the SBO term, and
+the term should be the most precise (narrow) term that captures
+the meaning of the event in the model.
 
 As discussed in Section~\ref{sec:sboTerm}, SBO labels are optional
 information on a model.  Applications are free to ignore
@@ -4432,24 +4388,157 @@ information on a model.  Applications are free to ignore
 benefit of SBO labels.
 
 
-\paragraph{The \token{eventAssignment} field}
-\label{sec:eventassignment}
+\begin{blockChanged}
 
-The \token{eventAssignment} field consists of a non-empty list of
-\EventAssignment structures.  This field is implemented as a
-\token{listOfEventAssignments} element containing one or more
-\token{eventAssignment} elements.  The \EventAssignment structures
-represent variable assignments that have effect when the event is
-\emph{executed}.
+\subsubsection{\class{Trigger}}
+\label{sec:trigger}
+
+As shown in Figure~\ref{fig:event}, the \token{trigger} field of
+an \Event must contain exactly one object of class \Trigger.  This
+object contains one \token{math} field containing a MathML
+expression.  The expression must evaluate to a value of type
+\primtype{boolean}.  The exact moment at which the expression
+evaluates to \val{true} is the time point when the \Event is
+\emph{fired}.
+
+An event only fires when its \Trigger expression makes the
+transition in value from \val{false} to \val{true}.  The event
+will also fire at any future time points when the \token{trigger}
+make this transition; in other words, an event can fire multiple
+times during a simulation if its trigger condition makes the
+transition from \val{false} to \val{true} more than once.
+
+An important question is whether an event can fire prior to, or
+at, initial simulation time, \ie $t \leq 0$.  The answer is no: an
+event can only be triggered immediately after initial simulation
+time \ie $t > 0$.
+
+
+\paragraph{The optional \token{sboTerm} field on \class{Trigger}}
+\label{sec:trigger-sboterm}
+
+As with all SBML components derived from \SBase, \Trigger inherits
+the optional field \token{sboTerm} of type \primtype{SBOTerm} (see
+Sections~\ref{sec:sboterm-type} and~\ref{sec:sboTerm}).  When a
+value is given to this field, it must be a valid term representing
+a mathematical expression (\ie a term chosen from the
+\sbomathformula hierarchy).  The formula in the \Trigger's
+\token{math} expression should have an ``is a'' relationship with
+the SBO term, and the term should capture most precise (narrow)
+meaning of the mathematical formula of the trigger.
+
+
+\subsubsection{\class{Delay}}
+\label{sec:event-delay}
+
+As shown in Figure~\ref{fig:event}, an \Event object can contain
+an optional \token{delay} field of class \Delay.  The \Delay is
+derived from \SBase and contains a mathematical formula stored in
+\token{math}.  The formula is used to compute the length of time
+between when the event has \emph{fired} and when the event's
+assignments (see below) are actually \emph{executed}.  If no delay
+is present on a given \Event, a time delay of zero is assumed.
+
+The expression in \token{math} must be evaluated at the time the
+rule is \emph{fired}.  The expression must always evaluate to a
+positive number (otherwise, a nonsensical situation could arise
+where an event is defined to fire before it is triggered!).  
+
+
+\paragraph{Units of delay expressions}
+
+The units of the numerical value computed by the delay expression
+must be units of time (Section~\ref{sec:built-in-units}).  Note
+that units are \emph{not} predefined or assumed for the contents
+of \token{math} in a \Delay object; rather, they must be defined
+explicitly for each instance of a \Delay object in a model.  This
+is an important point to bear in mind when pure numbers are used
+in delay expressions.
+
+For example, the following \Event fragment would fail model
+validation on the basis of inconsistent units, because pure
+numbers in SBML have default units of \val{dimensionless} and what
+is required in this context is units of time:
+
+\begin{example}
+<model>
+    ...
+    <listOfEvents>
+        <event>
+            ...
+            <delay>
+                <math xmlns="http://www.w3.org/1998/Math/MathML">
+                    <cn> 1 </cn>
+                </math>
+            </delay>
+            ...
+        </event>
+    </listOfEvents>
+    ...
+</model>
+\end{example}
+
+The \val{<cn> 1 </cn>} within the mathematical formula of the
+\token{delay} above has units of \val{dimensionless}.  To make the
+expression have the needed units of time, we must use one of the
+techniques discussed in Section~\ref{??}, namely, either defining
+a parameter for the number and using it in place of the number, or
+else multiplying the number with a parameter having the proper
+units.  Here we employ the second approach as an illustration:
+
+\begin{example}
+<model>
+    ...
+    <listOfParameters>
+        <parameter id="TimeUnits" value="1" units="time"/>
+    </listOfParameters>
+    ...
+    <listOfEvents>
+        <event>
+            ...
+            <delay>
+                <math xmlns="http://www.w3.org/1998/Math/MathML">
+                    <apply>
+                        <times/>
+                        <cn> 1 </cn>
+                        <ci> TimeUnits </ci>
+                    </apply>
+                </math>
+            </delay>
+            ...
+        </event>
+    ...
+</model>
+\end{example}
+
+
+\paragraph{The optional \token{sboTerm} field on \class{Delay}}
+
+As with all SBML components derived from \SBase, \Delay inherits
+an optional \token{sboTerm} field of type \primtype{SBOTerm} (see
+Sections~\ref{sec:sboterm-type} and~\ref{sec:sboTerm}).  When a
+value is given to this field, it must be a valid term derived from
+the \sbomathformula hierarchy in SBO.  The \Delay formula should
+have an ``is a'' relationship with the chosen SBO term, and the
+term should be the most precise (narrow) term that captures the
+meaning of the delay expression.
+
 
 
 \subsubsection{\class{EventAssignment}}
 \label{sec:eventassignment-sboterm}
 
-The \EventAssignment structure is shown in Figure~\ref{fig:event}.
-It contains three fields: \token{variable}, \token{math} and
-\token{sboTerm}, described below.
+\Event contains a \token{eventAssignment} field, which must
+contain a non-empty list of one or more \EventAssignment object
+structures.  The assignments have effect when the event is
+\emph{executed}; that is, at the end of any given delay period (if
+given) following the moment that the \Event is triggered.  The
+\EventAssignment structure is shown in Figure~\ref{fig:event}.  It
+contains a required field, \token{variable}, a \token{math} field,
+and all the usual fields defined by the parent class \SBase from
+which \EventAssignment is derived.
 
+\end{blockChanged}
 
 \paragraph{The \token{variable} field}
 
@@ -4493,7 +4582,7 @@ Certain restrictions are placed on what can appear in
 \end{itemize}
 
 
-\paragraph{The \token{sboTerm} field}
+\paragraph{The optional \token{sboTerm} field on \class{EventAssignment}}
 
 The \EventAssignment structure has an optional \token{sboTerm}
 field of type \primtype{SBOTerm} (see
@@ -4505,13 +4594,8 @@ an ``is a'' relationship with the SBO term, and the term should be
 the most precise (narrow) term that captures the form of the
 assignment formula in the model.
 
-As discussed in Section~\ref{sec:sboTerm}, SBO labels are optional
-information on a model.  Applications are free to ignore
-\token{sboTerm} values.  A model must be interpretable without the
-benefit of SBO labels.
 
-
-\paragraph{The \token{math} field}
+\paragraph{\class{EventAssignment}'s \token{math}}
 
 The \token{math} field contains a MathML expression that defines
 the new value of the variable. This expression is evaluated when
@@ -4523,39 +4607,52 @@ The identifiers occurring in the MathML \token{ci} fields of the
 \EventAssignment structures represent the value of the identifier
 at the point when the \Event is \emph{fired}.
 
-In all cases, as would be expected, the units of the formula in an
-\EventAssignment are identical to the units associated with the
-\token{variable} field, when that variable appears in other
-formulas. However, the precise details, which are identical to
-those of \AssignmentRule structures, depend on the variable that
-is being set:
+
+\begin{blockChanged}
+
+\paragraph{Units of the \token{math} formula in \class{EventAssignment}}
+
+In all cases, as would be expected, the units of the formula
+contained in the \token{math} field of \EventAssignment's field
+must be consistent with the units of the object identified by the
+\token{variable} field.   More precisely:
 \begin{itemize}
   
 \item \emph{In the case of a species}, an \EventAssignment sets
   the referenced species' quantity (\quantity{concentration} or
   \quantity{amount of substance}) to the value determined by the
-  formula in \token{math}.  The units of the formula are the
-  \emph{units of the species} as defined in
+  formula in \token{math}.  The units of the \token{math} formula
+  must be the \emph{units of the species} as defined in
   Section~\ref{sec:species-units}.
   
 \item \emph{In the case of a compartment}, an \EventAssignment
   sets the referenced compartment's size to the size determined by
   the formula in \token{math}.  The overall units of the formula
-  are the units specified for the size of the compartment
-  identified by the value of the \EventAssignment's
+  must be the same as the units specified for the size of the
+  compartment identified by the value of the \EventAssignment's
   \token{variable} field.  (See
   Section~\ref{sec:compartment-units} for an explanation of how
   the units of the compartment's size are determined.)
   
 \item \emph{In the case of a parameter}, an \EventAssignment sets
   the referenced parameter's value to that determined by the
-  formula in \token{math}.  The overall units of the formula are
-  the units defined for the parameter identified by the value of
-  the \EventAssignment's \token{variable} field.  (See
-  Section~\ref{sec:parameter-units} for an explanation of how the
-  units of the parameter are determined.)
+  formula in \token{math}.  The overall units of the formula must
+  be consistent with the units defined for the parameter
+  identified by the value of the \EventAssignment's
+  \token{variable} field.  (See Section~\ref{sec:parameter-units}
+  for an explanation of how the units of the parameter are
+  determined.)  If no units are defined for the parameter in
+  question, then the formula contained in \token{math} must have
+  units \val{dimensionless}.
 
 \end{itemize}
+
+It is worth noting that the formula placed in the \token{math}
+field has no assumed units.  The consistency of the units of the
+formula, and the units of the entity which the assignment affects,
+must be explicitly established.  (See also Section~\ref{???}.)
+
+\end{blockChanged}
 
 
 \subsubsection{Example \class{Event} structure}
@@ -4565,23 +4662,48 @@ assignment $k_2 = 0$ at the point when $P_1 \leq t$:
 
 \begin{example}
 <event>
-    <trigger>
-        <math xmlns="http://www.w3.org/1998/Math/MathML">
-            <apply>
-                <leq/>
-                <ci> P1 </ci>
-                <ci> t </ci>
-            </apply>
-        </math>
-    </trigger>
-    <listOfEventAssignments>
-        <eventAssignment variable="k2">
-            <math xmlns="http://www.w3.org/1998/Math/MathML">
-                <cn> 0 </cn>
-            </math>
-        </eventAssignment>
-    <listOfEventAssignments>
-</event>
+    ...
+    <listOfUnitDefinitions>
+        <unitDefinition id="per_second">
+            <listOfUnits>
+                <unit kind="second" exponent="-1" multiplier="1" offset="0"/>
+            </listOfUnits>
+        </unitDefinition>
+    </listOfUnitDefinitions>
+    ...
+    <listOfParameters>
+        ...
+        <parameter id="k2" value="0.05" units="per_second"/>
+        <parameter id="PerSecond" value="1" units="per_second"/>
+        ...
+    </listOfParameters>
+    ...
+    <listOfEvents>
+        <event>
+            <trigger>
+                <math xmlns="http://www.w3.org/1998/Math/MathML">
+                    <apply>
+                        <leq/>
+                        <ci> P1 </ci>
+                        <ci> t </ci>
+                    </apply>
+                </math>
+            </trigger>
+            <listOfEventAssignments>
+                <eventAssignment variable="k2">
+                    <math xmlns="http://www.w3.org/1998/Math/MathML">
+                        <apply>
+                            <times/>
+                            <cn> 0 </cn>
+                            <ci> PerSecond </cn>
+                        </apply>
+                    </math>
+                </eventAssignment>
+            <listOfEventAssignments>
+        </event>
+    </listOfEvents>
+    ...
+</model>
 \end{example}
 
 A complete example of a model using events is given in

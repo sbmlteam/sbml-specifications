@@ -175,27 +175,30 @@ Figure~\ref{fig:id}.
 % For a good summary of CombiningChar and Extender see
 % http://xsd.stylusstudio.com/2003Sep/post05008.htm
 
+
 \begin{figure}[htb]
   \ttfamily
   \small
   \centering
-  \renewcommand{\arraystretch}{0.9}
-  \begin{edtable}{tabular}{lll}
-   NCNameChar & ::= & letter | digit | '.' | '-' | '\_' | ':' | CombiningChar | Extender\\
-           ID & ::= & ( letter | '\_' | ':' ) NCNameChar*
-  \end{edtable}
+  \vspace*{0.5ex}
+  \begin{blockChanged}
+    \begin{edtable}{tabular}{lll}
+      NCNameChar & ::= & letter | digit | '.' | '-' | '\_' | ':' | CombiningChar | Extender\\
+      ID         & ::= & ( letter | '\_' | ':' ) NCNameChar*
+    \end{edtable}
+  \end{blockChanged}
   \vspace*{-2pt}
   \caption{The definition of the XML Schema type \primtype{ID}
     expressed in the variant of BNF used by the XML 1.0
     specification~\protect\citep{bray:2004}.  The characters
     \texttt{(} and \texttt{)} are used for grouping, the character
     \texttt{*} indicates ``zero or more times'', and the character
-    \texttt{|} indicates ``or''.  The production \token{letter}
+    \texttt{|} indicates ``or''.  \changed{The production \token{letter}
     consists of the basic upper and lower case alphabetic
     characters of the Latin alphabet along with a large number of
     related characters defined by Unicode~2.0; similarly, the
     production \token{digit} consists of the numerals
-    \texttt{0..9} along with related Unicode~2.0 characters.  The
+    \texttt{0..9} along with related Unicode~2.0 characters.}  The
     \token{CombiningChar} production is a list of characters that
     add such things as accents to the preceding character. (For
     example, the Unicode character \token{\#x030A} when combined
@@ -229,8 +232,8 @@ The type \primtype{SId} is the type of the \token{id} field found
 on the majority of SBML components.  \primtype{SId} is a data type
 derived from the basic XML type \primtype{string}, but with
 restrictions about the characters permitted and the sequences in
-which those characters may appear.  The definition of the type is
-shown in Figure~\vref{fig:sid}.
+which those characters may appear.  The definition is shown in
+Figure~\vref{fig:sid}.
 
 \begin{figure}[hbt]
   \ttfamily
@@ -317,58 +320,24 @@ models.  Section~\ref{sec:sboTerm} provides more information about
 the ontology and principles for the use of these terms in SBML
 models.
 
+% The removal of the previous section 3.2 (diagram of the
+% inheritance hierarchy) caused all subsequent section numbers to
+% change.  This marks the sections in red to flag the change.
 
-% \subsubsection{Type \primtype{any}}
-% \label{sec:any}
-
-% The XML Schema element type \primtype{any} is used to indicate
-% that a given SBML element allows arbitrary well-formed XML
-% content.  The content can be a mixture of character data and XML
-% tags.  In all situations where \primtype{any} is used in SBML,
-% certain additional conditions apply; for example, the content may
-% be restricted to being within a specific XML namespace.  Please
-% consult the relevant SBML structure definitions in the rest of
-% this document.
-
-
-\subsection{The SBML object inheritance hierarchy}
-\label{sec:type-inheritance-hierarchy}
-
-As explained above, most base data types in SBML are taken
-directly from XML
-Schema~\citep{biron:2000,fallside:2000,thompson:2000} or are
-derived from XML Schema data types.  SBML defines additional
-object classes beyond this.  The overall SBML inheritance
-hierarchy is depicted in Figure~\vref{fig:top-level}.
-
-\begin{figure}[ht]
-  \centering
-  \includegraphics[scale = 0.7]{figs/top-level}
-  \caption{A UML diagram of the inheritance hierarchy of major data types
-    in SBML.  Open arrows indicate inheritance, pointing from inheritors to
-    their parents~\protect\citep{eriksson:1998,oestereich:1999}.  In addition to
-    these types, all substructures in SBML (including, for example, all the
-    \token{listOf} lists) are also derived from \SBase.  See text
-    for details.}
-  \label{fig:top-level}
-\end{figure}
-
-Although not appearing explicitly in the diagram, the various
-\token{listOf\rule{0.5in}{0.5pt}} lists, as well as substructures
-such as \token{trigger} on \Event (Section~\ref{sec:events}), are
-also derived from \SBase.  However, substructures such as
-\token{math}, containing MathML content, are not derived from
-\SBase, nor are the \token{notes} and \token{annotation} fields
-defined in \SBase itself (discussed in Section~\ref{sec:notes}
-and~\ref{sec:annotation-use}).
+\makeatletter
+\renewcommand{\thesection}      {\changed{\@arabic\c@section}}
+\renewcommand{\thesubsection}   {\changed{\thesection.\@arabic\c@subsection}}
+\renewcommand{\thesubsubsection}{\changed{\thesubsection .\@arabic\c@subsubsection}}
+\renewcommand{\theparagraph}    {\changed{\thesubsubsection.\@arabic\c@paragraph}}
+\makeatother
 
 
 %-----------------------------------------------------------------------------
-\subsection{Type SBase}
+\subsection{Type \abstractclass{SBase}}
 \label{sec:sbase}
 %-----------------------------------------------------------------------------
 
-Every structure composing an SBML Level~2 model definition has a
+\changed{Nearly} every structure composing an SBML Level~2 model definition has a
 specific data type that is derived directly or indirectly from a
 single abstract type called \SBase.  In addition to
 serving as the parent class for most other classes of objects in
@@ -379,28 +348,22 @@ presented in Figure~\vref{fig:sbase}.
 
 \begin{figure}[hbt]
   \centering
-  \begin{classbox}{\textsl{SBase}}
-    metaid: ID \{ use="optional" \}                                                                 \\
-    notes: (any : \{ namespace="http://www.w3.org/1999/xhtml" \}) \{ minOccurs="0" maxOccurs="1" \} \\
-    annotation: (any) \{ minOccurs="0" maxOccurs="1" \}                                             \\
-  \end{classbox}
-  \caption{The definition of \SBase.  Text enclosed in braces next
-    to field types (e.g., \token{\{minOccurs="0"\}}) indicates
-    constraints on the possible field values.  We use the XML Schema
-    language to express constraints because we are primarily interested in
-    the XML encoding of SBML.  The constraint expression
-    \token{\{use="optional"\}} means that the indicated field is optional
-    and may be omitted in a particular instance in a model.  The constraint
-    expression \token{minOccurs="0"} likewise means the indicated
-    field is optional; this alternate form of expression must be used for
-    those fields that are containers (i.e., fields encoded as
-    subelements in XML).}
+  \small
+  \includegraphics[scale=0.8]{figs/sbase-uml}
+  \caption{The definition of \SBase.  Please refer to
+    Section~\protect\ref{sec:notation} for a summary of the UML
+    notation used here.  Note that the order of appearance of
+    subelements \token{notes} and \token{annotation} is
+    significant in instances of objects derived from
+    \abstractclass{SBase}: \token{notes} must always come before
+    \token{annotation}.}
   \label{fig:sbase}
 \end{figure}
 
-\SBase contains three fields, all of which are optional:
-\token{metaid}, \token{notes} and \token{annotation}. These
-fields are discussed separately in the following subsections.
+\SBase contains four fields, all of which are optional:
+\token{metaid}, \token{sboTerm}, \token{notes} and
+\token{annotation}. These fields are discussed separately in the
+following subsections.
 
 
 \subsubsection{The \token{metaid} field}
@@ -419,6 +382,22 @@ Section~\ref{sec:annotation-use}).  Such metadata can use RDF
 \val{describes} contains the \token{metaid} identifier of an
 object defined in the SBML model.  This topic is discussed in
 greater detail in Section~\ref{sec:annotation-standard}.
+
+
+\subsubsection{\changed{The \token{sboTerm} field}}
+\label{sec:sbase-sboterm}
+
+The field called \token{sboTerm} is provided on \SBase to support
+the use of the Systems Biology Ontology (SBO; see
+Section~\ref{sec:sbo}).  This field is optional; when a value is
+given to it, the value must conform to the data type
+\primtype{SBOTerm} (Sections~\ref{sec:sboterm-type}).  SBO terms
+are a type of optional annotation, and each different class of
+SBML object derived from \SBase imposes its own requirements about
+the values permitted for \token{sboTerm}.  Specific details on the
+permitted values are provided with the definitions of SBML classes
+throughout this specification document, and a broader discussion
+is provided in Section~\ref{sec:sbo}.
 
 
 \subsubsection{The \token{notes} field}
@@ -541,7 +520,7 @@ only of the following possibilities:
   \begin{example}
 <notes>
     <html xmlns="http://www.w3.org/1999/xhtml">
-    ...
+      ...
     </html>
 </notes>\end{example}
 
@@ -550,7 +529,7 @@ only of the following possibilities:
   \begin{example}
 <notes>
     <body xmlns="http://www.w3.org/1999/xhtml">
-    ...
+      ...
     </body>
 </notes>\end{example}
   
@@ -561,14 +540,15 @@ only of the following possibilities:
   \begin{example}
 <notes>
     <p xmlns="http://www.w3.org/1999/xhtml">
-    ...
+      ...
     </p>
     <p xmlns="http://www.w3.org/1999/xhtml">
-    ...
+      ...
     </p>
 </notes>\end{example}
 
 \end{enumerate}
+
 Another way to summarize the restrictions above is simply to say
 that the content of an SBML \token{notes} element can be only be a
 complete \token{html} element, a \token{body} element, or whatever
@@ -623,8 +603,7 @@ following:
 \begin{example}
 <annotation>
     <mysim:nodecolors xmlns:mysim="http://www.mysim.org/ns"
-         mysim:bgcolor="green"
-         mysim:fgcolor="white"/>
+         mysim:bgcolor="green" mysim:fgcolor="white"/>
 </annotation>
 \end{example}
 
@@ -1618,3 +1597,15 @@ and \token{otherwise} operators within the same \token{piecewise}
 operator should all return values of the same type. The arguments
 of the \token{eq} and \token{neq} operators should return the same
 type.
+
+
+% Restore normal printing of section headings (without coloring).
+% See earlier in this file where these commands were redefined to
+% print section headings in red for this part of the document.
+
+\makeatletter
+\renewcommand{\thesection}      {\@arabic\c@section}
+\renewcommand{\thesubsection}   {\thesection.\@arabic\c@subsection}
+\renewcommand{\thesubsubsection}{\thesubsection .\@arabic\c@subsubsection}
+\renewcommand{\theparagraph}    {\thesubsubsection.\@arabic\c@paragraph}
+\makeatother

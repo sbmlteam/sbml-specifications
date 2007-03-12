@@ -28,24 +28,26 @@ full examples of SBML in XML.
 All well-formed XML documents must begin with an \emph{XML
   declaration}, which specifies both the version of XML assumed
 and the document character encoding.  The declaration begins with
-the characters \token{<?xml}.  \sbmltwo uses XML version 1.0 and
-requires a document encoding of UTF-8.
-
-Following this XML declaration, the outermost portion of a model
-expressed in SBML \changed{\thisLV} consists of an object of class
-\Sbml, defined in Figure~\ref{fig:sbml}.  This class contains two
-required attributes, \token{level} and \token{version}, and one
-required subelement called \token{model} whose class is \Model.
+the characters \token{<?xml} followed by the XML \token{version}
+and \token{encoding} attributes.  \sbmltwo uses XML version 1.0
+and requires a document encoding of UTF-8.  Following this XML
+declaration, the outermost portion of a model expressed in SBML
+\changed{\thisLV} consists of an object of class \Sbml, defined in
+Figure~\ref{fig:sbml}.  This class contains two required
+attributes, for the SBML \token{level} and \token{version}, and
+one required subelement called \token{model} whose class is
+\Model.
 
 \begin{figure}[htb]
   \centering
   \small
-  \vspace*{-1ex}
-  \begin{tikzpicture}[level distance=0.7in]
+  \vspace*{-2ex}
+  \begin{tikzpicture}[level distance=0.85in]
     \node { \emptyClassbox{\textsl{SBase}} }
-      [open triangle 60-,edge from parent fork down,sibling distance=2.5in]
+      [open triangle 60-,edge from parent fork down,sibling distance=2.65in]
       child {node (a) {
           \begin{classbox}{Sbml}
+            xmlns: string \{ "http://www.sbml.org/sbml/level2/version3" \} \\
             level: positiveInteger \{ use="required" fixed="2" \}   \\
             version: positiveInteger \{ use="required" fixed="\changed{3}" \} \\
           \end{classbox}
@@ -77,13 +79,12 @@ an \sbmltwothree document:
 </sbml>
 \end{example}
 
-Note the additional XML attribute \token{xmlns}.  This is required
-for XML; it declares the default XML namespace used within the
-\token{sbml} element.  The XML namespace URI for \sbmltwothree is
-the string \uri{http://www.sbml.org/sbml/level2/\changed{version3}}.  All
-Level~2 Version~\changed{3} elements must be placed in this namespace either
-by assigning the default XML namespace as shown above, or using a
-tag prefix on every element.
+The attribute \token{xmlns} declares the default XML namespace
+used within the \token{sbml} element.  The URI for \sbmltwothree
+is \uri{http://www.sbml.org/sbml/level2/\changed{version3}}.  All
+elements must be placed in this namespace either by assigning the
+default namespace as shown above, or using a tag prefix on
+every element.
 
 An SBML XML document must not contain elements or attributes in
 the SBML namespace that are not defined in this SBML \changed{\thisLVR}
@@ -127,7 +128,7 @@ makes more sense to keep the version and level attributes.
 The definition of \Model is shown in Figure~\vref{fig:model}.
 Only one instance of a \Model object is allowed per instance of an
 SBML \thisLVR document or data stream, and it must be located
-inside the \token{<sbml> ... </sbml>} element as described in
+inside the \token{<sbml> ...\ </sbml>} element as described in
 Section~\ref{sec:sbml}.
 
 \begin{figure}[htb]
@@ -155,68 +156,79 @@ Section~\ref{sec:idnameattribs}.
 \FunctionDefinition, \UnitDefinition, \CompartmentType,
 \SpeciesType, \Compartment, \Species, \Parameter,
 \InitialAssignment, \Rule, \Constraint, \Reaction and \Event.
-Instances of these objects are placed inside instances of classes
+Instances of the classes are placed inside instances of classes
 \ListOfFunctionDefinitions, \ListOfUnitDefinitions,
 \ListOfCompartmentTypes, \ListOfSpeciesTypes, \ListOfCompartments,
 \ListOfSpecies, \ListOfParameters, \ListOfInitialAssignments,
 \ListOfRules, \ListOfConstraints, \ListOfReactions, and
-\ListOfEvents.  The ``list'' classes are also defined in
-Figure~\ref{fig:model}.  All the contents of these lists are
-optional; that is, the lists are permitted to have zero length.
-However, as shown in the definition of Figure~\ref{fig:model}, the
-lists container elements themselves are mandatory.  The resulting
-XML data object has the form illustrated by the following skeletal
-model:
+\ListOfEvents.  The ``list'' classes are defined in
+Figure~\ref{fig:model}.  All of the lists are optional, but if a
+given list container is present within the model, the list must
+not be empty; that is, it must have length one or more.  The
+resulting XML data object for a full model containing every
+possible list would have the following form:
 
-\begin{example}
-<?xml version="1.0" encoding="UTF-8"?>
-<sbml xmlns="http://www.sbml.org/sbml/level2/\changed{version3}" level="2" version="\changed{3}">
-    <model id="My_Model">
-        <listOfFunctionDefinitions>
-            \textrm{\emph{zero or more}} <functionDefinition> ... </functionDefinition> \textrm{\emph{elements}}
-        </listOfFunctionDefinitions>
-        <listOfUnitDefinitions>
-            \textrm{\emph{zero or more}} <unitDefinition> ... </unitDefinition> \textrm{\emph{elements}}
-        </listOfUnitDefinitions>
-        <listOfCompartmentTypes>
-            \textrm{\emph{zero or more}} <compartmentType> ... </compartmentType> \textrm{\emph{elements}}
-        </listOfCompartmentTypes>
-        <listOfSpeciesTypes>
-            \textrm{\emph{zero or more}} <speciesType> ... </speciesType> \textrm{\emph{elements}}
-        </listOfSpeciesTypes>
-        <listOfCompartments>
-            \textrm{\emph{zero or more}} <compartment> ... </compartment> \textrm{\emph{elements}}
-        </listOfCompartments>
-        <listOfSpecies>
-            \textrm{\emph{zero or more}} <species> ... </species> \textrm{\emph{elements}}
-        </listOfSpecies>
-        <listOfParameters>
-            \textrm{\emph{zero or more}} <parameter> ... </parameter> \textrm{\emph{elements}}
-        </listOfParameters>
-        <listOfInitialAssignments>
-            \textrm{\emph{zero or more}} <initialAssignment> ... </initialAssignment> \textrm{\emph{elements}}
-        </listOfInitialAssignments>
-        <listOfRules>
-            \textrm{\emph{zero or more subclasses of \abstractclass{Rule}}}
-        </listOfRules>
-        <listOfConstraints>
-            \textrm{\emph{zero or more}} <constraint> ... </constraint> \textrm{\emph{elements}}
-        </listOfConstraints>
-        <listOfReactions>
-            \textrm{\emph{zero or more}} <reaction> ... </reaction> \textrm{\emph{elements}}
-        </listOfReactions>
-        <listOfEvents>
-            \textrm{\emph{zero or more}} <event> ... </event> \textrm{\emph{elements}}
-        </listOfEvents>
-    </model>
+\newcommand{\sayOptional}{\raisebox{0pt}[0pt][0pt]{\bigg\} \textrm{\emph{optional}}}}
+
+\vspace*{1.5ex}
+\begin{tt}
+  \tightspacing
+  \small
+  \begin{tabbing}
+xxxx\=xxxx\=xxxx\=xxxx\=xxxx\=\kill
+\+\>
+<?xml version="1.0" encoding="UTF-8"?>\\
+<sbml xmlns="http://www.sbml.org/sbml/level2/\changed{version3}" level="2" version="\changed{3}">\\
+\><model id="My\_Model">\\
+\>\><listOfFunctionDefinitions>\\
+\>\>\>\textrm{\emph{one or more}} <functionDefinition> ... </functionDefinition> \textrm{\emph{elements}}  \` \sayOptional\\
+\>\></listOfFunctionDefinitions>\\
+\>\><listOfUnitDefinitions>\\
+\>\>\>\textrm{\emph{one or more}} <unitDefinition> ... </unitDefinition> \textrm{\emph{elements}}  \` \sayOptional\\
+\>\></listOfUnitDefinitions>\\
+\>\><listOfCompartmentTypes>\\
+\>\>\>\textrm{\emph{one or more}} <compartmentType> ... </compartmentType> \textrm{\emph{elements}}  \` \sayOptional\\
+\>\></listOfCompartmentTypes>\\
+\>\><listOfSpeciesTypes>\\
+\>\>\>\textrm{\emph{one or more}} <speciesType> ... </speciesType> \textrm{\emph{elements}}  \` \sayOptional\\
+\>\></listOfSpeciesTypes>\\
+\>\><listOfCompartments>\\
+\>\>\>\textrm{\emph{one or more}} <compartment> ... </compartment> \textrm{\emph{elements}}  \` \sayOptional\\
+\>\></listOfCompartments>\\
+\>\><listOfSpecies>\\
+\>\>\>\textrm{\emph{one or more}} <species> ... </species> \textrm{\emph{elements}}  \` \sayOptional\\
+\>\></listOfSpecies>\\
+\>\><listOfParameters>\\
+\>\>\>\textrm{\emph{one or more}} <parameter> ... </parameter> \textrm{\emph{elements}}  \` \sayOptional\\
+\>\></listOfParameters>\\
+\>\><listOfInitialAssignments>\\
+\>\>\>\textrm{\emph{one or more}} <initialAssignment> ... </initialAssignment> \textrm{\emph{elements}}  \` \sayOptional\\
+\>\></listOfInitialAssignments>\\
+\>\><listOfRules>\\
+\>\>\>\textrm{\emph{one or more elements of subclasses of \abstractclass{Rule}}}  \` \sayOptional\\
+\>\></listOfRules>\\
+\>\><listOfConstraints>\\
+\>\>\>\textrm{\emph{one or more}} <constraint> ... </constraint> \textrm{\emph{elements}}  \` \sayOptional\\
+\>\></listOfConstraints>\\
+\>\><listOfReactions>\\
+\>\>\>\textrm{\emph{one or more}} <reaction> ... </reaction> \textrm{\emph{elements}}  \` \sayOptional\\
+\>\></listOfReactions>\\
+\>\><listOfEvents>\\
+\>\>\>\textrm{\emph{one or more}} <event> ... </event> \textrm{\emph{elements}}  \` \sayOptional\\
+\>\></listOfEvents>\\
+\></model>\\
 </sbml>
-\end{example}
+\end{tabbing}
+\regularspacing
+\end{tt}
+\vspace*{1ex}
 
-Note that there are dependencies between SBML components, such
-that defining some requires defining others.  For example, as
-explained in other sections below, defining a species requires
-defining a compartment, and defining a reaction requires defining
-a species.
+Although all the lists are optional, there are dependencies
+between SBML components such that defining some components
+requires defining others.  An example is that defining a species
+requires defining a compartment, and defining a reaction requires
+defining a species.  The dependencies are explained throughout the
+text.
   
 % Contortion to make the section number be colored for the rest of
 % this subsection.
@@ -244,16 +256,15 @@ The various \class{ListOf\rule{0.5in}{0.5pt}} classes defined in
 Figure~\ref{fig:model} are merely containers used for organizing
 the main components of an SBML model.  All are derived from the
 abstract class \SBase (Section~\ref{sec:sbase}), and inherit
-\SBase's various attributes and subelements such as \token{notes}
+\SBase's various attributes and subelements such as \token{metaid}
 and \token{annotation}.  The list classes do not add any
 attributes of their own.
 
-Readers may wonder about the motivations for the use of the
+Readers may wonder about the motivations for using the
 \class{ListOf\rule{0.5in}{0.5pt}} containers.  A simpler approach
-to creating the lists of components in XML would be to place them
-all directly at the top level.  We chose instead to group them
-within XML elements named after
-\class{listOf}\rule{0.5in}{0.5pt}\class{ClassNames}, in part
+in XML might be to place the components all directly at the top
+level.  We chose instead to group them within XML elements named
+after \class{listOf}\rule{0.5in}{0.5pt}\class{ClassNames}, in part
 because we believe this helps organize the components and makes
 visual reading of \changed{models in XML} easier.  More
 importantly, the fact that the container classes are derived from
@@ -267,37 +278,52 @@ feature that a number of today's software tools exploit.
 
 \end{blockChanged}
 
-The \Model structure has an optional \token{sboTerm} \changed{attribute} of type
-\primtype{SBOTerm} (see Sections~\ref{sec:sboterm-type}
-and~\ref{sec:sboTerm}).  \changed{Values} \changed{of this attribute must
-be chosen from identifiers} referring to
-a modeling framework defined in SBO (\ie terms derived from
-\sboframework).  The SBO term chosen should be the most precise
-(narrow) term that defines the mathematical framework assumed by
-the \emph{entire} model.  An example framework might be ``discrete
-stochastic'', which would mean the \emph{entire} model was created
-under the assumption it will be simulated in a tool that turns
-substance quantities into discrete numbers and applies a
-stochastic simulation algorithm~\citep[e.g.,][]{gillespie:1977} to
-the model.  Other frameworks are possible.
+The \Model structure has an optional \token{sboTerm}
+\changed{attribute} of type \primtype{SBOTerm} (see
+Sections~\ref{sec:sboterm-type} and~\ref{sec:sboTerm}).
+\changed{Values} \changed{of this attribute must be chosen from
+  identifiers} referring to a modeling framework defined in SBO
+(\ie terms derived from \sboframework).  The SBO term chosen
+should be the most precise (narrow) term that defines the
+mathematical framework assumed by the \emph{entire} model.  An
+example might be ``non-spatial discrete framework'', which would
+mean the \emph{entire} model was created under the assumption it
+will be simulated in a tool that turns substance quantities into
+discrete numbers and applies a stochastic simulation
+algorithm~\citep[e.g.,][]{gillespie:1977} to the model.  Other
+frameworks are possible.
 
-The value given to \token{sboTerm} on a \Model interacts with the
-SBO labels on the model's \Reaction elements in the following way.
-The label on \Model should apply to the model as a whole, meaning
-that \emph{all} reactions in the model assume the same framework.
-In that case, the \token{sboTerm} values on individual \Reaction
-elements may be omitted, but only the \Reaction SBO labels can be
-thus omitted; the SBO labels on \KineticLaw within \Reaction must
-still be supplied, as must the terms on other components of the
-model, in order to characterize the model completely.
+\begin{blockChanged}
+
+\emph{A dependency exists} between the SBO term referenced by a
+\Model instance and the SBO labels on individual \KineticLaw
+instances within the model.  In SBO, each definition of a rate
+expression itself includes an SBO reference to a mathematical
+framework.  When a given \KineticLaw element refers to a rate
+law term in SBO, it therefore simultaneously also identifies a
+framework.  (It is possible for a model to mix frameworks, which is
+why it is important to enable individual reactions to indicate
+which one is assumed.)  By contrast, if all the reactions in a
+given model use the same framework, it makes sense to characterize
+the model as a whole as assuming this.  Thus, the label on \Model
+should apply to the model \emph{as a whole}, meaning that if
+\Model's \token{sboTerm} attribute has a value, \emph{all} of that
+model's reaction rate expressions are assumed to be expressed
+using the same mathematical framework, and the application reading
+the model may ignore frameworks indicated by the definitions of
+the SBO terms referenced by the \KineticLaw elements's
+\token{sboTerm} attributes.
 
 The absence of an \token{sboTerm} value on a \Model instance means
 that either the model has not been labeled with SBO terms at all,
-or there was no available SBO modeling framework term at the time
-the model was created that was deemed suitable for characterizing
-the model as a whole.  If \Model has no value for \token{sboTerm},
-the \changed{values of \token{sboTerm} attributes} on each \Reaction in a model may still
-indicate the framework assumed for each reaction separately.
+or no modeling framework term in SBO at the time the model was
+created was deemed suitable for characterizing the model as a
+whole.  If a \Model instance has no value for its \token{sboTerm}
+attribute, the definitions of the SBO terms referenced by
+individual \KineticLaw elements in the model may indicate the
+framework assumed for each reaction separately.
+
+\end{blockChanged}
 
 As discussed in Section~\ref{sec:sboTerm}, SBO labels are optional
 information on a model.  Applications are free to ignore
@@ -350,10 +376,14 @@ function called in subsequent MathML \token{apply} elements.
   \caption{\changed{The definition of class \FunctionDefinition.
       The contents of the \class{Lambda} class is a single \mathml
       \token{lambda} expression as discussed in the text.  A
-      sequence of zero or more instances of \FunctionDefinition
-      objects can be located in an instance of
-      \ListOfFunctionDefinitions in \Model, as shown in
-      Figure~\protect\ref{fig:model}.}}
+      function definition must contain exactly one \token{math}
+      element defined by the \class{Lambda} class; note also that
+      \class{Lambda} is not derived from \SBase, which means that
+      the attributes defined on \SBase are \emph{not} available on
+      the \token{math} element.  A sequence of one or more
+      instances of \FunctionDefinition objects can be located in
+      an instance of \ListOfFunctionDefinitions in \Model, as
+      shown in Figure~\protect\ref{fig:model}.}}
   \label{fig:mathdefinition}
   \label{fig:functionDefinition}
 \end{figure}
@@ -460,7 +490,7 @@ law.  Note how the invocation of the function uses its identifier.
 \begin{example}
 <model>
     ...
-    <listOfFunctionDefinitions>
+    \changed{<listOfFunctionDefinitions>}
         <functionDefinition id="pow3">
             <math xmlns="http://www.w3.org/1998/Math/MathML">
                 <lambda>
@@ -473,7 +503,7 @@ law.  Note how the invocation of the function uses its identifier.
                 </lambda>
             </math>
         </functionDefinition>
-    </listOfFunctionDefinitions>
+    \changed{</listOfFunctionDefinitions>}
     ...
     <listOfReactions>
         <reaction id="reaction_1">
@@ -490,8 +520,7 @@ law.  Note how the invocation of the function uses its identifier.
         </reaction>
     </listOfReactions>
     ...
-</model>
-\end{example}
+</model>\end{example}
 
 
 %-----------------------------------------------------------------------------
@@ -508,19 +537,19 @@ SBML model.  \changed{The units of the} \changed{following
   SBML are those that arise naturally from the components and
   mathematical expressions} \changed{comprising the formula, or in
   other words, the units obtained by doing dimensional analysis on
-  the formula.}  Rather than requiring a complete unit definition
-on every structure, SBML provides a facility for defining units
-that can be referenced throughout a model.  In addition, every
-kind of SBML mathematical entity has units assigned to it from a
-set of built-in defaults (see Section~\ref{sec:built-in-units}
-below, and also Sections~\ref{sec:compartment-units},
-\ref{sec:species-units} and~\ref{subsec:kinetic-law}).  By
-redefining these built-in default units, it is possible to change
-the units used throughout a model in a simple and consistent
-manner.
+  the formula.}
 
-The SBML unit definition facility uses two classes of objects,
-\UnitDefinition and \Unit.  Their definitions are shown in
+Rather than requiring a complete unit definition on every
+structure, SBML provides a facility for defining units that can be
+referenced throughout a model.  In addition, every kind of SBML
+mathematical entity has units assigned to it from a set of
+built-in defaults (see Section~\ref{sec:built-in-units} below, and
+also Sections~\ref{sec:compartment-units}, \ref{sec:species-units}
+and~\ref{subsec:kinetic-law}).  By redefining these built-in
+default units, it is possible to change the units used throughout
+a model in a simple and consistent manner.  The SBML unit
+definition facility uses two classes of objects, \UnitDefinition
+and \Unit.  Their definitions are shown in
 Figure~\vref{fig:unitdefinition} and explained in more detail in
 Sections~\ref{sec:unitdefinition-structure}
 and~\ref{sec:unit-structure} below.
@@ -528,6 +557,7 @@ and~\ref{sec:unit-structure} below.
 \begin{figure}[htb]
   \centering
   \small
+  \vspace*{1ex}
   \begin{tikzpicture}[level distance=1in]
     \node { \emptyClassbox{\textsl{SBase}} }
       [open triangle 60-,edge from parent fork down,sibling distance=2.15in]
@@ -555,13 +585,13 @@ and~\ref{sec:unit-structure} below.
        node[above=6pt,left=1.25in] {\textsf{1..*}};
   \end{tikzpicture}
   \caption{\changed{The definition of classes \UnitDefinition and
-      \Unit.  A sequence of zero or more instances of
+      \Unit.  A sequence of one or more instances of
       \UnitDefinition objects can be located in an instance of
-      \ListOfUnitDefinitions in \Model, as shown in
-      Figure~\protect\ref{fig:model}.  Note how
-      \class{ListOfUnits} has no attributes (beyond those it
-      inherits from class \SBase); it merely acts as a container
-      for one or more instances of \Unit objects.}}
+      \ListOfUnitDefinitions in \Model
+      (Figure~\protect\ref{fig:model}).  \class{ListOfUnits} has
+      no attributes (beyond those it inherits from class \SBase);
+      it merely acts as a container for one or more instances of
+      \Unit objects.}}
   \label{fig:unitdefinition}
 \end{figure}
 
@@ -666,18 +696,19 @@ use of \UnitDefinition:
 A \Unit structure represents a (possibly transformed) reference to
 a base unit chosen from \primtype{UnitKind}
 (Table~\ref{tab:unitkind}).  The \changed{attribute} \token{kind} indicates the
-chosen base unit, whereas the three \changed{attributes} \token{exponent},
+chosen base unit, whereas the \changed{attributes} \token{exponent},
 \token{scale}, and \token{multiplier} define how the base unit is
 being transformed.  These various \changed{attributes} are described in detail
 below.
 
-Compatibility note: in \sbmltwoone, \Unit had an additional \changed{attribute}
-called \token{offset}.  This \changed{attribute} has been removed entirely in
-\sbmltwotwo \changed{and Version~3}.  Modelers and software authors are instead directed
-to use other methods of encoding units requiring offsets.  The
-reasons for this change, and some suggestions for how to achieve
-equivalent effects of unit offsets, are discussed in more detail
-below.
+Compatibility note: in \sbmltwoone, \Unit had an additional
+\changed{attribute} called \token{offset}.  This
+\changed{attribute} has been removed entirely in Level~2
+\changed{Versions~2 and~3}.  Modelers and software authors are
+instead directed to use other methods of encoding units requiring
+offsets.  The reasons for this change, and some suggestions for
+how to achieve equivalent effects of unit offsets, are discussed
+in more detail below.
 
 
 \paragraph{The \token{kind} \changed{attribute}}
@@ -693,7 +724,7 @@ of base units.  The possible values of \primtype{UnitKind} are
 given in Table~\vref{tab:unitkind}.
 
 \begin{table}[bht]
-  \vspace*{1ex}
+  \vspace*{0.5ex}
   \centering
   \ttfamily
   \small
@@ -714,7 +745,7 @@ given in Table~\vref{tab:unitkind}.
     ``\token{dimensionless}'' and ``\token{item}'', which are
     SBML additions important for handling certain common situations.
     ``\token{Dimensionless}'' is intended for cases where a
-    quantity does not have units, and ``\token{item}'' for
+    quantity \changed{is a ratio whose units cancel out}, and ``\token{item}'' for
     expressing such things as ``N items'' (e.g., ``100
     molecules'').  Also, note that the gram and litre are not
     strictly part of SI; however, they are frequently
@@ -1157,13 +1188,10 @@ the usage of units in SBML.
 A \emph{compartment type} in SBML is a grouping construct used to
 establish a relationship between multiple \emph{compartments}
 (Section~\ref{sec:compartments}).  A compartment type is
-represented by the \CompartmentType data structure, defined in
-Figure~\vref{fig:compartmentType}.
-
-\begin{figure}[htb]
+represented by the \CompartmentType data structure, 
+\begin{wrapfigure}[14]{r}{2.5in}
   \centering
   \small
-  \vspace*{-2ex}
   \begin{tikzpicture}
     \node[above=0.45in] (a) {
       \emptyClassbox{\textsl{SBase}}
@@ -1177,29 +1205,28 @@ Figure~\vref{fig:compartmentType}.
     \draw[open triangle 60-] (a) -- (b);
   \end{tikzpicture}
   \caption{\changed{The definition of class \CompartmentType.  A
-      sequence of zero or more instances of \CompartmentType
+      sequence of one or more instances of \CompartmentType
       objects can be located in an instance of
       \ListOfCompartmentTypes in \Model, as shown in
       Figure~\protect\ref{fig:model}.}}
   \label{fig:compartmentType}
-\end{figure}
+\end{wrapfigure}
+defined in Figure~\vref{fig:compartmentType}.
 
-In \changed{\sbmltwothree}, a compartment type only has an identity, and this
-identity can only be used to indicate that particular compartments
-belong to this type.  This may be useful for conveying a modeling
-intention, such as when a model contains many similar
-compartments, either by their biological function or the reactions
-they carry; without a compartment type construct, it would be
-impossible in the language of SBML to indicate that all of the
-compartments share an underlying conceptual relationship because
-each SBML compartment must be given a unique and separate
-identity.
-
-Compartment types have no mathematical meaning in
-\changed{\sbmltwothree}---they have no effect on a model's mathematical
-interpretation.  Simulators and other numerical analysis software
-may ignore \CompartmentType structures and references to them in a
-model.
+In \changed{\sbmltwothree}, a compartment type only has an
+identity, and this identity can only be used to indicate that
+particular compartments belong to this type.  This may be useful
+for conveying a modeling intention, such as when a model contains
+many similar compartments, either by their biological function or
+the reactions they carry; without a compartment type construct, it
+would be impossible in the language of SBML to indicate that all
+of the compartments share an underlying conceptual relationship
+because each SBML compartment must be given a unique and separate
+identity.  Compartment types have no mathematical meaning in
+\changed{\sbmltwothree}---they have no effect on a model's
+mathematical interpretation.  Simulators and other numerical
+analysis software may ignore \CompartmentType structures and
+references to them in a model.
 
 There is no mechanism in SBML for representing hierarchies of
 compartment types.  One \CompartmentType structure cannot be the
@@ -1217,6 +1244,24 @@ Section~\ref{sec:sid}.  \CompartmentType also has an optional
 \token{name} \changed{attribute}, of type \primtype{string}.  The \token{name}
 and \token{id} \changed{attributes} must be used as described in
 Section~\ref{sec:idnameattribs}.
+
+\begin{blockChanged}
+
+\subsubsection{The \token{sboTerm} \changed{attribute}}
+\label{sec:compartmenttype-sboterm}
+
+\CompartmentType inherits an optional \token{sboTerm}
+\changed{attribute} of type \primtype{SBOTerm} from its parent
+class \SBase (see Sections~\ref{sec:sboterm-type}
+and~\ref{sec:sboTerm}).  When a value is given to this
+\changed{attribute} in a \CompartmentType instance, the value must
+be an SBO identifier referring to a participant physical type (\ie
+terms derived from \sboparticipantphysical).  The relationship is
+of the form ``the compartment type \emph{is a} X'', where X is the
+SBO term.  The term chosen should be the most precise (narrow) one
+that captures the role of the compartment type in the model.
+
+\end{blockChanged}
 
 
 \subsubsection{Examples}
@@ -1251,15 +1296,10 @@ hypothetical model.
 The term \emph{species type} refers to reacting entities
 independent of location.  These include simple ions (e.g.,
 protons, calcium), simple molecules (e.g., glucose, ATP), large
-molecules (e.g., RNA, polysaccharides, and proteins), and others.
-The \SpeciesType data structure is intended to represent these
-entities.  Its definition is shown in
-Figure~\vref{fig:speciesType}.
-
-\begin{figure}[htb]
+molecules (e.g., RNA, polysaccharides, and
+\begin{wrapfigure}[15]{r}{2.55in}
   \centering
   \small
-  \vspace*{-1ex}
   \begin{tikzpicture}
     \node[above=0.45in] (a) {
       \emptyClassbox{\textsl{SBase}}
@@ -1273,11 +1313,14 @@ Figure~\vref{fig:speciesType}.
     \draw[open triangle 60-] (a) -- (b);
   \end{tikzpicture}
   \caption{\changed{The definition of class \SpeciesType.  A
-      sequence of zero or more instances of \SpeciesType objects
+      sequence of one or more instances of \SpeciesType objects
       can be located in an instance of \ListOfSpeciesTypes in
       \Model, as shown in Figure~\protect\ref{fig:model}.}}
   \label{fig:speciesType}
-\end{figure}
+\end{wrapfigure}
+proteins), and others.  The \SpeciesType data structure is
+intended to represent these entities.  Its definition is shown in
+Figure~\vref{fig:speciesType}.
 
 \SpeciesType structures are included in SBML to enable \Species
 (Section~\ref{sec:species}) of the same type to be related
@@ -1308,6 +1351,26 @@ Section~\ref{sec:sid}.  \SpeciesType also has an optional
 \token{name} \changed{attribute}, of type \primtype{string}.  The \token{name}
 and \token{id} \changed{attributes} must be used as described in
 Section~\ref{sec:idnameattribs}.
+
+
+\begin{blockChanged}
+
+\subsubsection{The \token{sboTerm} \changed{attribute}}
+\label{sec:speciestype-sboterm}
+
+\SpeciesType inherits an optional \token{sboTerm}
+\changed{attribute} of type \primtype{SBOTerm} from its parent
+class \SBase (see Sections~\ref{sec:sboterm-type}
+and~\ref{sec:sboTerm}).  When a value is given to this
+\changed{attribute} in a \SpeciesType instance, the value must
+be an SBO identifier referring to a participant physical type (\ie
+terms derived from \sboparticipantphysical).  The relationship is
+of the form ``the species type \emph{is a} X'', where X is the
+SBO term.  The term chosen should be the most precise (narrow) one
+that captures the role of the compartment type in the model.
+
+\end{blockChanged}
+
 
 \subsubsection{Example}
 
@@ -1366,7 +1429,7 @@ of \Compartment is shown in Figure~\vref{fig:compartment}.
     \draw[open triangle 60-] (a) -- (b);
   \end{tikzpicture}
   \caption{\changed{The definition of class \Compartment.  A
-      sequence of zero or more instances of \Compartment objects
+      sequence of one or more instances of \Compartment objects
       can be located in an instance of \ListOfCompartments in
       \Model, as shown in Figure~\protect\ref{fig:model}.}}
   \label{fig:compartment}
@@ -1451,28 +1514,32 @@ assignment (Section~\ref{sec:initialAssignment}) or a rule
 a logical inconsistency would exist because a zero-dimensional
 object cannot have a physical size.
 
-A compartment's size is set by its \token{size} \changed{attribute} exactly
-once.  If the compartment's \token{constant} \changed{attribute} has the value
-\val{true} (the default), then the size is fixed and cannot be
-changed except by an \InitialAssignment in the model (and in the
-case where \token{spatialDimensions}=\val{0}, it cannot be changed
-by any \InitialAssignment either).  These two methods of setting
-the compartment size differ in that the \token{size} \changed{attribute} can
-only be used to set the compartment size to a literal scalar
-value, whereas \InitialAssignment allows the value to be set using
-an arbitrary mathematical expression.  If the compartment's
-\token{constant} \changed{attribute} has the value \val{false}, the
-compartment's size value may be overridden by an
+\begin{blockChanged}
+
+A compartment's size is set by its \token{size}
+\changed{attribute} exactly once.  If the compartment's
+\token{constant} \changed{attribute} value is \val{true} (the
+default), then the size is fixed and cannot be changed except by
+an \InitialAssignment in the model (and if
+\token{spatialDimensions}=\val{0}, it cannot be changed by any
+\InitialAssignment either).  These methods of setting the size
+differ in that the \token{size} attribute can only be used to set
+the compartment size to a literal scalar value, whereas
+\InitialAssignment allows the value to be set using an arbitrary
+mathematical expression.  If the compartment's \token{constant}
+attribute is \val{false}, the size value may be overridden by an
 \InitialAssignment or changed by an \AssignmentRule or
 \AlgebraicRule, and in addition, for simulation time $t > 0$, it
 may also be changed by a \RateRule or \Event{}s.  (However, some
-of these constructs are mutually exclusive; see
-Sections~\ref{sec:rules} and~\ref{sec:events}.)  It is not an
-error to define \token{size} on a compartment and also redefine
-the value using an \InitialAssignment, but the \token{size} value
-in that case is ignored.  Section~\ref{sec:before-t0} provides
-additional information about the semantics of assignments, rules
-and values for simulation time $t \leq 0$.
+constructs are mutually exclusive; see Sections~\ref{sec:rules}
+and~\ref{sec:events}.)  It is not an error to define \token{size}
+on a compartment and also redefine the value using an
+\InitialAssignment, but the \token{size} value in that case is
+ignored.  Section~\ref{sec:before-t0} provides additional
+information about the semantics of assignments, rules and values
+for simulation time $t \leq 0$.
+
+\end{blockChanged}
 
 For the reasons given above, the \token{size} \changed{attribute} on a
 compartment must be defined as optional; however, \emph{it is
@@ -1505,7 +1572,7 @@ and the kinds of units allowed as values of the \changed{attribute}
 \token{units}, interact with the number of spatial dimensions of
 the compartment.  The value of the \token{units} \changed{attribute} of a
 \Compartment object must be one of the base units from
-Table~\vref{tab:unitkind}, or the built-in units \val{volume},
+Table~\ref{tab:unitkind}, or the built-in units \val{volume},
 \val{area}, \val{length} or \val{dimensionless}, or a new unit
 defined by a unit definition in the enclosing model, subject to
 the restrictions detailed in Table~\ref{tab:comp-size-units}.
@@ -1513,9 +1580,10 @@ the restrictions detailed in Table~\ref{tab:comp-size-units}.
 \begin{table}[h]
   \small
   \centering
+  \vspace*{-1ex}
   \begin{edtable}{tabular}{cllll}
     \toprule
-    \textbf{Value of \changed{attribute}}    & \texttt{size} & \texttt{units} &  & \textbf{Default value}\\
+    \textbf{Value of \changed{attribute}}    & \texttt{size} & \texttt{units} &  & \textbf{Default value}\\[-2pt]
     \texttt{spatialDimensions} & \textbf{allowed?}            & \textbf{allowed?}             & \textbf{Allowable kinds of units} & \textbf{of \changed{attribute}} \texttt{units}\\
     \midrule
     \val{3}             & yes   & yes   & units of volume, or \token{dimensionless}     & \val{volume}\\
@@ -1524,12 +1592,11 @@ the restrictions detailed in Table~\ref{tab:comp-size-units}.
     \val{0}             & no    & no    & (no units allowed)\\
     \bottomrule
   \end{edtable}
-  \caption{The types of units permitted for the units of
-    compartment size. If the value of \token{spatialDimensions} is
-    \val{0}, the \token{units} \changed{attribute} must not be present
-    because a compartment with no dimensions has no size and
-    units cannot be meaningfully associated with the
-    (non-existent) size.  \emph{Units of volume} means litres,
+  \vspace*{-0.5ex}
+  \caption{The units permitted for compartment sizes.  If
+    \token{spatialDimensions}=\val{0}, the compartment's
+    \token{units} \changed{attribute} must be left unset.
+    \emph{Units of volume} means litres,
     cubic metres, or units derived from them; \emph{units of area}
     means square metres or units derived from square metres; and
     \emph{units of length} means metres or units derived from
@@ -1539,32 +1606,40 @@ the restrictions detailed in Table~\ref{tab:comp-size-units}.
 \end{table}
 
 The units of the compartment size, as defined by the \token{units}
-\changed{attribute}, are used in the following ways when the compartment has a
+\changed{attribute or (if \token{units} is not set) the default
+  value listed in Table~\vref{tab:comp-size-units}}, are used in
+the following ways when the compartment has a
 \token{spatialDimensions} value greater than \val{0}:
 \begin{itemize}
 
-\item The value of the \token{units} \changed{attribute} is used as the units of
-  the \token{size} \changed{attribute} of the compartment structure (see
-  Section~\ref{sec:size}).
+\begin{blockChanged}
 
-\item The value of the \token{units} \changed{attribute} is used as the units of
-  the compartment identifier when it appears as a numerical
-  quantity in a mathematical formula expressed in MathML
+\item The value of the \token{units} \changed{attribute} is used
+  as the units of the compartment identifier when it appears as a
+  numerical quantity in a mathematical formula expressed in MathML
   (discussed in Section~\ref{sec:ci-token}).
 
-\item The value of the \token{units} \changed{attribute} is used as the units of
-  the \token{math} \changed{element} provided on \AssignmentRule and
-    \InitialAssignment structures for setting a compartment's
-    size (see Section~\ref{sec:assignmentrule}).
+\item The \token{math} \changed{element} of an \AssignmentRule or
+  \InitialAssignment referring to this compartment must have
+  identical units (see Sections~\ref{sec:assignmentrule}
+  and~\ref{sec:initialAssignment}).
 
-\item In a \RateRule structure that sets the rate of change of the
-  compartment's size (Section~\ref{sec:raterule}), the units on
-  the rule's \token{math} \changed{element} are those in the compartment's
-  \token{units} \changed{attribute} divided by the default \quantity{time}
-  units.  (In other words, the units for the rate of change of
-  compartment size are \quantity{compartment size}/\quantity{time}
-  units.)
+\item In \RateRule structures that set the rate of change of the
+  compartment's size (Section~\ref{sec:raterule}), the units of
+  the rule's \token{math} \changed{element} must be identical to
+  the compartment's \token{units} \changed{attribute} divided by
+  the default \quantity{time} units.  (In other words, the units
+  for the rate of change of compartment size are
+  \quantity{compartment size}/\quantity{time} units.)
 
+\item When a \Species is to be treated in terms of concentrations,
+  the units of the spatial size of the concentration value (\ie
+  the denominator in the units
+  \quantity{substance}/\quantity{size}) are those indicated by the
+  value of the \token{units} attribute on the compartment in which
+  the species is located.
+
+\end{blockChanged}\vspace*{-1ex}
 \end{itemize}
 
 Compartments with \token{spatialDimensions}=\val{0} require
@@ -1643,6 +1718,25 @@ Section~\ref{sec:level-3}, SBML Level~3 is expected introduce the
 ability to define geometries and spatial qualities.)
 
 
+\begin{blockChanged}
+
+\subsubsection{The \token{sboTerm} \changed{attribute}}
+\label{sec:compartment-sboterm}
+
+\Compartment inherits an optional \token{sboTerm}
+\changed{attribute} of type \primtype{SBOTerm} from its parent
+class \SBase (see Sections~\ref{sec:sboterm-type}
+and~\ref{sec:sboTerm}).  When a value is given to this
+\changed{attribute} in a \Compartment instance, the value must be
+an SBO identifier referring to a participant physical type (\ie
+terms derived from \sboparticipantphysical).  The relationship is
+of the form ``the compartment \emph{is a} X'', where X is the SBO
+term.  The term chosen should be the most precise (narrow) one
+that captures the role of the compartment type in the model.
+
+\end{blockChanged}
+
+
 \subsubsection{Examples}
 
 The following example illustrates two compartments in an
@@ -1684,19 +1778,22 @@ cell membrane.  To express that a compartment with identifier
 \label{sec:species}
 %-----------------------------------------------------------------------------
 
-A \emph{species} refers to a pool of reacting entities
-of a specific \emph{species type} that take part in
-reactions and are located in a specific \emph{compartment}.
-The \Species data
-structure is intended to represent these pools.   Its definition
-is shown in Figure~\vref{fig:species}.
+A \emph{species} refers to a pool of reacting entities of a
+specific \emph{species type} that take part in reactions and are
+located in a specific \emph{compartment}.  The \Species data
+structure is intended to represent these pools.  Its definition is
+shown in Figure~\vref{fig:species}.  Although the exact definition
+of \Species given here has changed from the definition in the
+specification of SBML Level~2 Version~1 (\ie through the
+introduction of \SpeciesType), the concept represented by \Species
+remains the same.
 
 \begin{figure}[htb]
   \centering
   \small
   \vspace*{-1ex}
   \begin{tikzpicture}
-    \node[above=1.2in] (a) {
+    \node[above=1.1in] (a) {
       \emptyClassbox{\textsl{SBase}}
     };
     \node (b) {
@@ -1719,22 +1816,17 @@ is shown in Figure~\vref{fig:species}.
     \draw[open triangle 60-] (a) -- (b);
   \end{tikzpicture}
   \caption{\changed{The definition of class \Species.  A sequence
-      of zero or more instances of \Species objects can be located
+      of one or more instances of \Species objects can be located
       in an instance of \ListOfSpecies in \Model, as shown in
       Figure~\protect\ref{fig:model}.}}
   \label{fig:species}
 \end{figure}
 
-Although the exact definition of \Species given here has
-changed from the definition in the specification of SBML Level~2
-Version~1 (\ie through the introduction of \SpeciesType), the
-concept represented by \Species remains the same.
-
 \begin{blockChanged}
 
-Previous definitions of \Species in SBML Level~2 included an
-additional attribute called \token{spatialSizeUnits}, which
-allowed explicitly setting the units of \emph{size} for initial
+In previous versions of SBML Level~2, the class \Species included
+an attribute called \token{spatialSizeUnits}, which allowed
+explicitly setting the units of \emph{size} for initial
 concentration.  \sbmltwothree removes this attribute for two
 reasons.  First, its semantics were confusing and introduced an
 implicit unit conversion.  \Compartment has its own size-setting
@@ -1751,14 +1843,14 @@ into the same spatial units as the other.  In other words,
 modelers and software tools would have had to insert explicit
 conversion factors into kinetic rate formulas.  Such conversions
 can be be difficult to achieve and prone to errors.  Second,
-although the \token{spatialSizeUnits} attribute provided some new
-functionality, it could also be argued to be redundant: a
-compartment's definition logically \emph{should} be the entity
-controlling its own spatial size information, in the same way that
-a species' definition controls its quantity.  For these reasons,
-and because few software packages seemed to take account of the
-implicit unit conversion, it was deemed better to remove the
-\token{spatialSizeUnits} attribute from \Species.
+although the \token{spatialSizeUnits} attribute provided
+some new functionality, it could also be argued to be redundant:
+a \changed{compartment's definition logically \emph{should} be the
+entity controlling its own spatial size information, in the} same
+way that a species' definition controls its quantity.  For these
+reasons, and because few software packages seemed to take account
+of the implicit unit conversion, it was deemed better to remove
+the \token{spatialSizeUnits} attribute from \Species.
 
 \end{blockChanged}
 
@@ -1833,7 +1925,6 @@ species in the compartment where the species is located.  These
 \changed{attributes} are mutually exclusive; \ie \emph{only one} can have a
 value on any given instance of a \Species structure.
 
-
 Missing \token{initialAmount} and \token{initialConcentration}
 values implies that their values either are unknown, or to be
 obtained from an external source, or determined by an initial
@@ -1846,20 +1937,20 @@ of \val{0}, the species cannot have a value for
 zero dimensions.
 
 A species' initial quantity is set by the \token{initialAmount} or
-\token{initialConcentration} \changed{attributes} exactly once.  If the species'
-\token{constant} \changed{attribute} has the value \val{true} (the default),
-then the size is fixed and cannot be changed except by an
-\InitialAssignment.  These two methods of setting the species
-quantity differ in that the \token{initialAmount} and
-\token{initialConcentration} \changed{attributes} can only be used to set the
-species quantity to a literal scalar value, whereas
-\InitialAssignment allows the value to be set using an arbitrary
-mathematical expression.  If the species' \token{constant} \changed{attribute}
-has the value \val{false}, the species' quantity value may be
-overridden by an \InitialAssignment or changed by \AssignmentRule
-or \AlgebraicRule, and in addition, for $t > 0$, it may also be
-changed by a \RateRule or \Event{}s. (However, some of these
-constructs are mutually exclusive; see Sections~\ref{sec:rules}
+\token{initialConcentration} \changed{attributes} exactly once.
+If the species' \token{constant} \changed{attribute} is \val{true}
+(the default), then the size is fixed and cannot be changed except
+by an \InitialAssignment.  These methods differ in that the
+\token{initialAmount} and \token{initialConcentration}
+\changed{attributes} can only be used to set the species quantity
+to a literal scalar value, whereas \InitialAssignment allows the
+value to be set using an arbitrary mathematical expression.  If
+the species' \token{constant} \changed{attribute} is \val{false},
+the species' quantity value may be overridden by an
+\InitialAssignment or changed by \AssignmentRule or
+\AlgebraicRule, and in addition, for $t > 0$, it may also be
+changed by a \RateRule or \Event{}s. (However, some constructs are
+mutually exclusive; see Sections~\ref{sec:rules}
 and~\ref{sec:events}.) It is not an error to define
 \token{initialAmount} or \token{initialConcentration} on a species
 and also redefine the value using an \InitialAssignment, but the
@@ -1867,7 +1958,6 @@ and also redefine the value using an \InitialAssignment, but the
 that case is ignored.  Section~\ref{sec:before-t0} provides
 additional information about the semantics of assignments, rules
 and values for simulation time $t \leq 0$.
-
 
 The units of the value in the \token{initialAmount}
 \changed{attribute} are set by the \token{substanceUnits}
@@ -1880,16 +1970,16 @@ value in the \token{initialConcentration} \changed{attribute} are
   in which the species is located.}
 
 
-\subsubsection{The \token{substanceUnits} and
-    \token{hasOnlySubstanceUnits} \changed{attributes}}
+\subsubsection{The \changed{\token{substanceUnits} and
+    \token{hasOnlySubstanceUnits} attributes}}
 \label{sec:species-units}
 
 The units associated with a species' quantity, referred to as the
 \emph{units of the species}, are determined via the optional
 \changed{attributes} \token{substanceUnits} and
-\token{hasOnlySubstanceUnits}, \changed{and by the units of the
-  size defined for} \changed{the compartment object in which the
-  species are located.}
+\token{hasOnlySubstanceUnits}, \changed{in combination with the
+  units of the size} \changed{defined for the compartment object
+  in which the species are located.}
 
 The \changed{attribute} \token{hasOnlySubstanceUnits} takes on boolean values
 and defaults to \val{false}.  This \changed{attribute}'s role is to indicate
@@ -1922,14 +2012,14 @@ units of \quantity{substance} are those defined by the
 
 
 \begin{table}[htb]
-  \vspace*{2ex}
   \centering
   \small
+  \vspace*{-1ex}
   \begin{edtable}{tabular}{lll}
     \toprule
     \textbf{value of} &
     \textbf{\emph{units of the species} when} &
-    \textbf{\emph{units of the species} when}\\
+    \textbf{\emph{units of the species} when}\\[-1pt]
     \textbf{\token{hasOnlySubstanceUnits}}&
     \textbf{\token{spatialDimensions} is greater than 0} &
     \textbf{\token{spatialDimensions} is 0}\\
@@ -1938,7 +2028,7 @@ units of \quantity{substance} are those defined by the
     \texttt{true} & $substance$ & $substance$ \\
     \bottomrule
   \end{edtable}
-  \vspace*{1ex}
+  \vspace*{-0.5ex}
   \caption{How to interpret the value the \token{hasOnlySubstanceUnits}
   \changed{attribute} of the \Species structure.}
   \label{tab:speciesunits}
@@ -1961,14 +2051,20 @@ The \emph{units of the species} are used in the following ways:
   numerical quantity in a mathematical formula expressed in MathML
   (discussed in Section~\ref{sec:ci-token}).
 
-\item The \token{math} \changed{element} of \AssignmentRule and
-  \InitialAssignment structures determining the species' quantity
-  (see Section~\ref{sec:assignmentrule}) has these units.
+\begin{blockChanged}
+
+\item The \token{math} \changed{element} of an \AssignmentRule or
+  \InitialAssignment referring to this species must have identical
+  units (see Sections~\ref{sec:assignmentrule}
+  and~\ref{sec:initialAssignment}).
 
 \item In \RateRule structures that set the rate of change of the
-  species' quantity (Section~\ref{sec:raterule}), the units on the
-  rule's \token{math} \changed{element} are the \emph{units of the species}
-  divided by the built-in \quantity{time} units.
+  species' quantity (Section~\ref{sec:raterule}), the units of the
+  rule's \token{math} \changed{element} must be identical to the
+  \quantity{units of the species} divided by the model's
+  \quantity{time} units.
+
+\end{blockChanged}
 
 \end{itemize}
 
@@ -2066,6 +2162,25 @@ charged ion such as calcium ($\text{Ca}^{2+}$).  \changed{The
 since Level~2 Version~2.}
 
 
+\begin{blockChanged}
+
+\subsubsection{The \token{sboTerm} \changed{attribute}}
+\label{sec:species-sboterm}
+
+\Species inherits an optional \token{sboTerm} \changed{attribute}
+of type \primtype{SBOTerm} from its parent class \SBase (see
+Sections~\ref{sec:sboterm-type} and~\ref{sec:sboTerm}).  When a
+value is given to this \changed{attribute} in a \Species instance,
+the value must be an SBO identifier referring to a participant
+physical type (\ie terms derived from \sboparticipantphysical).
+The relationship is of the form ``the species \emph{is a} X'',
+where X is the SBO term.  The term chosen should be the most
+precise (narrow) one that captures the role of the compartment
+type in the model.
+
+\end{blockChanged}
+
+
 \subsubsection{Example}
 
 The following example shows two species definitions within an
@@ -2080,8 +2195,7 @@ are listed under the heading \token{listOfSpecies} in the model:
         <species id="Glucose_6_P" compartment="cell" initialConcentration="0.75"/>
     </listOfSpecies>
     ...
-</model>
-\end{example}
+</model>\end{example}\vspace*{-2ex}
 
 
 %-----------------------------------------------------------------------------
@@ -2089,16 +2203,22 @@ are listed under the heading \token{listOfSpecies} in the model:
 \label{sec:parameters}
 %-----------------------------------------------------------------------------
 
-A \Parameter structure is used to declare a variable for use in
-mathematical formulas in an SBML model definition.  By default, parameters
-have constant value for the duration of a simulation and for this reason
-are called ``parameters'' instead of variables in SBML.  The definition of
+\begin{blockChanged}
+
+A \Parameter is used in SBML to define a symbol associated with a
+value; this symbol can then be used in mathematical formulas in a
+model.  By default, parameters have constant value for the
+duration of a simulation, and for this reason are called
+``parameters'' instead of ``variables'' in SBML, although in
+truth, SBML parameters can be either.  The definition of
 \Parameter is shown in Figure~\vref{fig:parameter}.
+
+\end{blockChanged}
 
 \begin{figure}[htb]
   \centering
   \small
-  \vspace*{-1ex}
+  \vspace*{-1.5ex}
   \begin{tikzpicture}
     \node[above=0.6in] (a) {
       \emptyClassbox{\textsl{SBase}}
@@ -2116,8 +2236,9 @@ are called ``parameters'' instead of variables in SBML.  The definition of
     };
     \draw[open triangle 60-] (a) -- (b);
   \end{tikzpicture}
+  \vspace{-1.25ex}
   \caption{\changed{The definition of class \Parameter.  A
-      sequence of zero or more instances of \Parameter objects can
+      sequence of one or more instances of \Parameter objects can
       be located in an instance of \ListOfParameters in \Model, as
       shown in Figure~\protect\ref{fig:model}.}}
   \label{fig:parameter}
@@ -2132,6 +2253,31 @@ within a reaction are local to the particular reaction and (within
 that reaction) \emph{override} any global parameters having the
 same identifiers (See Section~\ref{sec:identifiers} for further
 details).
+
+\begin{blockChanged}
+
+The use of the term \emph{parameter} in SBML sometimes leads to
+confusion among readers who have a particular notion of what
+something called ``parameter'' should be.  It has been the source
+of heated debate, but despite this, no one has yet found an
+adequate replacement term that does not have different
+connotations to different people and hence leads to confusion
+among \emph{some} subset of users.  Perhaps it would have been
+better to have two constructs, one called ``constants'' and the
+other called ``variables''.  The current approach in SBML is
+simply more parsimonious, using a single \Parameter construct with
+the boolean flag \token{constant} indicating which flavor it is.
+In any case, readers are implored to look past their particular
+definition of a ``parameter'' and simply view SBML's \Parameter as
+a single mechanism for defining both constants and (additional)
+variables in a model.  (We write \emph{additional} because the
+species in a model are usually considered to be the central
+variables.)  After all, software tools are not required to expose
+to users the actual names of particular SBML constructs, and thus
+tools can present to their users whatever terms their designers
+feel best matches their target audience.
+
+\end{blockChanged}
 
 
 \subsubsection{The \token{id} and \token{name} \changed{attributes}}
@@ -2179,24 +2325,49 @@ for simulation time $t \leq 0$.
 \subsubsection{The \token{units} \changed{attribute}}
 \label{sec:parameter-units}
 
+\begin{blockChanged}
+
 The units associated with the value of the parameter are specified
-by the \changed{attribute} \token{units}.  These units are relevant when the
-parameter identifier appears in: (a) \RateRule, \AssignmentRule,
-\InitialAssignment and \EventAssignment structures setting the
-value of the parameter; and (b) MathML expressions elsewhere in
-the model. A \RateRule structure that may determine the value of
-the parameter has units \quantity{parameter
-  units}/\quantity{time}, where \quantity{parameter units} are the
-units assigned to the parameter using the \token{units} \changed{attribute} and
-\quantity{time} is the built-in \token{time} units.  The value
-assigned to the parameter's \token{units} \changed{attribute} must be chosen
+by the \changed{attribute} \token{units}.  The value assigned to
+the parameter's \token{units} \changed{attribute} must be chosen
 from one of the following possibilities: one of the base unit
 identifiers from Table~\vref{tab:unitkind}; one of the built-in
 unit identifiers appearing in first column of
 Table~\vref{tab:builtin}; or the identifier of a new unit defined
 in the list of unit definitions in the enclosing \Model structure.
-There are no constraints on which units can be chosen from these
-sets.  There are no default units for parameters.
+There are no constraints on the units that can be chosen from
+these sets.  There are no default units for parameters.
+
+The units of the parameter are used in the following ways:
+\begin{itemize}
+
+\item The units of the \token{math} element of an \AssignmentRule,
+  \InitialAssignment or \EventAssignment setting the value of the
+  parameter must have units identical to the units declared by the
+  parameter's \token{units} attribute.
+
+\item The units of the \token{math} element of a \RateRule that
+  references the parameter be identical to \quantity{parameter
+    units}/\quantity{time}, where \quantity{parameter units} are
+  the units declared for the parameter using the \token{units}
+  attribute and \quantity{time} is the built-in \token{time}
+  units.
+
+\item When the parameter identifier appears in other MathML
+  expressions in a model, the units associated with the value
+  are those defined by the parameter's \token{units} attribute.
+
+\end{itemize}
+
+The fact that parameter units are optional, and that no defaults
+are defined, means that models can define parameters with
+undeclared units.  If such parameters appear in mathematical
+expressions elsewhere in a model, it may not be possible for a
+software tool to verify the consistency of units used in the
+expressions.  Modelers and software tools should therefore assign
+units to parameters whenever possible.
+
+\end{blockChanged}
 
 
 \subsubsection{The \token{constant} \changed{attribute}}
@@ -2253,10 +2424,12 @@ The following is an example of parameters defined at the \Model level:
     ...
     <listOfParameters>
         <parameter id="tau1" value="2.3" units="second"/>
+        <parameter id="tau2" value="3e-2" units="second"/>
         <parameter id="Km1" value="10.7" units="moleperlitre"/>
     </listOfParameters>
     ...
 </model>
+
 \end{example}
 
 
@@ -2310,7 +2483,7 @@ constant or the initial value of a variable from the values of
     contents of the \class{Math} class can be any \mathml
     permitted in SBML; see
     Section~\protect\ref{sec:mathmlsubset}.  A
-    sequence of zero or more instances of \InitialAssignment
+    sequence of one or more instances of \InitialAssignment
     objects can be located in an instance of
     \ListOfInitialAssignments in \Model, as shown in
     Figure~\protect\ref{fig:model}.}}
@@ -2359,7 +2532,7 @@ rules (see Section~\ref{sec:ruleconstraints}).
 The \token{math} \changed{element} contains a MathML expression that is used
 to calculate the value of the constant or the initial value of the
 variable.  The units of the value computed by the formula in the
-\token{math} \changed{element} are taken to be the units associated with the
+\token{math} \changed{element must be identical to be the units} associated with the
 identifier given in the \token{symbol} \changed{attribute}.  (That is, the units
 are the units of the species, compartment, or parameter, as
 appropriate for the kind of object identified by the value of
@@ -2422,7 +2595,7 @@ of variable being set:
 \item \emph{In the case of a compartment}, an \InitialAssignment
   sets the referenced compartment's initial size to the size
   determined by the formula in \token{math}.  The overall units of
-  the formula are the units specified for the size of the
+  the formula \changed{must be the same as} the units specified for the size of the
   compartment.  (See Section~\ref{sec:compartment-units} for an
   explanation of how the units of the compartment's size are
   determined.)
@@ -2430,7 +2603,7 @@ of variable being set:
 \item \emph{In the case of a parameter}, an \InitialAssignment
   sets the referenced parameter's initial value to that determined
   by the formula in \token{math}.  The overall units of the
-  formula are the units defined for the parameter.  (See
+  formula \changed{must be the same as} the units defined for the parameter.  (See
   Section~\ref{sec:parameter-units} for an explanation of how the
   units of the parameter are determined.)
 
@@ -2547,6 +2720,7 @@ there also exists an \InitialAssignment for it \emph{and} another
     </listOfInitialAssignments>
     ...
 </model>
+
 \end{example}
 
 The value of \val{othersymbol} in the SBML excerpt above will be
@@ -2613,24 +2787,27 @@ treated as separate cases for the following reasons:
 \end{itemize}
 
 The approach taken to covering these cases in SBML is to define an
-abstract \Rule structure containing an \changed{element}, \token{math}, to hold
-the right-hand side expression, then to derive subtypes of \Rule
-that add \changed{attributes} to distinguish the cases of algebraic, assignment
-and rate rules.  Figure~\vref{fig:rules} gives the definitions of
-\Rule and the subtypes derived from it.  The figure shows there
-are three subtypes, \AlgebraicRule, \AssignmentRule and \RateRule
-derived directly from \Rule. These correspond to the cases
+abstract \Rule structure containing an \changed{element},
+\token{math}, to hold the right-hand side expression, then to
+derive subtypes of \Rule that add \changed{attributes} to
+distinguish the cases of algebraic, assignment and rate rules.
+Figure~\vref{fig:rules} gives the definitions of \Rule and the
+subtypes derived from it.  The figure shows there are three
+subtypes, \AlgebraicRule, \AssignmentRule and \RateRule derived
+directly from \Rule. These correspond to the cases
 \emph{Algebraic}, \emph{Assignment}, and \emph{Rate} described
 above respectively.
 
 \begin{figure}[htb]
   \centering
+  \vspace*{2ex}
   \includegraphics[scale=0.8]{figs/rule-uml}
   \caption{\changed{The definition of \Rule and derived types
       \AlgebraicRule, \AssignmentRule and \RateRule.}}
   \label{fig:rules}
 \end{figure}
 
+\clearpage
 
 \subsubsection{Common fields in \abstractclass{Rule}}
 \label{sec:rule-math}\label{sec:rule-fields}\label{sec:rule-sboterm}
@@ -3058,7 +3235,7 @@ shows the definition of the \Constraint data structure.
       guidelines for XHTML content as explained in
       Section~\ref{sec:notes} for notes on \SBase also apply to
       the XHTML within messages in a \Constraint. A sequence of
-      zero or more instances of \Constraint objects can be located
+      one or more instances of \Constraint objects can be located
       in an instance of \ListOfConstraints in \Model, as shown in
       Figure~\protect\ref{fig:model}.}}
   \label{fig:constraint}
@@ -3087,7 +3264,7 @@ in \token{math} evaluates to a value of \val{false}.  Software
 tools are not required to display the message, but it is
 recommended that they do so as a matter of best practice.
 
-% \begin{blockChanged}
+\begin{blockChanged}
 
 The XHTML content within a \token{message} element must follow the
 same restrictions as for the \token{notes} element on \SBase
@@ -3218,11 +3395,15 @@ supporting data structures, defined in Figure~\vref{fig:reaction}.
 
 \begin{figure}[htb]
   \centering
+  \vspace*{1ex}
   \includegraphics[scale=0.779]{figs/reaction-uml}
+  \vspace*{0.5ex}
   \caption{\changed{The definitions of classes \Reaction, \KineticLaw,
       \SpeciesReference, \ModifierSpeciesReference, as well as the
       container classes \ListOfReactants, \ListOfProducts,
-      \ListOfModifiers, and \ListOfParameters.}}
+      \ListOfModifiers, and \ListOfParameters.  Note that
+      \SimpleSpeciesReference is an abstract class used only to
+      provide some common attributes to its derived classes.}}
   \label{fig:reaction}
 \end{figure}
 
@@ -3232,7 +3413,7 @@ supporting data structures, defined in Figure~\vref{fig:reaction}.
 
 
 \subsubsection{The \class{Reaction} structure}
-\label{sec:reaction-type}\label{sec:reaction-sboterm}
+\label{sec:reaction-type}
 \label{sec:listofreactants}
 \label{sec:listofproducts}
 \label{sec:listofmodifiers}
@@ -3445,36 +3626,34 @@ change over the course of a simulation, but can reasonably be
 assessed a posteriori in most cases.
 
 
-\paragraph{The \token{sboTerm} \changed{attribute}}
+\paragraph{The \token{sboTerm} \changed{attribute} on \class{Reaction}}
+\label{sec:reaction-sboterm}
 
-The \Reaction structure inherits from \SBase the optional \token{sboTerm} \changed{attribute} of
-type \primtype{SBOTerm} (see Sections~\ref{sec:sboterm-type}
-and~\ref{sec:sboTerm}).  When a value is given to this \changed{attribute} in a
-reaction definition, the value must be a valid SBO identifier
-referring to a modeling framework (\ie terms derived from
-\sboframework).  The \Reaction structure should have an ``is a''
-relationship with the SBO term.  The SBO term chosen should be the
-most precise (narrow) term that defines the mathematical framework
-used in the reaction.
+\begin{blockChanged}
 
-As discussed in Section~\ref{sec:model-sboterm}, the value given
-to \token{sboTerm} on a \Reaction object interacts with the value
-of the \token{sboTerm} \changed{attribute} on the \Model element.  If the
-\Model's \token{sboTerm} \changed{attribute} has a value, it should be
-interpreted to mean that all the reactions in a model assume the
-same modeling framework.  In that case, the \token{sboTerm} labels
-on individual reactions may be omitted, but only the \Reaction
-\token{sboTerm} labels can be thus omitted; the \token{sboTerm}
-\changed{attribute} on \KineticLaw within \Reaction must still be given a value,
-as must the terms on other components of the model, in order to
-characterize the model completely.  (See
-Section~\ref{sec:model-sboterm} for more discussion about this.)
+The \Reaction structure inherits from \SBase the optional
+\token{sboTerm} \changed{attribute} of type \primtype{SBOTerm}
+(see Sections~\ref{sec:sboterm-type} and~\ref{sec:sboTerm}).  When
+a value is given to this \changed{attribute} in a reaction
+definition, the value must be a valid SBO identifier referring to
+an event (\ie terms derived from \sboevent).  The \Reaction
+structure should have an ``is a'' relationship with the SBO term.
+The SBO term chosen should be the most precise (narrow) term that
+defines the event represented by the reaction as a whole.  For
+example, a given reaction in a model might represent
+\emph{binding}, which has a term in SBO (identifier
+\token{SBO:0000177}, definition ``Interaction between several
+biochemical entities that results in the formation of a
+non-covalent complex '').  The corresponding \Reaction instance in
+SBML would have \token{sboTerm="SBO:0000177"}.
 
-SBO labels are optional information on a model.  Applications are
-free to ignore \token{sboTerm} values, and a model must be
-interpretable without the benefit of SBO labels.
-Section~\ref{sec:sboTerm} gives more information about this
-principle and the use of SBO.
+\end{blockChanged}
+
+\changed{As mentioned elsewhere,} SBO labels are optional
+information on a model.  Applications are free to ignore
+\token{sboTerm} values, and a model must be interpretable without
+the benefit of SBO labels.  Section~\ref{sec:sboTerm} gives more
+information about this principle and the use of SBO.
 
 
 \subsubsection{The \class{SimpleSpeciesReference} abstract type}
@@ -3530,35 +3709,38 @@ or modifier in the reaction is determined by the subtype of
 
 
 \paragraph{The \token{sboTerm} \changed{attribute}}
+\label{sec:simplespeciesreference-sboterm}
 
-\changed{The class} \SimpleSpeciesReference inherits from \SBase the optional
-\token{sboTerm} \changed{attribute} of type \primtype{SBOTerm} (see
-Sections~\ref{sec:sboterm-type} and~\ref{sec:sboTerm}).  This
-means that the object classes derived from
-\SimpleSpeciesReference, namely \SpeciesReference and
-\ModifierSpeciesReference, all have \token{sboTerm} \changed{attributes}.  When
-a value is given to this \changed{attribute}, it must be a valid SBO referring
-to a participant role.  The appropriate term depends on whether
-the object is a reactant, product or modifier.  If a reactant,
-then it should be a term in the \sboreactant hierarchy; if a
-product, then it should be a term in the \sboproduct hierarchy;
-and if a modifier, then it should be a term in the \sbomodifier
-hierarchy. The \SpeciesReference and \ModifierSpeciesReference
-structures should have an ``is a'' relationship to the term
-identified by the SBO term identifier.  The SBO terms chosen
-should be the most precise (narrow) one that defines the role of
-the species in the reaction.
+\changed{The class} \SimpleSpeciesReference inherits from \SBase
+the optional \token{sboTerm} \changed{attribute} of type
+\primtype{SBOTerm} (see Sections~\ref{sec:sboterm-type}
+and~\ref{sec:sboTerm}).  This means that the object classes
+derived from \SimpleSpeciesReference, namely \SpeciesReference and
+\ModifierSpeciesReference, all have \token{sboTerm}
+\changed{attributes}.  When a value is given to this
+\changed{attribute}, it must be a valid SBO \changed{identifier}
+referring to a participant role.  The appropriate \changed{SBO}
+term depends on whether the object is a reactant, product or
+modifier.  If a reactant, then it should be a term in the
+\sboreactant hierarchy; if a product, then it should be a term in
+the \sboproduct hierarchy; and if a modifier, then it should be a
+term in the \sbomodifier hierarchy.  The \SpeciesReference and
+\ModifierSpeciesReference instances should have an ``is a''
+relationship to the term identified by the SBO identifier.
 
-A product term must only be used when the \SpeciesReference
-structure is contained in the \token{product} \changed{element} of the
-containing \Reaction structure.  Similarly, a reactant term must
-only be used when the \SpeciesReference structure is contained in
-the \token{reactant} \changed{element} of the containing \Reaction structure.
+\begin{blockChanged}
 
-As discussed in Section~\ref{sec:sboTerm}, SBO labels are optional
-information on a model.  Applications are free to ignore
-\token{sboTerm} values.  A model must be interpretable without the
-benefit of SBO labels.
+The SBO terms chosen should be the most precise (narrow) one that
+defines the role of the species in the reaction.  As might be
+expected, an SBO reactant term can only be assigned to the
+\token{sboTerm} attribute of a \SpeciesReference instance when
+that instance is contained in the list of reactants in the
+containing \Reaction instance.  Similarly, an SBO product term can
+only be assigned to the \token{sboTerm} attribute of a
+\SpeciesReference instance when that instance is contained in the
+list of products in the containing \Reaction instance.
+
+\end{blockChanged}
 
 
 \subsubsection{\class{SpeciesReference}}
@@ -3577,11 +3759,11 @@ Section~\ref{subsec:simplespeciesreference} for their definitions.
 It also defines \changed{attribute} \token{stoichiometry} and
 \changed{element} \token{stoichiometryMath}, described below.
 
-The value of the \token{species} \changed{attribute} must be the identifier of
-an existing species defined in the enclosing \Model; this species
-is thereby designated as a reactant or product in the reaction.
-Which one it is (reactant or product) is determined by whether the
-\SpeciesReference instance appears in the \Reaction's
+The \token{species} \changed{attribute} value must be the
+identifier of an existing species defined in the enclosing \Model;
+the species is thereby designated as a reactant or product in the
+reaction.  Which one it is (\ie reactant or product) is indicated
+by whether the \SpeciesReference appears in the \Reaction's
 \token{reactant} or \token{product} lists.
 
 
@@ -3789,7 +3971,7 @@ laws''.
 \paragraph{The list of parameters}
 
 An instance of a \KineticLaw type structure can contain a list of
-zero or more \Parameter structures (Section~\ref{sec:parameters})
+\changed{one} or more \Parameter structures (Section~\ref{sec:parameters})
 which define new parameters whose identifiers can be used in the
 \token{math} formula.  As discussed in
 Section~\ref{sec:identifiers}, reactions introduce local
@@ -3813,14 +3995,37 @@ its default value).
 
 \paragraph{The \token{sboTerm} \changed{attribute}}
 
-\KineticLaw inherits from \SBase the optional \changed{attribute} called
-\token{sboTerm} of type \primtype{SBOTerm} (see
-Section~\ref{sec:sboTerm}).  When a value is given to this \changed{attribute},
-the value must be an SBO identifier referring to a term from the
-\sboratelaw vocabulary defined in SBO.  The relationship is of the
-form ``the kinetic law \emph{is a} X'', where X is the SBO term.
-The SBO term chosen should be the most precise (narrow) term that
-defines the type of kinetic law encoded by the structure.
+\KineticLaw inherits from \SBase the optional \changed{attribute}
+called \token{sboTerm} of type \primtype{SBOTerm} (see
+Section~\ref{sec:sboTerm}).  When a value is given to this
+\changed{attribute}, the value must be an SBO identifier referring
+to a term from the \sboratelaw vocabulary defined in SBO.  The
+relationship is of the form ``the kinetic law \emph{is a} X'',
+where X is the SBO term.  The SBO term chosen should be the most
+precise (narrow) term that defines the type of \changed{reaction
+  rate expression encoded by the \KineticLaw instance}.
+
+\begin{blockChanged}
+
+As explained in Section~\ref{sec:model-sboterm}, there is an
+interaction between the SBO terms chosen for a model's \KineticLaw
+instances and the \token{sboTerm} value given to the overall
+\Model instance.  The interaction is as follows.  In
+SBO, each definition of a rate expression itself includes its own
+SBO reference to a mathematical framework.  When a given
+\KineticLaw element refers to a rate law defined in SBO, it
+therefore simultaneously also identifies a framework.  If a \Model
+instance has a value for \token{sboTerm}, it implies that all
+reaction kinetics in the model assume the same mathematical
+framework.  In that case, the frameworks referenced in the SBO
+definitions of individual reaction rate expressions may be
+ignored.  Consequently, if the mathematical frameworks underlying
+the definitions of different reactions in a model \emph{should} be
+observed individually (\eg because the model mixes frameworks),
+then there should not be a value assigned to \token{sboTerm} on
+the enclosing \Model.
+
+\end{blockChanged}
 
 
 \paragraph{Example}
@@ -3887,6 +4092,7 @@ expression.
     </listOfReactions>
     ...
 </model>
+
 \end{example}
 
 
@@ -4022,32 +4228,32 @@ the compartment where the reactants are located, leading to the
 following SBML rate formula:
 \begin{linenomath}
 \begin{equation*}
-  R_1 = r_1 \cdot V_1 = -k_1 \cdot [S_1] \cdot V_1 \\
+  \changed{R_1 = r_1 \cdot V_1 = -k_1 \cdot [S_1] \cdot V_1} \\
 \end{equation*}
 \end{linenomath}
 The second rate expression becomes
 \begin{linenomath}
 \begin{equation*}
-  R_2 = r_2 \cdot V_2 = -k_2 \cdot [S_2] \cdot V_2 \\
+  \changed{R_2 = r_2 \cdot V_2 = -k_2 \cdot [S_2] \cdot V_2} \\
 \end{equation*}
 \end{linenomath}
 \changed{The units of $k_1$ and $k_2$ are $1/\emph{time}$ (often
-$1/sec$, but not necessarily), as is typical for reactions that
-are first-}\changed{order in one reactant.}  The expressions
-$R_1$ and $R_2$ are what would be written in \KineticLaw
-\token{math} definitions for the two reactions in this system.
-The formulas give the speed of each reaction in terms of the
-substance change over time.  The reader of the SBML model needs to
-combine the individual contributions of each reaction to construct
-equations for the \emph{overall} rates of change of each species
-in the model using these expressions.  In terms of differential
-equations, these are:
+  $1/sec$, but not necessarily), as is typical for reactions that
+  are first-}\changed{order in one reactant.  The expressions
+  $R_1$ and $R_2$ are what would be written in \KineticLaw
+  \token{math} definitions} \changed{for the two reactions in this
+  system.  The formulas give the speed of each reaction in terms
+  of the substance} \changed{change over time.}  The reader of the
+SBML model needs to combine the individual contributions of each
+reaction to construct equations for the \emph{overall} rates of
+change of each species in the model using these expressions.  In
+terms of differential equations, these are:
 \begin{linenomath}
 \begin{equation*}
   \begin{aligned}
-  \frac{dn_{S_1}}{dt} = &- R_1                    &= - k_1 \cdot [S_1] \cdot V_1 &{}\\[4pt]
-  \frac{dn_{S_2}}{dt} = &+ R_1 - R_2              &= + k_1 \cdot [S_1] \cdot V_1 &-\, k_2 \cdot [S_2] \cdot V_2\\[4pt]
-  \frac{dn_{S_3}}{dt} = &\phantom{{}+ R_1} + R_2  &= \phantom{+ k_1 \cdot [S_2] \cdot V_1} &+\, k_2 \cdot [S_2] \cdot V_2
+  \frac{dn_{S_1}}{dt} = &\changed{- R_1}                    &= - k_1 \cdot [S_1] \cdot V_1 &{}\\[4pt]
+  \frac{dn_{S_2}}{dt} = &\changed{+ R_1} - \changed{R_2}    &= + k_1 \cdot [\changed{S_1}] \cdot V_1 &-\, k_2 \cdot [S_2] \cdot V_2\\[4pt]
+  \frac{dn_{S_3}}{dt} = &\phantom{{}+ \changed{R_1}} + \changed{R_2}  &= \phantom{+ k_1 \cdot [S_2] \cdot V_1} &+\, k_2 \cdot [S_2] \cdot V_2
 \end{aligned}
 \end{equation*}
 \end{linenomath}
@@ -4085,6 +4291,7 @@ compartment of size $V_j$,
   \end{split}
 \end{equation}
 \end{linenomath}
+\begin{blockChanged}
 In Equation~\eqref{eq:simple-odes}, each term $\text{sign}_j$ is
 ``$-$'' if $S_i$ is a reactant in $r_j$ and ``$+$'' if it is a
 product, and each term $\text{stoich}_j$ is the stoichiometry of
@@ -4092,7 +4299,7 @@ $S_i$ in reaction $r_j$.  Letting $R_j = r_j \cdot V_j$ represent
 the form of the rate expressions as they would be written in the
 \KineticLaw \token{math} elements, then we can equivalently write
 \begin{linenomath}
-\begin{equation} \label{eq:simple-odes}
+\begin{equation} \label{eq:simple-odes-sbml}
   \begin{split}
     \frac{dn_{S_i}}{dt} &= \relphantom{+}\,\text{sign}_1 \cdot \text{stoich}_1 \cdot R_1\\
     &\relphantom{=} +\, \text{sign}_2 \cdot \text{stoich}_2 \cdot R_2\\
@@ -4103,7 +4310,7 @@ the form of the rate expressions as they would be written in the
   \end{split}
 \end{equation}
 \end{linenomath}
-
+\end{blockChanged}
 This approach preserves the use of concentration terms within the
 reaction rate expressions so that the core of those rate
 expressions can be ordinary rate laws.  This is important when
@@ -4298,8 +4505,8 @@ reaction rates will be written \changed{as conventional
 \begin{linenomath}
 \begin{equation*}
   \begin{aligned}
-    R_1 &= {k_1}' \cdot [A] \cdot [B]^2 \cdot V\\
-    R_2 &= {k_2}' \cdot [C] \cdot V
+    \changed{R_1} &= {k_1}' \cdot [A] \cdot [B]^2 \cdot V\\
+    \changed{R_2} &= {k_2}' \cdot [C] \cdot V
   \end{aligned}
 \end{equation*}
 \end{linenomath}
@@ -4310,9 +4517,9 @@ of change of $A$, $B$, and $C$, the result is
 \begin{linenomath}
 \begin{equation*}
   \begin{aligned}
-    dA/dt &= -a_1 \cdot R_1 + a_2 \cdot R_2\\[5pt]
-    dB/dt &= -b_1 \cdot R_1\\[5pt]
-    dC/dt &= +c_1 \cdot R_1 - c_2 \cdot R_2
+    dA/dt &= -a_1 \cdot \changed{R_1} + a_2 \cdot \changed{R_2}\\[5pt]
+    dB/dt &= -b_1 \cdot \changed{R_1}\\[5pt]
+    dC/dt &= +c_1 \cdot \changed{R_1} - c_2 \cdot \changed{R_2}
 %     \dfrac{dA}{dt} &= -a_1 \cdot r_1 + a_2 \cdot r_2\\[5pt]
 %     \dfrac{dB}{dt} &= -b_1 \cdot r_1\\[5pt]
 %     \dfrac{dC}{dt} &= +c_1 \cdot r_1 - c_2 \cdot r_2
@@ -4562,17 +4769,18 @@ Section~\ref{sec:idnameattribs}.
 \end{blockChanged}
 
 
-\paragraph{The \token{sboTerm} \changed{attribute} on \class{Event}}
+\paragraph{The optional \token{sboTerm} \changed{attribute} on \class{Event}}
 \label{sec:event-sboterm}
 
 \changed{As with all SBML components derived from \SBase, an
-\Event has an optional \changed{attribute} \token{sboTerm} of type
-\primtype{SBOTerm} }\changed{ (see Sections~\ref{sec:sboterm-type}
-and~\ref{sec:sboTerm}).}  When a value is given to this
-\changed{attribute}, it must be a valid term derived from \sboevent in SBO.  The
-\Event should have an ``is a'' relationship with the SBO term, and
-the term should be the most precise (narrow) term that captures
-the meaning of the event in the model.
+  \Event has an optional \changed{attribute} \token{sboTerm} of
+  type \primtype{SBOTerm} }\changed{ (see
+  Sections~\ref{sec:sboterm-type} and~\ref{sec:sboTerm}).}  When a
+value is given to this \changed{attribute}, it must be a valid
+term derived from \sboevent in SBO.  The \Event should have an
+``is a'' relationship with the SBO term, and the term should be
+the most precise (narrow) term that captures the meaning of the
+event in the model.
 
 As discussed in Section~\ref{sec:sboTerm}, SBO labels are optional
 information on a model.  Applications are free to ignore
@@ -4611,10 +4819,11 @@ time \ie $t > 0$.
 \label{sec:trigger-sboterm}
 
 As with all SBML components derived from \SBase, \Trigger inherits
-the optional \changed{attribute} \token{sboTerm} of type \primtype{SBOTerm} (see
-Sections~\ref{sec:sboterm-type} and~\ref{sec:sboTerm}).  When a
-value is given to this \changed{attribute}, it must be a valid term representing
-a mathematical expression (\ie a term chosen from the
+the optional \changed{attribute} \token{sboTerm} of type
+\primtype{SBOTerm} (see Sections~\ref{sec:sboterm-type}
+and~\ref{sec:sboTerm}).  When a value is given to this
+\changed{attribute}, it must be a valid term representing a
+mathematical expression (\ie a term chosen from the
 \sbomathformula hierarchy).  The formula in the \Trigger's
 \token{math} expression should have an ``is a'' relationship with
 the SBO term, and the term should capture most precise (narrow)
@@ -4650,8 +4859,8 @@ in delay expressions.
 
 For example, the following \Event fragment would fail model
 validation on the basis of inconsistent units, because pure
-numbers in SBML have default units of \val{dimensionless} and what
-is required in this context is units of time:
+numbers in SBML do not have any default units; what is required in
+this context is units of time:
 
 \begin{example}
 <model>
@@ -4672,12 +4881,13 @@ is required in this context is units of time:
 \end{example}
 
 The \val{<cn> 1 </cn>} within the mathematical formula of the
-\token{delay} above has units of \val{dimensionless}.  To make the
+\token{delay} above has \emph{no units declared}.  To make the
 expression have the needed units of time, we must use one of the
-techniques discussed in Section~\ref{??}, namely, either defining
-a parameter for the number and using it in place of the number, or
-else multiplying the number with a parameter having the proper
-units.  Here we employ the second approach as an illustration:
+techniques discussed in Section~\ref{sec:units-of-mathml}, namely,
+either defining a parameter for the number and using it in place
+of the number, or else multiplying the number with a parameter
+having the proper units.  Here we employ the second approach as an
+illustration:
 
 \begin{example}
 <model>
@@ -4706,6 +4916,7 @@ units.  Here we employ the second approach as an illustration:
 
 
 \paragraph{The optional \token{sboTerm} \changed{attribute} on \class{Delay}}
+\label{sec:delay-sboterm}
 
 As with all SBML components derived from \SBase, \Delay inherits
 an optional \token{sboTerm} \changed{attribute} of type \primtype{SBOTerm} (see
@@ -4719,7 +4930,6 @@ meaning of the delay expression.
 
 
 \subsubsection{\class{EventAssignment}}
-\label{sec:eventassignment-sboterm}
 \label{sec:eventassignment}
 \label{sec:listofeventassignments}
 
@@ -4784,6 +4994,7 @@ Certain restrictions are placed on what can appear in
 
 
 \paragraph{The optional \token{sboTerm} \changed{attribute} on \class{EventAssignment}}
+\label{sec:eventassignment-sboterm}
 
 The \EventAssignment structure has an optional \token{sboTerm}
 \changed{attribute} of type \primtype{SBOTerm} (see
@@ -4804,7 +5015,7 @@ the \Event is \emph{fired} but the variable only acquires the
 result or new value when the \Event is \emph{executed}. The order
 of the \EventAssignment structures is not significant; the effect
 of one assignment cannot affect the result of another assignment.
-The identifiers occurring in the MathML \token{ci} \changed{attribute}s of the
+The identifiers occurring in the MathML \token{ci} \changed{attributes} of the
 \EventAssignment structures represent the value of the identifier
 at the point when the \Event is \emph{fired}.
 
@@ -4824,13 +5035,13 @@ precisely:
   the referenced species' quantity (\quantity{concentration} or
   \quantity{amount of substance}) to the value determined by the
   formula in \token{math}.  The units of the \token{math} formula
-  must be the \emph{units of the species} as defined in
-  Section~\ref{sec:species-units}.
+  must be identical to the \emph{units of the species} as defined
+  in Section~\ref{sec:species-units}.
   
 \item \emph{In the case of a compartment}, an \EventAssignment
   sets the referenced compartment's size to the size determined by
   the formula in \token{math}.  The overall units of the formula
-  must be the same as the units specified for the size of the
+  must be identical to the units specified for the size of the
   compartment identified by the value of the \EventAssignment's
   \token{variable} \changed{attribute}.  (See
   Section~\ref{sec:compartment-units} for an explanation of how
@@ -4839,13 +5050,11 @@ precisely:
 \item \emph{In the case of a parameter}, an \EventAssignment sets
   the referenced parameter's value to that determined by the
   formula in \token{math}.  The overall units of the formula must
-  be consistent with the units defined for the parameter
-  identified by the value of the \EventAssignment's
-  \token{variable} \changed{attribute}.  (See Section~\ref{sec:parameter-units}
-  for an explanation of how the units of the parameter are
-  determined.)  If no units are defined for the parameter in
-  question, then the formula contained in \token{math} must have
-  units \val{dimensionless}.
+  be identical to the units defined for the parameter identified
+  by the value of the \EventAssignment's \token{variable}
+  \changed{attribute}.  (See Section~\ref{sec:parameter-units} for
+  an explanation of how the units of the parameter are
+  determined.)
 
 \end{itemize}
 

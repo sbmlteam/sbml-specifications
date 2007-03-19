@@ -294,6 +294,18 @@ The equality of \primtype{UnitSId} values is determined by an
 exact character sequence match; \ie comparisons of these
 identifiers must be performed in a case-sensitive manner.
 
+\begin{blockChanged}
+ 
+A number of reserved symbols are defined in the space of values of
+\primtype{UnitSId}.  These reserved symbols are the list of base
+unit names defined in Table~\vref{tab:unitkind}, and the SBML
+built-in units \val{substance}, \val{volume}, \val{area},
+\val{length}, and \val{time} listed in Table~\vref{tab:builtin}.
+These symbols and their use is described in
+Section~\ref{sec:unitdefinitions}.
+
+\end{blockChanged}
+
 
 \subsubsection{Type \primtype{SBOTerm}}
 \label{sec:sboterm-type}
@@ -359,6 +371,7 @@ presented in Figure~\vref{fig:sbase}.
 \begin{figure}[hbt]
   \centering
   \small
+  \vspace*{-1ex}
   \includegraphics[scale=0.8]{figs/sbase-uml}
   \caption{The definition of \SBase.  Please refer to
     Section~\protect\ref{sec:notation} for a summary of the UML
@@ -632,8 +645,8 @@ amount of data placed inside the \token{mysim:nodecolors} element.
 The key point of the example above is that application-specific
 annotation data is entirely contained inside a single
 \emph{top-level element} within the SBML \token{annotation}
-container.  \sbmltwothree places the following restrictions on
-annotations:
+container.  SBML Level~2 Version~\changed{3} places the following
+restrictions on annotations:
 \begin{itemize}
 
 \item Within a given SBML \token{annotation} element, there can
@@ -718,11 +731,9 @@ namespace.
 \begin{example}
 <annotation>
     <mysim:nodecolors xmlns:mysim="http://www.mysim.org/ns"
-        mysim:bgcolor="green"
-        mysim:fgcolor="white"/>
+        mysim:bgcolor="green" mysim:fgcolor="white"/>
     <mysim:textcolors xmlns:mysim="http://www.mysim.org/ns"
-        mysim:bgcolor="green"
-        mysim:fgcolor="white"/>
+        mysim:bgcolor="green" mysim:fgcolor="white"/>
 </annotation>
 \end{example}
 
@@ -746,8 +757,7 @@ On the other hand, the following example is valid:
 For completeness, we note that annotations can legally be empty:
 
 \begin{example}
-<annotation>
-</annotation>
+<annotation />
 \end{example}
 
 \end{blockChanged}
@@ -985,7 +995,7 @@ Although many SBML components \changed{feature}
   components where it \emph{is} currently optional.
   
 \item The \SBase abstract type is used as the base type for
-  certain \changed{objects} such as \Sbml, \Unit, \AssignmentRule,
+  certain \changed{objects} such as \changed{\Sbml, \AssignmentRule},
   etc., which do not have identifiers because these components do
   not need to be referenced by other components.  If \SBase had a
   mandatory \token{id} \changed{attribute}, \emph{all} objects of
@@ -1234,43 +1244,44 @@ XML attribute value.
 
 \begin{blockChanged}
 
-\paragraph{Units of MathML expressions}
+\paragraph{Units of numbers in MathML \token{cn} expressions}
 \label{sec:units-of-mathml}
 
-If a pure number appears in a MathML expression, what units should
-be attributed to it?  A common answer (but one that turns out to be
-unworkable) is to assume that the units should be ``whatever units
-appropriate in the context where the number appears''.  This
-implies that units can always be assigned unambiguously to any
-number appearing in an expression, and this turns out to be false.
-Another answer (favored among those with a physics background) is
-that numbers should be ``dimensionless'' by default.  This may be
-correct in physical and other contexts, but it turns out that when
-numbers appear in expressions in SBML's domain of application,
-they are rarely intended to be dimensionless even if the units are
-not included: instead, they \changed{are \emph{supposed} to have
-  specific units, but the units are usually undeclared.  (Being
-  ``dimensionless'' is not the} same as having \emph{undeclared} units!)
-Thus, for SBML to define raw numbers as being \emph{by default}
-dimensionless would likely result in many models being technically
-incorrect and catch many users by surprise.
+What units should be attributed to values appearing inside MathML
+\token{cn} elements?  One answer is to assume that the units
+should be ``whatever units appropriate in the context where the
+number appears''.  This implies that units can always be assigned
+unambiguously to any number appearing in any expression, and this
+turns out to be false.  Another answer is that numbers should be
+considered ``dimensionless''.  This may be correct in pure
+mathematics and other contexts, but it turns out that when numbers
+appear in expressions in SBML's domain of application, they are
+rarely \emph{intended} to have the units \val{dimensionless} even
+if the units are not declared: they are \emph{supposed} to have
+specific units, but the units are usually undeclared.  (Being
+\changed{``dimensionless'' is} not the same as having
+\emph{undeclared} units!)  More importantly, for SBML to define
+numbers as being \emph{by default} dimensionless would likely
+result in many models being technically incorrect without the
+modeler being aware of it unless their software tools performed
+dimensional analysis.  Most software tools today still do not, and
+so the discovery of incorrect units would not occur until other
+researchers and database curators attempted to use the model in
+software packages that did check units.
 
-The current approach in SBML is not to define default units for
-numbers.  Instead, software packages and modelers are encouraged
-to explicitly add unit declarations to numbers.  This can permit
-software tools to perform dimensional analysis and potentially
-report model errors.  There are (at least) two simple methods for
-associating units with numerical quantities in SBML:
+The current approach in SBML is to leave the default units of
+numbers undefined.  Software packages and modelers are encouraged
+to explicitly add unit declarations to numbers; such declarations
+can permit software tools to perform dimensional analysis and
+potentially report model errors.  There are (at least) two simple
+methods for associating units with numerical quantities in SBML:
 
 \begin{itemize}
 
-\item Do not use ``raw'' numbers at all; instead, define
+\item Do not use literal numbers at all; instead, define
   \Parameter objects (Section~\ref{sec:parameters}) for every
   quantity, and declare units for each such parameter in its
-  definitions.  (This is in fact the best modeling practice
-  anyway.  One can never be sure what changes and modifications to
-  a model the future will bring, and making the entire model fully
-  declared helps its maintainability.)
+  definitions.  (This is the best modeling practice anyway.)
 
 \item Define separate parameters for the needed units, such that
   the parameters have numerical values of \val{1} and the
@@ -1341,8 +1352,8 @@ containing \changed{element} in which the \token{ci} is used:
   \item \emph{Parameter identifier}: When a \Parameter identifier
     occurs in a \token{ci} element, it represents the numerical
     value assigned to that parameter.  The units associated with
-    the parameter's value are the units assigned in its instance
-    of a \Parameter \changed{element}; see
+    the parameter's value are the units assigned in the instance
+    of the \Parameter \changed{element}; see
     Section~\ref{sec:parameter-units}.
     
   \item \emph{Function identifier}: When a \FunctionDefinition
@@ -1383,7 +1394,7 @@ more information.
 
 \begin{blockChanged}
 
-\subsubsection{Handling of boolean values}
+\subsubsection{Interpretation of boolean values}
 \label{sec:handling-booleans}
 
 As noted already in Section~\ref{sec:boolean}, there is another
@@ -1450,7 +1461,8 @@ following predefined SBML symbol URIs:
   current time.  There are no restrictions on the form of $x$.
   The units of the $d$ parameter are determined from the built-in
   \token{time}.  The value of the $d$ parameter, when evaluated,
-  must be numerical and be greater than or equal to 0.  The
+  must be numerical (\ie a number in MathML real, integer, or
+  ``e-notation'' format) and be greater than or equal to 0.  The
   \emph{delay} function is useful for representing biological
   processes having a delayed response, but where the detail of the
   processes and delay mechanism is not relevant to the operation
@@ -1669,11 +1681,16 @@ of the \emph{delay} \token{csymbol}, $t_i = 0$, but this does not
 alter the steps above.
 
 
-\subsubsection{Math expression types}
+\subsubsection{\changed{MathML} expression \changed{data} types}
 \label{sec:mathmltype}
 
 MathML operators in SBML each return results in one of two
-possible types: boolean and numeric.  The following guidelines
+possible types: boolean and numerical.  \changed{By}
+\changed{\emph{numerical} type, we mean either (1) a number in
+  MathML real, integer, rational, or ``e-notation'' format;}
+\changed{or (2) the \token{csymbol} for delay or the
+  \token{csymbol} for time described in
+  Section~\ref{sec:csymbol-token}.}  The following guidelines
 summarize the different possible cases.
 
 The relational operators (\token{eq}, \token{neq}, \token{gt},
@@ -1685,16 +1702,18 @@ boolean values.  \changed{As noted in
   \token{1} do} \changed{not count as boolean values in \mathml
   contexts in SBML.}
 
-The type of an operator referring to an SBML \FunctionDefinition
-is determined by the type of the top-level operator of the MathML
-expression in the \token{math} \changed{element} of the function definition.
-This type may be boolean or numeric.
+The type of an operator referring to a \FunctionDefinition is
+determined by the type of the top-level operator of the expression
+in the \token{math} \changed{element} of the \FunctionDefinition
+instance, and can be boolean or numerical.
 
-All other operators, values and symbols return numeric results.
+All other operators, values and symbols return numerical
+results.
 
 The roots of the expression trees used in the following contexts
 must yield boolean values:
-\begin{itemize}
+
+\begin{itemize}\setlength{\parskip}{-0.2ex}
 
 \item the arguments of the MathML logical operators (\token{and},
 \token{or}, \token{xor}, \token{not});
@@ -1709,7 +1728,8 @@ must yield boolean values:
 
 The roots of the expression trees used in the following contexts can
 optionally yield boolean values:
-\begin{itemize}
+
+\begin{itemize}\setlength{\parskip}{-0.2ex}
 
 \item the arguments to the \token{eq} and \token{neq} operators;
 
@@ -1720,8 +1740,8 @@ operators; and
 
 \end{itemize}
 
-The roots of expression trees in other contexts must yield numeric
-values.
+The roots of expression trees in other contexts must yield
+numerical values.
 
 The type of expressions should be used consistently.  The set of
 expressions that make up the first arguments of the \token{piece}
@@ -1729,6 +1749,104 @@ and \token{otherwise} operators within the same \token{piecewise}
 operator should all return values of the same type. The arguments
 of the \token{eq} and \token{neq} operators should return the same
 type.
+
+\begin{blockChanged}
+
+\subsubsection{Units of arguments to mathematical operators}
+\label{sec:operator-arg-types}
+
+The units associated with the arguments to operators such as
+\token{plus} and \token{power} should be made mathematically and
+physically sensible.  Many mathematical operators cannot be
+applied to arguments that have units of physical dimensions---the
+operators are technically defined in terms of dimensionless
+quantities.  (For example, it is not clear what would be the
+interpretation of taking the natural logarithm of a quantity
+having units of length.)  Thus, the following rules should be
+followed for the units of arguments to MathML operators in SBML:
+\begin{itemize}
+
+\item All arguments to the following operators should have the
+  same units (regardless of what those units happen to be):
+  \token{plus}, \token{minus}, \token{eq}, \token{neq} \token{gt},
+  \token{lt}, \token{geq}, \token{leq}.
+
+\item The units of each argument to the following operators should
+  be \val{dimensionless}: \token{exp}, \token{ln}, \token{log},
+  \token{factorial}, \token{sin}, \token{cos}, \token{tan},
+  \token{sec}, \token{csc}, \token{cot}, \token{sinh},
+  \token{cosh}, \token{tanh}, \token{sech}, \token{csch},
+  \token{coth}, \token{arcsin}, \token{arccos}, \token{arctan},
+  \token{arcsec}, \token{arccsc}, \token{arccot}, \token{arcsinh},
+  \token{arccosh}, \token{arctanh}, \token{arcsech},
+  \token{arccsch}, \token{arccoth}.
+
+\item The units of the argument to the operators \token{abs},
+  \token{floor} and \token{ceiling} can be anything.
+
+\item The units of each argument in a call to a
+  \FunctionDefinition should match the units expected by the
+  \token{lambda} expression within the \token{math} expression of
+  that \FunctionDefinition instance.
+
+\item The two arguments to \token{power}, which are of the form
+  $\textit{power}(a,b)$ with the meaning $a^b$, should be as
+  follows: (1) if the second argument is an integer, then the
+  first argument can have any units; (2) if the second argument
+  $b$ is a rational number $n/m$, it must be possible to derive
+  the $m$-th root of $(a \{\text{unit}\})^n$, where
+  $\{\text{unit}\}$ signifies the units associated with $a$;
+  otherwise, (3) the units of the first argument must be
+  \val{dimensionless}.  The second argument ($b$) should always
+  have units of \val{dimensionless}.
+
+\item The two arguments to \token{root}, which are of the form
+  $\textit{root}(n,a)$ with the meaning $\sqrt[n]{a}$ and where
+  the degree $n$ is optional (defaulting to \val{2}), should be as
+  follows: (1) if the optional degree qualifier $n$ is an integer,
+  then it must be possible to derive the $n$-th root of $a$; (2)
+  if the optional degree qualifier $n$ is a rational $n/m$ then it
+  must be possible to derive the $n$-th root of $(a
+  \{\text{unit}\})^m$, where $\{\text{unit}\}$ signifies the units
+  associated with $a$; otherwise, (3) the units of $a$ must be
+  \val{dimensionless}.
+
+\item All of the possible return values from \token{piece} and
+  \token{otherwise} subelements of a \token{piecewise} expression
+  should have the same units, regardless of what those units are.
+  (Otherwise, the \token{piecewise} expression would return values
+  having different units depending on which case evaluated to
+  true.)
+
+\item For the \emph{delay} \token{csymbol}
+  (Section~\ref{sec:csymbol-token}) function, which has the form
+  $delay(x, d)$, the second argument $d$ should have units of time.
+
+\end{itemize}
+
+We advise declaring the units of all quantities in a model,
+insofar as this is possible, using the various mechanisms provided
+for this in SBML.  Fully declared units can allow software tools
+to perform dimensional analysis on the units of mathematical
+expressions, and such analysis can be valuable in helping modelers
+produce correct models.  The lack of declared units on quantities
+in a model does not render it invalid SBML, but it reduces the
+types of consistency checks that software packages can perform.
+
+
+% fixme: add smth about this:
+%
+% I know that people use the above and it is perfectly fine as long as [A]
+% has units dimensionless. If the unit is not dimensionless the above is
+% nonsense. I think we decided to allow nonsense but mark the model as
+% yellow when we are able to detect it. I know that it sounds strange to
+% have valid, invalid and suspicious models but I think that is the way we
+% need to go at least at the moment. In addition, the above can be easily
+% corrected. 
+%   k' * ([A]/(substance_unit/volume_unit))^pi.
+
+
+\end{blockChanged}
 
 
 % Restore normal printing of section headings (without coloring).

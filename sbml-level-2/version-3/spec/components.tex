@@ -80,7 +80,7 @@ an \sbmltwothree document:
 \end{example}
 
 The attribute \token{xmlns} declares the default XML namespace
-used within the \token{sbml} element.  The URI for \sbmltwothree
+used within the \token{sbml} element.  The URI for SBML Level~2 Version~\changed{3}
 is \uri{http://www.sbml.org/sbml/level2/\changed{version3}}.  All
 elements must be placed in this namespace either by assigning the
 default namespace as shown above, or using a tag prefix on
@@ -264,7 +264,7 @@ Readers may wonder about the motivations for using the
 \class{ListOf\rule{0.5in}{0.5pt}} containers.  A simpler approach
 in XML might be to place the components all directly at the top
 level.  We chose instead to group them within XML elements named
-after \class{listOf}\rule{0.5in}{0.5pt}\class{ClassNames}, in part
+after \class{listOf}\class{ClassNames}, in part
 because we believe this helps organize the components and makes
 visual reading of \changed{models in XML} easier.  More
 importantly, the fact that the container classes are derived from
@@ -299,10 +299,10 @@ frameworks are possible.
 \Model instance and the SBO labels on individual \KineticLaw
 instances within the model.  In SBO, each definition of a rate
 expression itself includes an SBO reference to a mathematical
-framework.  When a given \KineticLaw element refers to a rate
-law term in SBO, it therefore simultaneously also identifies a
-framework.  (It is possible for a model to mix frameworks, which is
-why it is important to enable individual reactions to indicate
+framework.  When a given \KineticLaw element refers to a rate law
+term in SBO, it therefore simultaneously also identifies a
+framework.  (It is possible for a model to mix frameworks, which
+is why it is important to enable individual reactions to indicate
 which one is assumed.)  By contrast, if all the reactions in a
 given model use the same framework, it makes sense to characterize
 the model as a whole as assuming this.  Thus, the label on \Model
@@ -312,7 +312,9 @@ model's reaction rate expressions are assumed to be expressed
 using the same mathematical framework, and the application reading
 the model may ignore frameworks indicated by the definitions of
 the SBO terms referenced by the \KineticLaw elements's
-\token{sboTerm} attributes.
+\token{sboTerm} attributes.  As discussed in
+Section~\ref{sec:sboTerm}, SBO labels are optional information on
+a model.
 
 The absence of an \token{sboTerm} value on a \Model instance means
 that either the model has not been labeled with SBO terms at all,
@@ -324,12 +326,6 @@ individual \KineticLaw elements in the model may indicate the
 framework assumed for each reaction separately.
 
 \end{blockChanged}
-
-As discussed in Section~\ref{sec:sboTerm}, SBO labels are optional
-information on a model.  Applications are free to ignore
-\token{sboTerm} values, and a model must be interpretable without
-the benefit of SBO labels.
-
 
 % Restore section number coloring to normal.
 
@@ -389,7 +385,7 @@ function called in subsequent MathML \token{apply} elements.
 \end{figure}
 
 Function definitions in SBML (also informally known as
-``user-defined functions'') have relatively limited capabilities.
+``user-defined functions'') have \changed{purposefully} limited capabilities.
 As is made more clear below, a function cannot reference
 parameters or other model quantities outside of itself; values
 must be passed as parameters to the function.  Moreover, recursive
@@ -445,7 +441,7 @@ Note that \FunctionDefinition does not have a separate attribute
 for defining the units of the value returned by the function.  The
 units associated with the function's return value, when the
 function is called from within MathML expressions elsewhere in
-SBML, are simply the overall units of the expression in
+SBML, are simply the overall units of the expression in \FunctionDefinition's
 \token{math} when applied to the arguments supplied in the call to
 the function.  Ascertaining these units requires performing
 dimensional analysis on the expression.  (Readers may wonder why
@@ -558,40 +554,45 @@ and~\ref{sec:unit-structure} below.
   \centering
   \small
   \vspace*{1ex}
-  \begin{tikzpicture}[level distance=1in]
+  \hspace*{-1ex}\begin{tikzpicture}[level distance=1in]
     \node { \emptyClassbox{\textsl{SBase}} }
-      [open triangle 60-,edge from parent fork down,sibling distance=2.15in]
+      [open triangle 60-,edge from parent fork down,sibling distance=2.175in]
       child {node (a) {
           \begin{classbox}{UnitDefinition}
-            id: UnitSId         \\
+            id: UnitSId \{ Excludes values from Table~\ref{tab:unitkind} \}         \\
             name: string \{ use="optional" \} \\
           \end{classbox}
         }}
-      child {node[left=-0.25in] (b) { \emptyClassbox{ListOfUnits}
+      child {node[left=-0.425in] (b) { \emptyClassbox{ListOfUnits}
         }}
-      child {node (c) { 
+      child {node[left=-1.1in] (c) { 
           \begin{classbox}{Unit}
-            kind: UnitKind                                     \\
+            kind: \changed{UnitSId} \{ Restricted to values in Table~\ref{tab:unitkind} \}  \\
             exponent: int \{ use="optional" default="1" \}     \\
             scale: int \{ use="optional" default="0" \}        \\
-            multiplier: double \{ use="optional" default="1" \}\\
+            multiplier: double \{ use="optional" default="1"\}\\
           \end{classbox}
         }}
      ;
      \draw[diamond-] (a) -- (b) 
-       node[above=6pt,left=0.5in] {\textsf{listOfUnits}};
+       node[above=6pt,left=0.41in] {\textsf{listOfUnits}};
      \draw[diamond-,shorten >=-6pt] (b) -- (c) 
-       node[above=6pt,left=1.6in] {\textsf{unit}}
-       node[above=6pt,left=1.25in] {\textsf{1..*}};
+       node[above=6pt,left=1.315in] {\textsf{unit}}
+       node[above=-6pt,left=1.2in] {\textsf{1..*}};
   \end{tikzpicture}
   \caption{\changed{The definition of classes \UnitDefinition and
       \Unit.  A sequence of one or more instances of
-      \UnitDefinition objects can be located in an instance of
+      \UnitDefinition can be located in an instance of
       \ListOfUnitDefinitions in \Model
       (Figure~\protect\ref{fig:model}).  \class{ListOfUnits} has
       no attributes (beyond those it inherits from class \SBase);
       it merely acts as a container for one or more instances of
-      \Unit objects.}}
+      \Unit objects.  Note that the only permitted values of
+      \token{kind} on \Unit are the reserved words in
+      Table~\vref{tab:unitkind}, but these symbols are
+      \emph{excluded} from the permitted values of
+      \UnitDefinition's \token{id} because SBML's unit system does
+      not allow redefining the base units.}}
   \label{fig:unitdefinition}
 \end{figure}
 
@@ -641,9 +642,9 @@ of unit definition \token{id} values:
 \begin{enumerate}
   
 \item The \token{id} of a \UnitDefinition must \emph{not} contain
-  a value from Table~\ref{tab:unitkind} (\ie the enumeration of
-  predefined \primtype{UnitKind} values).  This constraint simply
-  prevents the redefinition of the SBML base units.
+  a value from Table~\ref{tab:unitkind}, \changed{the list of
+    reserved base unit names.}  This constraint simply prevents
+  the redefinition of \changed{base units}.
 
 \item There is a set of predefined identifiers for the built-in
   default units in SBML; these identifiers are \val{substance},
@@ -671,8 +672,7 @@ The following skeleton of a unit definition illustrates an example
 use of \UnitDefinition:
 
 \begin{example}
-\changed{<model>
-    ...}
+\changed{<model>}
     <listOfUnitDefinitions>
         <unitDefinition id="unit1">
             <listOfUnits>
@@ -694,21 +694,25 @@ use of \UnitDefinition:
 \label{sec:unit-structure}
 
 A \Unit structure represents a (possibly transformed) reference to
-a base unit chosen from \primtype{UnitKind}
-(Table~\ref{tab:unitkind}).  The \changed{attribute} \token{kind} indicates the
-chosen base unit, whereas the \changed{attributes} \token{exponent},
-\token{scale}, and \token{multiplier} define how the base unit is
-being transformed.  These various \changed{attributes} are described in detail
-below.
+a base unit chosen from \changed{the list in
+  Table~\vref{tab:unitkind}.}  The \changed{attribute}
+\token{kind} indicates the chosen base unit, whereas the
+\changed{attributes} \token{exponent}, \token{scale}, and
+\token{multiplier} define how the base unit is being transformed.
+These various \changed{attributes} are described in detail below.
 
-Compatibility note: in \sbmltwoone, \Unit had an additional
+\changed{In \sbmltwoone}, \Unit had an additional
 \changed{attribute} called \token{offset}.  This
 \changed{attribute} has been removed entirely in Level~2
 \changed{Versions~2 and~3}.  Modelers and software authors are
 instead directed to use other methods of encoding units requiring
 offsets.  The reasons for this change, and some suggestions for
 how to achieve equivalent effects of unit offsets, are discussed
-in more detail below.
+in more detail below.  \changed{Another change in Version~3 is the
+  removal of the enumeration \primtype{UnitKind} and the
+  redefinition of \primtype{UnitSId} to include the previous
+  \primtype{UnitKind} values as reserved symbols.  This change has
+  no net effect on permissible models or their representation.}
 
 
 \paragraph{The \token{kind} \changed{attribute}}
@@ -718,18 +722,19 @@ in more detail below.
 \defcitealias{bipm:1998}{BIPM, 1998}
 \defcitealias{bipm:2000}{BIPM, 2000}
 
-The \Unit data structure has one required \changed{attribute}, \token{kind},
-whose value must be taken from \primtype{UnitKind}, an enumeration
-of base units.  The possible values of \primtype{UnitKind} are
-given in Table~\vref{tab:unitkind}.
+The \Unit data structure has one required \changed{attribute},
+\token{kind}, whose value must be taken from the list of reserved
+words given in Table~\vref{tab:unitkind}.  \changed{These reserved
+  symbols are in the value space of \primtype{UnitSId}
+  (Section~\ref{sec:unitsid}).}
 
 \begin{table}[bht]
-  \vspace*{0.5ex}
   \centering
   \ttfamily
   \small
+  \vspace*{-0.5ex}
   \setlength{\arraycolsep}{8pt}
-  \begin{edtable}{tabular}{llllll}
+  \begin{edtable}{tabular}{@{}llllll@{}}
     \toprule
     ampere    & gram    & katal    & metre  & second    & watt   \\
     becquerel & gray    & kelvin   & mole   & siemens   & weber\\
@@ -739,22 +744,24 @@ given in Table~\vref{tab:unitkind}.
      farad    & joule   & lux      & radian    & volt\\
     \bottomrule
   \end{edtable}
-  \caption{The possible values of \token{kind} in a \primtype{UnitKind}
-    enumeration.  All are names of base or derived SI
-    units~\protect\citep{bipm:2000}, except for
+  \vspace*{-0.5ex}
+  \caption{\changed{Base units defined in SBML.  These symbols are
+      predefined values of type \primtype{UnitSId}
+      (Section~\ref{sec:unitsid}).}  All are names of base or
+    derived SI units~\protect\citep{bipm:2000}, except for
     ``\token{dimensionless}'' and ``\token{item}'', which are
     SBML additions important for handling certain common situations.
     ``\token{Dimensionless}'' is intended for cases where a
-    quantity \changed{is a ratio whose units cancel out}, and ``\token{item}'' for
-    expressing such things as ``N items'' (e.g., ``100
-    molecules'').  Also, note that the gram and litre are not
-    strictly part of SI; however, they are frequently
+    quantity \changed{is a ratio whose units cancel out}, and
+    ``\token{item}'' for expressing such things as ``N items''
+    (e.g., ``100 molecules'').  Also, note that the gram and litre
+    are not strictly part of SI; however, they are frequently
     used in SBML's areas of application and therefore are
     included as predefined unit identifiers.  (The standard SI unit
     of mass is in fact the kilogram, and volume is defined in
     terms of cubic metres.)  Comparisons of
-    values from \primtype{UnitKind} must performed in a
-    case-sensitive manner.}
+    these values\changed{, like all values of type
+      \primtype{UnitSId},} must performed in a case-sensitive manner.}
   \label{tab:unitkind}
 \end{table}
 
@@ -768,7 +775,6 @@ CellML allows the construction of hierarchical unit definitions.
 
 
 \paragraph{The \token{exponent}, \token{scale} and \token{multiplier} \changed{attributes}}
-
 The optional \token{exponent} \changed{attribute} on \Unit represents an
 exponent on the unit.  Its default value is \val{1} (one).  A
 \Unit structure also has an optional \token{scale} \changed{attribute}; its
@@ -1098,7 +1104,9 @@ values; all of the defaults have \token{multiplier}=\val{1} and
     \token{time}   & second, dimensionless & second\\
     \bottomrule
   \end{edtable}
-  \caption{SBML's built-in units.}
+  \caption{SBML's built-in units.  \changed{The identifiers in the
+      left-most column are values of \primtype{UnitSId}
+      (Section~\ref{sec:unitsid}).}}
   \label{tab:builtin}
 \end{table}
 
@@ -1118,9 +1126,10 @@ are the following:
 \item The \UnitDefinition of a redefined built-in unit can only
   contain a single \Unit object within it.
 
-\item The value of the \token{unitKind} \changed{attribute} in the \Unit object
-  must be drawn from one of the values in the second column of the
-  appropriate row of Table~\ref{tab:builtin}.
+\item The value of the \changed{\token{kind} attribute} in
+  \changed{a \Unit instance} must be drawn from one of the values
+    in the second column of the appropriate row of
+    Table~\ref{tab:builtin}.
 
 % you can't represent volume in cubic metres if you do this!
 %\item The value of the \token{exponent} field in the \Unit object
@@ -1160,9 +1169,9 @@ whose identifier is chosen from among the following:
 \item A new unit identifier defined by a \UnitDefinition as
   described at the start of Section~\ref{sec:unitdefinitions};
 
-\item The predefined units from Table~\vref{tab:unitkind}; and
+\item The \changed{base} units \changed{listed in Table~\vref{tab:unitkind}}; and
   
-\item The predefined units defined in
+\item The \changed{built-in} units defined in
   Section~\ref{sec:built-in-units} and listed in
   Table~\ref{tab:builtin}.  (These are \val{substance},
   \val{volume}, \val{area}, \val{length}, and \val{time}.)
@@ -1615,9 +1624,9 @@ the following ways when the compartment has a
 \begin{blockChanged}
 
 \item The value of the \token{units} \changed{attribute} is used
-  as the units of the compartment identifier when it appears as a
-  numerical quantity in a mathematical formula expressed in MathML
-  (discussed in Section~\ref{sec:ci-token}).
+  as the units of the compartment identifier when the identifier
+  appears as a numerical quantity in a mathematical formula
+  expressed in MathML (discussed in Section~\ref{sec:ci-token}).
 
 \item The \token{math} \changed{element} of an \AssignmentRule or
   \InitialAssignment referring to this compartment must have
@@ -1632,9 +1641,9 @@ the following ways when the compartment has a
   for the rate of change of compartment size are
   \quantity{compartment size}/\quantity{time} units.)
 
-\item When a \Species is to be treated in terms of concentrations,
-  the units of the spatial size of the concentration value (\ie
-  the denominator in the units
+\item When a \Species is to be treated in terms of concentrations
+  or density, the units of the spatial size portion of the
+  concentration value (\ie the denominator in the units formula
   \quantity{substance}/\quantity{size}) are those indicated by the
   value of the \token{units} attribute on the compartment in which
   the species is located.
@@ -1843,9 +1852,9 @@ into the same spatial units as the other.  In other words,
 modelers and software tools would have had to insert explicit
 conversion factors into kinetic rate formulas.  Such conversions
 can be be difficult to achieve and prone to errors.  Second,
-although the \token{spatialSizeUnits} attribute provided
+although the \changed{\token{spatialSizeUnits} attribute provided
 some new functionality, it could also be argued to be redundant:
-a \changed{compartment's definition logically \emph{should} be the
+a compartment's definition logically \emph{should} be the
 entity controlling its own spatial size information, in the} same
 way that a species' definition controls its quantity.  For these
 reasons, and because few software packages seemed to take account
@@ -2047,9 +2056,10 @@ units derived from these.  The \token{substanceUnits}
 The \emph{units of the species} are used in the following ways:
 \begin{itemize}
 
-\item The species identifier has these units when it appears as a
-  numerical quantity in a mathematical formula expressed in MathML
-  (discussed in Section~\ref{sec:ci-token}).
+\item The species identifier has these units when \changed{the
+    identifier} appears as a numerical quantity in a mathematical
+  formula expressed in MathML (discussed in
+  Section~\ref{sec:ci-token}).
 
 \begin{blockChanged}
 
@@ -2341,6 +2351,11 @@ these sets.  There are no default units for parameters.
 The units of the parameter are used in the following ways:
 \begin{itemize}
 
+\item When the parameter identifier appears in mathematical
+  formulas expressed in MathML in a model, the units associated
+  with the value are those declared by the parameter's
+  \token{units} attribute.
+
 \item The units of the \token{math} element of an \AssignmentRule,
   \InitialAssignment or \EventAssignment setting the value of the
   parameter must have units identical to the units declared by the
@@ -2350,17 +2365,13 @@ The units of the parameter are used in the following ways:
   references the parameter be identical to \quantity{parameter
     units}/\quantity{time}, where \quantity{parameter units} are
   the units declared for the parameter using the \token{units}
-  attribute and \quantity{time} is the built-in \token{time}
+  attribute and \quantity{time} is the model-wide \token{time}
   units.
-
-\item When the parameter identifier appears in other MathML
-  expressions in a model, the units associated with the value
-  are those defined by the parameter's \token{units} attribute.
 
 \end{itemize}
 
-The fact that parameter units are optional, and that no defaults
-are defined, means that models can define parameters with
+\changed{The fact} that parameter units are optional, and that no
+defaults are defined, means that models can define parameters with
 undeclared units.  If such parameters appear in mathematical
 expressions elsewhere in a model, it may not be possible for a
 software tool to verify the consistency of units used in the
@@ -2746,7 +2757,7 @@ value to a variable in a model
 SBML separates rules into three subclasses for the benefit of
 model analysis software.  The three subclasses are based on the
 following three different possible functional forms (where $x$ is
-a variable, $f$ is some arbitrary function returning a numeric
+a variable, $f$ is some arbitrary function returning a numerical
 result, $\textbf{V}$ is a vector of variables that does not
 include $x$, and $\textbf{W}$ is a vector of variables that may
 include $x$):
@@ -3641,7 +3652,7 @@ an event (\ie terms derived from \sboevent).  The \Reaction
 structure should have an ``is a'' relationship with the SBO term.
 The SBO term chosen should be the most precise (narrow) term that
 defines the event represented by the reaction as a whole.  For
-example, a given reaction in a model might represent
+example, a given reaction in a model \changed{might represent}
 \emph{binding}, which has a term in SBO (identifier
 \token{SBO:0000177}, definition ``Interaction between several
 biochemical entities that results in the formation of a
@@ -4858,10 +4869,10 @@ explicitly for each instance of a \Delay object in a model.  This
 is an important point to bear in mind when pure numbers are used
 in delay expressions.
 
-For example, the following \Event fragment would fail model
-validation on the basis of inconsistent units, because pure
-numbers in SBML do not have any default units; what is required in
-this context is units of time:
+For example, the following \Event instance would fail model
+validation: the expression inside the \token{math} element does
+not have any declared units, and what is required in this context
+is units of time:
 
 \begin{example}
 <model>
@@ -4905,7 +4916,7 @@ illustration:
                     <apply>
                         <times/>
                         <cn> 1 </cn>
-                        <ci> TimeUnits </ci>
+                        \changed{<ci> TimeUnits </ci>}
                     </apply>
                 </math>
             </delay>
@@ -5059,12 +5070,12 @@ precisely:
 
 \end{itemize}
 
-It is worth noting that the formula placed in the \token{math}
-\changed{element} has no assumed units.  The consistency of the
-units of the formula, and the units of the entity which the
-assignment affects, must be explicitly established just as in the
-case of the value of \token{delay}.  A similar approach as the one
-discussed in Section~\ref{sec:event-delay} may be used.
+Note that the formula placed in the \token{math} \changed{element}
+has no assumed units.  The consistency of the units of the
+formula, and the units of the entity which the assignment affects,
+must be explicitly established just as in the case of the value of
+\token{delay}.  An approach similar to the one discussed in
+Section~\ref{sec:event-delay} may be used.
 
 \end{blockChanged}
 

@@ -239,6 +239,7 @@ text.
 \makeatother
 
 \subsubsection{The ListOf container classes}
+\label{sec:listof}
 \label{sec:listofunitdefinitions}
 \label{sec:listoffunctiondefinitions}
 \label{sec:listofcompartmenttypes}
@@ -253,25 +254,26 @@ text.
 \label{sec:listofreactions}
 \label{sec:listofevents}
 
-The various \class{ListOf\rule{0.5in}{0.5pt}} classes defined in
-Figure~\ref{fig:model} are merely containers used for organizing
-the main components of an SBML model.  All are derived from the
-abstract class \SBase (Section~\ref{sec:sbase}), and inherit
-\SBase's various attributes and subelements such as \token{metaid}
-and \token{annotation}.  The list classes do not add any
+The various \ListOf classes defined in Figure~\ref{fig:model} are
+merely containers used for organizing the main components of an
+SBML model.  All are derived from the abstract class \SBase
+(Section~\ref{sec:sbase}), and inherit \SBase's various attributes
+and subelements such as \token{metaid} and \token{annotation},
+although in SBML \thisLVR there are no defined SBO terms for the
+\token{sboTerm} attribute.  The \ListOf classes do not add any
 attributes of their own.
 
-Readers may wonder about the motivations for using the
-\class{ListOf\rule{0.5in}{0.5pt}} containers.  A simpler approach
-in XML might be to place the components all directly at the top
-level.  We chose instead to group them within XML elements named
-after \class{listOf}\class{ClassNames}, in part
-because we believe this helps organize the components and makes
-visual reading of \changed{models in XML} easier.  More
-importantly, the fact that the container classes are derived from
-\SBase means that software tools can add information about the
-lists themselves into each list container's \token{annotation}, a
-feature that a number of today's software tools exploit.
+Readers may wonder about the motivations for using the \ListOf
+containers.  A simpler approach in XML might be to place the
+components all directly at the top level.  We chose instead to
+group them within XML elements named after
+\token{listOfClassNames}, in part because we believe this helps
+organize the components and makes visual reading of
+\changed{models in XML} easier.  More importantly, the fact that
+the container classes are derived from \SBase means that software
+tools can add information about the lists themselves into each
+list container's \token{annotation}, a feature that a number of
+today's software tools exploit.
 
 
 \subsubsection{The \token{sboTerm} \changed{attribute}}
@@ -349,7 +351,7 @@ function called in subsequent MathML \token{apply} elements.
   \centering
   \small
   \begin{tikzpicture}
-    \node[above=0.45in] (a) {
+    \node[above=0.4in] (a) {
       \emptyClassbox{\textsl{SBase}}
     };
     \node (b) {
@@ -413,7 +415,9 @@ elements in an SBML model can refer to the function defined by a
 
 The \token{math} \changed{element} is a container for MathML content that
 defines the function.  The content of this \changed{element} can only be a
-MathML \token{lambda} element.  The \token{lambda} element must
+MathML \token{lambda} element \changed{or a MathML
+  \token{semantics} element containing a \token{lambda} element}.
+The \token{lambda} element must
 begin with zero or more \token{bvar} elements, followed by any
 other of the elements in the MathML subset listed in
 Section~\ref{sec:mathmlsubset} \emph{except} \token{lambda} (\ie a
@@ -425,16 +429,16 @@ elements that \emph{follow} the \FunctionDefinition definition in
 the model.  (These restrictions prevent recursive and
 mutually-recursive functions from being expressed.)
 
-A further restriction on the content of \token{math} is
-that it cannot contain references to variables other than the
-variables declared to the \token{lambda} itself.  That is, the
-contents of MathML \token{ci} elements inside the body of the
-\token{lambda} can only be the variables declared by its
-\token{bvar} elements, or the identifiers of other
-\FunctionDefinition{}s defined earlier in the model.  This implies
-that functions must be written so that all variables or parameters
-used in the MathML content are passed to them via their function
-parameters.
+A further restriction on the content of \token{math} is that it
+cannot contain references to variables other than the variables
+declared to the \token{lambda} itself.  That is, the contents of
+MathML \token{ci} elements inside the body of the \token{lambda}
+can only be the variables declared by its \token{bvar} elements,
+or the identifiers of other \FunctionDefinition{}s defined earlier
+in the model.  \changed{This restriction applies to the
+  \token{csymbol} for \quantity{time}.  Functions must be written}
+so that all variables or parameters used in the MathML content are
+passed to them via their function parameters.
 
 \begin{blockChanged}
 
@@ -460,15 +464,16 @@ those of the expression anyway.)
 \subsubsection{The \token{sboTerm} \changed{attribute}}
 \label{sec:functiondefinition-sboterm}
 
-\FunctionDefinition inherits an optional \token{sboTerm} \changed{attribute} of type
-\primtype{SBOTerm} from its parent class \SBase (see Sections~\ref{sec:sboterm-type}
-and~\ref{sec:sboTerm}).  When a value is given to this \changed{attribute} in a
-\FunctionDefinition instance, the value must be an SBO identifier
-referring to a mathematical expression (\ie terms derived from
-\sbomathformula).  The relationship is of the form ``the function
-definition \emph{is a} X'', where X is the SBO term.  The term
-chosen should be the most precise (narrow) one that captures the
-role of the function in the model.
+\FunctionDefinition inherits an optional \token{sboTerm}
+\changed{attribute} of type \primtype{SBOTerm} from its parent
+class \SBase (see Sections~\ref{sec:sboterm-type}
+and~\ref{sec:sboTerm}).  \changed{When a value is given to this
+  attribute in a \FunctionDefinition instance, it must be an
+}\changed{SBO identifier referring to a mathematical expression
+  (\ie terms derived from \sbomathformula).}  The relationship is
+of the form ``the function definition \emph{is a} X'', where X is
+the SBO term.  The term chosen should be the most precise (narrow)
+one that captures the role of the function in the model.
 
 As discussed in Section~\ref{sec:sboTerm}, SBO labels are optional
 information on a model.  Applications are free to ignore
@@ -2835,7 +2840,6 @@ above respectively.
   \label{fig:rules}
 \end{figure}
 
-\clearpage
 
 \subsubsection{Common attributes in \abstractclass{Rule}}
 \label{sec:rule-math}\label{sec:rule-fields}\label{sec:rule-sboterm}
@@ -2891,6 +2895,16 @@ that involve the \emph{delay} \token{csymbol}
 to apply also at $t \leq 0$.  Section~\ref{sec:before-t0} provides
 additional information about the semantics of assignments, rules,
 and entity values for simulation time $t \leq 0$.
+
+\begin{blockChanged}
+
+\AlgebraicRule is unlike \AssignmentRule and \RateRule in that
+there are no specific definitions of the meaning of the
+mathematical expression in the \AlgebraicRule.  There is only one
+requirement on the units, which is that the units of the overall
+expression must be consistent under dimensional analysis.
+
+\end{blockChanged}
 
 The ability to define arbitrary algebraic expressions in an SBML
 model introduces the possibility that a model is mathematically
@@ -3048,6 +3062,8 @@ from the fact that an indeterminate system would result if a model
 contained more than one assignment rule for the same variable or
 both an assignment rule and a rate rule for the same variable.
 
+
+\clearpage
 
 \subsubsection{Additional restrictions on rules}
 \label{sec:ruleconstraints}
@@ -4878,19 +4894,21 @@ where an event is defined to fire before it is triggered!).
 \paragraph{Units of delay expressions}
 
 The units of the numerical value computed by the delay expression
-must be units of time (Section~\ref{sec:built-in-units}).  Note
-that units are \emph{not} predefined or assumed for the contents
-of \token{math} in a \Delay object; rather, they must be defined
-explicitly for each instance of a \Delay object in a model.  This
-is an important point to bear in mind when pure numbers are used
-in delay expressions.
+must match the model's units of \quantity{time} (\ie the
+definition of the \val{time} units in the model; see
+Section~\ref{sec:built-in-units}).  Note that, as in other cases
+of MathML use in SBML, units are \emph{not} predefined or assumed
+for the contents of the \token{math} element in the \Delay object;
+rather, they must be defined explicitly for each instance of a
+\Delay object in a model.  This is an important point to bear in
+mind when pure numbers are used in delay expressions.
 
-For example, the following \Event instance would not satisfy the
-model consistency rules in SBML described in this specification
-and summarized in Appendix~\ref{apdx:validation-rules}): the
+The following \Event example instance would not satisfy the model
+consistency rules in SBML described in this specification and
+summarized in Appendix~\ref{apdx:validation-rules}): the
 expression inside the \token{math} element does not have any
-declared units, whereas what is required in this context is units
-of time:
+declared units, whereas what is required in this context is that
+the units match the model's units of time:
 
 \begin{example}
 <model>
@@ -4911,19 +4929,16 @@ of time:
 \end{example}
 
 The \val{<cn> 1 </cn>} within the mathematical formula of the
-\token{delay} above has \emph{no units declared}.  To make the
-expression have the needed units of time, we must use one of the
-techniques discussed in Section~\ref{sec:units-of-mathml}, namely,
-either defining a parameter for the number and using it in place
-of the number, or else multiplying the number with a parameter
-having the proper units.  Here we employ the second approach as an
-illustration:
+\token{delay} above has \emph{no units declared}.  Instead of
+simply entering a literal number in the formula, what must be done
+is to use a defined parameter or an expression that yields the
+proper units.  Here is an example of using a parameter:
 
 \begin{example}
 <model>
     ...
     <listOfParameters>
-        <parameter id="TimeUnits" value="1" units="time"/>
+        <parameter id="oneUnitOfTime" value="1" units="time"/>
     </listOfParameters>
     ...
     <listOfEvents>
@@ -4931,15 +4946,12 @@ illustration:
             ...
             <delay>
                 <math xmlns="http://www.w3.org/1998/Math/MathML">
-                    <apply>
-                        <times/>
-                        <cn> 1 </cn>
-                        <ci> TimeUnits </ci>
-                    </apply>
+                    <ci> oneUnitOfTime </ci>
                 </math>
             </delay>
             ...
         </event>
+    </listOfEvents>
     ...
 </model>
 \end{example}
@@ -5101,7 +5113,7 @@ Section~\ref{sec:event-delay} may be used.
 \subsubsection{Example \class{Event} definitions}
 
 A example of an \Event \changed{object} follows.  This structure makes the
-assignment $k_2 = 0$ at the point when $P_1 \leq t$:
+assignment $k_2 = 0$ at the point when $P_1 \leq P_2$:
 
 \begin{example}
 <event>
@@ -5117,7 +5129,7 @@ assignment $k_2 = 0$ at the point when $P_1 \leq t$:
     <listOfParameters>
         ...
         <parameter id="k2" value="0.05" units="per_second"/>
-        <parameter id="PerSecond" value="1" units="per_second"/>
+        <parameter id="k2reset" value="0.0" units="per_second"/>
         ...
     </listOfParameters>
     ...
@@ -5127,19 +5139,15 @@ assignment $k_2 = 0$ at the point when $P_1 \leq t$:
                 <math xmlns="http://www.w3.org/1998/Math/MathML">
                     <apply>
                         <leq/>
-                        <ci> P1 </ci>
-                        <ci> t </ci>
+                        <ci> P_1 </ci>
+                        <ci> P_2 </ci>
                     </apply>
                 </math>
             </trigger>
             <listOfEventAssignments>
                 <eventAssignment variable="k2">
                     <math xmlns="http://www.w3.org/1998/Math/MathML">
-                        <apply>
-                            <times/>
-                            <cn> 0 </cn>
-                            <ci> PerSecond </cn>
-                        </apply>
+                        <ci> k2reset </ci>
                     </math>
                 </eventAssignment>
             <listOfEventAssignments>

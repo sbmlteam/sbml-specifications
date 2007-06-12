@@ -1736,40 +1736,37 @@ type.
 
 \begin{blockChanged}
 
-\subsubsection{Units of numerical quantities appearing in mathematical operators}
+\subsubsection{Consistency of units in mathematical expressions
+  and treatment of unspecified units}
 \label{sec:operator-arg-types}
 
-Strict physical validity of mathematical formulas requires not
-only that physical quantities added to or equated with each other
-have the same fundamental dimensions and units of measurement; it
-also requires that the application of operators and functions to
-quantities produces sensible results.  Yet, in real-life models
-today, these conditions are routinely and (at least sometimes)
+Strictly speaking, physical validity of mathematical formulas
+requires not only that physical quantities added to or equated
+with each other have the same fundamental dimensions and units of
+measurement; it also requires that the application of operators
+and functions to quantities produces sensible results.  Yet, in
+real-life models today, these conditions are often and sometimes
 legitimately disobeyed.  SBML must again balance the ability of
 modelers to represent whatever model they desire against the need
 for the represented models to be self-consistent and detailed
 enough for different software tools to be able to manipulate and
 analyze them.
 
-%   Only the
-% modeler can do that; a software tool cannot deduce the modeler's
-% true intentions even if it can deduce that particular quantities
-% in a model should have particular units.
-
-% The purpose is to ensure that a system
-% of equations generated from the model \emph{can} be consistent.
-
 The approach taken in SBML is to focus requirements principally on
-the \emph{consistency} of a model rather than the correctness and
-completeness of the model.  In a nutshell, the SBML requirement is
-that \emph{what is expressed in a model must be consistent to the
-  extent that this can be determined using the information
-  available in the model}.  This SBML requirement is defined in
-terms of dimensional analysis applied recursively to every
-operator and function and every argument to them.  
+preventing inconsistency of a model.  In a nutshell, the SBML
+requirement is that \emph{what is expressed in a model must be
+  consistent to the extent that this can be determined using the
+  information available in the model}.
 
-In accordance with this requirement, the following conditions must
-be true in a model:
+
+\paragraph{Unit requirements for mathematical expressions}
+
+The SBML requirement for consistency of units is defined in terms
+of dimensional analysis applied recursively to every operator and
+function and every argument to them.  Some conditions \emph{must}
+be true, and others \emph{should} be true (but are not absolutely
+required for model validity).  The following conditions must be
+true in a model:
 
 \begin{enumerate}
 
@@ -1782,9 +1779,6 @@ be true in a model:
   \FunctionDefinition must match the units expected by the
   \token{lambda} expression within the \token{math} expression of
   that \FunctionDefinition instance.
-
-\item The units of a \FunctionDefinition's \token{math} expression
-  must be the same everywhere the function is called.
 
 % what about ``0'' as an ``other'' case?
 
@@ -1840,32 +1834,89 @@ conditions is not true):
   associated with $a$; otherwise, (3) the units of $a$ must be
   \val{dimensionless}.
 
+\item Since the units of literal numbers cannot be specified
+  directly in SBML (see below), it is possible for the units of a
+  \FunctionDefinition object's return value to be effectively
+  different in different contexts where it is called.  If a
+  \FunctionDefinition's mathematical formula contains literal
+  constants (\ie numbers within MathML \token{cn} elements), the
+  units of the constants should be identical in all contexts the
+  function is called.
+
 \end{enumerate}
 
-The units of other operators, in particular \token{abs},
-\token{floor} and \token{ceiling}, can be anything.
+The units of other operators such as \token{abs}, \token{floor},
+and \token{ceiling}, can be anything.
 
-If an expression contains quantities lacking declared units, and
-the expression is otherwise consistent in the units of its
-remaining constituents, it is still not possible to establish the
-consistency of the overall expression with the information
-available in the model.  The model is considered neither
-consistent nor inconsistent in terms of its units.  We note that
-since species and compartments in SBML always have unit
-declarations (whether explicit or the defaults), the only possible
-sources of undeclared units are literal numbers and \Parameter
-instances lacking unit declarations.
+The final bulleted item above, regarding \FunctionDefinition,
+warrants additional elaboration.  An example may help illustrate
+the problem.  Suppose the formula $x + 5$ is defined as a
+function, where $x$ is an argument.  The literal number 5 in SBML
+has unspecified units.  If this function is called with an
+argument whose units are moles, the overall return value should
+have units of moles.  If in another context in the same model, the
+function is called with an argument whose units are seconds, the
+function return value should have units of seconds.  Now suppose
+that a modeler decides to change all uses of seconds to
+milliseconds in the model.  To make the function definition return
+the same quantity in terms of seconds, the 5 in the formula would
+need to be changed, but doing so would change the result of the
+function everywhere it is called---with the wrong consequences in
+the context where moles were intended.  This illustrates the
+subtle danger of using numbers with unspecified units in function
+definitions.  There are at least two approaches for avoiding this:
+(1) define separate functions for each case where the units of the
+constants are supposed to be different; or (2) declare the
+necessary constants as \Parameter objects in the model (with
+declared units!) and pass those parameters as arguments to the
+function, avoiding the use of literal numbers in the function's
+formula.
 
-For reasons already alluded to, we advise modelers and software
-tools to declare the units of all quantities in a model, insofar
-as this is possible, using the various mechanisms provided for
-this in SBML.  Fully declared units can allow software tools to
-perform dimensional analysis on the units of mathematical
-expressions, and such analysis can be valuable in helping modelers
-produce correct models.  The lack of declared units on quantities
-in a model does not render it invalid SBML, but it reduces the
-types of consistency checks and useful operations (such as
-conversions and translations) that software systems can perform.
+
+\paragraph{Treatment of unspecified units}
+
+There are only two ways to introduce numbers with unspecified
+units into mathematical formulas in SBML: using literal numbers
+(\ie numbers enclosed in MathML \token{cn} elements), and using
+\Parameter objects defined without unit declarations.  All other
+quantities, in particular species and compartments, always have
+unit declarations (whether explicit or the defaults).
+
+If an expression contains literal numbers and/or \Parameter
+objects without declared units, the consistency or inconsistency
+of units may be impossible to determine.  In the absence of a
+verifiable \emph{inconsistency}, an expression in SBML is accepted
+as-is; the writer of the model is assumed to have written what
+they intended.  Nevertheless, this is \emph{not} equivalent to
+assuming the expression \emph{does} have consistent units.
+
+In some cases, it may be possible to determine that expressions
+containing unspecified units are inconsistent regardless of what
+units would be attributed to the unspecified quantities.  For
+example, the expression
+\begin{linenomath}
+  \begin{equation*}
+    \frac{dX}{dt} = \frac{[Y] \cdot [Z]^n}{[Z]^m + 1} \cdot V
+  \end{equation*}
+\end{linenomath}
+with $X$, $Y$ and $Z$ in units of substance, $V$ in units of
+volume, and $m \neq m$, cannot ever be consistent, no matter what
+units the literal 1 takes on.  (This also illustrates the need not
+to stop verifying the units of an expression immediately upon
+encountering an unspecified quantity---the rest of the expression
+may still be profitably evaluated and checked for inconsistency.)
+
+We advise modelers and software tools to declare the units of all
+quantities in a model, insofar as this is possible, using the
+various mechanisms provided for this in SBML.  Fully declared
+units can allow software tools to perform dimensional analysis on
+the units of mathematical expressions, and such analysis can be
+valuable in helping modelers produce correct models.  In addition,
+it can allow model-wide operations such as conversion or rescaling
+of units.  The lack of declared units on quantities in a model
+does not render it invalid SBML, but it reduces the types of
+consistency checks and useful operations (such as conversions and
+translations) that software systems can perform.
 
 
 \subsubsection{SBML does not define implicit unit conversions}
@@ -1893,7 +1944,10 @@ would evaluate to \val{true}.  This is a trivial example, but the
 problem for SBML is that implicit unit conversions of this kind
 can lead to controversial situations where even humans do not
 agree on the answer.  Consequently, SBML only requires that
-mathematical expressions be evaluated numerically.
+mathematical expressions be evaluated numerically.  It is up to
+the model writer to ensure that the units on both sides of an
+expression match, by inserting explicit unit conversion factors if
+necessary.
 
 It is simple enough to avoid expressions with mixed units such as
 in the example above: a modeler or a software tool can define a
@@ -1906,8 +1960,7 @@ expression could be written as
     1 * g\_per\_kg > 500
   \end{equation*}
 \end{linenomath}
-which will then evaluate to \val{true} regardless of whether the
-software reading the model performs unit conversions.
+which will then evaluate to \val{true}.
 
 
 

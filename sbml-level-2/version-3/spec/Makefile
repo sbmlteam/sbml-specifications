@@ -29,4 +29,8 @@ html:
 
 dvi:
 	TEXINPUTS=$(SBML_TEXINPUTS) \
-	pdflatex -output-format=dvi "\input{sbml-level-2-version-3}"
+	latex "\input{sbml-level-2-version-3}"
+
+ps:	dvi
+	TEXINPUTS=$(SBML_TEXINPUTS) \
+	dvips -D 600 -o sbml-level-2-version-3.ps sbml-level-2-version-3.dvi

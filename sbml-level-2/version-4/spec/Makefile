@@ -1,5 +1,5 @@
 ##
-## @file    Makefile.in
+## @file    Makefile
 ## @brief   Makefile for SBML Level 2 specification documents
 ## @author  Stefan Hoops
 ## @author  Michael Hucka

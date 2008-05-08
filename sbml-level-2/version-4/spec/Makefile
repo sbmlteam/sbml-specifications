@@ -1,3 +1,17 @@
+##
+## @file    Makefile.in
+## @brief   Makefile for SBML Level 2 specification documents
+## @author  Stefan Hoops
+## @author  Michael Hucka
+## 
+## $Id$
+## $Source$
+##
+##<!---------------------------------------------------------------------------
+## This file is part of the SBML project.  Please visit http://sbml.org for 
+## more information about SBML and the latest version of the specification.
+##----------------------------------------------------------------------- -->*/
+
 SBML_PROJECT=../../../../project
 
 SBML_TEX=$(SBML_PROJECT)/tex
@@ -6,31 +20,37 @@ SBML_BIB=$(SBML_PROJECT)/bib
 SBML_TEXINPUTS    = .:$(SBML_TEX)//:$(TEXINPUTS)
 SBML_BIBINPUTS    = .:$(SBML_BIB)/:$(BIBINPUTS)
 
-all: color
+MAIN_FILE = sbml-level-2-version-4
+
+default: pdf
 
 # create a colored pdf (default)
-color:
+pdf color:
 	TEXINPUTS=$(SBML_TEXINPUTS) \
-	pdflatex "\input{sbml-level-2-version-3}"
+	pdflatex "\input{$(MAIN_FILE)}"
+	make bib
+	pdflatex "\input{$(MAIN_FILE)}"
+	pdflatex "\input{$(MAIN_FILE)}"
+	pdflatex "\input{$(MAIN_FILE)}"
 
 # crate a gray scale pdf
 gray:
 	TEXINPUTS=$(SBML_TEXINPUTS) \
-        pdflatex "\newcommand\UseOption{grayscale}\input{sbml-level-2-version-3}"
+        pdflatex "\newcommand\UseOption{grayscale}\input{$(MAIN_FILE)}"
 # create the bibliography
 bib:
 	BIBINPUTS=$(SBML_BIBINPUTS) \
-        bibtex sbml-level-2-version-3
+        bibtex $(MAIN_FILE)
 
 # create html
 html:
 	TEXINPUTS=$(SBML_TEXINPUTS) \
-	/usr/local/tth_exe/tth -L sbml-level-2-version-3.tex
+	/usr/local/tth_exe/tth -L $(MAIN_FILE).tex
 
 dvi:
 	TEXINPUTS=$(SBML_TEXINPUTS) \
-	latex "\input{sbml-level-2-version-3}"
+	latex "\input{$(MAIN_FILE)}"
 
 ps:	dvi
 	TEXINPUTS=$(SBML_TEXINPUTS) \
-	dvips -D 600 -o sbml-level-2-version-3.ps sbml-level-2-version-3.dvi
+	dvips -D 600 -o $(MAIN_FILE).ps $(MAIN_FILE).dvi

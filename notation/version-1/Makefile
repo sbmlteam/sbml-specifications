@@ -4,7 +4,7 @@
 # Organization: CDS, Caltech
 # Language    : Make
 # Created     : 2001-01-03
-# Revision    : $Id: Makefile,v 1.1.1.1 2003-03-11 05:19:51 mhucka Exp $
+# Revision    : $Id$
 # $Source: /Users/mhucka/projects/sysbio/sbml/current-cvs/specifications/notation/version-1/Makefile,v $
 
 BASENAME = notation

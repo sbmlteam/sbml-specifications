@@ -10,8 +10,11 @@ all: color
 
 # create a colored pdf (default)
 color:
-	TEXINPUTS=$(SBML_TEXINPUTS) \
-	pdflatex "\input{sbml-level-2-version-3}"
+	env TEXINPUTS="$(SBML_TEXINPUTS)" pdflatex "\input{sbml-level-2-version-3}"
+	env TEXINPUTS="$(SBML_TEXINPUTS)" bibtex sbml-level-2-version-3
+	env TEXINPUTS="$(SBML_TEXINPUTS)" pdflatex "\input{sbml-level-2-version-3}"
+	env TEXINPUTS="$(SBML_TEXINPUTS)" pdflatex "\input{sbml-level-2-version-3}"
+	env TEXINPUTS="$(SBML_TEXINPUTS)" pdflatex "\input{sbml-level-2-version-3}"
 
 # crate a gray scale pdf
 gray:

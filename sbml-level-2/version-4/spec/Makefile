@@ -26,12 +26,11 @@ default: pdf
 
 # create a colored pdf (default)
 pdf color:
-	TEXINPUTS=$(SBML_TEXINPUTS) \
-	pdflatex "\input{$(MAIN_FILE)}"
+	TEXINPUTS=$(SBML_TEXINPUTS) pdflatex "\input{$(MAIN_FILE)}"
 	make bib
-	pdflatex "\input{$(MAIN_FILE)}"
-	pdflatex "\input{$(MAIN_FILE)}"
-	pdflatex "\input{$(MAIN_FILE)}"
+	TEXINPUTS=$(SBML_TEXINPUTS) pdflatex "\input{$(MAIN_FILE)}"
+	TEXINPUTS=$(SBML_TEXINPUTS) pdflatex "\input{$(MAIN_FILE)}"
+	TEXINPUTS=$(SBML_TEXINPUTS) pdflatex "\input{$(MAIN_FILE)}"
 
 # crate a gray scale pdf
 gray:

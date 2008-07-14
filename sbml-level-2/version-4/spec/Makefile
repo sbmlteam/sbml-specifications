@@ -5,7 +5,7 @@
 ## @author  Michael Hucka
 ## 
 ## $Id$
-## $Source$
+## $HeadURL$
 ##
 ##<!---------------------------------------------------------------------------
 ## This file is part of the SBML project.  Please visit http://sbml.org for 

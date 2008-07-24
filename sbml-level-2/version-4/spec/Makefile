@@ -60,3 +60,6 @@ ps:	dvi
 
 mathml.xsd: $(MATHML_SCHEMA)
 	ln -s $(MATHML_SCHEMA) mathml.xsd
+
+clean:
+	-rm -f mathml.xsd *.aux *.bbl *.blg *.log *.out *.toc

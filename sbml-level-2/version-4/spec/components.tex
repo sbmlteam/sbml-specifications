@@ -4787,6 +4787,44 @@ information on a model.  Applications are free to ignore
 \token{sboTerm} values.  A model must be interpretable without the
 benefit of SBO labels.
 
+\begin{blockChanged}
+
+\paragraph{The optional \token{useValuesFromTriggerTime} attribute}
+\label{sec:event-usevaluesfromtriggertime}
+
+The optional \Delay on \Event means there are two times to take
+into account when computing the results of an event: the time at
+which the event \emph{fires} and the time at which assignments are
+\emph{executed}.  It is also possible to draw a distinction
+between the time at which the expression in an \EventAssignment is
+calculated, and the time at which the assignment is performed: the
+expression could be evaluated at the same time the assignments are
+performed, i.e., when the event is \emph{executed}, but it could
+also be defined to be evaluated at the time the event
+\emph{fired}.
+
+In SBML Level~2 versions prior to Version~4, the semantics of
+\Event time delays were defined such that the expressions in the
+event's assignments were always evaluated at the time the event
+was \emph{fired}.  This definition made it difficult to define an
+event whose assignment formulas were meant to be evaluated at the
+time the event was \emph{executed} (\ie after the time period
+defined by the value of the \Delay element).
+
+As of \sbmltwofour, the \token{useValuesFromTriggerTime} attribute
+on \Event allows a model to indicate the time at which the event's
+assignments are intended to be evaluated.  The default value is
+\val{true}, which corresponds to the interpretation of event
+assignments prior to \sbmltwofour: the values of the assignment
+formulas are computed at the moment the event fired, not after the
+delay.  If \token{useValuesFromTriggerTime}=\val{false}, it means
+that the formulas in the event's assignments are to be computed
+after the delay, at the time the event is executed.  Of course, if
+there is no delay defined in a given event object, there is
+effectively no distinction in the two cases.
+
+\end{blockChanged}
+
 
 \subsubsection{\class{Trigger}}
 \label{sec:trigger}
@@ -4839,7 +4877,7 @@ between when the event has \emph{fired} and when the event's
 assignments (see below) are actually \emph{executed}.  If no delay
 is present on a given \Event, a time delay of zero is assumed.
 
-The expression in \token{math} must be evaluated at the time the
+The expression in \changed{the \Delay object's \token{math} element} must be evaluated at the time the
 \changed{event} is \emph{fired}.  The expression must always evaluate to a
 nonnegative number (otherwise, a nonsensical situation could arise
 where an event is defined to fire before it is triggered!).  
@@ -4995,6 +5033,21 @@ Certain restrictions are placed on what can appear in
 
 \end{itemize}
 
+\begin{blockChanged}
+
+Note that the time of assignment of the object identified by the
+value of \token{variable} is always the time at which the \Event
+is \emph{executed}, not when it is \emph{fired}.  The timing is
+controlled by the optional \Delay in an \Event.  The time of
+assignment is not affected by the \token{useValuesFromTriggerTime}
+attribute on \Event---that attribute affects the time at which the
+\EventAssignment's \token{math} expression is evaluated.  In other
+words, SBML allows decoupling the time at which the
+\token{variable} is assigned from the time at which its value
+expression is calculated.
+
+\end{blockChanged}
+
 
 \paragraph{The optional \token{sboTerm} attribute on \class{EventAssignment}}
 \label{sec:eventassignment-sboterm}
@@ -5013,14 +5066,20 @@ assignment formula in the model.
 \paragraph{\class{EventAssignment}'s \token{math}}
 
 The \token{math} element contains a MathML expression that defines
-the new value of the variable. This expression is evaluated when
-the \Event is \emph{fired} but the variable only acquires the
-result or new value when the \Event is \emph{executed}. The order
-of the \EventAssignment objects is not significant; the effect
-of one assignment cannot affect the result of another assignment.
-The identifiers occurring in the MathML \token{ci} attributes of the
-\EventAssignment object represent the value of the identifier
-at the point when the \Event is \emph{fired}.
+the new value of the object identified by the \token{variable}.
+
+The time at which this expression is evaluated is determined by
+\Event's \token{useValuesFromTriggerTime} attribute.  If the
+attribute value is \val{true} (the default), the expression must
+be evaluated when the event is \emph{fired}; more precisely, the
+values of identifiers occurring in MathML \token{ci} attributes in
+the \EventAssignment's \token{math} expression are the values they
+have at the point when the event \emph{fired}.  If, instead,
+\token{useValuesFromTriggerTime}'s value is \val{false}, it means
+the values at \emph{execution} time should be used; that is, the
+values of identifiers occurring in MathML \token{ci} attributes in
+the \EventAssignment's \token{math} expression are the values they
+have at the point when the event \emph{executed}.
 
 
 \paragraph{Units of the \token{math} formula in \class{EventAssignment}}

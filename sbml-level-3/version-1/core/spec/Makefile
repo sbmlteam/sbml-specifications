@@ -12,7 +12,7 @@
 ## more information about SBML and the latest version of the specification.
 ##----------------------------------------------------------------------- -->*/
 
-SBML_PROJECT=../../../../project
+SBML_PROJECT=../../../../../project
 
 SBML_TEX=$(SBML_PROJECT)/tex
 SBML_BIB=$(SBML_PROJECT)/bib

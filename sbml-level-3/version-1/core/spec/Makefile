@@ -21,7 +21,7 @@ SBML_TEXINPUTS    = .:$(SBML_TEX)//:$(TEXINPUTS)
 SBML_BIBINPUTS    = .:$(SBML_BIB)/:$(BIBINPUTS)
 
 MAIN_FILE = sbml-level-3-version-1-core
-MATHML_SCHEMA = ../../../../sbml-mathml/sbml-mathml.xsd
+MATHML_SCHEMA = ../mathml-schema/sbml-mathml.xsd
 
 default: pdf
 
@@ -59,6 +59,7 @@ ps:	dvi
 # Argh!  So we have to do this bletcherous hack.
 
 mathml.xsd: $(MATHML_SCHEMA)
+	-rm -f mathml.xsd
 	ln -s $(MATHML_SCHEMA) mathml.xsd
 
 clean:

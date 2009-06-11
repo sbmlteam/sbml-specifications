@@ -25,6 +25,134 @@ components presented in Section~\ref{sec:elements}.
 \subsection{Function definitions}
 \label{sec:bp:functions}
 
+\subsection{Unit definitions}
+\label{sec:bp:unitdefinitions}
+
+
+\subsubsection{Handling units requiring the use of offsets}
+\label{sec:bp:unitdefinitions:offset}
+
+As mentioned in Section~\ref{sec:unit-structure} Unit definitions and conversions 
+requiring offsets cannot be done using the simple approach described in \ref{sec:unit-simple-approach}.  
+The most general case, involving offsets, multipliers and exponents, requires a completely
+different approach to defining units.
+
+In previous versions of SBML, not only was the general case
+incorrectly presented (\ie in the same terms described above, when
+in reality a different approach is required), but few if any
+developers even attempted to support offset-based units in their
+software.  In the development of \sbmltwotwo, a consensus among
+SBML developers emerged that a fully generalized unit scheme
+is so confusing and complicated that it actually impedes
+interoperability.  SBML Level~2 Versions 2--4 acknowledge this reality by reducing
+and simplifying the unit system, specifically by removing the
+\token{offset} attribute on \Unit and Celsius as a pre-defined unit,
+and by describing approaches for handling Celsius and other
+temperature units.  This is a backwards-incompatible change
+relative to \sbmltwoone and \sbmlonetwo, but it is believed to
+have limited real-life impact because so few tools and models
+appeared to have employed this feature anyway.  By simplifying the
+unit system to the point that it only involves multiplicative
+factors as described above, we expect that more software tools
+will be able to support the SBML unit system from this point
+forward, ultimately improving interoperability.
+
+We first address the question of how to handle units that
+\emph{do} require offsets:
+\begin{itemize}
+
+\item \emph{Handling Celsius}.  A model in which certain
+  quantities are temperatures measured in degrees Celsius can be
+  converted straightforwardly to a model in which those
+  temperatures are in kelvin.  A software tool could do this by
+  performing a straightforward substitution using the following
+  relationship:
+  \begin{linenomath}
+    \begin{equation}
+      T_\emph{kelvin} = T_\emph{Celsius} + 273.15
+      \label{eq:celsius-kelvin}
+    \end{equation}
+  \end{linenomath}
+  In every mathematical formula of the model where a quantity
+  (call it $x$) in degrees Celsius appears, replace $x$ with $x_k
+  + 273.15$ where $x_k$ is now in kelvin.  An alternative approach
+  would be to use a \FunctionDefinition to define a function
+  encapsulating this relationship above and then using that in the
+  rest of the model as needed.  Since Celsius is a commonly-used
+  unit, software tools could help users by providing users with
+  the ability to express temperatures in Celsius in the tools'
+  interfaces, and making substitutions automatically when writing
+  out the SBML.
+
+\item \emph{Handling other units requiring offsets}.  The only
+  other units requiring offsets in SBML's domain of common
+  applications are other temperature units such as Fahrenheit.
+  Few modern scientists employ Fahrenheit degrees; therefore, this
+  is an unusual situation.  The complication inherent in
+  converting between degrees Fahrenheit and kelvin is that both a
+  multiplier and an offset are required:
+  \begin{linenomath}
+    \begin{equation}
+      T_\emph{kelvin} = \frac{T_\emph{F} + 459.67}{1.8}
+      \label{eq:fah-kelvin}
+    \end{equation}
+  \end{linenomath}
+
+  One approach to handling this is to use a \FunctionDefinition to
+  define a function encapsulating the relationship above, then to
+  substitute a call to this function wherever the original
+  temperature in Fahrenheit appears in the model's mathematical
+  formulas.  Here is a candidate definition as an example:
+  \begin{example}
+<functionDefinition id="Fahrenheit_to_kelvin">
+    <math xmlns="http://www.w3.org/1998/Math/MathML">
+        <lambda>
+            <bvar><ci> temp_in_fahrenheit </ci></bvar>
+            <apply>
+                <divide/>
+                <apply>
+                    <plus/>
+                    <ci> temp_in_fahrenheit </ci>
+                    <cn> 459.67 </cn>
+                </apply>
+                <cn> 1.8 </cn>
+            </apply>
+        </lambda>
+    </math>
+</functionDefinition>
+  \end{example}
+  
+  An alternative approach not requiring the use of function
+  definitions is to use an \AssignmentRule for each variable in
+  Fahrenheit units.  The \AssignmentRule could compute the
+  conversion from Fahrenheit to (say) kelvin, assign its value to
+  a variable (in Kelvin units), and then that variable could be
+  used elsewhere in the model.  Still another approach is to
+  rewrite the mathematical formulas of a model to directly
+  incorporate the conversion Equation~\ref{eq:fah-kelvin} wherever
+  the quantity appears.
+
+  All of these approaches provide general solutions to the problem
+  of supporting any units requiring offsets in the unit system of
+  SBML Level~2 Versions 2--4.  It can be used for other temperature units
+  requiring an offset (\eg degrees Rankine, degrees R\'{e}aumur),
+  although the likelihood of a real-life model requiring such
+  other temperature units seems exceedingly small.
+
+\end{itemize}
+
+%In summary, the removal of \token{offset} does not
+In summary, the fact that SBML units do not support specifying an offset 
+does  not impede the creation of models using alternative units.  If
+conversions are needed, then converting between temperature in
+degrees Celsius and thermodynamic temperature can be handled
+rather easily by the simple substitution described above.  For the
+rarer case of Fahrenheit and other units requiring combinations of
+multipliers and offsets, users are encouraged to employ the power
+of \FunctionDefinition, \AssignmentRule, or other constructs in
+SBML.
+
+
 
 \subsection{Compartments}
 \label{sec:bp:compartment}

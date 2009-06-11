@@ -1829,10 +1829,7 @@ are listed under the heading \token{listOfSpecies} in the model:
 
 A \Parameter is used in SBML to define a symbol associated with a
 value; this symbol can then be used in mathematical formulas in a
-model.  By default, parameters have constant value for the
-duration of a simulation, and for this reason are called
-``parameters'' instead of ``variables'' in SBML, although in
-truth, SBML parameters can be either.  The definition of
+model. The definition of
 \Parameter is shown in Figure~\vref{fig:parameter}.
 
 \begin{figure}[htb]
@@ -1861,15 +1858,9 @@ truth, SBML parameters can be either.  The definition of
   \label{fig:parameter}
 \end{figure}
 
-\textcolor{black}{Parameters can be defined in two places in SBML: in lists of
-parameters defined at the top level in a} \Model
-instance, and within individual reaction definitions (as
-described in Section~\ref{sec:reactions}).  Parameters defined at
-the top level are \emph{global} to the whole model; parameters
-that are defined within a reaction are local to the particular
-reaction and (within that reaction) \emph{override} any global
-parameters having the same identifiers (See
-Section~\ref{sec:identifiers} for further details).
+Parameters are defined in a list of
+parameters defined at the top level in a \Model
+instance.
 
 The use of the term \emph{parameter} in SBML sometimes leads to
 confusion among readers who have a particular notion of what
@@ -1992,13 +1983,6 @@ value can be changed by rules (see Section~\ref{sec:rules}) and
 that the \token{value} is actually intended to be the initial
 value of the parameter.
 
-Parameters local to a reaction (\ie those defined within a
-\Reaction's \KineticLaw object, as described in
-Section~\ref{subsec:kinetic-law}) cannot be changed by rules and
-therefore are implicitly always constant; thus, parameter
-definitions within \Reaction objects should \emph{not} have
-their \token{constant} attribute set to \val{false}.
-
 What if a global parameter has its \token{constant} attribute set to
 \val{false}, but the model does not contain any rules, events or
 other constructs that ever change its value over time?  Although
@@ -2034,8 +2018,8 @@ The following is an example of parameters defined at the \Model level:
 <model>
     ...
     <listOfParameters>
-        <parameter id="tau2" value="3e-2" units="second"/>
-        <parameter id="Km1" value="10.7" units="moleperlitre"/>
+        <parameter id="tau2" value="3e-2" units="second" constant="true"/>
+        <parameter id="Km1" value="10.7" units="moleperlitre" constant="true"/>
     </listOfParameters>
     ...
 </model>
@@ -3003,12 +2987,12 @@ supporting data classes, defined in Figure~\vref{fig:reaction}.
   \includegraphics[scale=0.8]{figs/reaction-uml-v2}
   \vspace*{0.5ex}
   \caption{The definitions of classes \Reaction, \KineticLaw,
-      \SpeciesReference, \ModifierSpeciesReference, as well as the
+      \SpeciesReference, \ModifierSpeciesReference, \LocalParameter,
+      as well as the
       container classes \ListOfReactants, \ListOfProducts,
-      \ListOfModifiers, and \ListOfParameters.  Note that
+      \ListOfModifiers, and \ListOfLocalParameters.  Note that
       \SimpleSpeciesReference is an abstract class used only to
-      provide some common attributes to its derived classes.  The class
-      \Parameter is defined in Section~\ref{sec:parameters}.}
+      provide some common attributes to its derived classes.}
   \label{fig:reaction}
 \end{figure}
 
@@ -3160,6 +3144,11 @@ Note that the \token{fast} flag has significant effect on the mathematical
 interpretation of a model and cannot be safely ignored if a software 
 tool does not implement support for the corresponding concept. 
 
+\paragraph{The \token{compartment} attribute on \class{Reaction}}
+\label{sec:reaction-compartment}
+
+
+
 \paragraph{The \token{sboTerm} attribute on \class{Reaction}}
 \label{sec:reaction-sboterm}
 
@@ -3185,9 +3174,6 @@ information on a model.  Applications are free to ignore
 the benefit of SBO labels.  Section~\ref{sec:sboTerm} gives more
 information about this principle and the use of SBO.
 
-\paragraph{The \token{compartment} attribute on \class{Reaction}}
-\label{sec:reaction-compartment}
-
 
 \subsubsection{The \class{SimpleSpeciesReference} abstract type}
 \label{subsec:simplespeciesreference}
@@ -3212,16 +3198,14 @@ and elements that are common to the latter two objects.
 
 \paragraph{The \token{id} and \token{name} attributes}
 
-The optional identifier stored in the \token{id} attribute allows
-\SpeciesReference and \ModifierSpeciesReference instances to be
-referenced from other object.  No SBML object classes currently do
-this; however, such classes are anticipated in future SBML
-Levels.  The value of \token{id} must be a text string conforming
-to the syntax permitted by the \primtype{SId} data type described
-in Section~\ref{sec:sid}.  The \token{id} value (whether it is in
-a \SpeciesReference or \ModifierSpeciesReference object) exists in
-the global namespace of the model, as described in
-Section~\ref{sec:idnameattribs}.  The \token{id} and \token{name}
+The optional identifier stored in the \token{id} attribute  of type
+\primtype{SId} allows \SpeciesReference and \ModifierSpeciesReference 
+instances to be referenced from other objects. The \token{id} value 
+(whether it is in a \SpeciesReference or \ModifierSpeciesReference object) 
+exists in the global namespace of the model.   A
+\SpeciesReference or \ModifierSpeciesReference can also have an 
+optional \token{name} attribute of type
+\primtype{string}.The \token{id} and \token{name}
 attributes must be used as described in
 Section~\ref{sec:idnameattribs}.
 
@@ -3284,8 +3268,8 @@ attribute \token{species} and optional attributes \token{id},
 \token{name}, and \token{sboTerm}, from the parent type
 \SimpleSpeciesReference; see
 Section~\ref{subsec:simplespeciesreference} for their definitions.
-It also defines attribute \token{stoichiometry} and
-element \token{stoichiometryMath}, described below.
+It also defines the mandatory attributes \token{stoichiometry} and \token{constant}
+as well as an optional attribute \token{conversionFactor}, described below.
 
 The \token{species} attribute value must be the
 identifier of an existing species defined in the enclosing \Model;
@@ -3295,8 +3279,7 @@ by whether the \SpeciesReference appears in the \Reaction's
 \token{reactant} or \token{product} lists.
 
 
-\paragraph{The \token{stoichiometry} attribute and \token{stoichiometryMath}
-  element}
+\paragraph{The \token{stoichiometry} attribute}
 
 Product and reactant stoichiometries can be specified using
 \emph{either} \token{stoichiometry} or \token{stoichiometryMath}
@@ -3351,8 +3334,6 @@ ends up being a dimensionless number and equivalent to the
 standard chemical stoichiometry found in textbooks.  Examples and
 more explanations of this are given in
 Section~\ref{sec:about-kinetic-laws}.
-
-\clearpage
 
 The following is a simple example of a species reference for
 species \val{X0}, with stoichiometry \val{2}, in a list of
@@ -3435,6 +3416,23 @@ stoichiometry for all their species:
 </reaction>
 \end{example}
 
+\paragraph{The \token{constant} attribute}
+
+The \SpeciesReference object has a mandatory boolean attribute named
+\token{constant} which indicates whether the stoichiometry can
+vary during a simulation. 
+A value \val{true} for this attribute means that the stoichiometry of the referenced species 
+takes the value of the \token{stoichiometry} attribute, unless it is changed by an \InitialAssignment.
+For interoperability reasons it is important to set the value of this attribute to 
+\val{true} whenever the model does not require variable stoichiometries.
+A value of \val{false} indicates the stoichiometry 
+can be changed by rules (see Section~\ref{sec:rules}) and
+that the value of the \token{stoichiometry} attribute is actually intended to be the initial
+value of the stoichiometry.
+
+\paragraph{The \token{conversionFactor} attribute}
+
+TODO description of conversion factor
 
 \subsubsection{\class{ModifierSpeciesReference}}
 \label{subsec:modifierreference}
@@ -3466,47 +3464,20 @@ products of the same reaction where it is designated as a
 modifier, as well as to appear in the list of reactants, products
 and modifiers of other reactions in the model.
 
+\subsubsection{\class{LocalParameter}}
+\label{subsec:localparameter}
+
+TODO: Description of local parameters
 
 \subsubsection{\class{KineticLaw}}
 \label{subsec:kinetic-law}
+\label{subsec:listoflocalparameters}
 
 The \KineticLaw object class is used to describe the rate at which
 the process defined by the \Reaction takes place.  As shown in
 Figure~\vref{fig:reaction}, \KineticLaw has elements called
 \token{math} and \token{listOfParameters}, in addition to the
 attributes and elements it inherits from \SBase.
-
-Previous definitions of SBML included two additional attributes called
-\token{substanceUnits} and \token{timeUnits}, which allowed the
-\quantity{substance}/\quantity{time} units of the reaction rate
-expression to be defined on a per-reaction basis.  These
-attributes were removed in \sbmltwotwo
-for several reasons.  First, the introduction
-in \sbmltwotwo of mass and dimensionless units as possible units
-of \quantity{substance}, coupled with the previous facility for
-defining the units of each reaction separately and the ability to
-use non-integer stoichiometries, lead to the possibility of
-creating a valid model whose reactions nevertheless could not be
-integrated into a system of equations without outside knowledge
-for converting the quantities used.  (As a simple example,
-consider if one reaction is defined to be in grams per second and
-another in moles per second, and species are given in moles:
-converting from mass to moles would require knowing the molecular
-mass of the species.)  Second, the ability to change the units of
-a reaction provided the potential of creating unintuitive and
-difficult-to-reconcile systems of equations, yet the feature added
-little functionality to SBML.  The \emph{absence} of
-\token{substanceUnits} does not prevent the definition of any
-reactions; it only results in requiring the generator of the model
-to be explicit about any necessary conversion factors.  Third, few
-if any software tools have ever correctly implemented support for
-\token{substanceUnits}, which made the use of this attribute in a
-model an impediment to interoperability.  Fourth, examination of
-real-life models revealed that a frequent reason for using
-\token{substanceUnits} was to set the units of all reactions to
-the same set of substance units, which is better achieved by
-setting the model-wide values of \val{substance}.
-
 
 \paragraph{The \token{math} element}
 
@@ -3528,10 +3499,10 @@ discussions about the meaning and interpretation of SBML ``kinetic
 laws''.
 
 
-\paragraph{The list of parameters}
+\paragraph{The list of local parameters}
 
 An instance of \KineticLaw can contain a list of
-one or more \Parameter objects (Section~\ref{sec:parameters})
+one or more \LocalParameter objects (Section~\ref{subsec:localparameter})
 which define new parameters whose identifiers can be used in the
 \token{math} formula.  As discussed in
 Section~\ref{sec:identifiers}, reactions introduce local
@@ -3549,18 +3520,6 @@ identifier as a species or compartment or other global model
 entity will override the global value.  Modelers and software
 developers may wish to take precautions to avoid this happening
 accidentally.
-
-The type of object used to define a parameter inside
-\KineticLaw is the same \Parameter object class used to define global
-parameters (Section~\ref{sec:parameters}).  This simplifies the
-SBML language and reduces the number of unique types of data
-objects.  However, there is a difference between local and global
-parameters: in the case of parameters defined locally to a
-\KineticLaw, there is no means by which the parameter values can
-be changed.  Consequently, such parameters' values are always
-constant, and the \token{constant} attribute in their definitions must
-always have a value of \val{true} (either explicitly or left to
-its default value).
 
 
 \paragraph{The \token{sboTerm} attribute}
@@ -3646,9 +3605,9 @@ expression.
                         <times/> <ci> k </ci> <ci> S2 </ci> <ci> X0 </ci> <ci> c1 </ci>
                     </apply>
                 </math>
-                <listOfParameters>
-                    <parameter id="k" value="0.1" units="per_concent_per_time"/>
-                </listOfParameters>
+                <listOfLocalParameters>
+                    <localParameter id="k" value="0.1" units="per_concent_per_time"/>
+                </listOfLocalParameters>
             </kineticLaw>
         </reaction>
     </listOfReactions>
@@ -3658,565 +3617,11 @@ expression.
 
 
 
-\subsubsection{Traditional rate laws versus SBML ``kinetic laws''}
+\subsubsection{Mathematical interpretation of SBML kinetic laws}
 \label{sec:about-kinetic-laws}
 
+TODO rewrite
 % FIXME units
-
-It is important to make clear that a ``kinetic law'' in SBML is
-\emph{not} identical to a traditional rate law.  The reason is
-that SBML must support multicompartment models, and the units
-normally used in traditional rate laws as well as some conventional
-single-compartment modeling packages are problematic when used for
-defining reactions between multiple compartments.
-
-When modeling species as continuous amounts (\eg concentrations),
-the rate laws used are traditionally expressed in terms of
-\quantity{amount of substance concentration per time}, embodying a
-tacit assumption that reactants and products are all located in a
-single, constant volume.  Attempting to describe reactions between
-multiple volumes using \quantity{concentration}/\quantity{time}
-(which is to say,
-\quantity{substance}/\quantity{volume}/\quantity{time}) quickly
-leads to difficulties.  Here is an illustration of this.  Suppose
-we have two species pools $S_1$ and $S_2$, with $S_1$ located in a
-compartment having volume $V_1$, and $S_2$ located in a
-compartment having volume $V_2$.  Let the volume $V_2 = 3 V_1$.
-Now consider a transport reaction $S_1 \rightarrow S_2$ in which
-the species $S_1$ is moved from the first compartment to the
-second.  Assume the simplest type of chemical kinetics, in which
-the rate of the transport reaction is controlled by the activity
-of $S_1$ and this rate is equal to some constant $k$ times the
-activity of $S_1$.  For the sake of simplicity, assume $S_1$ is in
-a diluted solution and thus that the activity of $S_1$ can be
-taken to be equal to its concentration $[S_1]$.  The rate
-expression will therefore be $k \cdot [S_1]$, with the
-  units of $k$ being $1/\emph{time}$.  Then:
-
-\vspace*{-3ex}
-\begin{linenomath}
-  \begin{equation*}
-    \frac{d[S_2]}{dt} = -\frac{d[S_1]}{dt} = k \cdot [S_1]
-  \end{equation*}
-\end{linenomath}
-
-So far, this looks normal---until we consider the number of
-molecules of $S_1$ that disappear from the compartment of volume
-$V_1$ and appear in the compartment of volume $V_2$.  The number
-of molecules of $S_1$ (call this $n_{S_1}$) is given by $[S_1]
-\cdot V_1$ and the number of molecules of $S_2$ (call this
-$n_{S_2}$) is given by $[S_2] \cdot V_2$.  Since our volumes have
-the relationship $V_2 / V_1 = 3$, the relationship above implies
-that $n_{S_1} = k \cdot [S_1] \cdot V_1$ molecules disappear from
-the first compartment per unit of time and $n_{S_2} = 3
-\cdot k \cdot [S_1] \cdot V_1$ molecules appear in the second
-compartment.  In other words, we have created matter out of
-nothing!
-
-The problem lies in the use of concentrations as the measure of
-what is transfered by the reaction, because concentrations depend
-on volumes and the scenario involves multiple unequal volumes.
-The problem is not limited to using concentrations or volumes; the
-same problem also exists when using density, \ie
-\quantity{mass}/\quantity{volume}, and dependency on other spatial
-distributions (\ie areas or lengths).  What must be done instead
-is to consider the number of ``items'' being acted upon by a
-reaction process irrespective of their distribution in space
-(volume, area or length).  An ``item'' in this context may be a
-molecule, particle, mass, or other ``thing'', as long as the
-substance measurement is independent of the size of the space in
-which the items are located.
-
-For the current example, the expressions in terms of $n_{S_1}$ and
-$n_{S_2}$ are straightforward:
-\begin{linenomath}
-\begin{equation*}
-  \frac{dn_{S_2}}{dt} = -\frac{dn_{S_1}}{dt} = k \cdot [S_1] \cdot V_1
-\end{equation*}
-\end{linenomath}
-Given numbers of items, it is then easy to recover concentrations
-by dividing the item counts of each species by the volume of the
-compartment in which the species is located: $[S_1] = n_{S_1}/V_1$
-and $[S_2] = n_{S_2}/V_2$.
-
-The need to support multicompartment models requires that the
-reaction rates in SBML to be expressed in terms of
-\quantity{substance}/\quantity{time}, rather than the more typical
-\quantity{substance}/\quantity{size}/\quantity{time}.  As a
-result, modelers and software tools in general cannot insert
-textbook rate laws unmodified as the rate expression in the
-\token{math} element of a \KineticLaw.  The unusual term ``kinetic
-law'' was chosen to alert users to this difference.  We explain
-the general principles of converting rate laws in the following
-paragraphs.
-
-%In textbook biochemistry, reactions are generally presented
-%without regard to the space in which the reactions take place,
-%apart from a consideration of the volume.  The concentration may
-%play a role in the reaction kinetics, but all of the reactants are
-%assumed to be in the same volume.  However, in the general case
-%this may not be true.  One can have reactions in which items are
-%moved from one space to another, and the spaces may have different
-%volumes.  Then this presents a problem, because concentration
-%depends on volume and if one is not careful to account for the
-%different volumes, meaningless results will be produced.
-
-
-\paragraph{Basic cases}
-
-\newcommand{\relphantom}[1]{\mathrel{\phantom{#1}}}
-
-Let us expand the simple example above by adding a second
-reaction, to create the system
-\begin{linenomath}
-\begin{equation*}
-  S_1 \rightarrow S_2 \rightarrow S_3
-\end{equation*}
-\end{linenomath}
-with the left-hand reaction's rate (call this $r_1$) being given
-as $k_1 \cdot [S_1]$ and the rate of the right-hand reaction (call
-it $r_2$) as $k_2 \cdot [S_2]$.  Also assume each species is
-located in a different compartment:
-\begin{center}
-  \begin{edtable}{tabular}{lll}
-    $S_1$ & located in compartment $C_1$ & with volume $V_1$\\
-    $S_2$ & located in compartment $C_2$ & with volume $V_2$\\ 
-    $S_3$ & located in compartment $C_3$ & with volume $V_3$
-  \end{edtable}
-\end{center}
-As before, converting the rate of the first reaction ($S_1
-\rightarrow S_2$) to units of \quantity{substance}/\quantity{time}
-in this case is a simple matter of multiplying by the volume of
-the compartment where the reactants are located, leading to the
-following SBML rate formula:
-\begin{linenomath}
-\begin{equation*}
-  R_1 = r_1 \cdot V_1 = k_1 \cdot [S_1] \cdot V_1 \\
-\end{equation*}
-\end{linenomath}
-The second rate expression becomes
-\begin{linenomath}
-\begin{equation*}
-  R_2 = r_2 \cdot V_2 = k_2 \cdot [S_2] \cdot V_2 \\
-\end{equation*}
-\end{linenomath}
-The units of $k_1$ and $k_2$ are $1/\emph{time}$ (often
-  $1/sec$, but not necessarily), as is typical for reactions that
-  are first-order in one reactant.  The expressions
-  $R_1$ and $R_2$ are what would be written in \KineticLaw
-  \token{math} definitions for the two reactions in this
-  system.  The formulas give the speed of each reaction in terms
-  of the substance change over time.  The reader of the
-SBML model needs to combine the individual contributions of each
-reaction to construct equations for the \emph{overall} rates of
-change of each species in the model using these expressions.  In
-terms of differential equations, these are:
-\begin{linenomath}
-\begin{equation*}
-  \begin{aligned}
-  \frac{dn_{S_1}}{dt} = &- R_1                    &= - k_1 \cdot [S_1] \cdot V_1 &{}\\[4pt]
-  \frac{dn_{S_2}}{dt} = &+ R_1 - R_2    &= + k_1 \cdot [S_1] \cdot V_1 &-\, k_2 \cdot [S_2] \cdot V_2\\[4pt]
-  \frac{dn_{S_3}}{dt} = &\phantom{{}+ R_1} + R_2  &= \phantom{+ k_1 \cdot [S_2] \cdot V_1} &+\, k_2 \cdot [S_2] \cdot V_2
-  \end{aligned}
-\end{equation*}
-\end{linenomath}
-To recover the concentration values, we add the following to the
-system of equations:
-\begin{linenomath}
-\begin{equation*}
-\begin{split}
-  [S_1] &= n_{S_1}/V_1\\
-  [S_2] &= n_{S_2}/V_2\\
-  [S_3] &= n_{S_3}/V_3
-\end{split}
-\end{equation*}
-\end{linenomath}
-Note that this formulation works properly even if the compartment
-sizes $V_1$, $V_2$ and $V_3$ vary during simulation.  
-
-Extrapolating from this example, we can now provide a general
-approach to translating a system of reactions involving species
-located in multiple compartments, for the restricted case where
-all reactants of any given reaction are in the same compartment
-(but where the compartments involved may be different for each
-reaction).  For a species $S_i$ involved in $m$
-  reactions whose rates are given (in ``textbook'' form, without
-volume adjustments) as $r_1, r_2, \ldots, r_m$, where the
-reactants of $r_j$ are located in the compartment of size $V_j$,
-\begin{linenomath}
-\begin{equation} \label{eq:simple-odes}
-  \begin{split}
-    \frac{dn_{S_i}}{dt} &= \relphantom{+}\,\text{sign}_1 \cdot \text{stoich}_1 \cdot r_1 \cdot V_1\\
-    &\relphantom{=} +\, \text{sign}_2 \cdot \text{stoich}_2 \cdot r_2 \cdot V_2\\
-    &\relphantom{=} +\, \ldots \\
-    &\relphantom{=} +\, \text{sign}_m \cdot \text{stoich}_m \cdot r_m \cdot V_m\\
-    \\[-4pt]
-    [S_i] &= n_{S_i}/V_i
-  \end{split}
-\end{equation}
-\end{linenomath}
-In Equation~\eqref{eq:simple-odes}, each term $\text{sign}_j$ is
-``$-$'' if $S_i$ is a reactant in $r_j$ and ``$+$'' if it is a
-product, and each term $\text{stoich}_j$ is the stoichiometry of
-$S_i$ in reaction $r_j$.  Letting $R_j = r_j \cdot V_j$ represent
-the form of the rate expressions as they would be written in the
-\KineticLaw \token{math} elements, then we can equivalently write
-\begin{linenomath}
-\begin{equation} \label{eq:simple-odes-sbml}
-  \begin{split}
-    \frac{dn_{S_i}}{dt} &= \relphantom{+}\,\text{sign}_1 \cdot \text{stoich}_1 \cdot R_1\\
-    &\relphantom{=} +\, \text{sign}_2 \cdot \text{stoich}_2 \cdot R_2\\
-    &\relphantom{=} +\, \ldots \\
-    &\relphantom{=} +\, \text{sign}_m \cdot \text{stoich}_m \cdot R_m\\
-    \\[-4pt]
-    [S_i] &= n_{S_i}/V_i
-  \end{split}
-\end{equation}
-\end{linenomath}%
-This approach preserves the use of concentration terms within the
-reaction rate expressions so that the core of those rate
-expressions can be ordinary rate laws.  This is important when
-modeling species as continuous quantities, because most textbook
-rate expressions are measured in terms of concentrations, and most
-rate constants have units involving concentration rather than item
-counts.  For example, the second-order rate constant in a
-mass-action rate law has units of 1/($M \cdot s$), which is to
-say,
-\quantity{volume}/(\quantity{substance}$\cdot$\quantity{time});
-this constant is then multiplied by two concentration terms.
-Reaction definitions in SBML models can be constructed by taking
-such expressions and multiplying them by the volume of the
-compartment in which the reactants are located.  By contrast, if
-we were to simply replace concentrations of species by item counts
-in such rate laws, it would in most cases be incorrect.  At the
-very least, the constants in the equations would need to be
-converted in some way to make such expressions valid.
-
-The preceding discussion of problems involving rate laws concerns
-modeling approaches that use continuous quantities.  There is an
-alternative approach to modeling that instead treats species as
-discrete populations~\citep{wilkinson_2006}.  In those cases, the
-rate expressions already use substance or item counts rather than
-concentrations and there is no need to convert them.
-
-A full SBML example of translating a complete multicompartmental
-model into ODEs is given in Section~\ref{sec:odeeg}.  An example
-of translating a discrete model is given in
-Section~\ref{sec:discrete-eg}.
-
-
-\paragraph{Advanced cases}
-
-The explanation above applies to reactions where all of the
-reactants are in the same compartment.  What about cases where two
-or more reactant species are in separate compartments?
-
-This is a more difficult situation, and the guidelines described
-above for Equation~\eqref{eq:simple-odes} cannot always be applied
-because there will be more than one compartment size term by which
-the core rate expression needs to be multiplied.  Unfortunately,
-there is often no straightforward way to mechanically convert such
-models without requiring a more significant change to the reaction
-rate expression.  An example will help illustrate the difficulty.
-Suppose we have a simple reaction system consisting of only
-\begin{linenomath}
-\begin{equation*}
-  S_1 + S_2 \rightarrow S_3
-\end{equation*}
-\end{linenomath}
-where $S_1$, $S_2$ and $S_3$ are each located in separate
-compartments with volumes $V_1$, $V_2$ and $V_3$, and the rate
-expression is given as $k \cdot [S_1] \cdot [S_2]$.  (In reality,
-one would not use such a rate law in this case, but for the sake
-of this example, let us ignore the fact that a mass-action rate
-law would actually involve an assumption that all reactants are in
-a well-mixed solution.)  A straightforward examination of the
-possibilities eventually leads to the conclusion that in order to
-take account of the multiple volumes, the rate expressions in
-terms of \quantity{substance}/\quantity{time} have to be written
-as
-\begin{linenomath}
-\begin{equation*}
-  \frac{dn_{S_i}}{dt} = -k'(V_1,V_2) \cdot 
-    \bigl([S_1] \cdot V_1\bigr) \cdot \bigl([S_2] \cdot V_2\bigr)\\
-\end{equation*}
-\end{linenomath}
-The crux of the problem is that the new factor $k'(V_1,V_2)$ is
-not the original $k$; to make the overall units of the expression
-work out, $k'(V_1,V_2)$ must be a function of the volumes, and its
-value must change if $V_1$ or $V_2$ changes.  It is no longer a
-standard rate constant.  In an SBML model, it is easy to define an
-\AssignmentRule to compute the value of $k'$ based on $k$, $V_1$,
-$V_2$, and possibly other variables in the system as needed, but
-only the modeler can determine the proper formula for their
-particular modeling situation.  (For example, the modeler may know
-that in their hypothesized physical system, the reaction actually
-takes place completely in one or the other compartment and
-therefore the factor should be designed accordingly, or perhaps
-the reaction takes place on a membrane between compartments and a
-scaling factor based on the area should be used.)
-
-Thus, although these models can be represented in SBML,
-constructing the correct rate expression in terms of
-\quantity{substance}/\quantity{time} units depends on
-problem-specific knowledge, and we cannot provide a general
-recipe.
-
-
-%First, it is important for modelers to examine carefully the
-%assumptions implicit in such a scenario.  Substances presumably
-%need to have the opportunity to come in contact in order to be
-%able to react with each other.  If the reactants are located in
-%separate compartments, it means the separate pools of species are
-%not mixed.  (If they were mixed, they would have to be located in
-%the same compartment.)  This then begs the question, how can the
-%reactants ever interact to produce a reaction?
-
-%In some cases, although a reaction such as $S_1 + S_2 \rightarrow
-%S_3$ may be written with reactant species in separate compartments
-%having volumes $V_1$ and $V_2$, the reaction may actually be known
-%to occur in one or the other compartment.  In that case, it is
-%clear which volume should be used when generating the
-%\quantity{substance}/\quantity{time} ``kinetic law'' expression.
-%It then becomes the responsibility of the modeler to write the
-%expression such that the appropriate volume term ($V_1$ or $V_2$)
-%is used.
-
-% From emails by Nicolas:
-
-%We explained that in the former messages. Basically there are two types of
-%problems. The first deals with the fact that you have only one
-%substanceUnits per reaction while you can have several speciesReference
-%potentially using different units. And since every reaction can have its
-%own substanceUnits, the reconstruction of the ODEs is a nightmare. The
-%second problem comes from the fact that the substanceUnits of kineticLaw
-%defaults to "substance", that itself default to mole. Therefore there is
-%in the vast majority of the cases an inconsistency between the left and
-%right-sides.
-
-% The global redefinition of substance is different. And removing it
-%would not fix anything since you would still have possible inconsistencie
-%between the built-in substance and the units of species. The global
-%redefinition of substance is actually the best protection against
-%inconsistencies, ensuring that all reactions use the same units. Coupled
-%with the omission of individual units of species when it is not necessary,
-%it becomes very powerful, simplyfying everything.
-
-
-\paragraph{Mixed species units}
-
-The discussion so far has assumed that all of the species
-appearing in a given reaction's rate expression had the same
-units, whether they be concentration or amounts or other.
-However, \Species objects can each declare units separately.  What
-happens then?
-
-It is important to realize that implicit conversions in this
-situation are not defined in SBML.  A species identifier appearing
-in a mathematical expression has the units attributed to that
-species (see Section~\ref{sec:species-units} for a definition of
-the \emph{the units of the species}).  If a reaction contains
-species each having different units, the creator of the SBML model
-must explicitly incorporate the necessary conversions to make the
-units of the rate expression consistent.  The most appropriate way
-is to include the conversion factor as part of the value of
-\token{stoichiometry} or \token{stoichiometryMath} in the
-\SpeciesReference for that species.
-
-An example may help illustrate this.  Suppose we have a system of
-two biochemical reactions with mass-action kinetics, written in
-the traditional form
-
-\vspace*{-1ex}
-\begin{linenomath}
-  \begin{equation} \label{eq:two-reactions}
-    \begin{aligned}
-      A + 2\,B & \yields^{k_1} C\\
-      C        & \yields^{k_2} 3\,A
-    \end{aligned}
-  \end{equation}
-\end{linenomath}
-
-with the units of $k_1$ being $\quantity{liter}^{\,2}
-  \quantity{s}^{\,2} \quantity{mol}^{\,-2}$ and $k_2$'s units
-  being $\quantity{s}^{-1}$.  Assume the reactions take place in
-a single compartment of volume $V$, but now let us throw a wrench
-into the problem: suppose that the species in the model are
-defined with mixed units as follows:
-\begin{center}
-  \begin{edtable}{tabular}{ll}
-    $A$  & is in millimoles per litre\\
-    $B$  & is in grams per litre\\
-    $C$  & is in items per litre
-  \end{edtable}
-\end{center}
-When biochemical reaction equations of the form
-\eqref{eq:two-reactions} above are written, the units of species'
-quantities usually are assumed to be the same, and therefore the
-stoichiometries in the reaction equations \eqref{eq:two-reactions}
-represent simple ratios between the quantities of the species in
-those units.  (\emph{``One mole of \emph{this} and two moles of
-  \emph{that} react to produce one mole of \emph{that other}.''})
-If instead the quantities of the species are given in mixed units,
-as in the present example, the quantities not only need to be in
-proper stoichiometric relationships, the units also have to be
-made consistent.  In SBML, this is done by appropriately setting
-the \token{stoichiometry} attribute value in the species references of
-the lists of reactants, products and modifiers in a \Reaction.
-This then permits a properly balanced system of equations to be
-constructed for each species' rate of change of quantity.
-
-In the present example, the SBML ``kinetic law'' formulas for the
-reaction rates will be written as conventional
-mass-action reaction rates adjusted for volume as
-  described previously,
-\begin{linenomath}
-\begin{equation*}
-  \begin{aligned}
-    R_1 &= {k_1}' \cdot [A] \cdot [B]^2 \cdot V\\
-    R_2 &= {k_2}' \cdot [C] \cdot V
-  \end{aligned}
-\end{equation*}
-\end{linenomath}
-where ${k_2}' = k_2$ for this particular example but ${k_1}'$ will
-depend on other units as described in the paragraphs below.  When
-these formulas are combined into overall expressions for the rates
-of change of $A$, $B$, and $C$, the result is
-\begin{linenomath}
-\begin{equation*}
-  \begin{aligned}
-    dA/dt &= -a_1 \cdot R_1 + a_2 \cdot R_2\\[5pt]
-    dB/dt &= -b_1 \cdot R_1\\[5pt]
-    dC/dt &= +c_1 \cdot R_1 - c_2 \cdot R_2
-%     \dfrac{dA}{dt} &= -a_1 \cdot r_1 + a_2 \cdot r_2\\[5pt]
-%     \dfrac{dB}{dt} &= -b_1 \cdot r_1\\[5pt]
-%     \dfrac{dC}{dt} &= +c_1 \cdot r_1 - c_2 \cdot r_2
-  \end{aligned}
-\end{equation*}
-\end{linenomath}
-where
-\begin{center}
-  \begin{edtable}{tabular}{lll}
-    $a_1$ & is the SBML stoichiometry of $A$ in reaction 1\\
-    $a_2$ & is the SBML stoichiometry of $A$ in reaction 2\\
-    $b_1$ & is the SBML stoichiometry of $B$ in reaction 1\\
-    $c_1$ & is the SBML stoichiometry of $C$ in reaction 1\\
-    $c_2$ & is the SBML stoichiometry of $C$ in reaction 2\\
-  \end{edtable}
-\end{center}
-We use the term \emph{SBML stoichiometries} to highlight the fact
-that in this example involving mixed-units species, the values may
-not be identical to the biochemical stoichiometries in the
-reaction equations \eqref{eq:two-reactions}.  And just what are
-the \emph{SBML stoichiometries}?  In the kind of mixed-units
-situation faced in this example, they must encompass both the
-biochemical stoichiometries and any necessary unit conversions.
-Thus, letting $m_B$ stand for the molecular mass of $B$:
-
-\begin{edtable}{tabular}{l@{\hspace{2pt}}ll}
-  $a_1$ &= 1000 
-  & (in each reaction event, 1 mole of $A$ is consumed, with $A$ expressed in millimoles)\\
-
-  $a_2$ &= 3000
-  & (in each reaction event, 3 moles of $A$ are produced, with $A$ expressed in millimoles)\\
-
-  $b_1$ &= $2 \cdot m_B$
-  & (in each reaction event, 2 moles of $B$ are consumed, with $B$ expressed in grams)\\
-
-  $c_1$ &= $6.02 \cdot 10^{23}$
-  & (in each reaction event, 1 mole of $C$ is produced, expressed as item counts)\\
-
-  $c_2$ &= $6.02 \cdot 10^{23}$
-  & (in each reaction event, 1 mole of $C$ is consumed, expressed as item counts)\\[5pt]
-\end{edtable}
-
-and ${k_1}'$ = $k_1 \cdot 10^{-3} \cdot 1/{m_B}^2$.
-\vspace*{0.75ex}
-
-What happens if the definition of the SBML predefined unit
-\val{substance} is changed in the model to be millimoles?  Then
-the stoichiometries must be changed to the following:
-
-\begin{edtable}{tabular}{l@{\hspace{2pt}}ll}
-  $a_1$ &= 1
-  & (in each reaction event, 1 millimole of $A$ is consumed, expressed in millimoles)\\
-
-  $a_2$ &= 3
-  & (in each reaction event, 3 millimoles of $A$ are produced, expressed in millimoles)\\
-
-  $b_1$ &= $2 \cdot 10^{-3} \cdot m_B$
-  & (in each reaction event, 2 millimoles of $B$ are consumed, expressed in grams)\\
-
-  $c_1$ &= $6.02 \cdot 10^{20}$
-  & (in each reaction event, 1 millimole of $C$ is produced, expressed as item counts)\\
-
-  $c_2$ &= $6.02 \cdot 10^{20}$
-  & (in each reaction event, 1 millimole of $C$ is consumed, expressed as item counts)\\[6pt]
-\end{edtable}
-
-and ${k_1}'$ = $k_1 \cdot (10^3/m_B)^2$.
-\vspace*{0.75ex}
-
-What happens if instead the definition of the SBML predefined unit
-\val{substance} is changed in the model to be \val{item}?  Then
-the stoichiometries must be changed to the following:
-
-\begin{edtable}{tabular}{l@{\hspace{2pt}}ll@{}}
-  $a_1$ &= $1/(6.02 \cdot 10^{20})$
-  & (in each reaction event, 1 item of $A$ is consumed, expressed in millimoles)\\
-
-  $a_2$ &= $3/(6.02 \cdot 10^{20})$
-  & (in each reaction event, 3 items of $A$ are produced, expressed in millimoles)\\
-
-  $b_1$ &= $2 \cdot 1/(6.02 \cdot 10^{23}) \cdot m_B$
-  & (in each reaction event, 2 items of $B$ are consumed, expressed in grams)\\
-
-  $c_1$ &= 1
-  & (in each reaction event, 1 item of $C$ is produced, expressed as item counts)\\
-
-  $c_2$ &= 1
-  & (in each reaction event, 1 item of $C$ is consumed, expressed as item counts)\\[6pt]
-\end{edtable}
-
-and
-${k_1}'$ = $k_1 \cdot 6.02 \cdot 10^{20} \cdot \left(\dfrac{6.02 \cdot
-  10^{23}}{m_B}\right)^{\negmedspace{}2}$.
-\vspace*{0.75ex}
-
-And finally, what happens if the definition of the SBML predefined
-unit \val{substance} is changed in the model to be \val{gram}?
-Then the stoichiometries must be changed again, to the following:
-
-\begin{edtable}{tabular}{l@{\hspace{2pt}}ll}
-  $a_1$ &= $1000 / m_A$
-  & (in each reaction event, 1 gram of $A$ is consumed, expressed in millimoles)\\
-
-  $a_2$ &= $3000 / m_A$
-  & (in each reaction event, 3 grams of $A$ are produced, expressed in millimoles)\\
-
-  $b_1$ &= 2
-  & (in each reaction event, 2 grams of $B$ are consumed, expressed in grams)\\
-
-  $c_1$ &= $6.02 \cdot 10^{23} \cdot m_C$
-  & (in each reaction event, 1 gram of $C$ is produced, expressed as item counts)\\
-
-  $c_2$ &= $6.02 \cdot 10^{23} \cdot m_C$
-  & (in each reaction event, 1 gram of $C$ is consumed, expressed as item counts)\\[6pt]
-\end{edtable}
-
-and ${k_1}'$ = $k_1 \cdot 10^{-3} \cdot m_A$, where $m_A$, $m_B$,
-and $m_C$ are the molecular masses of species $A$, $B$, and $C$,
-respectively.
-
-In all of these cases, one straightforward approach to computing
-the value of ${k_1}'$ is to use an \InitialAssignment construct
-for setting the value of ${k_1}'$ to the result of a formula such
-as one of those given in the examples above.  And finally, note
-that if the species units \emph{were} the same throughout (and in
-most models they are), the unit conversion aspects of the SBML
-stoichiometries would become unity, leaving only the expected
-biochemical stoichiometry values.  Isn't that nice?
-
 
 \subsubsection{Use of reaction identifiers in mathematical expressions}
 \label{subsec:reaction-as-symbol}

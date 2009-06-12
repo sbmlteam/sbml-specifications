@@ -817,7 +817,7 @@ using the \Unit and \UnitDefinition constructs:
 <listOfUnitDefinitions>
     <unitDefinition id="foot">
         <listOfUnits>
-            <unit kind="metre" multiplier="0.3048" scale="0" multiplier="1"/>
+            <unit kind="metre" multiplier="0.3048" scale="0" exponent="1"/>
         </listOfUnits>
     </unitDefinition>
 </listOfUnitDefinitions>
@@ -2995,7 +2995,7 @@ tool does not implement support for the corresponding concept.
 \paragraph{The \token{compartment} attribute on \class{Reaction}}
 \label{sec:reaction-compartment}
 
-
+TODO: describe compartment attribute
 
 \paragraph{The \token{sboTerm} attribute on \class{Reaction}}
 \label{sec:reaction-sboterm}
@@ -3315,7 +3315,71 @@ and modifiers of other reactions in the model.
 \subsubsection{\class{LocalParameter}}
 \label{subsec:localparameter}
 
-TODO: Description of local parameters
+The kinetic law of a \Reaction can contain a list of local parameters that
+are only used by the rate law of this specific reaction. The list contains
+\LocalParameter objects that associate a symbol  with a
+value; this symbol can then be used in the kinetic law. 
+The definition of \LocalParameter is shown in Figure~\vref{fig:reaction}.
+
+\paragraph{The \token{id} and \token{name} attributes}
+
+\LocalParameter has a required attribute \token{id}, of type
+\primtype{SId}, to give the local parameter an identifier by which
+the rate law can refer to it.  A local
+parameter can also have an optional \token{name} attribute of type
+\primtype{string}.  Identifiers and names must be used according
+to the guidelines described in Section~\ref{sec:idnameattribs}.
+
+TODO explain scope for ID
+
+\paragraph{The \token{value} attribute}
+
+The optional attribute \token{value} determines the value (of type
+\primtype{double}) assigned to the identifier.  A missing
+\token{value} attribute implies that the value either is unknown, or
+to be obtained from an external source.
+
+\paragraph{The \token{units} attribute}
+
+The units associated with the value of the local parameter are specified
+by the attribute \token{units}.  The value assigned to
+the local parameter's \token{units} attribute must be chosen
+from one of the following possibilities: one of the base unit
+identifiers from Table~\vref{tab:unitkind}; one of the predefined
+unit identifiers appearing in first column of
+Table~\vref{tab:predefined}; or the identifier of a new unit defined
+in the list of unit definitions in the enclosing \Model definition.
+There are no constraints on the units that can be chosen from
+these sets.  There are no default units for parameters.
+
+When the local parameter identifier appears in the rate law, the units associated
+with the value are those declared by the local parameter's \token{units} attribute.
+
+The fact that parameter units are optional, and that no defaults
+are defined, means that models can define parameters with
+undeclared units.  If such local parameters appear in a rate law, it may not be possible for a
+software tool to verify the consistency of units used in the
+expressions.  Modelers and software tools should therefore assign
+units to local parameters whenever possible.
+
+
+\paragraph{The \token{sboTerm} attribute}
+
+The \LocalParameter object inherits from \SBase the optional \token{sboTerm} attribute of
+type \primtype{SBOTerm} (see Sections~\ref{sec:sboterm-type}
+and~\ref{sec:sboTerm}).  When a value is given to this attribute in a
+local parameter definition, the value should be an SBO identifier
+referring to a quantitative parameter defined in SBO (\ie terms
+derived from \sboparameter).  The relationship is of the form
+``the SBML parameter \emph{is a} X'', where X is the SBO term.
+The term chosen should be the most precise (narrow) one that
+captures the role of the parameter in the model.
+
+As discussed in Section~\ref{sec:sboTerm}, SBO labels are optional
+information on a model.  Applications are free to ignore
+\token{sboTerm} values.  A model must be interpretable without the
+benefit of SBO labels.
+
 
 \subsubsection{\class{KineticLaw}}
 \label{subsec:kinetic-law}
@@ -3330,7 +3394,7 @@ attributes and elements it inherits from \SBase.
 \paragraph{The \token{math} element}
 
 As shown in Figure~\vref{fig:reaction}, \KineticLaw 
-has a element called \token{math} for holding a MathML formula
+has an element called \token{math} for holding a MathML formula
 defining the rate of the reaction.  The expression in \token{math}
 may refer to species identifiers, as discussed in
 Section~\ref{sec:ci-token}.  The only \Species identifiers that
@@ -3338,8 +3402,8 @@ can be used in \token{math} are those declared in the lists of
 reactants, products and modifiers in the \Reaction object (see
 Sections~\ref{subsec:simplespeciesreference},
 \ref{subsec:speciesreference} and~\ref{subsec:modifierreference}).
-\Parameter identifiers may be taken from the \KineticLaw's list of
-local parameters (see below) or the parameters defined globally on
+\LocalParameter identifiers can only be taken from the \KineticLaw's list of
+local parameters (see below); \Parameter identifiers refer to the parameters defined globally on
 the \Model instance.
 
 Section~\ref{sec:about-kinetic-laws} provides important
@@ -3354,7 +3418,7 @@ one or more \LocalParameter objects (Section~\ref{subsec:localparameter})
 which define new parameters whose identifiers can be used in the
 \token{math} formula.  As discussed in
 Section~\ref{sec:identifiers}, reactions introduce local
-namespaces for parameter identifiers, and within a
+namespaces for local parameter identifiers, and within a
 \KineticLaw object, a local parameter whose identifier is
 identical to a global identifier defined in the model takes
 precedence over the value associated with
@@ -3423,26 +3487,29 @@ expression.
     <listOfUnitDefinitions>
         <unitDefinition id="per_concent_per_time">
             <listOfUnits>
-                <unit kind="litre"/>
-                <unit kind="mole"   exponent="-1"/>
-                <unit kind="second" exponent="-1"/>
+                <unit kind="litre" exponent="1" scale="0" multiplier="1"/>
+                <unit kind="mole"   exponent="-1" scale="0" multiplier="1"/>
+                <unit kind="second" exponent="-1" scale="0" multiplier="1"/>
             </listOfUnits>
         </unitDefinition>
     </listOfUnitDefinitions>
     ...
     <listOfSpecies>
-        <species id="S1" compartment="c1" initialConcentration="2.0"/>
-        <species id="S2" compartment="c1" initialConcentration="0.5"/>
-        <species id="X0" compartment="c1" initialConcentration="1.0"/>
+        <species id="S1" compartment="c1" initialConcentration="2.0" 
+              hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false"/>
+        <species id="S2" compartment="c1" initialConcentration="0.5" 
+              hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false"/>
+        <species id="X0" compartment="c1" initialConcentration="1.0" 
+              hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false"/>
     </listOfSpecies>
     ...
     <listOfReactions>
-        <reaction id="J1">
+        <reaction id="J1" reversible="false" fast="false">
             <listOfReactants>
-                <speciesReference species="X0"/>
+                <speciesReference species="X0" stoichiometry="1"/>
             </listOfReactants>
             <listOfProducts>
-                <speciesReference species="S1"/>
+                <speciesReference species="S1" stoichiometry="1"/>
             </listOfProducts>
             <listOfModifiers>
                 <modifierSpeciesReference species="S2"/>

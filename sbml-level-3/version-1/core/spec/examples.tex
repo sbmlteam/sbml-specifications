@@ -110,7 +110,12 @@ a result, the corresponding ``kinetic law'' formulas do not need
 volume corrections.  In Gillespie's approach, the constants in the
 rate expressions (here, \val{c1} and \val{c2}) contain a
 contribution from the kinetic constants of the reaction and the
-size of the compartment in which the reactions take place.
+size of the compartment in which the reactions take
+place. This is a convention commonly adopted by stochastic
+modellers, but is in no way essential --- it is perfectly
+reasonable to factor volume out of the rate constants, and in
+certain situations it may be desirable to do so (eg. for models having
+time-varying compartment volume).
 Finally, it is worth noting the rate expression for the forward
 reaction is a second-order mass-action reaction, but it is the
 \emph{discrete} formulation of such a reaction
@@ -126,7 +131,58 @@ would likely misinterpret the model (in particular the reaction
 rate formulas), unless it deduced that a discrete stochastic
 simulation was intended.  One of the purposes of SBO annotations
 (Section~\ref{sec:sboTerm}) is to enable such interpretation
-without the need for deduction.
+without the need for deduction. However, the interpretation of the
+model is essentially the same irrespective of whether the model is
+to be simulated in a deterministic or stochastic manner, and a
+properly SBML-compliant deterministic simulator will in most cases
+correctly simulate from the continuous deterministic approximation
+to the stochastic model even if they have no stochastic simulation
+capability.
+
+The interpretation of rate laws for stochastic models is similar
+to, yet different from that of deterministic models. Taking the
+first reaction as an example, the rate law is $c_1P(P-1)/2$ reaction
+events per second. In the continuous deterministic case, the
+interpretation of this is that the extent of the reaction in time
+$dt$ is $[c_1P(P-1)/2]dt$ (and this leads naturally to the usual ODE
+formulation of the model). In the stochastic case, the
+interpretation is that the \emph{propensity} (or \emph{rate}, or
+\emph{hazard}) of the reaction is $c_1P(P-1)/2$. That is, the
+\emph{probability} of a single reaction event occuring in time
+$dt$ is $[c_1P(P-1)/2]dt$. This interpretation leads to a Markov
+jump process for the system dynamics, where the inter-event times
+are exponentially distributed. Such dynamics can be simulated
+using a discrete event simulation algorithm such as the
+\emph{Gillespie algorithm}. In this case, the algorithm for
+simulating the model can be described as follows:
+
+\begin{enumerate}
+\item Initialise $t:=0,\ c_1:=0.00166,\ c_2:=0.2,\ P:=301,\ P_2:=0$
+\item Compute $h_1:=c_1P(P-1)/2,\ h_2:=c_2P_2$
+\item Compute $h_0=h_1+h_2$
+\item Simulate $t'\sim \operatorname{Exp}(h_0)$ and set $t:=t+t'$
+\item With probability $h_1/h_0$ set $P:=P-2,\ P_2:=P_2+1$,
+otherwise set $P:=P+2,\ P_2:=P_2-1$.
+\item Output $t,\ P,\ P_2$
+\item If $t<T_{max}$, return to step 2
+\end{enumerate}
+
+However, this is a simulation algorithm and not a precise
+mathematical description. Such a description can be provided by
+writing the model as a time change of a pair of independent unit
+Poisson processes. Let $N_1(t)$ and $N_2(t)$ be the counting
+functions of these processes, so that for each $i=1,2$, $t>0$,
+$N_i(t)\sim \operatorname{Poisson}(t)$. Then, writing $P(t)$ and
+$P_2(t)$ for the numbers of molecules of $P$ and $P_2$ at time
+$t$, we have:
+\begin{align*}
+P_2(t) &= N_1\left(\int_0^t
+c_1\frac{P(\tau)[P(\tau)-1]}{2}d\tau\right) - N_2\left(\int_0^t
+c_2 P_2(\tau)d\tau\right) \\
+P(t) &= 301 - 2P_2(t)
+\end{align*}
+
+\texttt{DJW TO CHECK AND FINISH THIS!}
 
 
 %-----------------------------------------------------------------------------

@@ -1307,17 +1307,16 @@ abbreviated SBML example of a model definition:
 \label{sec:species}
 %-----------------------------------------------------------------------------
 
-A \emph{species} refers to a pool of reacting entities of a
-specific \emph{species type} that take part in reactions and are
-located in a specific \emph{compartment}.  The \Species
-object class
-is intended to represent these pools.  Its definition is
-shown in Figure~\vref{fig:species}.  
+A \emph{species} in SBML refers to a pool of entities that (a) are
+considered indistinguishable from each other for the purposes of
+the model, (b) participate in reactions, and (c) are located in a
+specific \emph{compartment}.  The SBML \Species object class is
+intended to represent these pools.  Its definition is shown in
+Figure~\vref{fig:species}.
 
 \begin{figure}[htb]
   \centering
   \small
-  \vspace*{-1.75ex}
   \begin{tikzpicture}
     \node[above=1.05in] (a) {
       \emptyClassbox{\textsl{SBase}}
@@ -1338,10 +1337,10 @@ shown in Figure~\vref{fig:species}.
     \draw[open triangle 60-] (a) -- (b);
   \end{tikzpicture}
   \vspace*{-1.5ex}
-  \caption{The definition of class \Species.  A sequence
-      of one or more instances of \Species objects can be located
-      in an instance of \ListOfSpecies in \Model, as shown in
-      Figure~\protect\ref{fig:model}.}
+  \caption{The definition of class \Species.  One or more
+    instances of \Species objects can be located in an instance of
+    \ListOfSpecies in \Model, as shown in
+    Figure~\protect\ref{fig:model}.}
   \label{fig:species}
 \end{figure}
 
@@ -1357,6 +1356,25 @@ attribute, of type \primtype{string}.  The \token{name} and \token{id}
 attributes must be used as described in
 Section~\ref{sec:idnameattribs}.
 
+
+\subsubsection{The \token{sboTerm} attribute}
+\label{sec:species-sboterm}
+
+\Species inherits an optional \token{sboTerm}
+attribute of type \primtype{SBOTerm} from its parent
+class \SBase (see Sections~\ref{sec:sboterm-type}
+and~\ref{sec:sboTerm}).  When a value is given to this
+attribute in a \Species instance, it should be an
+SBO identifier belonging to the branch for type \Species 
+indicated in Table~\ref{tab:sboterm-availability}.  The relationship is
+of the form ``the species \emph{is a} X'', where X is
+the SBO term.  The term chosen should be the most precise (narrow)
+one that captures the role of the species in the model.
+
+As discussed in Section~\ref{sec:sboTerm}, SBO labels are optional
+information on a model.  Applications are free to ignore
+\token{sboTerm} values.  A model must be interpretable without the
+benefit of SBO labels.
 
 
 \subsubsection{The \token{compartment} attribute}
@@ -1408,7 +1426,9 @@ the species' \token{constant} attribute is \val{false},
 the species' quantity value may be overridden by an
 \InitialAssignment or changed by \AssignmentRule or
 \AlgebraicRule, and in addition, for $t > 0$, it may also be
-changed by a \RateRule or \Event{}s. (However, some constructs are
+changed by a \RateRule, \Event{}s, and as a result of being a
+reactant or product in one or more \Reaction{}s. 
+(However, some constructs are
 mutually exclusive; see Sections~\ref{sec:rules}
 and~\ref{sec:events}.) It is not an error to define
 \token{initialAmount} or \token{initialConcentration} on a species
@@ -1418,15 +1438,17 @@ that case is ignored.  Section~\ref{sec:before-t0} provides
 additional information about the semantics of assignments, rules
 and values for simulation time $t \leq 0$.
 
-The units of the value in the \token{initialAmount}
-attribute are set by the \token{substanceUnits}
-attribute on \Species.  The units of the
-value in the \token{initialConcentration} attribute are
+The units of the value in the \token{initialAmount} attribute are
+set by the \token{substanceUnits}.  The units of the value in the
+\token{initialConcentration} attribute are
 \quantity{substance}/\quantity{size} units.  The units of
 \quantity{substance} are those defined in the
 \token{substanceUnits}, and the \quantity{size} units are those
-given in the definition of the size of the \Compartment
-  in which the species is located.
+given in the definition of the size of the \Compartment in which
+the species is located.  Additional comments about the  units of
+species quantities are given in Section~\ref{sec:species-units}, and 
+the interpretation of species quantities under different
+conditions is explained in Section~\ref{sec:species-meaning}.
 
 
 \subsubsection{The \token{substanceUnits} and
@@ -1436,71 +1458,28 @@ given in the definition of the size of the \Compartment
 The units associated with a species' quantity, referred to as the
 \emph{units of the species}, are determined via the optional
 attributes \token{substanceUnits} and
-\token{hasOnlySubstanceUnits}, in combination with the
-  units of the size defined for the compartment object
-  in which the species are located.
+\token{hasOnlySubstanceUnits} in combination with the units of the
+size defined for the compartment object in which the species are
+located.
 
-The attribute \token{hasOnlySubstanceUnits} takes on boolean values
-and defaults to \val{false}.  This attribute's role is to indicate
-whether the units of the species, when the species identifier
-appears in mathematical formulas, are intended to be concentration
-or amount.  Although it may seem as though this intention could be
-determined based on whether \token{initialConcentration} or
-\token{initialAmount} is set, the fact that these two attributes are
-optional means that a separate flag is needed.  (Consider the
-situation where neither is set, and instead the species' quantity
-is established by an \InitialAssignment or \AssignmentRule.)
-
-The possible values of \emph{units of the species} are summarized
-in Table~\ref{tab:speciesunits}.  The \emph{units of the species}
-are of the form \quantity{substance}/\quantity{size} units (\ie
+The attribute \token{hasOnlySubstanceUnits} takes on boolean
+values and defaults to \val{false}.  This attribute's role is to
+indicate whether the units of the species, when the species
+identifier appears in mathematical formulas, are intended to be
+concentration or amount.  Although it may seem as though this
+intention could be determined based on whether
+\token{initialConcentration} or \token{initialAmount} is set, the
+fact that these two attributes are optional means that a separate
+flag is needed.  (Consider the situation where neither is set, and
+instead the species' quantity is established by an
+\InitialAssignment or \AssignmentRule.)  The interpretation rule
+is the following.  The \emph{units of the species} are of the form
+\quantity{substance}/\quantity{size} units (\ie
 \quantity{concentration} units, using a broad definition of
-concentration) if the compartment's \token{spatialDimensions} is
-non-zero and \token{hasOnlySubstanceUnits} has the value
-\val{false}.  The \emph{units of the species} are of the form
-\quantity{substance} if \token{hasOnlySubstanceUnits} has the
-value \val{true} \emph{or} \token{spatialDimensions} is zero.
-(This dependence is due to the fact that a zero-dimensional
-compartment cannot support concentrations or densities.)  The
-units of \quantity{substance} are those defined by the
-\token{substanceUnits} attribute, and the
-\quantity{size} units are those of the size of the
-  compartment in which the species is located.  This compartment
-  is the one identified by the species'
-  \token{compartment} attribute.
-
-
-\begin{table}[htb]
-  \centering
-  \small
-  \vspace*{-1ex}
-  \begin{edtable}{tabular}{lll}
-    \toprule
-    \textbf{value of} &
-    \textbf{\emph{units of the species} when} &
-    \textbf{\emph{units of the species} when}\\[-1pt]
-    \textbf{\token{hasOnlySubstanceUnits}}&
-    \textbf{\token{spatialDimensions} is greater than 0} &
-    \textbf{\token{spatialDimensions} is 0}\\
-    \midrule
-    \texttt{false} (default) & $substance/size$ & $substance$ \\
-    \texttt{true} & $substance$ & $substance$ \\
-    \bottomrule
-  \end{edtable}
-  \vspace*{-0.5ex}
-  \caption{How to interpret the value of the \Species \token{hasOnlySubstanceUnits}
-  attribute.}
-  \label{tab:speciesunits}
-\end{table}
-
-As an aside, we note that treating species in terms of
-\quantity{substance} units (\ie discrete quantities such as
-molecule counts) rather than concentrations is common when using
-discrete stochastic simulation
-frameworks~\citep{gillespie:1977,wilkinson_2006}.  The appropriate
-way of accomplishing this in SBML is to set
-\token{hasOnlySubstanceUnits}=\val{true} in the species'
-definitions.
+concentration) if \token{hasOnlySubstanceUnits} has the value
+\val{false}.  Otherwise, if \token{hasOnlySubstanceUnits} has the
+value \val{true}, then the \emph{units of the species} are of the
+form \quantity{substance}.
 
 The value chosen for \token{substanceUnits} must be
 either a base unit from Table~\vref{tab:unitkind}, a predefined unit
@@ -1511,6 +1490,17 @@ definition in the enclosing model.  The chosen units for
 units derived from these.  The \token{substanceUnits}
 attribute defaults to the the predefined unit
 ``\token{substance}'' shown in Table~\vref{tab:predefined}.
+
+% FIXME this should be a best practice:
+%
+% As an aside, we note that treating species in terms of
+% \quantity{substance} units (\ie discrete quantities such as
+% molecule counts) rather than concentrations is common when using
+% discrete stochastic simulation
+% frameworks~\citep{gillespie:1977,wilkinson_2006}.  The appropriate
+% way of accomplishing this in SBML is to set
+% \token{hasOnlySubstanceUnits}=\val{true} in the species'
+% definitions.
 
 The \emph{units of the species} are used in the following ways:
 \begin{itemize}
@@ -1615,24 +1605,43 @@ into ODEs a model that uses \token{boundaryCondition} and
 \token{constant} attributes.
 
 
-\subsubsection{The \token{sboTerm} attribute}
-\label{sec:species-sboterm}
+\subsubsection{Interpretation of the numerical value of a species}
+\label{sec:species-meaning}
 
-\Species inherits an optional \token{sboTerm}
-attribute of type \primtype{SBOTerm} from its parent
-class \SBase (see Sections~\ref{sec:sboterm-type}
-and~\ref{sec:sboTerm}).  When a value is given to this
-attribute in a \Species instance, it should be an
-SBO identifier belonging to the branch for type \Species 
-indicated in Table~\ref{tab:sboterm-availability}.  The relationship is
-of the form ``the species \emph{is a} X'', where X is
-the SBO term.  The term chosen should be the most precise (narrow)
-one that captures the role of the species in the model.
+Species are unique in SBML in that they have a kind of duality: a
+species identifier may stand for either an amount (meaning, a
+count of the number of individual entities) or a concentration or
+density (meaning, an amount divided by a compartment size).  The
+previous sections explain the meaning of a species identifier when
+it is referenced in a mathematical formula or in rules or other
+SBML constructs; however, it remains to specify what happens to a
+species when the compartment in which it is located changes in size.
 
-As discussed in Section~\ref{sec:sboTerm}, SBO labels are optional
-information on a model.  Applications are free to ignore
-\token{sboTerm} values.  A model must be interpretable without the
-benefit of SBO labels.
+When a species definition has the attribute setting
+\token{hasOnlySubstanceUnits}=\val{false} and the size of the
+compartment in which it is located changes, the default behavior
+in SBML is to \emph{preserve the amount}.  Upon such changes, the
+value of the concentration or density must be recalculated from
+the simple relationship \emph{concentration} =
+\emph{amount}/\emph{size} if the value of the concentration is
+needed (for example, if the species identifier appears in a
+mathematical formula or is otherwise referenced in an SBML
+construct).  There is one exception: if the species' quantity is
+determined by an \AssignmentRule, \RateRule, \AlgebraicRule, or an
+\EventAssignment, it means that the \emph{concentration} is set by
+the rule or event; in that case, it is the amount that needs to be
+calculated when the compartment size changes.  Events also require
+additional care in this situation, because an event with multiple
+assignments could conceivably reassign both a species quantity and
+a compartment size simultaneously.
+Section~\ref{sec:eventassignment} describes the handling of
+species in event assignments.)
+
+Note that the above only matters if a species has the attribute
+\token{hasOnlySubstanceUnits}=\val{false}.  If the attribute's
+value is \val{true}, then the identifier of the species always
+stands for an amount wherever it appears in a mathematical formula
+or is referenced by an SBML construct.
 
 
 \subsubsection{Example}
@@ -3905,6 +3914,9 @@ formula, and the units of the entity which the assignment affects,
 should be explicitly established just as in the case of the value of
 \token{delay}.
 
+
+% FIXME explain how to handle species quantities if an event sets
+% both a species and a compartment size at the same time.
 
 
 

@@ -115,7 +115,12 @@ place. This is a convention commonly adopted by stochastic
 modellers, but is in no way essential --- it is perfectly
 reasonable to factor volume out of the rate constants, and in
 certain situations it may be desirable to do so (eg. for models having
-time-varying compartment volume).
+time-varying compartment volume), but due to the use of substance
+units, it must be done differently to the deterministic case.
+Thirdly, although the reaction is reversible, it is encoded as two
+separate irreversible reactions, one each for the forward and
+reverse directions, as averaging over the reactions will affect
+the stochasticity.
 Finally, it is worth noting the rate expression for the forward
 reaction is a second-order mass-action reaction, but it is the
 \emph{discrete} formulation of such a reaction
@@ -136,7 +141,7 @@ model is essentially the same irrespective of whether the model is
 to be simulated in a deterministic or stochastic manner, and a
 properly SBML-compliant deterministic simulator will in most cases
 correctly simulate from the continuous deterministic approximation
-to the stochastic model even if they have no stochastic simulation
+to the stochastic model even if it has no stochastic simulation
 capability.
 
 The interpretation of rate laws for stochastic models is similar
@@ -148,7 +153,7 @@ $dt$ is $[c_1P(P-1)/2]dt$ (and this leads naturally to the usual ODE
 formulation of the model). In the stochastic case, the
 interpretation is that the \emph{propensity} (or \emph{rate}, or
 \emph{hazard}) of the reaction is $c_1P(P-1)/2$. That is, the
-\emph{probability} of a single reaction event occuring in time
+\emph{probability} of a single reaction event occurring in time
 $dt$ is $[c_1P(P-1)/2]dt$ (and note that the \emph{expected} extent of
 the reaction will be $[c_1P(P-1)/2]dt$). This interpretation leads to a Markov
 jump process for the system dynamics, where the inter-event times
@@ -169,13 +174,13 @@ otherwise set $P:=P+2,\ P_2:=P_2-1$.
 Although this is a simulation algorithm is a very practical way of
 describing how to construct exact realisations of the Markov jump
 process corresponding to the discrete stochastic kinetic model, it
-is not a consise mathematical description. Such a description can
+is not a concise mathematical description. Such a description can
 be provided by writing the model as a time change of a pair of
 independent unit Poisson processes. Let $N_1(t)$ and $N_2(t)$ be
 the counting functions of these processes, so that for each
 $i=1,2$, $t>0$, $N_i(t)\sim \operatorname{Poisson}(t)$. Then,
 writing $P(t)$ and $P_2(t)$ for the numbers of molecules of $P$
-and $P_2$ at time $t$, we have that the stochastic process
+and $P_2$ at time $t$, respectively, we have that the stochastic process
 $\{P(t),P_2(t)|t>0\}$ satisfies the stochastic integral equation
 \begin{align*}
 P_2(t) &= N_1\left(\int_0^t
@@ -183,8 +188,38 @@ c_1\frac{P(\tau)[P(\tau)-1]}{2}d\tau\right) - N_2\left(\int_0^t
 c_2 P_2(\tau)d\tau\right) \\
 P(t) &= 301 - 2P_2(t).
 \end{align*}
+The above representation is arguably the most useful for
+mathematical analysis of the stochastic model; see \cite{ball:2006} for
+details. Another popular representation is the so-called chemical
+Master equation (CME) for the probability distribution of the possible
+states at all times \citep{gillespie:1992}. In this case, since there are
+151 possible states of the system (corresponding to the 151
+possible values of $P_2$), the CME consists of 151 coupled
+ODEs, \emph{viz}
+\[
+\frac{d}{dt}p(P,P_2,t) =
+\left\{
+\begin{array}{ll}
+\displaystyle-\frac{c_1}{2}\times 301\times 299p(301,0,t)+c_2p(299,1,t),
+&P=301,\ P_2=0,\\
+\displaystyle\frac{c_1}{2}(P+2)(P+1)p(P+2,P_2-1,t)-\frac{c_1}{2}P(P-1)p(P,P_2,t)&P=301-x,\ P_2=x,\\
+\qquad+c_2(P_2+1)p(P-2,P_2+1,t)-c_2P_2p(P,P_2,t),
+&\quad x=1,2,\ldots,149,\\
+\displaystyle\frac{c_1}{2}\times 2\times 3p(3,149,t)-c_2\times 150p(1,150,t),
+&P=1,\ P_2=150,
+\end{array}
+\right.
+\]
+where $p(P,P_2,t)$ denotes the probability that there are $P$
+molecules of $P$ and $P_2$ molecules of $P_2$ at time $t$, and the
+ODEs are subject to the initial conditions
+\[
+p(301,0,0)=1,\ p(301-2x,x,0)=0,\ x=1,2,\ldots,150.
+\]
+See \cite{evans:2008} for further examples of discrete stochastic
+kinetic models encoded in SBML and \cite{wilkinson_2006} for an
+introduction to discrete stochastic modelling using SBML.
 
-\texttt{DJW TO CHECK AND FINISH THIS!}
 
 
 %-----------------------------------------------------------------------------

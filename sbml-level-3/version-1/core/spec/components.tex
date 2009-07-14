@@ -11,7 +11,7 @@ We use the UML notation described in
 Section~\ref{sec:notation-uml} for defining classes of objects.
 We also illustrate the use of SBML components by giving partial
 model definitions in XML.  Section~\ref{sec:xml-rep} provides many
-full examples of SBML in XML.
+complete examples of SBML in XML.
 
 
 %-----------------------------------------------------------------------------
@@ -23,25 +23,39 @@ All well-formed SBML documents must begin with an \emph{XML
   declaration}, which specifies both the version of XML assumed
 and the document character encoding.  The declaration begins with
 the characters \token{<?xml} followed by the XML \token{version}
-and \token{encoding} attributes.  \thisL uses XML version 1.0 and
-requires a document encoding of UTF-8.  Following this
+and \token{encoding} attributes.  SBML \thisL uses XML version 1.0
+and requires a document encoding of UTF-8.  Following this
 declaration, the outermost portion of a model expressed in \thisL
 consists of an object of class \Sbml, defined in
 Figure~\ref{fig:sbml}.  This class contains two required
-attributes (\token{level} and \token{version}), an optional
-\token{listOfPackages} element, and a required \token{model}
-element.
-\todo{MH}{may need changing}
+attributes (\token{level} and \token{version}), and a required
+\token{model} element.
 
 \begin{figure}[htb]
   \centering
   \small
-  \includegraphics[scale=0.8]{figs/sbml-uml}
+  \begin{tikzpicture}[level distance=1.05in]
+    \node { \emptyClassbox{\textsl{SBase}} }
+      [open triangle 60-,edge from parent fork down,sibling distance=2.75in]
+      child {node (a) {
+          \begin{classbox}{Sbml}
+            xmlns: string \{ "http://www.sbml.org/sbml/level3/version1/core" \} \\
+            level: positiveInteger \{ use="required" fixed="3" \}   \\
+            version: positiveInteger \{ use="required" fixed="1" \} \\
+            \{ \emph{Additional attributes permitted} \} \\
+          \end{classbox}
+        }}
+      child {node (b) {
+          \emptyClassbox{Model}
+        }}
+     ;
+     \draw[diamond-] (a) -- (b) 
+       node[above=6pt,left=0.65in] {\textsf{model}};
+  \end{tikzpicture}
   \caption{The definition of \Sbml for SBML \thisLV.  The class
-    \Model is defined in Section~\ref{sec:model}.  Note that
-    \Sbml, \Model and \ListOfPackages are all subclasses of
-    \SBase, and therefore inherit the attributes of that abstract
-    class.}
+    \Model is defined in Section~\ref{sec:model}.  Note that \Sbml
+    and \Model are subclasses of \SBase, and therefore inherit
+    the attributes of that abstract class.}
   \label{fig:sbml}
 \end{figure}
 
@@ -61,7 +75,6 @@ XML form for an SBML Level~3 Version~1 document (and here,
 ellipses are used to indicate content elided from this example):
 
 \begin{example}
-
 <?xml version="1.0" encoding="UTF-8"?>
 <sbml xmlns="http://www.sbml.org/sbml/level3/version1/core" level="3" version="1">
   ...
@@ -69,55 +82,12 @@ ellipses are used to indicate content elided from this example):
      ...
   </model>
 </sbml>
-
 \end{example}
 
-Readers may wonder why the SBML top-level XML element uses
-\emph{both} a namespace URI identifying the SBML level and
-version, as well as separate XML attributes giving the level and
-version.  Why is the information duplicated?  There are several
-reasons.  First, XML is only one possible serialization of SBML
-(albeit an extremely popular one at this time).  Though most of
-this document is written with XML in mind, it is the intention
-behind the design of SBML that its object structure should be
-implementable in other languages and software systems.
-Programmatic access is easier if the level and version information
-are accessible directly as data rather than have to be extracted
-from a string.  Second, generic high-level XML parsers may not
-give their calling programs access to the value of the
-\texttt{xmlns} attribute.  Providing the information via separate
-attributes is a good backup measure.  And finally, earlier in the
-history of SBML, it was expected that only the level needed to be
-encoded as part of the namespace URI (e.g.,
-\uri{http://www.sbml.org/sbml/level1}) because it was hoped that
-changes within levels would not require XML Schema changes.  This
-has proven to be false, but SBML Level~1 (both versions) and the
-first version of SBML Level~2 still subscribe to this principle.
-This means that for these variants of SBML, software tools must
-look for a \token{version} attribute on the top-level element.
-For backwards compatibility with software that expects this, it
-makes more sense to keep the version and level attributes.
-
-
-\subsubsection{The \token{listOfPackages} element}
-
-As shown in Figure~\ref{fig:sbml}, the SBML document may contain
-an optional \token{listOfPackages} element, which (if present)
-must contain one or more instances of \Package object.  Each of
-the latter constitutes a \emph{package reference}; this is a
-declaration that the current SBML document makes use of features
-defined in a named SBML Level~3 package.
-Section~\ref{sec:package} explains the SBML Level~3 package
-concept in more detail.
-
-It is important to note that an additional requirement for XML
-conformance is the presence of an XML namespace declaration for
-every Level~3 package used in an SBML document.  This declaration
-can come on the \token{sbml} element (see Figure~\ref{fig:sbml}),
-or it can appear wherever the Level~3 package elements and
-attributes are used.  Using an SBML Level~3 package requires
-\emph{both} declaring the XML namespace, and referencing the
-package in the \token{listOfPackages} element.
+The \token{sbml} element may contain additional attributes, in
+particular attributes to support the inclusion of SBML Level~3
+packages.  Section~\ref{sec:packages} explains this in more
+detail.
 
 
 \subsubsection{The \token{model} element}
@@ -132,122 +102,80 @@ there must still be \emph{one} top-level model defining the
 structure of the overall composition.)
 
 
-\subsubsection{The ListOf container classes}
-\label{sec:listof}
-\label{sec:listofunitdefinitions}
-\label{sec:listoffunctiondefinitions}
-\label{sec:listofcompartments}
-\label{sec:listofspecies}
-\label{sec:listofparameters}
-\label{sec:listofinitialassignments}
-\label{sec:listofinitialassign}
-\label{sec:listofrules}
-\label{sec:listofconstraints}
-\label{sec:listofreactions}
-\label{sec:listofevents}
-\label{sec:listofpackages}
-
-The \ListOfPackages class defined in Figure~\ref{fig:sbml} and the
-various other \ListOf classes defined in Figure~\ref{fig:model}
-are merely containers used for organizing the main components of
-an SBML document.  All are derived from the abstract class \SBase
-(Section~\ref{sec:sbase}), and inherit \SBase's various attributes
-and subelements such as \token{metaid} and \token{annotation},
-although in SBML \thisLVR there are no defined SBO terms for the
-\token{sboTerm} attribute.  The \ListOf classes do not add any
-attributes of their own.
-
-There are several motivations for grouping SBML components within
-XML elements named after \token{listOfClassNames}, rather than
-placing the components all directly at the top level.  First, the
-fact that the container classes are derived from \SBase means that
-software tools can add information about the lists themselves into
-each list container's \token{annotation}, a feature that a number
-of today's software tools exploit.  Second, we believe the
-grouping leads to a more modular structure that is helpful when
-working with elements from multiple SBML Level~3 packages.  Third,
-we believe that it makes visual reading of models in XML easier,
-for situations when humans must inspect and edit SBML directly.
-
-
-%-----------------------------------------------------------------------------
-\subsection{Package}
-\label{sec:package}
-%-----------------------------------------------------------------------------
-
-% \begin{wrapfigure}[9]{r}{2.6in}
+\subsubsection{Package declarations}
 
 SBML Level~3 is intended to be modular, in the sense of having a
 defined core set of features and optional packages adding features
 on top of the core.  This modular approach means that models can
 declare which feature-sets they use, and likewise, software tools
-can declare which packages they support.  The mechanism for
-indicating which packages are used in a given SBML model is a list
-of \Package object definitions.  The definition of \Package is
-shown in Figure~\vref{fig:package}.  A list of one or more
-instances of \Package objects can be located in an instance of
-\ListOfPackages in \Sbml, as shown in Figure~\vref{fig:sbml}.
+can declare which packages they support.  The mechanism for models
+to declare which packages they use involves two parts: a standard
+XML namespace declaration, and an attribute that every package
+must declare in this namespace.
+\begin{enumerate}
 
-\begin{figure}[htb]
-  \centering
-  \begin{tikzpicture}
-    \node[above=0.4in] (a) {
-      \emptyClassbox{\textsl{SBase}}
-    };
-    \node (b) {
-      \begin{classbox}{\textcolor{black}{Package}}
-        namespace: string\\
-        required: boolean\\
-      \end{classbox}
-    };
-    \draw[open triangle 60-] (a) -- (b);
-  \end{tikzpicture}
-  \caption{The definition of \Package.}
-  \label{fig:package}
-\end{figure}
+\item Every SBML Level~3 package is identified uniquely by an XML
+  namespace URI.  The use of a given SBML Level~3 package must be
+  declared by a model using the standard XML namespace declaration
+  approach.  The declaration is made using the character sequence
+  \token{xmlns:}, followed by additional characters providing a
+  prefix by which elements and attributes in that namespace are
+  known in the rest of the SBML document, and finally followed by
+  the namespace URI as a value.  The following is an example of
+  namespace declarations for a package nicknamed \val{multi} and
+  another package nicknamed \val{layout} (and here, ellipses are
+  used to indicate content elided from this example):
+  \begin{example}
+<sbml xmlns="http://www.sbml.org/sbml/level3/version1/core" level="3" version="1"
+      xmlns:multi="http://www.sbml.org/sbml/level3/version1/multi/version1"
+      xmlns:layout="http://www.sbml.org/sbml/level3/version1/layout/version1"
+...
+</sbml> 
+  \end{example}
+  There are no restrictions on the prefixes used for XML
+  namespaces referring to SBML Level~3 packages (\ie the strings
+  \val{multi} and \val{layout} in the example above) beyond those
+  imposed by the relevant specifications of XML~1.0 and XML
+  namespaces.
 
-As mentioned in Section~\ref{sec:sbml}, in the XML encoding of
-SBML, an additional requirement exists when including Level~3
-packages in a model: the XML namespace for the package must also
-be declared.  This declaration is often most conveniently made on
-the top-level \token{sbml} element, but XML also permits the
-declarations to appear on the individual elements where Level~3
-package elements and attributes are used.  Regardless of which
-approach is chosen, every package used in an SBML Level~3 package
-must be declared \emph{both} using an instance of a \Package
-object and an XML namespace declaration.
+\item SBML Level~3 requires that every package defines the
+  addition of at least one attribute named \token{required}.  The
+  attribute, being in the namespace of the Level~3 package, must
+  be referenced by the XML namespace prefix described in point
+  number 1 above.  The value of the \token{required} attribute
+  indicates whether understanding the package is required for
+  complete mathematical interpretation of a model, or whether the
+  package is optional.  A value of \token{required}=\val{true}
+  indicates that interpreting the package is required.  The
+  following is an example:
+  \begin{example}
+<sbml xmlns="http://www.sbml.org/sbml/level3/version1/core" level="3" version="1"
+      xmlns:multi="http://www.sbml.org/sbml/level3/version1/multi/version1"
+      xmlns:layout="http://www.sbml.org/sbml/level3/version1/layout/version1"
+      multi:required="true"
+      layout:required="false" >
+...
+</sbml> 
+  \end{example}
+  If a package is declared optional, it means that the elements
+  and attributes added by the package can be ignored without any
+  loss of meaning of the model's full mathematics.  ``Ignoring'' a
+  package can be accomplished in multiple ways; a reader could
+  either skip those elements or attributes altogether during
+  parsing, or read them but not interpret them, or do something
+  similar.
+  
+\end{enumerate}
 
+The XML namespace declaration for an SBML Level~3 package is an
+indication that a model makes use of features defined by that
+package, while the \token{required} attribute indicates whether
+the features may be ignored without compromising the mathematical
+meaning of the model.  Both are necessary for a complete reference
+to an SBML Level~3 package.  On the other hand, no declaration is
+necessary for the Level~3 Core package, since it is the base
+package and support for it is required in any case.
 
-\subsubsection{The \token{namespace} and \token{required} attributes}
-\label{sec:package-attributes}
-
-Every SBML Level~3 package is identified uniquely by an XML
-namespace URI.  In an instance of a \Package object appearing in a
-model, the \token{namespace} attribute must be set to this
-namespace URI string.  The URI must be the same string that is
-used in the XML namespace declaration described above.  The reason
-for the duplication is that there is no way to use the XML
-namespace declaration alone to indicate whether a software tool
-must be able to understand and use a given SBML Level~3 package to
-fully interpret a model.  This information is carried by the
-\token{required} attribute on a \Package object instance.
-
-The \token{required} attribute value indicates whether the package
-is in fact required for complete mathematical interpretation of a
-model, or whether the package is optional.  A value of
-\token{required}=\val{true} indicates that interpreting the
-package is required.  If a package is declared optional, it means
-that the elements and attributes added by the package can be
-ignored without any loss of meaning of the model's full
-mathematics.  ``Ignoring'' a package can be accomplished in
-multiple ways; a reader could either skip those elements or
-attributes altogether during parsing, or read them but not
-interpret them, or similar.
-
-No declaration is necessary for the Level~3 Core package, since it
-is the base package and support for it is required in any case.  A
-model that uses only Level~3 Core and no package would not need a
-\token{listOfPackages} element at all.
 
 
 % 2009-07-12 <mhucka@caltech.edu>
@@ -422,6 +350,44 @@ benefit of SBO labels.
 \todo{SH}{Write me.}
 
 
+
+\subsubsection{The ListOf container classes}
+\label{sec:listof}
+\label{sec:listofunitdefinitions}
+\label{sec:listoffunctiondefinitions}
+\label{sec:listofcompartments}
+\label{sec:listofspecies}
+\label{sec:listofparameters}
+\label{sec:listofinitialassignments}
+\label{sec:listofinitialassign}
+\label{sec:listofrules}
+\label{sec:listofconstraints}
+\label{sec:listofreactions}
+\label{sec:listofevents}
+
+The various \ListOf classes defined in Figure~\ref{fig:model}
+are merely containers used for organizing the main components of
+an SBML document.  All are derived from the abstract class \SBase
+(Section~\ref{sec:sbase}), and inherit \SBase's various attributes
+and subelements such as \token{metaid} and \token{annotation},
+although in SBML \thisLVR there are no defined SBO terms for the
+\token{sboTerm} attribute.  The \ListOf classes do not add any
+attributes of their own.
+
+There are several motivations for grouping SBML components within
+XML elements named after \token{listOfClassNames}, rather than
+placing the components all directly at the top level.  First, the
+fact that the container classes are derived from \SBase means that
+software tools can add information about the lists themselves into
+each list container's \token{annotation}, a feature that a number
+of today's software tools exploit.  Second, we believe the
+grouping leads to a more modular structure that is helpful when
+working with elements from multiple SBML Level~3 packages.  Third,
+we believe that it makes visual reading of models in XML easier,
+for situations when humans must inspect and edit SBML directly.
+
+
+
 %Prior to \sbmltwofour, the SBML specifications stipulated that the
 %SBO branch for \Model had be the mathematical framework
 %branch of SBO.  This turned out to be confusing and problematic.
@@ -430,7 +396,6 @@ benefit of SBO labels.
 %process or phenomenon involving different entities, making the SBO
 %branch of \sbointeraction, an appropriate one for the
 %\token{sboTerm} value on an SBML \Model.
-
 
 
 

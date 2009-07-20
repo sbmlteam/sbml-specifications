@@ -1909,7 +1909,8 @@ beginning of simulation time, \ie $t \leq 0$, while an
 \token{symbol}, of type \primtype{SIdRef}.  The value of this
 attribute in an \InitialAssignment object can be the
 identifier (\ie the value of the \token{id} attribute)
-of a \Compartment, \Species or global \Parameter elsewhere in the
+of a \Compartment, \Species, \SpeciesReference or global \Parameter 
+elsewhere in the
 model.  The purpose of the \InitialAssignment is to define the
 initial value of the constant or variable referred to by the
 \token{symbol} attribute.  (The attribute's
@@ -1967,9 +1968,9 @@ having that compartment's \token{id} as its \token{symbol} value,
 then the interpretation is that the \token{size} assigned in the
 \Compartment definition should be ignored and the value assigned
 based on the computation defined in the \InitialAssignment.
-Initial assignments can take place for \Compartment, \Species and
-global \Parameter objects regardless of the value of their
-\token{constant} attribute.
+Initial assignments can take place for \Compartment, \Species, 
+\SpeciesReference and global \Parameter objects regardless of the 
+value of their \token{constant} attribute.
 
 This does not mean that a definition of a symbol can be omitted if
 there is an \InitialAssignment object for that symbol; the symbols
@@ -1989,6 +1990,10 @@ of variable being set:
   the value determined by the formula in \token{math}.  (See
   Section~\ref{sec:species-units} for an explanation of how the
   units of the species' quantity are determined.)
+
+\item \emph{In the case of a species reference}, an \InitialAssignment
+  sets the initial stoichiometry of the referenced \SpeciesReference 
+  to the value determined by the formula in \token{math}.  
 
 \item \emph{In the case of a compartment}, an \InitialAssignment
   sets the referenced compartment's initial size to the size
@@ -2288,7 +2293,8 @@ Section~\ref{sec:ruleconstraints} below.
 The rule type \AssignmentRule is used to express equations that
 set the values of variables.  The left-hand side (the
 \token{variable} attribute) of an assignment rule can refer to the
-identifier of a \Species, \Compartment, or \Parameter object in
+identifier of a \Species, \SpeciesReference, \Compartment, 
+or \Parameter object in
 the model (but not a reaction).  The entity identified must not
 have its \token{constant} attribute set to \val{true}.  The effects of
 an \AssignmentRule are in general terms the same, but differ in
@@ -2311,6 +2317,10 @@ the precise details depending on the type of variable being set:
   words, an assignment rule cannot be defined for a species that
   is created or destroyed in a reaction unless that species is
   defined as a boundary condition in the model.
+
+\item \emph{In the case of a species reference}, an \AssignmentRule sets
+  the stoichiometry of the referenced \SpeciesReference to the value 
+  determined by the formula in \token{math}.
 
 \item \emph{In the case of a compartment}, an \AssignmentRule sets
   the referenced compartment's size to the value determined by the
@@ -2371,7 +2381,8 @@ is an \AssignmentRule object for it.  For example, there must be a
 The rule type \RateRule is used to express equations that
 determine the rates of change of variables.  The left-hand side
 (the \token{variable} attribute) can refer to the identifier of a
-species, compartment, or parameter (but not a reaction).  The
+species, species reference, compartment, or parameter (but not a 
+reaction).  The
 entity identified must have its \token{constant} attribute set to
 \val{false}.  The effects of a \RateRule are in general terms the
 same, but differ in the precise details depending on which
@@ -2397,6 +2408,10 @@ variable is being set:
   means a rate rule cannot be defined for a species that is
   created or destroyed in a reaction, unless that species is
   defined as a boundary condition in the model.
+  
+\item \emph{In the case of a species reference}, a \RateRule sets the rate
+  of change of the \SpeciesReference's stoichiometry value to that 
+  determined by the formula in \token{math}.  
   
 \item \emph{In the case of a compartment}, a \RateRule sets the
   rate of change of the compartment's size to the value determined
@@ -2455,7 +2470,7 @@ it is defined.)  This combined set of assignment statements must
 not contain algebraic loops---dependency chains between these
 statements must terminate.  To put this more formally, consider a
 directed graph in which nodes are assignment statements and
-directed arcs exist for each occurrence of an SBML species,
+directed arcs exist for each occurrence of an SBML species, species reference,
 compartment or parameter symbol in an assignment statement's
 \token{math} element.  Let the directed arcs point from the
 statement assigning the symbol to the statements that contain the
@@ -3091,6 +3106,39 @@ zero (0).
 An explanation of how exactly the stoichiometry is used in the mathematical interpretation 
 of the model is given in Section~\ref{sec:about-kinetic-laws}.
 
+
+\paragraph{The \token{constant} attribute}
+
+The \SpeciesReference object has a mandatory boolean attribute named
+\token{constant} which indicates whether the stoichiometry can
+vary during a simulation. 
+A value \val{true} for this attribute means that the stoichiometry of the referenced species 
+takes the value of the \token{stoichiometry} attribute, unless it is changed by an \InitialAssignment.
+A value of \val{false} indicates the stoichiometry 
+can be changed by rules (see Section~\ref{sec:rules}) and
+that the value of the \token{stoichiometry} attribute is actually intended to be the initial
+value of the stoichiometry.
+
+\paragraph{Use of species reference identifiers in mathematical expressions}
+
+The value of the \token{id} attribute of a \SpeciesReference can be
+used as the content of a \token{ci} element in MathML formulas
+elsewhere in the model. Such a \token{ci} element or symbol
+represents the stoichiometry of the given species in the given reaction.
+
+Furthermore, the \token{id} attribute of a \SpeciesReference can be
+used in the \token{variable} attribute of an \InitialAssignment, \RateRule,
+\AssignmentRule or \EventAssignment object, providing a way to describe
+variable stoichiometries. This is only allowed if the 
+\token{constant} attribute is set to false. 
+
+
+\paragraph{The \token{conversionFactor} attribute}
+
+TODO description of conversion factor
+
+\paragraph{Examples}
+
 The following is a simple example of a species reference for
 species \val{X0}, with stoichiometry \val{2}, in a list of
 reactants within a reaction having the identifier \val{J1}:
@@ -3099,9 +3147,9 @@ reactants within a reaction having the identifier \val{J1}:
 <model>
     ...
     <listOfReactions>
-        <reaction id="J1">
+        <reaction id="J1" reversible="false" fast="false">
             <listOfReactants>
-                <speciesReference species="X0" stoichiometry="2">
+                <speciesReference species="X0" stoichiometry="2" constant="true"/>
             </listOfReactants>
             ...
         </reaction>
@@ -3111,23 +3159,25 @@ reactants within a reaction having the identifier \val{J1}:
 </model>
 \end{example}
 
-The following is a more complex example of a species reference for
-species ``X0'', with a stoichiometry formula consisting of
-a rational number:
+The following is a more complex example of a species reference with an id ``sr01'' and 
+an initial assignment that specifies a rational number for the stoichiometry:
+
 
 \begin{example}
 <model>
     ...
+    <listOfInitialAssignments>
+        <initialAssignment symbol="sr01">
+            <math xmlns="http://www.w3.org/1998/Math/MathML">
+                <cn type="rational"> 3 <sep/> 2 </cn>
+            </math>
+        </initialAssignment>
+    </listOfInitialAssignments>
+	...
     <listOfReactions>
         <reaction id="J1" reversible="true" fast="false">
             <listOfReactants>
-                <speciesReference species="X0">
-                    <stoichiometryMath>
-                        <math xmlns="http://www.w3.org/1998/Math/MathML"> 
-                            <cn type="rational"> 3 <sep/> 2 </cn>
-                        </math>
-                    </stoichiometryMath>
-                </speciesReference>
+                <speciesReference id="sr01" species="X0" stoichiometry="1" constant="true"/>
             </listOfReactants>
             ...
         </reaction>
@@ -3136,6 +3186,7 @@ a rational number:
     ...
 </model>
 \end{example}
+
 
 A species can occur more than once in the lists of reactants and
 products of a given \Reaction instance.  The effective
@@ -3151,56 +3202,26 @@ following SBML fragment, the two reactions have the same effective
 stoichiometry for all their species:
 
 \begin{example}
-<reaction id="x">
+<reaction id="x" reversible="false" fast="false">
     <listOfReactants>
-        <speciesReference species="a"/>
-        <speciesReference species="a"/>
-        <speciesReference species="b"/>
+        <speciesReference species="a" stoichiometry="1" constant="true"/>
+        <speciesReference species="a" stoichiometry="1" constant="true"/>
+        <speciesReference species="b" stoichiometry="1" constant="true"/>
     </listOfReactants>
     <listOfProducts>
-        <speciesReference species="c"/>
-        <speciesReference species="b"/>
+        <speciesReference species="c" stoichiometry="1" constant="true"/>
+        <speciesReference species="b" stoichiometry="1" constant="true"/>
     </listProducts>
 </reaction>
-<reaction id="y">
+<reaction id="y" reversible="false" fast="false">
     <listOfReactants>
-        <speciesReference species="a" stoichiometry="2"/>
+        <speciesReference species="a" stoichiometry="2" constant="true"/>
     </listOfReactants>
     <listOfProducts>
-        <speciesReference species="c"/>
+        <speciesReference species="c" stoichiometry="1" constant="true"/>
     </listProducts>
 </reaction>
 \end{example}
-
-\paragraph{The \token{constant} attribute}
-
-The \SpeciesReference object has a mandatory boolean attribute named
-\token{constant} which indicates whether the stoichiometry can
-vary during a simulation. 
-A value \val{true} for this attribute means that the stoichiometry of the referenced species 
-takes the value of the \token{stoichiometry} attribute, unless it is changed by an \InitialAssignment.
-For interoperability reasons it is important to set the value of this attribute to 
-\val{true} whenever the model does not require variable stoichiometries.
-A value of \val{false} indicates the stoichiometry 
-can be changed by rules (see Section~\ref{sec:rules}) and
-that the value of the \token{stoichiometry} attribute is actually intended to be the initial
-value of the stoichiometry.
-
-\paragraph{Use of species reference identifiers in mathematical expressions}
-
-The value of the \token{id} attribute of a \SpeciesReference can be
-used as the content of a \token{ci} element in MathML formulas
-elsewhere in the model. Such a \token{ci} element or symbol
-represents the stoichiometry of the given species in the reaction.
-
-Furthermore, the \token{id} attribute of a \SpeciesReference can be
-used in the \token{variable} attribute of an \InitialAssignment, \RateRule,
-\AssignmentRule or \EventAssignment object.
-
-
-\paragraph{The \token{conversionFactor} attribute}
-
-TODO description of conversion factor
 
 
 
@@ -3249,10 +3270,10 @@ The definition of \LocalParameter is shown in Figure~\vref{fig:reaction}.
 \primtype{SId}, to give the local parameter an identifier by which
 the rate law can refer to it.  A local
 parameter can also have an optional \token{name} attribute of type
-\primtype{string}.  Identifiers and names must be used according
-to the guidelines described in Section~\ref{sec:idnameattribs}.
-
-TODO explain scope for ID
+\primtype{string}.  The identifier of a local parameter needs to be 
+unique only within the list of local parameters of one reaction. The details 
+about the scope for identifiers are given in Section~\ref{sec:identifiers}, about
+the use of names in Section~\ref{sec:name}.
 
 \paragraph{The \token{value} attribute}
 

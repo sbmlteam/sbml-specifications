@@ -1277,6 +1277,7 @@ Figure~\vref{fig:species}.
         hasOnlySubstanceUnits: boolean \\
         boundaryCondition: boolean     \\
         constant: boolean              \\
+        conversionFactor: SIdRef \{ use="optional" \}                        \\
       \end{classbox}
     };
     \draw[open triangle 60-] (a) -- (b);
@@ -1325,7 +1326,7 @@ benefit of SBO labels.
 \subsubsection{The \token{compartment} attribute}
 \label{sec:species-compartment}
 
-The required attribute \token{compartment}, also of type
+The required attribute \token{compartment}, of type
 \primtype{SIdRef}, is used to identify the compartment in which the
 species is located.  The attribute's value must be the identifier of
 an existing \Compartment object. Every species in an SBML model 
@@ -1542,6 +1543,30 @@ Section~\ref{sec:odeeg} gives an example of how one can translate
 into ODEs a model that uses \token{boundaryCondition} and
 \token{constant} attributes.
 
+\subsubsection{The \token{conversionFactor} attribute}
+\label{sec:species-conversion}
+The optional attribute \token{conversionFactor}, of type
+\primtype{SIdRef}, can be used to identify a \Parameter as a 
+unit conversion factor. If it is set it must be the \token{id} 
+of a parameter in the model. 
+\todo{sven}{rework this section. This is just a first draft}
+In SBML, the units of species can be different from the units of extent 
+of the reactions. This means that when calculating how a reaction affects
+a species, potentially some unit conversion has to be applied. 
+If the conversionFactor is set, it specifies a value by which product of
+reaction rate and stoichiometry needs to be multiplied to get a rate of change 
+for the amount of substance of the species in the correct units. 
+Since the unit conversion factor is specified as a reference to a \Parameter 
+rather than just as a number, it is possible to attach the correct units
+to the unit conversion factor, allowing completely well specified units
+throughout the whole model. 
+Note that the unit conversion factor is only applied when calculating the 
+effect of a reaction on a species. It is not used in any rules that 
+affect the species and it is also not used when the value of the species is
+referenced in a mathematical expression.
+When no unit conversion factor is given for a species, it is assumed 
+that no conversion is needed when evaluating the effect of a reaction on 
+the species.
 
 \subsubsection{Interpretation of the numerical value of a species}
 \label{sec:species-meaning}
@@ -3445,10 +3470,10 @@ expression.
     <listOfReactions>
         <reaction id="J1" reversible="false" fast="false">
             <listOfReactants>
-                <speciesReference species="X0" stoichiometry="1"/>
+                <speciesReference species="X0" stoichiometry="1" constant="true"/>
             </listOfReactants>
             <listOfProducts>
-                <speciesReference species="S1" stoichiometry="1"/>
+                <speciesReference species="S1" stoichiometry="1" constant="true"/>
             </listOfProducts>
             <listOfModifiers>
                 <modifierSpeciesReference species="S2"/>
@@ -3474,8 +3499,35 @@ expression.
 \subsubsection{Mathematical interpretation of SBML kinetic laws}
 \label{sec:about-kinetic-laws}
 
-TODO rewrite
-% FIXME units
+In SBML, \emph{reactions} are the central machanism to describe processes that
+change the concentration or amount of substance of species. The \emph{kinetic law} 
+provides the quantitative description on how fast this happens. This section 
+specifies how a system of ordinary differential equations (ODEs) can be constructed 
+from an SBML description of a set of reactions.  
+
+\question{Is this needed? Or should it be made more clear that different interpretations are equally valid?} 
+Other mathematical interpretations of an SBML model are possible (such as in a
+stochastic simulation framework). If applicable, the interpretation of the
+rate law in these cases should be done in a way that is consistent with the 
+ODE interpretation described here. E.g., a stochastic interpretation of the rate
+law should make sure that it approximates the ODE behaviour for very large particle 
+numbers. 
+
+\paragraph{Semantics of rate law and stoichiometry}
+
+The value of the mathematical expression in the \token{math} element describes the
+\emph{rate} of the reaction. The \emph{stoichiometry} describes how much the amount
+of substance of a species changes when the reaction happens. More specifically, 
+the product of the reaction rate (of a given reaction) and the stoichiometry
+(of a given species in this reaction)
+describes the contribution of the reaction to the rate of change of the amount of 
+substance of the species.
+
+\paragraph{Constructing the ODE}
+
+
+
+
 
 \subsubsection{Use of reaction identifiers in mathematical expressions}
 \label{subsec:reaction-as-symbol}

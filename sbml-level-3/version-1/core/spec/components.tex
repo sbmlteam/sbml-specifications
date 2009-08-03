@@ -3005,7 +3005,16 @@ tool does not implement support for the corresponding concept.
 \paragraph{The \token{compartment} attribute on \class{Reaction}}
 \label{sec:reaction-compartment}
 
-TODO: describe compartment attribute
+The optional attribute \token{compartment} of type \primtype{SIdRef} 
+can be used to indicate a compartment in which the reaction takes place. 
+If the attribute is present its value must be the identifier of a 
+compartment defined in the enclosing \Model. 
+
+Similar to the \token{reversible} attribute the value of the \token{compartment} 
+attribute has no direct implication on the construction of the
+mathematical equations. However, tools may make use of this information 
+to analyze the structure of the model, to guide the modeler in choosing 
+the correct rate law, or for visualization purposes.  
 
 \paragraph{The \token{sboTerm} attribute on \class{Reaction}}
 \label{sec:reaction-sboterm}
@@ -3526,9 +3535,59 @@ substance of the species.
 
 \paragraph{Constructing the ODE}
 
+\todo{sven}{formatting of this section}
+Assume we have a model with some species $S_{1}$, $S_{2}$, \ldots{},
+$S_{N}$ and some reactions $R_{1}$, $R_{2}$, \ldots{}, $R_{M}$.
+We only consider species where the {boundaryValue} attribute is set
+to {}``false'', since all other species are not affected by reactions.
+The amount of substance of a species $S_{i}$ is $n_{S_{i}}$, the
+rate of a reaction $R_{j}$ is $v_{R_{j}}$. The stoichiometry of
+a species $S_{i}$ in the reaction $R_{j}$ is $\text{stoich}{}_{S_{i},R_{j}}$.
+More specifically, $\textrm{stoich}_{S_{i},R_{j}}$ is the sum of
+the stoichiometry values of all species references in the listOfReactants
+of reaction $R_{j}$ whose species attribute points to the species
+$S_{i}$ minus the sum of the stoichiometry values of all species
+references in the listOfProducts of reaction $R_{j}$ whose species
+attribute points to the species $S_{i}$. This implies that $\textrm{stoich}_{S_{i},R_{j}}=0$
+if species $S_{i}$ is neither reactant nor product of reaction $R_{j}$.
 
+Now we have to consider three cases, depending on whether the conversionFactor
+attribute is set on the Species element or on the Model element.
 
+\begin{itemize}
+\item If the conversionFactor attribute is set neither on species $S_{i}$
+nor on the model it is implied that the rate of change of the amount
+of the species can be calculated from the reaction rate without any
+unit conversion. \\
+In this case the ODE for the amount of the species is:\[
+\frac{dn_{S_{i}}}{dt}=\sum_{j=1}^{M}\textrm{stoich}_{S_{i},R_{j}}\cdot v_{R_{j}}.\]
 
+\item If the conversionFactor attribute on species $S_{i}$ is set it must
+be the id of a global parameter in the model. The value of this parameter
+(called $\textrm{conversion}_{S_{i}}$ in the equation below) is used
+to convert from the units used in the definition of the rate law to
+the units used for the amount of the species: \[
+\frac{dn_{S_{i}}}{dt}={\textstyle \textrm{conversion}_{S_{i}}}\cdot\sum_{j=1}^{M}\textrm{stoich}_{S_{i},R_{j}}\cdot v_{R_{j}}.\]
+
+\item A conversionFactor attribute can also be set on the Model element.
+If it is not set on the species but set on the model, the value of
+the parameter it refers to (called $\textrm{conversion}_{\textrm{global}}$
+in the equation) is used in the ODE. This basically means that a unit
+conversion is necessary, but it is the same for all species that do
+not specify their own conversion factor.\[
+\frac{dn_{S_{i}}}{dt}={\textstyle \textrm{conversion}_{\textrm{global}}}\cdot\sum_{j=1}^{M}\textrm{stoich}_{S_{i},R_{j}}\cdot v_{R_{j}}.\]
+
+\end{itemize}
+
+\paragraph{Concentration vs. Amount}
+
+One important point about ODEs and rate laws in SBML is that the left
+hand side of the ODE is always the rate of change of the \emph{amount}
+of the species, never the \emph{concentration.} What does this imply
+for the right hand side of the ODE? The stoichiometries are simply
+(dimensionless) numbers. The conversion factors cannot change the
+dimension...
+\todo{sven}{finish this section}
 
 \subsubsection{Use of reaction identifiers in mathematical expressions}
 \label{subsec:reaction-as-symbol}

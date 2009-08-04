@@ -385,6 +385,10 @@ type \primtype{UnitSIdRef} (Section:~\vref{sec:unitsidref}). A
 list of recommended units is given in 
 section~\vref{sec:bp:unitdefinitions:recommendedunits:extentUnits}. 
 
+\subsubsection{The \token{conversionFactor} attribute}
+\label{sec:model-conversionFactor}
+\todo{sven}{Write me.}
+
 
 \subsubsection{The ListOf container classes}
 \label{sec:listof}
@@ -806,7 +810,7 @@ symbols are defined in the value space of \primtype{UnitSId}
   \caption{Base units defined in SBML.  These symbols are
     predefined values of type \primtype{UnitSId}
     (Section~\ref{sec:unitsid}).  All are names of base or derived
-    SI units~\protect\citep{bipm:2000}, except for
+    SI units~\protect\citep{bipm:2006}, except for
     ``\token{avogadro}'', ``\token{dimensionless}'' and
     ``\token{item}'', which are SBML additions important for
     handling certain common situations.  ``\token{Dimensionless}''
@@ -912,6 +916,24 @@ where we used:
 \end{align}
 \end{linenomath}
 
+\paragraph{Examples}
+
+The following example illustrates the definition of an
+abbreviation \val{mmls} for the units $mmol\ l^{-1}\ s^{-1}$:
+
+\begin{example}
+<listOfUnitDefinitions>
+    <unitDefinition id="mmls">
+        <listOfUnits>
+            <unit kind="mole"   exponent="1"  scale="-3" multiplier="1"/>
+            <unit kind="litre"  exponent="-1" scale="0"  multiplier="1"/>
+            <unit kind="second" exponent="-1" scale="0"  multiplier="1"/>
+        </listOfUnits>
+    </unitDefinition>
+</listOfUnitDefinitions>
+\end{example}
+
+\paragraph{Comparing Units}
 The unit system allows model quantities to be expressed in units
 other than the base units of Table~\ref{tab:unitkind}.  For
 analyses and computations, the consumer of the model (be it a
@@ -943,6 +965,13 @@ Equation~\ref{eq:multip-units} we obtain.
 Using the independence of the base units we can derive the unkown
 exponents $z_i = x_i$ and that $\ybase = \ynew \cdot m \cdot 10^s$.
 
+Please note that when comparing units that in addition to the relationships defined by the SI Units~\protect\citep{bipm:2006} the following special relationship must be considered: 
+\begin{linenomath}
+\begin{equation}
+  \mbox{mole} = \mbox{avogadro} * \mbox{item}
+\label{eq:unit-conversion-avogadro}
+\end{equation}
+\end{linenomath}
 
 \label{sec:unit-simple-approach}
 Some additional points are worth discussing about the unit scheme
@@ -977,23 +1006,6 @@ While SBML no longer allows to directly specify offsets  on units, it is still p
 to encode models using such units. For more information on \emph{how to best 
 handle units requiring the use of offsets} see \ref{sec:bp:unitdefinitions:offset}. 
 
-\paragraph{Examples}
-
-The following example illustrates the definition of an
-abbreviation \val{mmls} for the units $mmol\ l^{-1}\ s^{-1}$:
-
-\begin{example}
-<listOfUnitDefinitions>
-    <unitDefinition id="mmls">
-        <listOfUnits>
-            <unit kind="mole"   exponent="1"  scale="-3" multiplier="1"/>
-            <unit kind="litre"  exponent="-1" scale="0"  multiplier="1"/>
-            <unit kind="second" exponent="-1" scale="0"  multiplier="1"/>
-        </listOfUnits>
-    </unitDefinition>
-</listOfUnitDefinitions>
-\end{example}
-
 \subsubsection{References to units}
 
 An attribute that defines the units of a mathematical entity (\eg the
@@ -1006,11 +1018,6 @@ whose identifier is chosen from among the following:
 
 \item The base units listed in Table~\vref{tab:unitkind}; and
   
-\item The predefined units defined in
-  Section~\ref{sec:predefined-units} and listed in
-  Table~\ref{tab:predefined}.  (These are \val{substance},
-  \val{volume}, \val{area}, \val{length}, and \val{time}.)
-
 \end{itemize}
 
 Software developers are asked to pay special attention to the
@@ -1138,11 +1145,13 @@ in Section~\ref{sec:bp:size}.
 \label{sec:compartment-units}
 
 The units associated with the compartment's \token{size} value may
-be set using the optional attribute \token{units}.  In the case that
-the attribute \token{units} is not given the units may be
-inherited from the model as specified in
-Table~\ref{tab:comp-size-units}. A list of recommended units is given in
-section~\vref{sec:bp:unitdefinitions:recommendedunits:sizeUnits}.
+be set using the optional attribute \token{units}.  The value must
+be of type \primtype{UnitSIdRef}
+(Section:~\vref{sec:unitsidref}). In the case that the attribute
+\token{units} is not given the units may be inherited from the
+model as specified in Table~\ref{tab:comp-size-units}. A list of
+recommended units is given in
+section~\vref{sec:bp:unitdefinitions:recommendedunits:sizeUnits}. 
   
 \begin{table}[h]
   \small
@@ -1403,7 +1412,14 @@ The units associated with a species' quantity, referred to as the
 attribute \token{substanceUnits} and the required attribute 
 \token{hasOnlySubstanceUnits} in combination with the units of the
 size defined for the compartment object in which the species are
-located.
+located. 
+
+The value of the attribute \token{substanceUnits} must be of type
+\primtype{UnitSIdRef} (Section:~\vref{sec:unitsidref}).
+In the case that the attribute \token{substanceUnits} is
+not given the substance units will be inherited from the model
+attribute \token{substanceUnits}. A list of recommended units is given in
+section~\vref{sec:bp:unitdefinitions:recommendedunits:substanceUnits}.  
 
 The attribute \token{hasOnlySubstanceUnits} takes on boolean
 values.  This attribute's role is to
@@ -1424,15 +1440,6 @@ concentration) if \token{hasOnlySubstanceUnits} has the value
 value \val{true}, then the \emph{units of the species} are of the
 form \quantity{substance}.
 
-The value chosen for \token{substanceUnits} must be
-either a base unit from Table~\vref{tab:unitkind}, a predefined unit
-from Table~\vref{tab:predefined}, or a new unit defined by a unit
-definition in the enclosing model.  The chosen units for
-\token{substanceUnits} must be be \token{dimensionless},
-\token{mole}, \token{item}, \token{kilogram}, \token{gram}, or
-units derived from these.  The \token{substanceUnits}
-attribute defaults to the the predefined unit
-``\token{substance}'' shown in Table~\vref{tab:predefined}.
 
 % FIXME this should be a best practice:
 %
@@ -1763,15 +1770,8 @@ for simulation time $t \leq 0$.
 \label{sec:parameter-units}
 
 The units associated with the value of the parameter are specified
-by the attribute \token{units}.  The value assigned to
-the parameter's \token{units} attribute must be chosen
-from one of the following possibilities: one of the base unit
-identifiers from Table~\vref{tab:unitkind}; one of the predefined
-unit identifiers appearing in first column of
-Table~\vref{tab:predefined}; or the identifier of a new unit defined
-in the list of unit definitions in the enclosing \Model definition.
-There are no constraints on the units that can be chosen from
-these sets.
+by the attribute \token{units}.  The value must be of type
+\primtype{UnitSIdRef} (Section:~\vref{sec:unitsidref}).
 
 The units of the parameter are used in the following ways:
 \begin{itemize}
@@ -3349,8 +3349,6 @@ to be obtained from an external source.
 
 The units associated with the value of the local parameter can be specified
 by the optional attribute \token{units}. 
-
-TODO:UNITS
 
 
 \paragraph{The \token{sboTerm} attribute}

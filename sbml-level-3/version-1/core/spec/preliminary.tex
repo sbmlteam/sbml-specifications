@@ -873,12 +873,9 @@ Schema~\citep{biron:2000,thompson:2000} and discussed further in
 Section~\ref{sec:primitive-types}.  SBML imposes no restrictions
 as to the content of \token{name} attributes beyond those restrictions
 defined by the \primtype{string} type in XML Schema.
-
-An additional point worth mentioning is although there are
-restrictions on the uniqueness of \token{id} values (see
-Section~\ref{sec:identifiers} above), there are no restrictions on
-the uniqueness of \token{name} values in a model.  This allows
-software packages leeway in assigning component identifiers.
+In addition, there are no restrictions on the uniqueness
+of \token{name} values in a model (unlike the restrictions on
+\token{id} values discussed in Section~\ref{sec:identifiers}).
 
 
 \subsubsection{Why \token{id} and \token{name} are not defined on \class{SBase}}
@@ -909,7 +906,7 @@ Although many SBML components feature
   overloaded on derived classes that needed different scoping.
   This would make the SBML specification even more complex.
   
-\item Identifier are optional on some SBML components and required
+\item Identifiers are optional on some SBML components and required
   on most others.  If \token{id} were defined as optional on
   \SBase, most component classes would separately have to redefine
   \token{id} as being mandatory---hardly an improvement over the
@@ -1224,36 +1221,22 @@ containing element in which the \token{ci} is used:
   \FunctionDefinition object
   (Section~\ref{sec:functiondefinition}), the referenced
   identifier must be either (i) one of the declared arguments to
-  that function, or (ii) the identifier of a previously defined
+  that function, or (ii) the identifier of another
   \FunctionDefinition object in the model.
   
 \item Otherwise, the referenced identifier must be that of a
-  \Species, \Compartment, \Parameter, \FunctionDefinition, or
-  \Reaction object defined in the model.  The following are the
-  only possible interpretations of using such an identifier in
-  SBML:\todo{MH}{explain use of species ref id's}
+  \Compartment, \FunctionDefinition, \Parameter, \Reaction,
+  \Species or \SpeciesReference object defined in the model.  The
+  following are the only possible interpretations of using such an
+  identifier in SBML:
   \begin{itemize}
-    
-  \item \emph{Species identifier}: When a \Species identifier
-    occurs in a \token{ci} element, it represents the quantity of
-    that species in units of either \quantity{amount of
-        substance} or units of \quantity{concentration}, depending
-      on the species' definition; see
-    Section~\ref{sec:species-units}.
-    
+
   \item \emph{Compartment identifier}: When a \Compartment
     identifier occurs in a \token{ci} element, it represents the
     size of the compartment.  The units of measurement
       associated with the size of the compartment are those given
       by the \Compartment instance's \token{units} attribute
       value; see Section~\ref{sec:compartment-units}.
-    
-  \item \emph{Parameter identifier}: When a \Parameter identifier
-    occurs in a \token{ci} element, it represents the numerical
-    value assigned to that parameter.  The units
-      associated with the parameter's value are those given by the
-      \Parameter instance's \token{units} attribute; see
-    Section~\ref{sec:parameter-units}.
     
   \item \emph{Function identifier}: When a \FunctionDefinition
     identifier occurs in a \token{ci} element, it represents a
@@ -1265,9 +1248,17 @@ containing element in which the \token{ci} is used:
       call are the overall units of the mathematical expression
     contained in the function definition.
     
+  \item \emph{Parameter identifier}: When a \Parameter identifier
+    occurs in a \token{ci} element, it represents the numerical
+    value assigned to that parameter.  The units
+      associated with the parameter's value are those given by the
+      \Parameter instance's \token{units} attribute; see
+    Section~\ref{sec:parameter-units}.
+
   \item \emph{Reaction identifier}: When a \Reaction identifier
     occurs in a \token{ci} element, it represents the rate of that
     reaction as defined by the \token{math} expression in
+    \todo{MH}{change to talk about extent}
       the \KineticLaw object within the \Reaction.  The
     units associated with that rate are
       \quantity{substance}/\quantity{time}, where the
@@ -1279,7 +1270,24 @@ containing element in which the \token{ci} is used:
       has no \KineticLaw , using its reaction identifier
       this way is an error (perhaps indicating that the model is
       incomplete).
+    
+  \item \emph{Species identifier}: When a \Species identifier
+    occurs in a \token{ci} element, it represents the quantity of
+    that species in units of either \quantity{amount of
+        substance} or units of \quantity{concentration}, depending
+      on the species' definition; see
+    Section~\ref{sec:species-units}.
 
+  \item \emph{SpeciesReference identifier}: When a
+    \SpeciesReference identifier occurs in a \token{ci} element,
+    it represents the stoichiometry of the reactant or product in
+    the reaction where the \SpeciesReference object is defined.
+    More specifically, the value of the \SpeciesReference
+    identifier is equal to the value of the \token{stoichiometry}
+    attribute of that \SpeciesReference object instance; see
+    Section~\ref{sec:reactions}.  The unit associated with the
+    value is always \token{dimensionless}.
+    
   \end{itemize}
 
 \end{itemize}
@@ -1349,8 +1357,8 @@ following URIs defined by SBML:
 \item \uri{http://www.sbml.org/sbml/symbols/time}.  This
   represents the current simulation time.  See
   Section~\ref{sec:meaning-of-time} for more information.  The
-  units of the current time entity is determined from the
-  built-in \token{time} of Table~\vref{tab:predefined}.
+  unit of measurement associated with time is determined by the
+  value of the \token{timeUnits} attribute on \Model.
 
 \item \uri{http://www.sbml.org/sbml/symbols/delay}.  This
  represents a delay function.  The delay function has the form
@@ -1371,7 +1379,7 @@ following URIs defined by SBML:
 \item \uri{http://www.sbml.org/sbml/symbols/avogadro}.  This
   represents Avogadro's constant, the number of elementary
   entities in one mole of substance.  The value of Avogadro's
-  constant is determined experimentally.  For the purposes of SBML
+  constant is determined experimentally; for the purposes of SBML
   \thisLVnum, the numerical value is taken to be the one
   recommended by the 2006 edition of CODATA~\citep{codata_2008},
   but the unit is \token{dimensionless}.  In other words, the
@@ -1381,14 +1389,13 @@ following URIs defined by SBML:
       (6.02214179 \times 10^{23}) \times \texttt{dimensionless}
     \end{equation*}
   \end{linenomath}
-  If future experimental work leads to a revision of the value of
-  Avogadro's constant, a future Version of the SBML \thisL
-  specification may stipulate a new value to be used for this
-  \token{csymbol} constant.  However, all software reading models
-  expressed in \emph{this} Version of SBML Level~3 should
-  \emph{always} use the value of Avogadro's constant given above,
-  even if the value of Avogadro's constant is revised in the
-  future.  (In other words, changes will apply only beginning with
+  If the value of Avogadro's constant is revised by international
+  standards-setting organizations in the future, a future Version
+  of the SBML \thisL specification may stipulate a new value to be
+  used for this \token{csymbol} constant.  However, all software
+  reading models expressed in \emph{this} Version of SBML Level~3
+  should \emph{always} use the value of Avogadro's constant given
+  above.  (In other words, changes will apply only beginning with
   a possible new Version of SBML Level~3 and not this existing
   version.)
 
@@ -1422,7 +1429,7 @@ example above.  The content of the \token{csymbol} element is for
 rendering purposes only and can be ignored by the parser.
 
 As a further example, the following XML fragment encodes the equation
-$k + delay(x, 0.1)$ or alternatively $k_t + x_{t - 0.1}$:
+$k + delay(x, 0.1)$ or, alternatively, $k_t + x_{t - 0.1}$:
 
 \begin{example}
 <math xmlns="http://www.w3.org/1998/Math/MathML">
@@ -1440,7 +1447,8 @@ $k + delay(x, 0.1)$ or alternatively $k_t + x_{t - 0.1}$:
 </math>
 \end{example}
 
-The use of Avogadro's number is illustrated here:
+Finally, the use of Avogadro's number is illustrated in the
+following XML fragment:
 
 \begin{example}
 <math xmlns="http://www.w3.org/1998/Math/MathML">
@@ -1455,12 +1463,6 @@ The use of Avogadro's number is illustrated here:
     </apply>
 </math>
 \end{example}
-
-Note that the URI in the value of \token{definitionURL}, as all
-URIs, is intended to serve as a unique identifier and is not
-intended to be dereferenced as an Internet address.  There is
-nothing actually located at the address
-\uri{http://www.sbml.org/sbml/symbols/delay}.
 
 
 \subsubsection{Simulation time}
@@ -1492,8 +1494,7 @@ desired offset is 2 time units, the MathML expression would be
 <math xmlns="http://www.w3.org/1998/Math/MathML">
     <apply>
         <minus/>
-        <csymbol encoding="text" definitionURL="http://www.sbml.org/sbml/symbols/time"> t
-        </csymbol>
+        <csymbol encoding="text" definitionURL="http://www.sbml.org/sbml/symbols/time"/> 
         <cn> 2 </cn>
     </apply>
 </math>
@@ -1504,8 +1505,7 @@ used to express mathematical statements that hold true at all
 moments, so using an assignment rule with the expression above
 will result in the value being equal to $t - 2$ at every point in
 time.  A parameter assigned this value could then be used
-elsewhere in the model, its value could be plotted by a simulator,
-etc.
+elsewhere in the model.
 
 
 \subsubsection{Initial conditions and special considerations}
@@ -1534,7 +1534,7 @@ delay expressions in the model for $t \geq 0$.  If there are no
 delays in the model, then $t_i = 0$.
 
 The following is how the definitions of the model should be
-applied:
+applied:\todo{anyone}{revise to include speces ref id's}
 \begin{enumerate}
 
 \item At time $t_i$:
@@ -1701,8 +1701,6 @@ and functions to quantities produces sensible results.  Yet, in
 real-life models today, these conditions are often and sometimes
 legitimately disobeyed.
 
-
-
 In a public vote held in late 2007, the SBML community decided to
 revoke the requirement (present up through Level~2 Version~3) for
 strict unit consistency in SBML.  As a result, SBML \thisL
@@ -1713,15 +1711,14 @@ thus formulated as recommendations that \emph{should} be followed
 except in special circumstances.
 
 
-
 \paragraph{Recommendations for unit consistency of mathematical expressions}
 
-The consistency of units is defined in terms of
-dimensional analysis applied recursively to every operator and
-function and every argument to them.  The following
-conditions should hold true in a model (and software)
-developers may wish to consider having their software warn users
-if one or more of the following conditions  is not true:
+The consistency of units is defined in terms of dimensional
+analysis applied recursively to every operator and function and
+every argument to them.  The following conditions should hold true
+in a model (and software developers may wish to consider having
+their software warn users if one or more of the following
+conditions is not true):
 
 \begin{enumerate}
 
@@ -1747,7 +1744,8 @@ if one or more of the following conditions  is not true:
 \item For the \emph{delay} \token{csymbol}
   (Section~\ref{sec:csymbol-token}) function, which has the form
   $delay(x, d)$, the second argument $d$ should match the model's
-  unit of \quantity{time} (\ie the \val{time} predefined unit).
+  unit of \quantity{time} (as determined by the value of the
+  \val{timeUnits} attribute on \Model).
 
 \item The units of each argument to the following operators should
   be \val{dimensionless}: \token{exp}, \token{ln}, \token{log},
@@ -1822,21 +1820,17 @@ formula.
 
 \paragraph{Treatment of unspecified units}
 
-\todo{??}{stmt about default units is no longer true}
-There are only two ways to introduce numbers with unspecified
-units into mathematical formulas in SBML: using literal numbers
-(\ie numbers enclosed in MathML \token{cn} elements), and using
-\Parameter objects defined without unit declarations.  All other
-quantities, in particular species and compartments, always have
-unit declarations (whether explicit or the defaults).
-
-If an expression contains literal numbers and/or \Parameter
-objects without declared units, the consistency or inconsistency
-of units may be impossible to determine.  In the absence of a
-verifiable \emph{inconsistency}, an expression in SBML is accepted
-as-is; the writer of the model is assumed to have written what
-they intended.  Nevertheless, this is \emph{not} equivalent to
-assuming the expression \emph{does} have consistent units.
+If an expression contains literal numbers and/or SBML components
+without declared units, the consistency or inconsistency of units
+may be impossible to determine.  In the absence of a verifiable
+\emph{inconsistency}, an expression in SBML is accepted as-is; the
+writer of the model is assumed to have written what they intended.
+However, this is \emph{not} equivalent to assuming the expression
+\emph{does} have consistent units.  The lack of declared units on
+quantities in an SBML model does not render the model invalid
+insofar as the SBML specification is concerned, but it reduces the
+types of consistency checks and useful operations (such as
+conversions and translations) that software systems can perform.
 
 In some cases, it may be possible to determine that expressions
 containing unspecified units are inconsistent regardless of what
@@ -1854,18 +1848,6 @@ the need not to stop verifying the units of an expression
 immediately upon encountering an unspecified quantity---the rest
 of the expression may still be profitably evaluated and checked
 for inconsistency.)
-
-We advise modelers and software tools to declare the units of all
-quantities in a model, insofar as this is possible, using the
-various mechanisms provided for this in SBML.  Fully declared
-units can allow software tools to perform dimensional analysis on
-the units of mathematical expressions, and such analysis can be
-valuable in helping modelers produce correct models.  In addition,
-it can allow model-wide operations such as conversion or rescaling
-of units.  The lack of declared units on quantities in a model
-does not render it invalid SBML, but it reduces the types of
-consistency checks and useful operations (such as conversions and
-translations) that software systems can perform.
 
 
 \subsubsection{SBML does not define implicit unit conversions}

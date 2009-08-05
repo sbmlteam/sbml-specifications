@@ -1198,22 +1198,22 @@ check units.  We believe the negative impact on interoperability
 and people's confidence in SBML as a reliable medium would be too
 high.
 
-The only practiacal choice is to allow the units to be explicitely
+The only practical choice is to allow the units to be explicitly
 specified. To facilitate this SBML introduces an attribute
 \token{sbml:units} to the MathML \token{cn} element. The value of
 this attribute must be of type \primtype{UnitSIdRef}
 (Section:~\vref{sec:unitsidref}). If this attribute is not present
 the units of the value are not declared and no assumptions are
-made. An alternative apporach is to avoid \token{cn} elements
+made. An alternative approach is to avoid \token{cn} elements
 altogether and use \token{ci} elements which refer to \Parameter
 objects (Section~\ref{sec:parameters}) which have a value and
-units. Either of these aproaches leads to mathematical formulas
+units. Either of these approaches leads to mathematical formulas
 whose units can be fully determined, permitting software tools to
 perform dimensional analysis and potentially report problems with
 a model. 
 
 In summary: literal numbers appearing within MathML content in
-SBML have no declared units.
+SBML with no \token {sbml:units} attribute have no declared units.
 
 \subsubsection{Use of \token{ci} elements in MathML expressions in SBML}
 \label{sec:ci-token}
@@ -1764,6 +1764,10 @@ conditions is not true):
   unit of \quantity{time} (as determined by the value of the
   \val{timeUnits} attribute on \Model).
 
+\item The units of the value returned by the \emph{delay} \token{csymbol}
+  (Section~\ref{sec:csymbol-token}) function, should match the units of the
+  first argument $x$.
+
 \item The units of each argument to the following operators should
   be \val{dimensionless}: \token{exp}, \token{ln}, \token{log},
   \token{factorial}, \token{sin}, \token{cos}, \token{tan},
@@ -1796,12 +1800,13 @@ conditions is not true):
   units associated with $a$; otherwise, (3) the units of $a$ should
   be \val{dimensionless}.
 
-\item Since the units of literal numbers cannot be specified
-  directly in SBML (see below), it is possible for the units of a
+\item Where the units of literal numbers have not been specified
+  directly in SBML, it is possible for the units of a
   \FunctionDefinition object's return value to be effectively
-  different in different contexts where it is called.  If a
+  different in different contexts where it is called (see below).  If a
   \FunctionDefinition's mathematical formula contains literal
-  constants (\ie numbers within MathML \token{cn} elements), the
+  constants (\ie numbers within MathML \token{cn} elements with no
+  \token{sbml:units} attribute), the
   units of the constants should be identical in all contexts the
   function is called.
 
@@ -1813,7 +1818,7 @@ and \token{ceiling}, can be anything.
 The final bulleted item above, regarding \FunctionDefinition,
 warrants additional elaboration.  An example may help illustrate
 the problem.  Suppose the formula $x + 5$ is defined as a
-function, where $x$ is an argument.  The literal number 5 in SBML
+function, where $x$ is an argument and the literal number 5
 has unspecified units.  If this function is called with an
 argument in moles, the only possible consistent unit for the
 return value is mole.  If in another context in the same model,
@@ -1828,7 +1833,8 @@ the context where moles were intended.  This illustrates the
 subtle danger of using numbers with unspecified units in function
 definitions.  There are at least two approaches for avoiding this:
 (1) define separate functions for each case where the units of the
-constants are supposed to be different; or (2) declare the
+constants are supposed to be different, optionally explicitly
+defining the units of the literal number; or (2) declare the
 necessary constants as \Parameter objects in the model (with
 declared units!) and pass those parameters as arguments to the
 function, avoiding the use of literal numbers in the function's

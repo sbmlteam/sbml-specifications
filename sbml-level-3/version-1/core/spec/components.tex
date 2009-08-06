@@ -888,27 +888,28 @@ of a system which contains as many elementary entities as there
 are atoms in 0.012 kilogram of carbon 12''---in other words, the
 SI unit \token{mole} is technical \emph{a unit of measure for
   amount of substance}.  Although people sometimes use ``mole''
-loosely to refer to other things (\eg ``a mole of X'' to mean a
-number of X equal to Avogadro's number, $6.022 \times 10^{23}$),
-such usage is not strictly correct.  We believe it is even less
-correct in the context of reactions: although in SBML they are
-called ``reactions'', there is nothing preventing the SBML
-\Reaction construct from being used to represent other kinds of
-processes not involving substances.  Consequently, we avoid using
-\val{mole} loosely where substances are not involved, and instead
-use ``Avogadro's number of X''.  In order to make it easier for
-models to define units in these terms, the SBML unit system
-includes the pseudo-unit \val{avogadro}, whose definition is
-identical to the definition of the \emph{avogadro} \token{csymbol}
-described in Section~\ref{sec:csymbol}.  The numerical value is
-taken to be the one recommended by the 2006 edition of
-CODATA~\citep{codata_2008}, but the unit is \token{dimensionless}.
-In other words, it is defined as
+loosely to refer to other things (\eg ``a mole of \emph{X}'' to
+mean a number of \emph{X} equal to Avogadro's number, $6.022 \cdot
+10^{23}$), such usage is not strictly correct.  We believe it is
+even less correct in the context of reactions: although in SBML
+they are called ``reactions'', there is nothing preventing the
+SBML \Reaction construct from being used to represent other kinds
+of processes not involving substances.  Consequently, we avoid
+using \val{mole} loosely where substances are not involved, and
+instead use ``Avogadro's number of \emph{X}''.  In order to make
+it easier for models to define units in these terms, the SBML unit
+system includes the pseudo-unit \val{avogadro}, whose definition
+is identical to the definition of the \emph{avogadro}
+\token{csymbol} described in Section~\ref{sec:csymbol}.  The
+numerical value is taken to be the one recommended by the 2006
+edition of CODATA~\citep{codata_2008}, but the unit is
+\token{dimensionless}.  In other words, it is defined as
 \begin{linenomath}
   \begin{equation*}
-    (6.02214179 \times 10^{23}) \times \texttt{dimensionless}
+    (6.02214179 \cdot 10^{23}) \cdot \texttt{dimensionless}
   \end{equation*}
 \end{linenomath}
+where the dot ($\cdot$) indicates simple scalar multiplication.
 If the value of Avogadro's constant is revised by international
 standards-setting organizations in the future, a future Version
 of the SBML \thisL specification may stipulate a new value to be
@@ -920,9 +921,8 @@ above.
 For purposes of comparing units, the following relationship should
 be assumed:
 \begin{linenomath}
-  \begin{equation}
-    \token{mole} = \token{avogadro} \times \token{item}
-    \label{eq:unit-conversion-avogadro}
+  \begin{equation} \label{eq:unit-conversion-avogadro}
+    \token{mole} = \token{avogadro} \cdot \token{item}
   \end{equation}
 \end{linenomath}
 
@@ -957,7 +957,6 @@ underlying this definition is the following:
 \label{eq:unit-semantics}
 \end{equation}
 \end{linenomath}
-where the dot ($\cdot$) indicates simple scalar multiplication.
 This formula defines a new unit, \unew, in terms of another unit,
 \ukind.  The unit \ukind is one of the units listed in
 Table~\ref{tab:unitkind}; in a given \Unit definition, it is
@@ -1185,7 +1184,7 @@ the usage of units in SBML.
 A \emph{compartment} in SBML represents a bounded space in which
 species are located.  Compartments do not necessarily have to
 correspond to actual structures inside or outside of a biological
-cell, although models are often designed that way.  The definition
+system, although models are often designed that way.  The definition
 of \Compartment is shown in Figure~\vref{fig:compartment}.
 
 \begin{figure}[htb]
@@ -1234,91 +1233,123 @@ compartment can also have an optional \token{name} attribute of type
 to the guidelines described in Section~\ref{sec:idnameattribs}.
 
 
-
 \subsubsection{The \token{spatialDimensions} attribute}
 
-A \Compartment object has an optional floating-point attribute named
-\token{spatialDimensions}, indicating the spatial dimensions possessed by the
-compartment. Note that the \token{spatialDimensions} attribute is more akin to an 
-annotation in that its value cannot alter the mathematics of the model. 
+A \Compartment object has an optional floating-point attribute
+named \token{spatialDimensions} whose value indicates the number
+of spatial dimensions possessed by the compartment.  Most modeling
+scenarios involve compartments with integer values of
+\token{spatialDimensions}=\val{3} (\ie a three-dimensional
+compartment, which is to say, a volume),
+\token{spatialDimensions}=\val{2} (\ie a two-dimensional
+compartment, a surface), or \token{spatialDimensions}=\val{1} (\ie
+a one-dimensional compartment, which is to say, a line).  However,
+SBML \thisL does not restrict compartments'
+\token{spatialDimensions} values, in order to allow for the
+possibility of representing structures with fractal dimensions.
+
+In SBML \thisLV, the number of spatial dimensions possessed by a
+compartment cannot enter into mathematical formulas, and therefore
+cannot alter the numerical interpretation of a model.  However, the
+value of \token{spatialDimensions} does affect the interpretation
+of the units associated with a compartment's \token{size} value,
+as described in the next section.  In addition, some SBML Level~3
+packages may use the value of \token{spatialDimensions} in ways
+not defined in \thisLV.
+
 
 \subsubsection{The \token{size} attribute}
 \label{sec:size}
 
 Each compartment has an optional floating-point attribute named
 \token{size}, representing the initial total size of the
-compartment.  The size may be a volume (if the compartment is a
-three-dimensional one), or it may be an area (if the compartment
-is two-dimensional), or a length (if the compartment is
-one-dimensional).
+compartment.  The size may correspond to a volume (if the
+compartment is a three-dimensional one), or it may be an area (if
+the compartment is two-dimensional), or a length (if the
+compartment is one-dimensional).
+
+A compartment's size is set by its \token{size} attribute exactly
+once.  If the compartment's \token{constant} attribute value is
+\val{true}, then the size is fixed and cannot be changed except by
+an \InitialAssignment in the model.  The approach of using an
+\InitialAssignment differs from setting the \token{size} attribute
+in that \token{size} can only be used to set the compartment size
+to a literal scalar value, whereas \InitialAssignment allows the
+value to be set using an arbitrary mathematical expression.  If
+the compartment's \token{constant} attribute is \val{false}, the
+size value may be overridden by an \InitialAssignment or changed
+by an \AssignmentRule or \AlgebraicRule, and in addition, for
+simulation time $t > 0$, it may also be changed by a \RateRule or
+\Event{}s.  (However, some constructs are mutually exclusive; see
+Sections~\ref{sec:rules} and~\ref{sec:events}.)  It is not an
+error to set the value of \token{size} on a compartment and also
+redefine the value using an \InitialAssignment, but the original
+\token{size} value in that case is ignored.
+Section~\ref{sec:before-t0} provides additional information about
+the semantics of assignments, rules and values for simulation time
+$t \leq 0$.
 
 It is important to note that in SBML Level~3, a missing
 \token{size} value \emph{does not imply that the compartment size
-  is 1}. A missing value for \token{size} for a given
+  is~\val{1}}. A missing value for \token{size} for a given
 compartment signifies that the value either is unknown, or to be
 obtained from an external source, or determined by an initial
 assignment (Section~\ref{sec:initialAssignment}) or a rule
-(Section~\ref{sec:rules}) elsewhere in the model.  \
-
-A compartment's size is set by its \token{size}
-attribute exactly once.  If the compartment's
-\token{constant} attribute value is \val{true}, then the size is 
-fixed and cannot be changed except by
-an \InitialAssignment in the model.  These methods of setting the size
-differ in that the \token{size} attribute can only be used to set
-the compartment size to a literal scalar value, whereas
-\InitialAssignment allows the value to be set using an arbitrary
-mathematical expression.  If the compartment's \token{constant}
-attribute is \val{false}, the size value may be overridden by an
-\InitialAssignment or changed by an \AssignmentRule or
-\AlgebraicRule, and in addition, for simulation time $t > 0$, it
-may also be changed by a \RateRule or \Event{}s.  (However, some
-constructs are mutually exclusive; see Sections~\ref{sec:rules}
-and~\ref{sec:events}.)  It is not an error to set the value of \token{size}
-on a compartment and also redefine the value using an
-\InitialAssignment, but the original \token{size} value in that case is
-ignored.  Section~\ref{sec:before-t0} provides additional
-information about the semantics of assignments, rules and values
-for simulation time $t \leq 0$.
-
-For the reasons given above, the \token{size} attribute on a
-compartment must be defined as optional; however, \emph{it is
-  extremely good practice to specify values for compartment sizes}
-when such values are available. The reasons for this are explained
-in Section~\ref{sec:bp:size}.
+(Section~\ref{sec:rules}) elsewhere in the model.  Further, due to
+the fact that alternative methods available for setting the size
+of a compartment, the \token{size} attribute must be defined as
+optional; however, \emph{it is extremely good practice to specify
+  a value the size of every compartment in a model}, no matter
+what method is used, when compartment size values are available.
+The reasons for this are explained in Section~\ref{sec:bp:size}.
 
 
 \subsubsection{The \token{units} attribute}
 \label{sec:compartment-units}
 
 The units associated with the compartment's \token{size} value may
-be set using the optional attribute \token{units}.  The value must
-be of type \primtype{UnitSIdRef}
-(Section:~\vref{sec:unitsidref}). In the case that the attribute
-\token{units} is not given the units may be inherited from the
-model as specified in Table~\ref{tab:comp-size-units}. A list of
-recommended units is given in
-section~\vref{sec:bp:unitdefinitions:recommendedunits:sizeUnits}. 
+be set using the optional \Compartment attribute \token{units}.
+The value must have the data type \primtype{UnitSIdRef}
+(Section~\vref{sec:unitsidref}).
+
+The \token{units} attribute may be left unspecified for a given
+compartment in a model; in that case, the compartment inherits the
+units defined by one of the attributes on the enclosing \Model
+object instance.  The applicable attribute on \Model depends on
+the value of the compartment's \token{spatialDimensions}
+attribute; the relationship is shown in
+Table~\vref{tab:comp-size-units}.  If neither the \token{units}
+attribute nor a relevant attribute on \Model is specified in a
+given SBML model, then the units associated with the compartment's
+size are undefined.  Leaving the units of compartment sizes
+undefined in an SBML model does not render the model invalid;
+however, as a matter of best practice, we strongly recommend that
+all models specify the units of measurement for every compartment
+size.  A list of recommended units is given in
+Section~\vref{sec:bp:unitdefinitions:recommendedunits:sizeUnits}.
   
-\begin{table}[h]
+\begin{table}[tbh]
   \small
   \centering
-  \vspace*{-1ex}
   \begin{edtable}{tabular}{cl}
     \toprule
-    \textbf{Value of attribute} & \textbf{Value inherited from} \\[-2pt]
-    \texttt{spatialDimensions}  & \Model \textbf{attribute} \\
+    \textbf{Value of attribute} & \Model \textbf{attribute used} \\[-2pt]
+    \token{spatialDimensions}  & \textbf{for inheriting units of size} \\
     \midrule
-    \val{3}                     & \val{volumeUnits} \\
-    \val{2}                     & \val{areaUnits} \\
-    \val{1}                     & \val{lengthUnits} \\
-    else                        & none \\
+    \val{3}                     & \token{volumeUnits} \\
+    \val{2}                     & \token{areaUnits} \\
+    \val{1}                     & \token{lengthUnits} \\
+    other                       & \emph{no units inherited} \\
     \bottomrule
   \end{edtable}
-  \vspace*{-0.5ex}
-  \caption{Inheritance of units for compartment sizes dependent on the
-    value of  \token{spatialDimensions} in the case that the compartment's
-    \token{units} attribute is left unset.}
+  \caption{When a \Compartment object instance does not specify a
+    value for the \token{units} attribute, the units associated
+    with the compartment's size are inherited from
+    the enclosing \Model instance according to the rules above.
+    The left-hand column indicates the value of the compartment's
+    \token{spatialDimensions} attribute, and the right-hand column
+    indicates the \Model attribute whose value should be used in
+    that case.}
   \label{tab:comp-size-units}
 \end{table}
 
@@ -1366,7 +1397,7 @@ stays constant or can vary during a simulation.  A value of
 \val{false} indicates the compartment's \token{size} can be
 changed by other constructs in SBML.  A value of \val{true}
 indicates the compartment's \token{size} cannot be changed by any
-other construct except \InitialAssignment. 
+construct except \InitialAssignment. 
 
 
 \subsubsection{The \token{sboTerm} attribute}

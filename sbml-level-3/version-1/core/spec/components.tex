@@ -1261,8 +1261,8 @@ not defined in \thisLV.
 \subsubsection{The \token{size} attribute}
 \label{sec:size}
 
-Each compartment has an optional floating-point attribute named
-\token{size}, representing the initial total size of the
+The optional \Compartment attribute \token{size}, with a data type
+of \primtype{double}, can be used to set the initial size of the
 compartment.  The size may correspond to a volume (if the
 compartment is a three-dimensional one), or it may be an area (if
 the compartment is two-dimensional), or a length (if the
@@ -1310,7 +1310,7 @@ The reasons for this are explained in Section~\ref{sec:bp:size}.
 The units associated with the compartment's \token{size} value may
 be set using the optional \Compartment attribute \token{units}.
 The value must have the data type \primtype{UnitSIdRef}
-(Section~\vref{sec:unitsidref}).
+(Section~\ref{sec:unitsidref}).
 
 The \token{units} attribute may be left unspecified for a given
 compartment in a model; in that case, the compartment inherits the
@@ -1326,7 +1326,7 @@ undefined in an SBML model does not render the model invalid;
 however, as a matter of best practice, we strongly recommend that
 all models specify the units of measurement for every compartment
 size.  A list of recommended units is given in
-Section~\vref{sec:bp:unitdefinitions:recommendedunits:sizeUnits}.
+Section~\ref{sec:bp:unitdefinitions:recommendedunits:sizeUnits}.
   
 \begin{table}[tbh]
   \small
@@ -1434,7 +1434,6 @@ abbreviated SBML example of a model definition:
     </listOfCompartments>
     ...
 </model>
-
 \end{example}
 
 
@@ -1473,7 +1472,6 @@ Figure~\vref{fig:species}.
     };
     \draw[open triangle 60-] (a) -- (b);
   \end{tikzpicture}
-  \vspace*{-1.5ex}
   \caption{The definition of class \Species.  One or more
     instances of \Species objects can be located in an instance of
     \ListOfSpecies in \Model, as shown in
@@ -1518,28 +1516,31 @@ benefit of SBO labels.
 \label{sec:species-compartment}
 
 The required attribute \token{compartment}, of type
-\primtype{SIdRef}, is used to identify the compartment in which the
-species is located.  The attribute's value must be the identifier of
-an existing \Compartment object. Every species in an SBML model 
-must be assigned a compartment, and consequently, a model must define 
-at least one compartment if that model contains any species.
+\primtype{SIdRef}, is used to identify the compartment in which
+the species is located.  The attribute's value must be the
+identifier of an existing \Compartment object in the model.  Note
+that SBML does not have a concept of a default compartment---every
+species in an SBML model must be assigned a compartment
+\emph{explicitly}, by setting the value of the \token{compartment}
+attribute.  (This also implies that every model must define at
+least one compartment.)
 
 
-\subsubsection{The \token{initialAmount} and
-  \token{initialConcentration} attributes}
+\subsubsection{The \token{initialAmount},
+  \token{initialConcentration}, and \token{substanceUnits} attributes}
 \label{sec:initialAmount}
 
 The optional attributes \token{initialAmount} and
 \token{initialConcentration}, both having a data type of
-\primtype{double}, are used to set the initial quantity of the
+\primtype{double}, can be used to set the initial quantity of the
 species in the compartment where the species is located.  These
-attributes are mutually exclusive; \ie \emph{only one} can have a
-value on any given instance of a \Species object.
-
-Missing \token{initialAmount} and \token{initialConcentration}
-values implies that their values either are unknown, or to be
-obtained from an external source, or determined by an initial
-assignment (Section~\ref{sec:initialAssignment}) or rule
+two attributes are mutually exclusive---either one can be used,
+but \emph{only one} can have a value on any given instance of a
+\Species object.  Missing \token{initialAmount} and
+\token{initialConcentration} values implies that their values
+either are unknown, or to be obtained from an external source, or
+determined by an initial assignment
+(Section~\ref{sec:initialAssignment}) or rule
 (Section~\ref{sec:rules}) elsewhere in the model.
 
 A species' initial quantity is set by the \token{initialAmount} or
@@ -1560,7 +1561,7 @@ changed by a \RateRule, \Event{}s, and as a result of being a
 reactant or product in one or more \Reaction{}s. 
 (However, some constructs are
 mutually exclusive; see Sections~\ref{sec:rules}
-and~\ref{sec:events}.) It is not an error to define
+and~\ref{sec:events}.)  It is not an error to define
 \token{initialAmount} or \token{initialConcentration} on a species
 and also redefine the value using an \InitialAssignment, but the
 \token{initialAmount} or \token{initialConcentration} setting in
@@ -1568,49 +1569,58 @@ that case is ignored.  Section~\ref{sec:before-t0} provides
 additional information about the semantics of assignments, rules
 and values for simulation time $t \leq 0$.
 
-The units of the value in the \token{initialAmount} attribute are
-set by the \token{substanceUnits}.  The units of the value in the
-\token{initialConcentration} attribute are
-\quantity{substance}/\quantity{size} units.  The units of
-\quantity{substance} are those defined in the
-\token{substanceUnits}, and the \quantity{size} units are those
-given in the definition of the size of the \Compartment in which
-the species is located.  Additional comments about the  units of
-species quantities are given in Section~\ref{sec:species-units}, and 
-the interpretation of species quantities under different
-conditions is explained in Section~\ref{sec:species-meaning}.
+When the \token{initialAmount} attribute is set, the units
+associated with its value are specified by the \Species attribute
+\token{substanceUnits}, whose value must have the data type
+\primtype{UnitSIdRef} (Section~\ref{sec:unitsidref}).  When the
+\token{initialConcentration} attribute is set, the units
+associated with its value are \quantity{substance}/\quantity{size}
+units, where the units of \quantity{substance} are those specified
+by the \token{substanceUnits} attribute, and the \quantity{size}
+units are those associated with the definition of the size of the
+\Compartment in which the species is located.  Note that in either
+case, \quantity{substance} units are involved and determined by
+the \token{substanceUnits} attribute.  If the
+\token{substanceUnits} attribute is not set on a given \Species
+object instance, then the value for that species is inherited from
+the \token{substanceUnits} attribute on the enclosing \Model
+object instance.  If that attribute on \Model is not set either,
+then the units of the species' quantity are undefined.  Leaving
+the units of species quantities undefined in an SBML model does
+not render the model invalid; however, as a matter of best
+practice, we strongly recommend that all models specify the units
+of measurement for every species quantity.  A list of recommended
+units is given in
+Section~\ref{sec:bp:unitdefinitions:recommendedunits}.
+
+Setting \token{initialAmount} or \token{initialConcentration} does
+\emph{not} determine whether a species identifier represents an
+amount or a concentration when it appears elsewhere in an SBML
+model.  Instead, that aspect is something controlled by the
+attribute \token{hasOnlySubstanceUnits}, discussed in
+Section~\ref{sec:species-units} below.
+
+% OLDER TEXT -- REMOVE ONCE THE FINAL SENTENCE IS MERGED IN
+%  in the \token{initialAmount}
+% or the \token{initialConcentration} attribute are determined by a
+% combination of factors described in
+% Section~\ref{sec:species-units} below.  The interpretation of
+% species quantities under different conditions is explained in
+% Section~\ref{sec:species-meaning}.
 
 
-\subsubsection{The \token{substanceUnits} and
-    \token{hasOnlySubstanceUnits} attributes}
+\subsubsection{The \token{hasOnlySubstanceUnits} attribute and the
+  units of the species}
 \label{sec:species-units}
 
-The units associated with a species' quantity, referred to as the
-\emph{units of the species}, are determined via the optional
-attribute \token{substanceUnits} and the required attribute 
-\token{hasOnlySubstanceUnits} in combination with the units of the
-size defined for the compartment object in which the species are
-located. 
-
-The value of the attribute \token{substanceUnits} must be of type
-\primtype{UnitSIdRef} (Section:~\vref{sec:unitsidref}).
-In the case that the attribute \token{substanceUnits} is
-not given the substance units will be inherited from the model
-attribute \token{substanceUnits}. A list of recommended units is given in
-section~\vref{sec:bp:unitdefinitions:recommendedunits:substanceUnits}.  
-
-The attribute \token{hasOnlySubstanceUnits} takes on boolean
-values.  This attribute's role is to
-indicate whether the units of the species, when the species
-identifier appears in mathematical formulas, are intended to be
-concentration (\val{false}) or amount(\val{true}).  Although it may seem as though this
-intention could be determined based on whether
-\token{initialConcentration} or \token{initialAmount} is set, the
-fact that these two attributes are optional means that a separate
-flag is needed.  (Consider the situation where neither is set, and
-instead the species' quantity is established by an
-\InitialAssignment or \AssignmentRule.)  The interpretation rule
-is the following.  The \emph{units of the species} are of the form
+When the identifier of a species appears in a mathematical
+expression or as the subject of SBML rules, initial assignments or
+event assignments, the identifier may represent either a
+concentration value or a substance amount value.  The
+\primtype{boolean} attribute \token{hasOnlySubstanceUnits}
+determines which interpretation applies for a given \Species
+object instance.  The interpretation rule is the following.  The
+intended \emph{units of the species} are of the form
 \quantity{substance}/\quantity{size} units (\ie
 \quantity{concentration} units, using a broad definition of
 concentration) if \token{hasOnlySubstanceUnits} has the value
@@ -1618,6 +1628,13 @@ concentration) if \token{hasOnlySubstanceUnits} has the value
 value \val{true}, then the \emph{units of the species} are of the
 form \quantity{substance}.
 
+Although it may seem as though this intention could be determined
+based on whether \token{initialConcentration} or
+\token{initialAmount} is set, the fact that these two \Species
+attributes are optional means that a separate flag is needed.
+(Consider the situation where neither is set, and instead the
+species' quantity is established by an \InitialAssignment or
+\AssignmentRule.)
 
 % FIXME this should be a best practice:
 %
@@ -1630,7 +1647,8 @@ form \quantity{substance}.
 % \token{hasOnlySubstanceUnits}=\val{true} in the species'
 % definitions.
 
-The \emph{units of the species} are used in the following ways:
+The \emph{units of the species} are used in the following ways in
+SBML:
 \begin{itemize}
 
 \item The species identifier has these units when the
@@ -1696,14 +1714,15 @@ determined by the reactions.  The boolean attribute
 this.  A value of \val{false} indicates that the species
 \emph{is} part of the reaction system.
 
-The \token{constant} attribute indicates whether the species' quantity
-can be changed at all, regardless of whether by reactions, rules,
-or constructs other than \InitialAssignment.  A value of 
-\val{false} indicates that the species' quantity can be changed,
-since the purpose of most simulations is precisely to calculate
-changes in species quantities.  Note that the initial quantity of
-a species can be set by an \InitialAssignment irrespective of the
-value of the \token{constant} attribute.
+The \token{constant} attribute indicates whether the species'
+quantity can be changed at all, regardless of whether by
+reactions, rules, or constructs other than \InitialAssignment.  A
+value of \val{false} indicates that the species' quantity can be
+changed.  This is the most common situation because the purpose of
+many models is precisely to calculate changes in species
+quantities over time.  Note that the initial quantity of a species
+can be set by an \InitialAssignment irrespective of the value of
+the \token{constant} attribute.
 
 In practice, a \token{boundaryCondition} value of \val{true} means
 a differential equation derived from the reaction definitions
@@ -1719,7 +1738,7 @@ A species having \token{boundaryCondition}=\val{false} and
 reactant of one or more reactions in the model.  If the species is
 a reactant or product of a reaction, it must not also appear as
 the target of any \AssignmentRule or \RateRule object in the
-model.  If instead the species \color{black} has
+model.  If instead the species has
 \token{boundaryCondition}=\val{false} and
 \token{constant}=\val{true}, then it cannot appear as a reactant
 or product, or as the target of any \AssignmentRule, \RateRule or
@@ -1732,8 +1751,10 @@ Section~\ref{sec:odeeg} gives an example of how one can translate
 into ODEs a model that uses \token{boundaryCondition} and
 \token{constant} attributes.
 
+
 \subsubsection{The \token{conversionFactor} attribute}
 \label{sec:species-conversion}
+
 The optional attribute \token{conversionFactor}, of type
 \primtype{SIdRef}, can be used to identify a \Parameter as a 
 unit conversion factor. If it is set it must be the \token{id} 
@@ -1757,7 +1778,9 @@ When no unit conversion factor is given for a species, it is assumed
 that no conversion is needed when evaluating the effect of a reaction on 
 the species.
 
-\subsubsection{Interpretation of the numerical value of a species}
+
+\subsubsection{Additional considerations for interpreting the
+  numerical value of a species}
 \label{sec:species-meaning}
 
 Species are unique in SBML in that they have a kind of duality: a
@@ -1949,7 +1972,7 @@ for simulation time $t \leq 0$.
 
 The units associated with the value of the parameter are specified
 by the attribute \token{units}.  The value must be of type
-\primtype{UnitSIdRef} (Section:~\vref{sec:unitsidref}).
+\primtype{UnitSIdRef} (Section~\ref{sec:unitsidref}).
 
 The units of the parameter are used in the following ways:
 \begin{itemize}

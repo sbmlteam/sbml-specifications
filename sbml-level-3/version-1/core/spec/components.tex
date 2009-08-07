@@ -2130,18 +2130,17 @@ beginning of simulation time, \ie $t \leq 0$, while an
 
 \subsubsection{The \token{symbol} attribute}
 
-\InitialAssignment contains the attribute
+\InitialAssignment contains the mandatory attribute
 \token{symbol}, of type \primtype{SIdRef}.  The value of this
-attribute in an \InitialAssignment object can be the
-identifier (\ie the value of the \token{id} attribute)
-of a \Compartment, \Species, \SpeciesReference or global \Parameter 
-elsewhere in the
-model.  The purpose of the \InitialAssignment is to define the
-initial value of the constant or variable referred to by the
-\token{symbol} attribute.  (The attribute's
-name is \token{symbol} rather than \token{variable} because it may
-assign values to constants as well as variables in a model; see
-Section~\ref{sec:initial-assignment-semantics} below.)
+attribute can be the identifier (\ie the value of the \token{id}
+attribute) of a \Compartment, \Species, \SpeciesReference or
+global \Parameter elsewhere in the model.  The purpose of the
+\InitialAssignment is to define the initial value of the constant
+or variable referred to by the \token{symbol} attribute.  (The
+attribute's name is \token{symbol} rather than \token{variable}
+because it may assign values to constants as well as variables in
+a model; see Section~\ref{sec:initial-assignment-semantics}
+below.)
 
 An initial assignment cannot be made to reaction identifiers, that
 is, the \token{symbol} attribute value of an \InitialAssignment cannot
@@ -2293,17 +2292,15 @@ by that initial assignment.
 \subsubsection{Example}
 
 The following example shows how the species \val{x} can assigned
-the initial value $2 \times y$, where \val{y} is an identifier
+the initial value $2 \cdot y$, where \val{y} is an identifier
 defined elsewhere in the model:
 
 \begin{example}
-
 <model>
     ...
     <listOfSpecies>
-        <species id="x" initialConcentration="5" compartment="C">
-                 hasOnlySubstanceUnits="false" boundaryCondition="false" 
-                 constant="false"/>
+        <species id="x" initialConcentration="5" compartment="C"
+                 hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false"/>
     </listOfSpecies>
     ...
     <listOfInitialAssignments>
@@ -2330,9 +2327,8 @@ there also exists an \InitialAssignment for it \emph{and} another
 <model>
     ...
     <listOfSpecies>
-        <species id="x" initialConcentration="5" compartment="C">
-                 hasOnlySubstanceUnits="false" boundaryCondition="false" 
-                 constant="false"/>
+        <species id="x" initialConcentration="5" compartment="C"
+                 hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false"/>
     </listOfSpecies>
     ...
     <listOfInitialAssignments>
@@ -2419,16 +2415,16 @@ treated as separate cases for the following reasons:
 \end{itemize}
 
 The approach taken to covering these cases in SBML is to define an
-abstract \Rule object class containing an element,
+abstract \Rule class containing an element,
 \token{math}, to hold the right-hand side expression, then to
-derive subtypes of \Rule that add attributes to
+derive subclasses of \Rule that add attributes to
 distinguish the cases of algebraic, assignment and rate rules.
 Figure~\vref{fig:rules} gives the definitions of \Rule and the
-subtypes derived from it.  The figure shows there are three
-subtypes, \AlgebraicRule, \AssignmentRule and \RateRule derived
+subclasses derived from it.  The figure shows there are three
+subclasses, \AlgebraicRule, \AssignmentRule and \RateRule derived
 directly from \Rule. These correspond to the cases
 \emph{Algebraic}, \emph{Assignment}, and \emph{Rate} described
-above respectively.
+above, respectively.
 
 \begin{figure}[htb]
   \centering
@@ -2541,9 +2537,13 @@ the precise details depending on the type of variable being set:
   is created or destroyed in a reaction unless that species is
   defined as a boundary condition in the model.
 
-\item \emph{In the case of a species reference}, an \AssignmentRule sets
-  the stoichiometry of the referenced \SpeciesReference to the value 
-  determined by the formula in \token{math}.
+\item \emph{In the case of a species reference}, an
+  \AssignmentRule sets the stoichiometry of the reactant or
+  product referenced by the \SpeciesReference object instance to
+  the value determined by the formula in \token{math}.  The
+  overall units of the formula in \token{math} should be
+  \token{dimensionless}, because reactant and product
+  stoichiometries in reactions are dimensionless quantities.
 
 \item \emph{In the case of a compartment}, an \AssignmentRule sets
   the referenced compartment's size to the value determined by the
@@ -2631,10 +2631,14 @@ variable is being set:
   means a rate rule cannot be defined for a species that is
   created or destroyed in a reaction, unless that species is
   defined as a boundary condition in the model.
-  
-\item \emph{In the case of a species reference}, a \RateRule sets the rate
-  of change of the \SpeciesReference's stoichiometry value to that 
-  determined by the formula in \token{math}.  
+
+\item \emph{In the case of a species reference}, a \RateRule sets
+  the rate of change of the stoichiometry of the reactant or
+  product referenced by the \SpeciesReference object instance to
+  the value determined by the formula in \token{math}.  The
+  overall units of the formula in \token{math} should be
+  \token{dimensionless}, because reactant and product
+  stoichiometries in reactions are dimensionless quantities.
   
 \item \emph{In the case of a compartment}, a \RateRule sets the
   rate of change of the compartment's size to the value determined
@@ -2781,27 +2785,27 @@ definitions of \texttt{x}, \texttt{s}, \texttt{k}, \texttt{k2},
 the model and not shown in this abbreviated example):
 
 \begin{example}
-    <listOfRules>
-        <assignmentRule variable="k">
-            <math xmlns="http://www.w3.org/1998/Math/MathML">
-                <apply> <divide/> <ci> k3 </ci> <ci> k2 </ci> </apply>
-            </math>
-        </assignmentRule>
-        <assignmentRule variable="s2">
-            <math xmlns="http://www.w3.org/1998/Math/MathML">
-                <apply>
-                    <divide/>
-                        <apply> <times/> <ci> k </ci> <ci> x </ci> </apply>
-                        <apply> <plus/> <cn> 1 </cn> <ci> k2 </ci> </apply>
-                </apply>
-            </math>
-        </assignmentRule>
-        <assignmentRule variable="A">
-            <math xmlns="http://www.w3.org/1998/Math/MathML">
-                <apply> <times/> <cn> 0.10 </cn> <ci> x </ci> </apply>
-            </math>
-        </assignmentRule>
-    </listOfRules>
+<listOfRules>
+    <assignmentRule variable="k">
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply> <divide/> <ci> k3 </ci> <ci> k2 </ci> </apply>
+        </math>
+    </assignmentRule>
+    <assignmentRule variable="s2">
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+                <divide/>
+                    <apply> <times/> <ci> k </ci> <ci> x </ci> </apply>
+                    <apply> <plus/> <cn> 1 </cn> <ci> k2 </ci> </apply>
+            </apply>
+        </math>
+    </assignmentRule>
+    <assignmentRule variable="A">
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply> <times/> <cn> 0.10 </cn> <ci> x </ci> </apply>
+        </math>
+    </assignmentRule>
+</listOfRules>
 \end{example}
 
 

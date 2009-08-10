@@ -952,12 +952,8 @@ for encoding mathematical expressions using XML.  There are two
 principal facets of MathML, one for encoding content (\ie the
 semantic interpretation of a mathematical expression), and another
 for encoding presentation or display characteristics.  SBML only
-makes direct use of a subset of the content portion of MathML.  By
-borrowing a separately-developed XML standard, we can avoid having
-to define a specialized syntax for mathematical expressions in
-SBML and simultaneously leverage existing intellectual and
-technological work already done in the MathML community.  However,
-it is not possible to produce a completely smooth and
+makes direct use of a subset of the content portion of MathML.
+However, it is not possible to produce a completely smooth and
 conflict-free interface between MathML and other standards used by
 SBML (in particular, \xmlschema).  Two specific issues and their
 resolutions are discussed in Sections~\ref{sec:cn-token}.
@@ -975,10 +971,7 @@ more technical information about using XML namespaces.
 \subsubsection{Subset of MathML used in SBML Level 3}
 \label{sec:mathmlsubset}
 
-The subset of \mathmltwo elements used in SBML Level~3 is similar
-to that used by CellML~\citep{hedley:2001b}, another model
-definition language with similar goals as SBML.  The subset of
-MathML elements used in SBML is listed below:
+The subset of MathML elements used in SBML is listed below:
 \begin{itemize}\setlength{\parskip}{-0.2ex}
 
 \item \emph{token}: \token{cn}, \token{ci}, \token{csymbol},
@@ -1055,11 +1048,11 @@ in SBML (in addition to the \token{xmlns} attribute on
   (see Section~\ref{sec:cn-token}) on \token{cn} elements.
 
 \end{itemize}\vspace*{-0.75ex}
-Missing values for these attributes are to be treated in the same
-way as defined by MathML.  These restrictions on attributes are
-designed to confine the MathML elements to their default semantics
-and to avoid conflicts in the interpretation of the type of token
-elements.
+Missing values for the MathML attributes are to be treated in the
+same way as defined by MathML~2.0.  These restrictions on
+attributes are designed to confine the MathML elements to their
+default semantics and to avoid conflicts in the interpretation of
+the type of token elements.
 
 
 \subsubsection{Numbers and \token{cn} elements}
@@ -1168,10 +1161,10 @@ contain XML elements---that is, \token{<sep/>} cannot appear in an
 XML attribute value.
 
 
-\paragraph{Units of numbers in MathML \token{cn} expressions}
+\paragraph{Units associated with numbers in MathML \token{cn} expressions}
 \label{sec:units-of-mathml}
 
-What units should be attributed to values appearing inside MathML
+What units should be attributed to numbers appearing inside MathML
 \token{cn} elements?  One answer is to assume that the units
 should be ``whatever units appropriate in the context where the
 number appears''.  This implies that units can always be assigned
@@ -1180,50 +1173,81 @@ it appears, and this turns out to be false.  Another answer is
 that numbers should be considered ``dimensionless''.  Many people
 argue that this is the correct interpretation, but even if it is,
 there is an overriding practical reason why it cannot be adopted
-for SBML's domain of application: when numbers appear in 
+for SBML's domain of application: when numbers appear in
 expressions in SBML, they are \emph{rarely intended} by the
-modeler to have the unit \val{dimensionless} even if
-the unit is not declared---the numbers are \emph{supposed} to
-have specific units, but the units are usually undeclared.  (Being
+modeler to have the unit \val{dimensionless} even if the unit is
+not declared---instead, the numbers are \emph{supposed} to have
+specific units, but the units are usually undeclared.  (Being
 ``dimensionless'' is not the same as having \emph{undeclared}
 units!)  If SBML defined numbers as being \emph{by default}
 dimensionless, it would result in many models being technically
 incorrect without the modeler being aware of it unless their
 software tools performed dimensional analysis.  Most software
 tools today still do not perform unit analysis, and so the
-inconsistency of units (and potential errors in the model) would not
-be detected until other researchers and database curators
+inconsistency of units (and potential errors in the model) would
+not be detected until other researchers and database curators
 attempted to use the model in software packages that \emph{did}
 check units.  We believe the negative impact on interoperability
 and people's confidence in SBML as a reliable medium would be too
 high.
 
-The only practical choice is to allow the units to be explicitly
-specified. To facilitate this SBML introduces an attribute
-\token{sbml:units} to the MathML \token{cn} element. The value of
-this attribute must be of type \primtype{UnitSIdRef}
-(Section:~\vref{sec:unitsidref}). If this attribute is not present
-the units of the value are not declared and no assumptions are
-made. The following example shows how to define a number with
-value 10 and units seconds. 
-
+SBML borrows an idea from CellML~\citep{hedley:2001b}, another
+model definition language with similar goals as SBML, and allows
+an additional attribute to appear on MathML \token{cn} elements;
+the value of this attribute can be used to indicate the units to
+be associated with the number inside the \token{cn} element.  The
+attribute is named \token{units} but, because it appears inside
+MathML content (which is in the XML namespace for MathML and not
+the namespace for SBML), it must always be prefixed with an XML
+namespace prefix for the SBML \thisLV namespace.  The value of the
+attribute must have the data type \primtype{UnitSIdRef}
+(Section:~\vref{sec:unitsidref}) and can be the identifier of a
+\UnitDefinition object in the model or a base unit listed in
+Table~\vref{tab:unitkind}.  The following example illustrates how
+this attribute can be used to define a number with value \val{10}
+and unit of measurement \val{second}:
 \begin{example}
 <math xmlns="http://www.w3.org/1998/Math/MathML"
       xmlns:sbml="http://www.sbml.org/sbml/level3/version1/core">
-    <cn type="integer" sbml:units="seconds"> 10 </cn>
+    <cn type="integer" sbml:units="second"> 10 </cn>
 </math>
-\end{example}
+\end{example} 
+In this example, we chose to use the string \val{sbml} as the XML
+namespace prefix for the SBML \thisLV namespace; this leads to the
+use of \token{sbml:units} as the attribute on the \token{cn}
+element.  Other prefix strings besides \val{sbml} could have been
+chosen, and the definition of the prefix could also have appeared
+on a higher-level element in the model.  Section~\ref{sec:sbml}
+provides mo information about the XML namespace for SBML \thisLV.
 
-An alternative approach is to avoid \token{cn} elements
-altogether and use \token{ci} elements which refer to \Parameter
-objects (Section~\ref{sec:parameters}) which have a value and
-units. Either of these approaches leads to mathematical formulas
-whose units can be fully determined, permitting software tools to
-perform dimensional analysis and potentially report problems with
-a model. 
+An alternative approach is to avoid using \token{cn} elements
+altogether, and always use \token{ci} elements to reference
+\Parameter objects having both value and units defined.  In the
+example above, we could have avoided putting the literal number
+\val{10} inside the mathematical expression, and instead, defined
+a parameter in the model, given it the value \val{10} and unit
+\val{second}, and finally, referred to that parameter in the
+\token{math} content above.  The approach of using named
+parameters provides additional power and advantages over simply
+using \token{sbml:units} attributes on \token{cn} elements; for
+example, \Parameter allows the association of terms from the
+Systems Biology Ontology (SBO; Section~\ref{sec:sbo}) as well as
+MIRIAM annotations (Section~\ref{sec:annotations}).
 
-In summary: literal numbers appearing within MathML content in
-SBML with no \token {sbml:units} attribute have no declared units.
+In summary, a literal number within MathML content without an SBML
+\token{units} attribute has no declared units.  Either of the two
+approaches described above (\ie avoiding \token{cn} in favor of
+\token{ci} elements and \Parameter objects, or using \token{cn}
+with a \token{sbml:units} attribute) leads to mathematical
+formulas whose units can be fully determined, enabling software
+tools to perform dimensional analysis and, potentially, detect and
+report problems with the model.  Conversely, in the absence of an
+SBML \token{units} attribute on a MathML \token{cn} element, no
+units are associated with the number within the \token{cn}
+element; in other words, \emph{the units are undeclared}.  In the
+example above, if the attribute \token{sbml:units} were not been,
+the value \val{10} would have no declared units.
+
 
 \subsubsection{Use of \token{ci} elements in MathML expressions in SBML}
 \label{sec:ci-token}
@@ -1278,12 +1302,11 @@ containing element in which the \token{ci} is used:
     reaction as defined by the \token{math} expression in the
     \KineticLaw object within the \Reaction.  The units associated
     with that rate are \emph{extent units}/\emph{time units},
-    where the \emph{extent units} is given by the attribute
+    where the \emph{extent units} is given by the \Model attribute
     \token{extentUnits} and \emph{time units} is given by the
-    attribute token{timeUnits} of the \Model element. If a
-    \Reaction instance has no \KineticLaw , using its reaction
-    identifier this way is an error (perhaps indicating that the
-    model is incomplete). 
+    \Model attribute token{timeUnits}.  If a \Reaction instance has
+    no \KineticLaw , using its reaction identifier this way is an
+    error (perhaps indicating that the model is incomplete).
     
   \item \emph{Species identifier}: When a \Species identifier
     occurs in a \token{ci} element, it represents the quantity of
@@ -1420,6 +1443,7 @@ The following examples demonstrate these concepts.  The XML fragment below
 encodes the formula $x + t$, where $t$ stands for time.
 
 \begin{example}
+
 <math xmlns="http://www.w3.org/1998/Math/MathML">
     <apply>
         <plus/>
@@ -1506,11 +1530,12 @@ value from the \token{csymbol} \emph{time}.  For example, if the
 desired offset is 2 time units, the MathML expression would be
 
 \begin{example}
-<math xmlns="http://www.w3.org/1998/Math/MathML">
+<math xmlns="http://www.w3.org/1998/Math/MathML"
+      xmlns:sbml="http://www.sbml.org/sbml/level3/version1/core">
     <apply>
         <minus/>
         <csymbol encoding="text" definitionURL="http://www.sbml.org/sbml/symbols/time"/> 
-        <cn> 2 </cn>
+        <cn sbml:units="second"> 2 </cn>
     </apply>
 </math>
 \end{example}

@@ -11,7 +11,7 @@ We use the UML notation described in
 Section~\ref{sec:notation-uml} for defining classes of objects.
 We also illustrate the use of SBML components by giving partial
 model definitions in XML.  Section~\ref{sec:xml-rep} provides many
-complete examples of SBML in XML.
+complete example models encoded in SBML.
 
 
 %-----------------------------------------------------------------------------
@@ -331,14 +331,14 @@ benefit of SBO labels.
 \label{sec:model-substanceUnits}
 
 The \token{substanceUnits} attribute specifies the units of
-measurement associated with the quantity of \Species objects in
-the model when the objects do not otherwise specify the units.
-The attribute's value must be of type \primtype{UnitSIdRef}
+measurement associated with substance quantities of \Species
+objects that do not themselves specify the units.  The attribute's
+value must be of type \primtype{UnitSIdRef}
 (Section~\ref{sec:unitsidref}).  A list of recommended units is
 given in Section~\ref{sec:bp:unitdefinitions:recommendedunits}.
 
 If a given \Species object definition does not specify units of
-measurement via the \token{substanceUnits} attribute on \Species
+substance via the \token{substanceUnits} attribute on \Species
 (described in Section~\ref{sec:species}), then the species
 quantity inherits the units specified by the \Model
 \token{substanceUnits} attribute.  If the \Model does not define a
@@ -351,6 +351,13 @@ SBML model does not render the model invalid; however, as a matter
 of best practice, we strongly recommend that all models specify
 the units of measurement for every species quantity, using the
 \token{substanceUnits} attribute on either \Model or \Species.
+
+Note that the overall units associated with the identifier of a
+species (when that identifier appears in a model's mathematical
+expressions) are not \emph{only} determined by setting
+\token{substanceUnits} on \Model or \Species.
+Sections~\ref{sec:species-units} and~\ref{sec:species-meaning}
+explain this in more detail.
 
 
 \subsubsection{The \token{timeUnits} attribute}
@@ -411,6 +418,9 @@ to compartments having \token{spatialDimensions}=\val{2}, and
 must be of type \primtype{UnitSIdRef}
 (Section~\ref{sec:unitsidref}).  A list of recommended units is
 given in Section~\ref{sec:bp:unitdefinitions:recommendedunits}.
+The attributes are not applicable to compartments whose
+\token{spatialDimensions} attribute value is not one of \val{1},
+\val{2} or \val{3}.
 
 If a given \Compartment object instance does not provide a value
 for its \token{units} attribute, then that compartment's size
@@ -428,7 +438,7 @@ practice, we strongly recommend that all models specify the units
 of measurement for every compartment size, using either the \Model
 \token{volumeUnits}, \token{areaUnits} or \token{lengthUnits}
 attributes (as appropriate), or the \token{units} attribute on
-\Compartment.
+an individual \Compartment object.
 
 The use of three separate attributes is a carry-over from SBML
 Level~2.  Note that it is entirely possible for a model to define
@@ -479,17 +489,16 @@ provided in Sections~\ref{sec:species} and~\ref{sec:reactions}.
 \label{sec:listofreactions}
 \label{sec:listofevents}
 
-The various \ListOf classes defined in Figure~\ref{fig:model}
-are merely containers used for organizing the main components of
-an SBML document.  All are derived from the abstract class \SBase
+The various \ListOf classes defined in Figure~\ref{fig:model} are
+merely containers used for organizing the main components of an
+SBML document.  All are derived from the abstract class \SBase
 (Section~\ref{sec:sbase}), and inherit \SBase's various attributes
-and subelements such as \token{metaid} and \token{annotation},
-although in SBML \thisLVR there are no defined SBO terms for the
-\token{sboTerm} attribute.  The \ListOf classes do not add any
-attributes of their own.
+and subelements such as \token{metaid} and \token{annotation}.
+The \ListOf classes do not add any attributes of their own.
 
-There are several motivations for grouping SBML components within XML elements named after \token{listOfClassNames}, rather than
-placing the components all directly at the top level.  First, the
+There are several motivations for grouping SBML components within
+XML elements named after \token{listOfClassNames} rather than
+placing all the components directly at the top level.  First, the
 fact that the container classes are derived from \SBase means that
 software tools can add information about the lists themselves into
 each list container's \token{annotation}, a feature that a number
@@ -531,7 +540,7 @@ function called in subsequent MathML \token{apply} elements.
       \end{classbox}
     };
     \draw[open triangle 60-] (a) -- (b);
-    \draw[diamond-,shorten <=-7pt,shorten >=-6pt] (b) -- (c)
+    \draw[diamond-,shorten <=-3pt,shorten >=-6pt] (b) -- (c)
         node[above=6pt,left=1.8in] {\textsf{math}};
   \end{tikzpicture}
   \caption{The definition of class \FunctionDefinition.
@@ -695,15 +704,11 @@ law.  Note how the invocation of the function uses its identifier.
 %-----------------------------------------------------------------------------
 
 Units of measurement may be supplied in a number of contexts in an
-SBML model.  The units of the following mathematical entities can
-be specified explicitly: the time of the \Model, the size of a
-\Compartment, the amount/substance of a \Species, the units of
-constant and variable \Parameter values, and the units of the 
-extent of a \Reaction.  The overall units of any mathematical
-formula appearing in SBML are those that arise naturally from the
-components and mathematical expressions comprising the formula, or
-in other words, the units obtained by doing dimensional analysis
-on the formula.
+SBML model and associated with a variety of components.  The
+overall units of any mathematical formula appearing in SBML are
+those that arise naturally from the components and mathematical
+expressions comprising the formula, or in other words, the units
+obtained by doing dimensional analysis on the formula.
 
 Rather than requiring a complete unit definition on every object,
 SBML provides a facility for defining units that can be referenced
@@ -828,11 +833,12 @@ These various attributes are described in detail below.
 
 \paragraph{The \token{kind} attribute}
 
-The \Unit object class has four required attributes, the first
-being the attribute \token{kind}, whose value must be taken from
-the list of reserved words given in Table~\vref{tab:unitkind}.
-These reserved symbols are defined in the value space of the data
-type \primtype{UnitSId} (Section~\ref{sec:unitsid}).
+The \Unit attribute \token{kind} specifies a base unit to serve as
+the starting point for a new unit definition.  The value of the
+attribute must be taken from the list of reserved words given in
+Table~\vref{tab:unitkind}.  These reserved symbols are defined in
+the value space of the data type \primtype{UnitSId}
+(Section~\ref{sec:unitsid}).
 
 \begin{table}[bht]
   \centering
@@ -907,12 +913,11 @@ edition of CODATA~\citep{codata_2008}, but the unit is
 \end{linenomath}
 where the dot ($\cdot$) indicates simple scalar multiplication.
 If the value of Avogadro's constant is revised by international
-standards-setting organizations in the future, a future Version
-of the SBML \thisL specification may stipulate a new value to be
-used for this \token{csymbol} constant.  However, all software
-reading models expressed in \emph{this} Version of SBML Level~3
-should \emph{always} use the value of Avogadro's constant given
-above.
+standards-setting organizations in the future, a future Version of
+the SBML \thisL specification may stipulate a new value to be used
+for \token{avogadro}.  However, all software reading models
+expressed in \emph{this} Version of SBML Level~3 should
+\emph{always} use the value of Avogadro's constant given above.
 
 For purposes of comparing units, the following relationship should
 be assumed:
@@ -940,13 +945,11 @@ be assumed:
 \newcommand{\utwo}{\ensuremath{\{u_{b_2}\}}\xspace}
 \newcommand{\un}  {\ensuremath{\{u_{b_n}\}}\xspace}
 
-To understand the meaning of the three other \Unit attributes
-\token{exponent}, \token{scale} and \token{multiplier}, and how
-they work together, we first need to define the meaning of
-\UnitDefinition more precisely.  The fundamental purpose of the
-unit scheme in SBML is to permit expressing new units in terms of
-the base units listed in Table~\vref{tab:unitkind}.  The formula
-underlying this definition is the following:
+The three other attributes \token{exponent}, \token{scale} and
+\token{multiplier} work together to permit the use of \Unit for
+expressing new units in terms of the base units listed in
+Table~\vref{tab:unitkind}.  The formula underlying this definition
+is the following:
 \begin{linenomath}
 \begin{equation}
   \unew = (\token{multiplier} \cdot 10^\token{scale} \cdot \ukind)^\token{exponent}
@@ -955,7 +958,7 @@ underlying this definition is the following:
 \end{linenomath}
 This formula defines a new unit, \unew, in terms of another unit,
 \ukind.  The unit \ukind is one of the units listed in
-Table~\ref{tab:unitkind}; in a given \Unit definition, it is
+Table~\ref{tab:unitkind}; in a given \Unit object, it is
 chosen by setting the \token{kind} attribute.  Each of the other
 components on the right-hand side of
 Equation~\ref{eq:unit-semantics} correspond to the remaining
@@ -975,7 +978,7 @@ follows:
 \item The \token{scale} attribute can be used to set the exponent
   for a power-of-ten multiplier that rescales the unit.  For
   example, a unit having a \token{kind} value of \val{gram} and a
-  \token{scale} value of \val{-3} signifies $10^{-3} \times gram$,
+  \token{scale} value of \val{-3} signifies $10^{-3} \cdot gram$,
   or milligrams.  A value of \token{scale} must always be provided
   in a \Unit object instance; in those cases where a unit does not
   need to be scaled by a power of ten, the value of \token{scale}
@@ -1045,7 +1048,7 @@ produce a new unit definition in an SBML model.
 As a concrete example to illustrate the definitions above, let us
 define a unit for \val{foot} in terms of the base unit
 \val{metre}.  This requires using \token{multiplier}=\val{0.3048},
-\token{exponent}=\val{1}, and \token{scale}=\val{0}:
+\token{scale}=\val{0}, and \token{exponent}=\val{1}:
 \begin{linenomath}
 \begin{align*}
   \text{foot} = 0.3048 \cdot 10^0 \cdot \token{metre}
@@ -1113,13 +1116,13 @@ solved for the unknown exponents on the left-hand side:
 $z_i = x_i$ and $\ybase = \ynew \cdot m \cdot 10^s$.
 
 \label{sec:unit-simple-approach}
-Some additional points are worth discussing about the unit scheme
-introduced so far.  First, and most importantly, the equations
+Some additional points are worth discussing about the unit scheme.
+First, and most importantly, the equations
 above are formulated with the assumption that the base units do
 not require an additive offset as part of their definition.
 \emph{When temperature values in units other than kelvin are being
   considered, then a different interpretation must be made}, as
-discussed below.
+discussed in Section~\ref{sec:bp:unitdefinitions:offset}.
 
 A second point is that care is needed to avoid seemingly-obvious
 but incorrect translations into this scheme of units taken from
@@ -1144,7 +1147,7 @@ discussed above.
 While the SBML unit system does not allow a means of specifying
 offsets directly, it is still possible to encode models using such
 units.  Section~\ref{sec:bp:unitdefinitions:offset} provides 
-information on ways of handling units requiring offsets.
+information on ways of handling units that require offsets.
 
 
 \subsubsection{References to units}
@@ -1160,16 +1163,6 @@ whose identifier is chosen from among the following:
   described in Section~\ref{sec:unitdefinitions}.
 
 \end{itemize}
-
-Software developers are asked to pay special attention to the
-units used in an SBML model.  Different users and developers
-sometimes are accustomed to making different assumptions about
-units, and these assumptions may not correspond to what is
-actually defined in SBML.  The numerical values in a model become
-meaningless if the corresponding units are not those being
-assumed.  Sections~\ref{sec:ci-token}, \ref{sec:species-units} and
-\ref{subsec:kinetic-law} have particularly important notes about
-the usage of units in SBML.
 
 
 %-----------------------------------------------------------------------------
@@ -1289,10 +1282,10 @@ It is important to note that in SBML Level~3, a missing
   is~\val{1}}. A missing value for \token{size} for a given
 compartment signifies that the value either is unknown, or to be
 obtained from an external source, or determined by an initial
-assignment (Section~\ref{sec:initialAssignment}) or a rule
-(Section~\ref{sec:rules}) elsewhere in the model.  Further, due to
-the fact that alternative methods available for setting the size
-of a compartment, the \token{size} attribute must be defined as
+assignment (Section~\ref{sec:initialAssignment}) or other SBML
+construct elsewhere in the model.  Further, due to the fact that
+alternative methods available for setting the size of a
+compartment, the \token{size} attribute must be defined as
 optional; however, \emph{it is extremely good practice to specify
   a value the size of every compartment in a model}, no matter
 what method is used, when compartment size values are available.
@@ -1328,7 +1321,7 @@ Section~\ref{sec:bp:unitdefinitions:recommendedunits:sizeUnits}.
   \centering
   \begin{edtable}{tabular}{cl}
     \toprule
-    \textbf{Value of attribute} & \Model \textbf{attribute used} \\[-2pt]
+    \textbf{Value of attribute} & \class{Model} \textbf{attribute used} \\[-2pt]
     \token{spatialDimensions}  & \textbf{for inheriting units of size} \\
     \midrule
     \val{3}                     & \token{volumeUnits} \\
@@ -1391,7 +1384,8 @@ stays constant or can vary during a simulation.  A value of
 \val{false} indicates the compartment's \token{size} can be
 changed by other constructs in SBML.  A value of \val{true}
 indicates the compartment's \token{size} cannot be changed by any
-construct except \InitialAssignment. 
+construct except \InitialAssignment.  Section~\ref{sec:size}
+provides more information.
 
 
 \subsubsection{The \token{sboTerm} attribute}
@@ -1516,8 +1510,8 @@ identifier of an existing \Compartment object in the model.  Note
 that SBML does not have a concept of a default compartment---every
 species in an SBML model must be assigned a compartment
 \emph{explicitly}, by setting the value of the \token{compartment}
-attribute.  (This also implies that every model must define at
-least one compartment.)
+attribute.  (This also implies that every model with one or more
+\Species objects must define at least one \Compartment object.)
 
 
 \subsubsection{The \token{initialAmount},
@@ -1534,8 +1528,8 @@ but \emph{only one} can have a value on any given instance of a
 \token{initialConcentration} values implies that their values
 either are unknown, or to be obtained from an external source, or
 determined by an initial assignment
-(Section~\ref{sec:initialAssignment}) or rule
-(Section~\ref{sec:rules}) elsewhere in the model.
+(Section~\ref{sec:initialAssignment}) or other SBML construct
+elsewhere in the model.
 
 A species' initial quantity is set by the \token{initialAmount} or
 \token{initialConcentration} attributes exactly once.
@@ -1614,7 +1608,7 @@ concentration value or a substance amount value.  The
 \primtype{boolean} attribute \token{hasOnlySubstanceUnits}
 determines which interpretation applies for a given \Species
 object instance.  The interpretation rule is the following.  The
-intended \emph{units of the species} are of the form
+\emph{units of the species} are of the form
 \quantity{substance}/\quantity{size} units (\ie
 \quantity{concentration} units, using a broad definition of
 concentration) if \token{hasOnlySubstanceUnits} has the value
@@ -1667,11 +1661,11 @@ SBML:
 \subsubsection{The \token{constant} and \token{boundaryCondition} attributes}
 \label{sec:species-constant}
 
-The \Species object has two mandatory boolean attributes named
-\token{constant} and \token{boundaryCondition}, used to indicate
-whether and how the quantity of that species can vary during a
-simulation.  Table~\ref{tab:specieattrib} shows how to interpret
-the combined values of the \token{boundaryCondition} and
+The \Species object has two other mandatory boolean attributes
+named \token{constant} and \token{boundaryCondition}, used to
+indicate whether and how the quantity of that species can vary
+during a simulation.  Table~\ref{tab:specieattrib} shows how to
+interpret the combined values of the \token{boundaryCondition} and
 \token{constant} attributes.
 
 \begin{table}[ht]
@@ -1790,7 +1784,7 @@ When a species definition has the attribute value
 \token{hasOnlySubstanceUnits}=\val{false} and the size of the
 compartment in which the species is located changes, the default
 in SBML is to assume that it is the concentration that must be
-updated to account for the size changes.  This follows from the
+updated to account for the size change.  This follows from the
 principle that, all other things held constant, if a compartment
 simply changes in size, the size change does not in itself cause
 an increase or decrease in the number of entities of any species
@@ -1824,7 +1818,7 @@ that case, there is never a question about whether an assignment
 or event is meant to affect the amount or concentration: it is
 always the amount.
 
-A particularly confusing situation occurs when the species
+A particularly confusing situation occurs when the species has
 attribute \token{constant}=\val{true}.  Suppose that such a
 species is defined with \token{hasOnlySubstanceUnits}=\val{false}
 and is given a value for \token{initialConcentration}.  Does
@@ -1932,22 +1926,23 @@ The optional attribute \token{value} determines the value (of type
 \primtype{double}) assigned to the identifier.  A missing
 \token{value} implies that the \token{value} either is unknown, or
 to be obtained from an external source, or determined by an
-initial assignment (Section~\ref{sec:initialAssignment}) or a rule
-(Section~\ref{sec:rules}) elsewhere in the model.
+initial assignment (Section~\ref{sec:initialAssignment}) or 
+other SBML construct elsewhere in the model.
 
 A parameter's value is set by its \token{value} attribute exactly
-once.  If the parameter's \token{constant} attribute has the value
-\val{true}, then the value is fixed and cannot be
-changed except by an \InitialAssignment.  These two methods of
-setting the parameter's value differ in that the \token{value}
-attribute can only be used to set it to a literal scalar value,
-whereas \InitialAssignment allows the value to be set using an
-arbitrary mathematical expression.  If the parameter's
-\token{constant} attribute has the value \val{false}, the parameter's
-value may be overridden by an \InitialAssignment or changed by
-\AssignmentRule or \AlgebraicRule, and in addition, for simulation
-time $t > 0$, it may also be changed by a \RateRule or \Event{}s.
-(However, some of these constructs are mutually exclusive; see
+once.  If the parameter's \token{constant} attribute
+(Section~\ref{sec:parameter-constant}) has the value \val{true},
+then the value is fixed and cannot be changed except by an
+\InitialAssignment.  These two methods of setting the parameter's
+value differ in that the \token{value} attribute can only be used
+to set it to a literal scalar value, whereas \InitialAssignment
+allows the value to be set using an arbitrary mathematical
+expression.  If the parameter's \token{constant} attribute has the
+value \val{false}, the parameter's value may be overridden by an
+\InitialAssignment or changed by \AssignmentRule or
+\AlgebraicRule, and in addition, for simulation time $t > 0$, it
+may also be changed by a \RateRule or \Event{}s.  (However, some
+of these constructs are mutually exclusive; see
 Sections~\ref{sec:rules} and~\ref{sec:events}.)  It is not an
 error to define \token{value} on a parameter and also redefine the
 value using an \InitialAssignment, but the \token{value} in that
@@ -1989,12 +1984,12 @@ The units of the parameter are used in the following ways:
 
 \end{itemize}
 
-The fact that the \token{units} attribute value is means that
-models can define parameters with undeclared units.  Leaving the
-units of parameter values undefined in an SBML model does not
+The fact that the \token{units} attribute value is optional means
+that models can define parameters with undeclared units.  Leaving
+the units of parameter values undefined in an SBML model does not
 render the model invalid; however, as a matter of best practice,
 we strongly recommend that all models specify the units of
-measurement for every parameter.  
+measurement for every parameter.
 
 
 \subsubsection{The \token{constant} attribute}
@@ -2211,9 +2206,13 @@ of variable being set:
   Section~\ref{sec:species-units} for an explanation of how the
   units of the species' quantity are determined.)
 
-\item \emph{In the case of a species reference}, an \InitialAssignment
-  sets the initial stoichiometry of the referenced \SpeciesReference 
-  to the value determined by the formula in \token{math}.  
+\item \emph{In the case of a species reference}, an
+  \InitialAssignment sets the initial stoichiometry of the
+  referenced \SpeciesReference to the value determined by the
+  formula in \token{math}.  The overall units of the formula in
+  \token{math} should be \token{dimensionless}, because reactant
+  and product stoichiometries in reactions are dimensionless
+  quantities.
 
 \item \emph{In the case of a compartment}, an \InitialAssignment
   sets the referenced compartment's initial size to the size
@@ -2295,17 +2294,18 @@ defined elsewhere in the model:
 <model>
     ...
     <listOfSpecies>
-        <species id="x" initialConcentration="5" compartment="C"
-                 hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false"/>
+        <species id="x" compartment="C" units="mole"
+                 hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
     </listOfSpecies>
     ...
     <listOfInitialAssignments>
         <initialAssignment symbol="x">
-            <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <math xmlns="http://www.w3.org/1998/Math/MathML"
+                  xmlns:sbml="http://www.sbml.org/sbml/level3/version1/core">
                 <apply>
                     <times/> 
                     <ci> y </ci> 
-                    <cn> 2 </cn>
+                    <cn sbml:units="dimensionless"> 2 </cn>
                 </apply>
             </math>
         </initialAssignment>
@@ -2323,22 +2323,24 @@ there also exists an \InitialAssignment for it \emph{and} another
 <model>
     ...
     <listOfSpecies>
-        <species id="x" initialConcentration="5" compartment="C"
-                 hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false"/>
+        <species id="x" initialAmount="50" compartment="C" units="item"
+                 hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
     </listOfSpecies>
     ...
     <listOfInitialAssignments>
         <initialAssignment symbol="x">
-            <math xmlns="http://www.w3.org/1998/Math/MathML">
-                <cn> 2 </cn>
+            <math xmlns="http://www.w3.org/1998/Math/MathML"
+                  xmlns:sbml="http://www.sbml.org/sbml/level3/version1/core">
+                <cn sbml:units="item"> 10 </cn>
             </math>
         </initialAssignment>
         <initialAssignment symbol="othersymbol">
-            <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <math xmlns="http://www.w3.org/1998/Math/MathML"
+                  xmlns:sbml="http://www.sbml.org/sbml/level3/version1/core">
                 <apply>
                     <times/>
                     <ci> x </ci>
-                    <cn> 2 </cn>
+                    <cn sbml:units="dimensionless"> 2 </cn>
                 </apply>
             </math>
         </initialAssignment>
@@ -2348,9 +2350,10 @@ there also exists an \InitialAssignment for it \emph{and} another
 \end{example}
 
 The value of \val{othersymbol} in the SBML excerpt above will be
-\val{4}.  The case illustrates the rule of thumb that if there is
+\val{20}.  The case illustrates the rule of thumb that if there is
 an initial assignment for a symbol, the value assigned to the
-symbol in its definition must be ignored and the value created by
+symbol in its definition (here, the value of
+\token{initialAmount}) must be ignored and the value created by
 the initial assignment used instead.
 
 
@@ -2496,7 +2499,7 @@ possibility that a model is mathematically overdetermined by the
 overall system of equations constructed from its rules, reactions
 and events.  Therefore, if an algebraic rule is introduced in a
 model, for at least one of the entities referenced in the rule's
-\token{math} element, the value of that entity must not be
+\token{math} element the value of that entity must not be
 completely determined by other constructs in the model.  This
 means that at least this entity must not have the attribute
 \token{constant}=\val{true} and there must also not be a rate rule
@@ -2995,19 +2998,20 @@ constraint has failed.
 \subsubsection{Example}
 
 As an example, the following SBML fragment demonstrates the
-constraint that species $S_1$ should only have values between 1
-and 100:
+constraint that species \val{S1} should only have values between~1
+and~100:
 
 \begin{example}
 <model>
     ...
     <listOfConstraints>
         <constraint>
-            <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <math xmlns="http://www.w3.org/1998/Math/MathML"
+                  xmlns:sbml="http://www.sbml.org/sbml/level3/version1/core">
                 <apply>
                     <and/>
-                        <apply> <lt/> <cn> 1 </cn> <ci> S1 </ci> </apply>
-                        <apply> <lt/> <ci> S1 </ci> <cn> 100 </cn> </apply>
+                        <apply> <lt/> <cn sbml:units="mole"> 1 </cn> <ci> S1 </ci> </apply>
+                        <apply> <lt/> <ci> S1 </ci> <cn sbml:units="mole"> 100 </cn> </apply>
                 </apply>
             </math>
             <message>
@@ -3025,22 +3029,21 @@ and 100:
 \label{sec:reactions}
 %-----------------------------------------------------------------------------
 
-A \emph{reaction} represents any transformation, transport or
-binding process, typically a chemical reaction, that can change
-the quantity of one or more species. 
-To describe a reaction in SBML it is necessary to define its \emph{structural}
-properties, i.e. the participating reactants and products (and their 
-corresponding stoichiometries) and its reversibility. 
-In addition there can be a \emph{quantitative} description of the rate of the
-reaction, consisting mainly of a list of additional modifier species that 
-have an influence on the reaction rate and a mathematical rate law 
-including optional parameters.
-Some software tools will interprete only the structural part of the reactions
-in an SBML model, but tools doing simulations or numerical analysis will
-usually also consider the quantitative information.
-The various parts of a
-reaction are recorded in the SBML \Reaction object class and other
-supporting data classes, defined in Figure~\vref{fig:reaction}.
+A \emph{reaction} in SBML represents any transformation,
+transport, binding or other kind of process---often a chemical
+reaction, but not necessarily---that can change the quantity of
+one or more species in a model.  At minimum, to describe a
+reaction in SBML, it is necessary to define its \emph{structural}
+properties, \ie the participating reactants and/or products (and
+their corresponding stoichiometries) and the reversibility of the
+process.  In addition, an SBML reaction can also contain a
+\emph{quantitative} description of the rate of the reaction; this
+aspect consists of a mathematical formula expressing describing
+the rate at which the reaction process takes place, together with
+an optional list of modifier species and parameters influencing
+the reaction rate.  The various parts of a reaction are recorded
+in the SBML \Reaction object class and other supporting data
+classes, defined in Figure~\vref{fig:reaction}.
 
 \begin{figure}[htb]
   \centering
@@ -3342,8 +3345,8 @@ zero (0).
 
 A missing \token{stoichiometry} implies that the stoichiometry is either unknown, 
 or to be obtained from an external source, or determined by an initial
-assignment (Section~\ref{sec:initialAssignment}) or a rule
-(Section~\ref{sec:rules}) elsewhere in the model.
+assignment (Section~\ref{sec:initialAssignment}) or other SBML
+construct elsewhere in the model.
 
 A species reference's stoichiometry is set by its \token{stoichiometry} 
 attribute exactly once.  If the species reference's \token{constant} 
@@ -3453,8 +3456,9 @@ an initial assignment that specifies a rational number for the stoichiometry:
     ...
     <listOfInitialAssignments>
         <initialAssignment symbol="sr01">
-            <math xmlns="http://www.w3.org/1998/Math/MathML">
-                <cn type="rational"> 3 <sep/> 2 </cn>
+            <math xmlns="http://www.w3.org/1998/Math/MathML"
+                  xmlns:sbml="http://www.sbml.org/sbml/level3/version1/core">
+                <cn type="rational" sbml:units="dimensionless"> 3 <sep/> 2 </cn>
             </math>
         </initialAssignment>
         ...
@@ -3550,6 +3554,7 @@ are only used by the rate law of this specific reaction. The list contains
 value; this symbol can then be used in the kinetic law. 
 The definition of \LocalParameter is shown in Figure~\vref{fig:reaction}.
 
+
 \paragraph{The \token{id} and \token{name} attributes}
 
 \LocalParameter has a required attribute \token{id}, of type
@@ -3561,12 +3566,18 @@ unique only within the list of local parameters of one reaction. The details
 about the scope for identifiers are given in Section~\ref{sec:identifiers}, about
 the use of names in Section~\ref{sec:name}.
 
+
 \paragraph{The \token{value} attribute}
 
 The optional attribute \token{value} determines the value (of type
 \primtype{double}) assigned to the identifier.  A missing
-\token{value} attribute implies that the value either is unknown, or
-to be obtained from an external source.
+\token{value} attribute implies that the value either is unknown,
+or to be obtained from an external source.  (Note that, unlike the
+case with global \Parameter objects, there is no way in SBML
+\thisLV for \InitialAssignment or other SBML constructs to be used
+for setting the value of \LocalParameter objects because local
+parameters are local to reactions.)
+
 
 \paragraph{The \token{units} attribute}
 
@@ -3852,7 +3863,7 @@ Section~\ref{sec:ruleconstraints}.
 \Model has an optional list of \Event objects that describe the
 time and form of explicit instantaneous discontinuous state
 changes in the model.  For example, an event may describe that one
-species quantity is halved when another species quantity exceeds a
+species quantity is halved when another species' quantity exceeds a
 given threshold value.
 
 An \Event object defines when the event can occur, the variables
@@ -4042,7 +4053,29 @@ because of this, but a recipient of the model may justifiably be
 concerned about what \val{10} really means.  (Ten seconds?  What
 if the global units of time on the model were changed from seconds
 to milliseconds?  Would the modeler remember to change \val{10} to
-\val{10~000}?)  In the discussion of best practices in
+\val{10~000}?)  A better approach would be to declare the units
+explicitly, as in the following example:
+
+\begin{example}
+<model>
+    ...
+    <listOfEvents>
+        <event useValuesFromTriggerTime="true">
+            ...
+            <delay>
+                <math xmlns="http://www.w3.org/1998/Math/MathML"
+                      xmlns:sbml="http://www.sbml.org/sbml/level3/version1/core">
+                    <cn sbml:units="second"> 10 </cn>
+                </math>
+            </delay>
+            ...
+        </event>
+    </listOfEvents>
+    ...
+</model>
+\end{example}
+
+In the discussion of best practices in
 Section~\ref{sec:bp:event:delay}, we offer suggestions for how to
 indicate the intended units of the delay.
 
@@ -4072,7 +4105,7 @@ benefit of SBO labels.
 \label{sec:eventassignment}
 \label{sec:listofeventassignments}
 
-\Event contains a mandatory element called
+\Event contains an optional element called
 \token{listOfEventAssignments}, of class \ListOfEventAssignments.
 In every instance of an event definition in a model, the object's
 \token{listOfEventAssignments} element must have a non-empty list
@@ -4109,9 +4142,9 @@ Certain restrictions are placed on what can appear in
   attribute must not have its \token{constant} attribute set 
   to \val{true}.  (Constants cannot be affected by events.)
   
-\item The \token{variable} attribute must not contain the identifier
-  of a reaction; only species, compartment and parameter values
-  may be set by an \Event.
+\item The \token{variable} attribute must not contain the
+  identifier of a reaction; only species, species references,
+  compartment and parameter values may be set by an \Event.
   
 \item The value of every \token{variable} attribute must be unique
   among the set of \EventAssignment objects within a given

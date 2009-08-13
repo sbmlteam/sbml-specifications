@@ -329,6 +329,7 @@ benefit of SBO labels.
 
 \subsubsection{The \token{substanceUnits} attribute}
 \label{sec:model-substanceUnits}
+\label{sec:substanceunits}
 
 The \token{substanceUnits} attribute specifies the units of
 measurement associated with substance quantities of \Species
@@ -362,6 +363,7 @@ explain this in more detail.
 
 \subsubsection{The \token{timeUnits} attribute}
 \label{sec:model-timeUnits}
+\label{sec:timeunits}
 
 The \token{timeUnits} attribute specifies the units in which time
 is measured in the model.  The value of this attribute must be of
@@ -403,6 +405,9 @@ measurement for time.
 \label{sec:model-volumeUnits}
 \label{sec:model-areaUnits}
 \label{sec:model-lengthUnits}
+\label{volumeunits}
+\label{areaunits}
+\label{lengthunits}
 
 The attributes \token{volumeUnits}, \token{areaUnits} and
 \token{lengthUnits} together are used to set the units of
@@ -450,7 +455,37 @@ dimensions.
 
 \subsubsection{The \token{extentUnits} attribute}
 \label{sec:model-extentUnits}
-\todo{sven}{Needs to be written.}
+\label{extentunits}
+
+Reactions are processes that occur over time.  These processes
+involve events of some sort.  A single reaction event is one
+in which some set of entities (known as ``reactants'' and
+``modifiers'' in SBML) interact, once.  As time moves forward in a
+system, the reaction keeps occurring as long as there are entities
+left to participate in the reaction.  The \emph{extent} of the
+reaction is how many times the reaction has happened after the
+system has started.  The time derivative of this extent gives the
+rate at which the reaction is occurring.  Thus, what is
+colloquially referred to as the ``rate of the reaction'' is in
+fact equal to the rate of change of the extent.
+
+The units to be associated with reaction extent in a given model
+can be set by the attribute \token{extentUnits} on the \Model
+instance.  These units establish how reaction events are meant to
+be counted.  The units of extent are combined with the
+\token{timeUnits} attribute on \Model to specify the units of the
+rate of change of reaction extent; this defines how the numerical
+value of each \KineticLaw's mathematical formula
+(Section~\ref{subsec:kinetic-law}) is meant to be interpreted.  A
+list of recommended units is given in
+Section~\ref{sec:bp:unitdefinitions:recommendedunits}.
+
+Note that this embodies an important principle in SBML models:
+\emph{all reactions in an SBML model must have the same units} for
+the rate of change of extent.  In other words, the units of all
+reaction rates in the model \emph{must be the same}.  There is
+only one global \token{extentUnits} and one global
+\token{timeUnits}.
 
 
 \subsubsection{The \token{conversionFactor} attribute}
@@ -897,7 +932,7 @@ even less correct in the context of reactions: although in SBML
 they are called ``reactions'', there is nothing preventing the
 SBML \Reaction construct from being used to represent other kinds
 of processes not involving substances.  Consequently, we avoid
-using \val{mole} loosely where substances are not involved, and
+using \val{mole} loosely where substances may not be involved, and
 instead use ``Avogadro's number of \emph{X}''.  In order to make
 it easier for models to define units in these terms, the SBML unit
 system includes the pseudo-unit \val{avogadro}, whose definition
@@ -1319,6 +1354,7 @@ Section~\ref{sec:bp:unitdefinitions:recommendedunits:sizeUnits}.
 \begin{table}[tbh]
   \small
   \centering
+  \vspace*{-2ex}
   \begin{edtable}{tabular}{cl}
     \toprule
     \textbf{Value of attribute} & \class{Model} \textbf{attribute used} \\[-2pt]
@@ -1330,6 +1366,7 @@ Section~\ref{sec:bp:unitdefinitions:recommendedunits:sizeUnits}.
     other                       & \emph{no units inherited} \\
     \bottomrule
   \end{edtable}
+  \vspace*{-1ex}
   \caption{When a \Compartment object instance does not specify a
     value for the \token{units} attribute, the units associated
     with the compartment's size are inherited from
@@ -1743,28 +1780,32 @@ into ODEs a model that uses \token{boundaryCondition} and
 \subsubsection{The \token{conversionFactor} attribute}
 \label{sec:species-conversion}
 
-The optional attribute \token{conversionFactor}, of type
-\primtype{SIdRef}, can be used to identify a \Parameter as a 
-unit conversion factor. If it is set it must be the \token{id} 
-of a parameter in the model. 
-\todo{sven}{rework this section. This is just a first draft}
-In SBML, the units of species can be different from the units of extent 
-of the reactions. This means that when calculating how a reaction affects
-a species, potentially some unit conversion has to be applied. 
-If the conversionFactor is set, it specifies a value by which product of
-reaction rate and stoichiometry needs to be multiplied to get a rate of change 
-for the amount of substance of the species in the correct units. 
-Since the unit conversion factor is specified as a reference to a \Parameter 
-rather than just as a number, it is possible to attach the correct units
-to the unit conversion factor, allowing completely well specified units
-throughout the whole model. 
-Note that the unit conversion factor is only applied when calculating the 
-effect of a reaction on a species. It is not used in any rules that 
-affect the species and it is also not used when the value of the species is
-referenced in a mathematical expression.
-When no unit conversion factor is given for a species, it is assumed 
-that no conversion is needed when evaluating the effect of a reaction on 
-the species.
+The attribute \token{conversionFactor} defines a conversion factor
+that applies to a particular species.  The value of the attribute
+must have the data type \primtype{SIdRef} and must be the
+identifier of a \Parameter object instance defined in the model.
+If a given \Species object definition defines a value for its
+\token{conversionFactor} attribute, it takes precedence over any
+factor defined by the \Model object's \token{conversionFactor}
+attribute.
+
+In SBML, the units of species can be different from the units of
+extent of reactions in the model; thus, when calculating how a
+reaction affects a species, unit conversions may need to be
+applied.  The use of a conversion factor in computing the effects
+of reactions on a species' quantity is explained in
+Section~\ref{sec:constructing-equations}.  Because the value of
+the \token{conversionFactor} attribute is the identifier of a
+\Parameter object in the model, and because parameters can have
+units attached to them, the transformation from reaction extent
+units to species units can be completely specified using this
+approach.
+
+Note that the unit conversion factor is only applied when
+calculating the effect of a reaction on a species.  It is not used
+in any rules or other SBML constructs that affect the species, and
+it is also not used when the value of the species is referenced in
+a mathematical expression.
 
 
 \subsubsection{Additional considerations for interpreting the
@@ -1920,7 +1961,6 @@ to the guidelines described in Section~\ref{sec:idnameattribs}.
 
 \subsubsection{The \token{value} attribute}
 \label{sec:parameter-value}
-
 
 The optional attribute \token{value} determines the value (of type
 \primtype{double}) assigned to the identifier.  A missing
@@ -2742,8 +2782,8 @@ valid set of assignment statements:
 
 An SBML model must not be overdetermined; that is, a model must
 not define more equations than there are unknowns in a model.  An
-SBML model that does not contain \AlgebraicRule objects cannot
-be overdetermined.
+SBML model without \AlgebraicRule objects cannot be
+overdetermined.
 
 Assessing whether a given continuous, deterministic, mathematical
 model is overdetermined does not require dynamic analysis; it can
@@ -2870,6 +2910,7 @@ shows the definition of the \Constraint object class.
 \begin{figure}[htb]
   \centering
   \small
+  \vspace*{1ex}
   \includegraphics[scale=0.8]{figs/constraint-uml}
   \caption{The definition of class \Constraint.  The
       contents of the \class{Math} class can be any \mathml
@@ -3010,12 +3051,22 @@ and~100:
                   xmlns:sbml="http://www.sbml.org/sbml/level3/version1/core">
                 <apply>
                     <and/>
-                        <apply> <lt/> <cn sbml:units="mole"> 1 </cn> <ci> S1 </ci> </apply>
-                        <apply> <lt/> <ci> S1 </ci> <cn sbml:units="mole"> 100 </cn> </apply>
+                        <apply> 
+                          <lt/> 
+                          <cn sbml:units="mole"> 1 </cn> 
+                          <ci> S1 </ci> 
+                        </apply>
+                        <apply> 
+                          <lt/> 
+                          <ci> S1 </ci>  
+                          <cn sbml:units="mole"> 100 </cn> 
+                        </apply>
                 </apply>
             </math>
             <message>
-                <p xmlns="http://www.w3.org/1999/xhtml"> Species S1 is out of range. </p>
+                <p xmlns="http://www.w3.org/1999/xhtml"> 
+                  Species S1 is out of range. 
+                </p>
             </message>
         </constraint>
     </listOfConstraints>
@@ -3030,24 +3081,31 @@ and~100:
 %-----------------------------------------------------------------------------
 
 A \emph{reaction} in SBML represents any transformation,
-transport, binding or other kind of process---often a chemical
-reaction, but not necessarily---that can change the quantity of
-one or more species in a model.  At minimum, to describe a
-reaction in SBML, it is necessary to define its \emph{structural}
-properties, \ie the participating reactants and/or products (and
-their corresponding stoichiometries) and the reversibility of the
-process.  In addition, an SBML reaction can also contain a
-\emph{quantitative} description of the rate of the reaction; this
-aspect consists of a mathematical formula expressing describing
-the rate at which the reaction process takes place, together with
-an optional list of modifier species and parameters influencing
-the reaction rate.  The various parts of a reaction are recorded
-in the SBML \Reaction object class and other supporting data
-classes, defined in Figure~\vref{fig:reaction}.
+transport, binding or other kind of process that can change the
+quantity of one or more species in a model.  The classical meaning
+of a \emph{reaction} is a process in which some entities (\ie
+species) interact in some way, at some rate.  In SBML, the notion
+of a reaction is slightly generalized to allow entities that may
+not be chemical substances; thus, a reaction in SBML does not
+necessarily have to be a biochemical reaction---a biochemical
+reaction is just one possible kind of process.
+
+At minimum, to describe a reaction in SBML, it is necessary to
+define its \emph{structural} properties, \ie the participating
+reactants and/or products (and their corresponding
+stoichiometries) and the reversibility of the process.  In
+addition, an SBML reaction can also contain a \emph{quantitative}
+description of the rate of the reaction; this aspect consists of a
+mathematical formula expressing describing the rate at which the
+reaction process takes place, together with an optional list of
+modifier species and parameters influencing the reaction rate.
+The various parts of a reaction are recorded in the SBML \Reaction
+object class and other supporting data classes, defined in
+Figure~\vref{fig:reaction}.
 
 \begin{figure}[htb]
   \centering
-  \includegraphics[scale=0.79]{figs/reaction-uml-v2}
+  \includegraphics[scale=0.78]{figs/reaction-uml-v2}
   \caption{The definitions of \Reaction, \KineticLaw,
     \SpeciesReference, \ModifierSpeciesReference, \LocalParameter,
     as well as the container classes \ListOfReactants,
@@ -3104,23 +3162,23 @@ reaction definitions:
 \begin{itemize}
   
 \item The ability of a species to appear as a reactant or product
-  of any reaction in a model is governed by certain flags in that
-  species' definition; see Section~\ref{sec:species-constant} for
-  more information.
+  of any reaction in a model is governed by certain combinations
+  of the attributes \token{constant} and \token{boundaryCondition}
+  on the \Species object instance; see
+  Section~\ref{sec:species-constant} for more information.
   
-\item Any species appearing in the mathematical formula of the
+\item Any species appearing in the \token{math} element of the
   \token{kineticLaw} of a \Reaction instance must be declared in
   at least one of that \Reaction's lists of reactants, products,
-  and/or modifiers.  Put another way, it is an error for a
-  reaction's kinetic law formula to refer to species that have not
-  been declared for that reaction.
+  and/or modifiers.  It is an error for a reaction's kinetic law
+  formula to refer to species that have not been declared for that
+  reaction.
   
 \item A reaction definition can contain an empty list of reactants
   \emph{or} an empty list of products, but it must have at least
   one reactant or product; in other words, a reaction without any
   reactant or product species is not permitted.  (This restriction
-  does not apply to modifier species, which remain optional in all
-  cases.)
+  does not apply to modifier species, which are always optional.)
 
 \end{itemize}
 
@@ -3133,92 +3191,110 @@ defines the speed at which the process defined by the reaction
 takes place.  A detailed description of \KineticLaw is left to
 Section~\ref{subsec:kinetic-law} below.
 
-Note that the inclusion of a \KineticLaw object in an instance
-of a \Reaction component is optional; however, missing rate laws mean
-that a lot of techniques for numerical analysis and simulation of the 
-model will not be applicable. 
-Nevertheless, for some modeling applications,
-reactions without any defined rate can be perfectly acceptable.
+The inclusion of a \KineticLaw object in an instance of a
+\Reaction component is optional.  For some modeling purposes,
+models containing reactions without defined rates is an acceptable
+alternative (and may even be the only possible option, such as
+when the kinetics of the reactions are unknown).  However, missing
+kinetic laws preclude the application of many model analysis
+techniques, including simulation.
 
 
 \paragraph{The \token{reversible} attribute}
 \label{sec:reversible}
 
-The mandatory boolean attribute \token{reversible} indicates whether
-the reaction is reversible.  
+The mandatory boolean attribute \token{reversible} indicates
+whether the reaction is reversible.  To say that a reaction is
+\emph{reversible} is to say it can proceed in either the forward
+or the reverse direction.  This information may be redundant in
+cases where the reversibility of the reaction can be deduced by
+inspecting its rate expression.  However, a reaction is not
+required to have a rate formula (because \KineticLaw is an
+optional component of \Reaction), and besides, when a rate
+expression is present, it may not always be possible to deduce the
+reversibility by inspecting it.  Having a separate attribute for
+\token{reversible} allows certain kinds of structural analysis,
+such as elementary mode analysis, even in these cases.
 
-To say that a reaction is \emph{reversible} is to say it can
-proceed in either the forward or the reverse direction.
-This information may be redundant in cases where the reversibility of the 
-reaction can be deduced by inspecting its rate expression. However, a reaction
-is not required to have a rate law and if the rate law is present it may not
-always be possible to deduce the reversibility from it. 
-Having a separate attribute allows certain kinds of structural analysis such as 
-elementary mode analysis even in these cases.
+Mathematically, the \token{reversible} attribute on \Reaction has
+no impact on the construction of the equations for change of the
+species quantities.  However, labeling a reaction as irreversible
+would be interpreted as an assertion that the rate expression will
+not have negative values during a simulation.  Software developers
+may wish to provide their software systems with a means of testing
+that this condition holds.
 
-Mathematically, the \token{reversible} attribute on \Reaction has no impact on 
-the construction of the equations for change of the species quantities. However, 
-labeling a reaction as irreversible would be interpreted as an assertion that 
-the rate law will not have negative values during a simulation. 
-Software tools could provide a means of testing that this condition holds.  
-The presence of reversibility information in two places (\ie the rate expression
-and the \token{reversible} flag) leaves open the possibility that
-a model could contain contradictory information, but this would be considered as
-a problem of the encoded model rather than as an invalid SBML encoding.
+The presence of reversibility information in two places (\ie the
+rate expression, and the \token{reversible} flag) leaves open the
+possibility that a model could contain contradictory information,
+but this would be considered as a problem of the encoded model,
+rather than as an invalid SBML encoding.
+
 
 \paragraph{The \token{fast} attribute}
 \label{sec:fast}
 
-The optional boolean attribute \token{fast} is another required
-boolean attribute of \Reaction.  
-
-When a model contains a true value for \token{fast} on any of its
-reactions, it indicates that the creator of the model is
-distinguishing different time scales of reactions in the system.
-If a model does not distinguish between time scales the \token{fast} 
-attribute should be set to \val{false} for all reactions. 
+The boolean attribute \token{fast} is another required boolean
+attribute of \Reaction.  When a model contains a value of
+\val{true} for \token{fast} on any of its reactions, it indicates
+that the creator of the model is distinguishing different time
+scales of reactions in the system.  If a model does not
+distinguish between time scales, the \token{fast} attribute should
+be set to \val{false} for all reactions.
 
 The model's reaction definitions are divided into two sets by the
-values of the \token{fast} attributes.  The set of reactions having
-\token{fast}=\val{true} (known as \emph{fast reactions}) should be
-assumed to be operating on a time scale significantly faster than
-the other reactions (the \emph{slow reactions}).  Fast reactions
-are considered to be instantaneous relative to the slow reactions.
-Software tools should use a pseudo steady-state approximation for
-the set of fast reactions when constructing the system of
-equations for the model.  More specifically, the set of reactions
-that have the \token{fast} attribute set to \val{true} forms a
-subsystem that should be described by a pseudo steady-state
-approximation in relationship to all other reactions in the model.
-Under this description, relaxation from any initial condition or
-perturbation from any intermediate state of this subsystem would
-be infinitely fast.
+values of the \token{fast} attributes.  The set of reactions
+having \token{fast}=\val{true} (known as \emph{fast reactions})
+should be assumed to be operating on a time scale significantly
+faster than the other reactions (the \emph{slow reactions}).  Fast
+reactions are considered to be instantaneous relative to the slow
+reactions.  Software tools should use a pseudo steady-state
+approximation for the set of fast reactions when constructing the
+system of equations for the model.  More specifically, the set of
+reactions that have the \token{fast} attribute set to \val{true}
+forms a subsystem that should be described by a pseudo
+steady-state approximation in relationship to all other reactions
+in the model.  Under this description, relaxation from any initial
+condition or perturbation from any intermediate state of this
+subsystem would be infinitely fast.
 Appendix~\ref{apdx:consequences-of-being-fast} provides a
 technical explanation of an approach to solving systems with fast
 reactions.
 
 The correctness of the approximation requires a significant
 separation of time scales between the fast reactions and other
-processes.  It is the responsibility of the modeler or of the software tool
-writing the SBML file to ensure this condition is fulfilled.
+processes.  It is the responsibility of the modeler or of the
+software system writing the SBML model to ensure this condition is
+fulfilled.
 
-Note that the \token{fast} flag has significant effect on the mathematical
-interpretation of a model and cannot be safely ignored if a software 
-tool does not implement support for the corresponding concept. 
+Note that the \token{fast} attribute has a significant effect on
+the mathematical interpretation of a model and cannot be safely
+ignored if a software tool does not implement support for the
+corresponding concept.  Software systems should indicate to users
+when they encounter models with reactions having
+\token{fast}=\val{true} and do not have the capacity to analyze
+the model using a pseudo steady-state approximation.
+
 
 \paragraph{The \token{compartment} attribute on \class{Reaction}}
 \label{sec:reaction-compartment}
 
-The optional attribute \token{compartment} of type \primtype{SIdRef} 
-can be used to indicate a compartment in which the reaction takes place. 
-If the attribute is present its value must be the identifier of a 
-compartment defined in the enclosing \Model. 
+The optional attribute \token{compartment}, of data type
+\primtype{SIdRef}, can be used to indicate the compartment in
+which the reaction is assumed to take place.  If the attribute is
+present, its value must be the identifier of a \Compartment object
+defined in the enclosing \Model object.
 
-Similar to the \token{reversible} attribute the value of the \token{compartment} 
-attribute has no direct implication on the construction of the
-mathematical equations. However, tools may make use of this information 
-to analyze the structure of the model, to guide the modeler in choosing 
-the correct rate law, or for visualization purposes.  
+Similar to the \token{reversible} attribute, the value of the
+\token{compartment} attribute has no direct impact on the
+construction of mathematical equations for the SBML model.  When a
+kinetic law is given for a reaction, the compartment location may
+already be implicit in the kinetic law (although this cannot
+always be guaranteed).  Nevertheless, software tools may find the
+\token{compartment} attribute value useful for such purposes as
+analyzing the structure of the model, guiding the modeler in
+choosing correct rate laws, and visualization purposes.
+
 
 \paragraph{The \token{sboTerm} attribute on \class{Reaction}}
 \label{sec:reaction-sboterm}
@@ -3238,6 +3314,7 @@ As discussed in Section~\ref{sec:sboTerm}, SBO labels are optional
 information on a model.  Applications are free to ignore
 \token{sboTerm} values.  A model must be interpretable without the
 benefit of SBO labels.
+
 
 \subsubsection{The \class{SimpleSpeciesReference} abstract type}
 \label{subsec:simplespeciesreference}
@@ -3262,167 +3339,187 @@ and elements that are common to the latter two objects.
 
 \paragraph{The \token{id} and \token{name} attributes}
 
-The optional identifier stored in the \token{id} attribute  of type
-\primtype{SId} allows \SpeciesReference and \ModifierSpeciesReference 
-instances to be referenced from other objects. The \token{id} value 
-(whether it is in a \SpeciesReference or \ModifierSpeciesReference object) 
-exists in the global namespace of the model.   A
-\SpeciesReference or \ModifierSpeciesReference can also have an 
-optional \token{name} attribute of type
-\primtype{string}.The \token{id} and \token{name}
+\SimpleSpeciesReference has optional attributes for an identifier
+(\token{id}, of data type \primtype{SId}) and name (\token{name},
+of data type \primtype{string}).  The \token{id} and \token{name}
 attributes must be used as described in
 Section~\ref{sec:idnameattribs}.
+
+The \token{id} value (whether it is in a \SpeciesReference or
+\ModifierSpeciesReference object) exists in the global namespace
+of the model.  This optional identifier allows \SpeciesReference
+and \ModifierSpeciesReference instances to be referenced from
+other objects.  In the case of \SpeciesReference objects, the
+identifier also has a special meaning: \emph{it stands for the
+  value of the \token{stoichiometry} attribute} of a
+\SpeciesReference object instance.  This allows the stoichiometry
+of a species to be accessed from other parts of the model.  This
+feature is discussed in more detail in
+Section~\ref{subsec:speciesreference} below.
 
 
 \paragraph{The \token{species} attribute}
 
 The \SimpleSpeciesReference object class has a required attribute,
-\token{species}, of type \primtype{SIdRef}.  As with the other
-attributes, it is inherited by \SpeciesReference and
-\ModifierSpeciesReference.  The value of \token{species} must be the
-identifier of a species defined in the enclosing \Model.  The
-species is thereby declared as participating in the reaction being
-defined.  The precise role of that species as a reactant, product,
-or modifier in the reaction is determined by the subtype of
-\SimpleSpeciesReference (\ie either \SpeciesReference or
-\ModifierSpeciesReference) in which the identifier appears and by the 
-specific list of species references in which the \SpeciesReference appears.
+\token{species}, of data type \primtype{SIdRef}.  As with the
+other attributes, it is inherited by \SpeciesReference and
+\ModifierSpeciesReference.  The value of \token{species} must be
+the identifier of a species defined in the enclosing \Model; the
+referenced species is thereby declared as participating in the
+reaction being defined.  The precise role of that species as a
+reactant, product, or modifier in the reaction is determined by
+the subtype of \SimpleSpeciesReference (\ie either
+\SpeciesReference or \ModifierSpeciesReference) in which the
+identifier appears and by the specific list of species references
+in which the \SpeciesReference appears.
 
 
 \paragraph{The \token{sboTerm} attribute}
 \label{sec:simplespeciesreference-sboterm}
 
 \SimpleSpeciesReference inherits an optional \token{sboTerm}
-attribute of type \primtype{SBOTerm} from its parent
-class \SBase (see Sections~\ref{sec:sboterm-type}
-and~\ref{sec:sboTerm}).  When a value is given to this
-attribute in a  \SimpleSpeciesReference instance, it should be an
-SBO identifier belonging to the branch for type  \SimpleSpeciesReference 
-indicated in Table~\ref{tab:sboterm-availability}.  The relationship is
-of the form ``the species reference \emph{is a} X'', where X is
-the SBO term.  The term chosen should be the most precise (narrow)
-one that captures the role of the species reference in the model.
+attribute of type \primtype{SBOTerm} from its parent class \SBase
+(see Sections~\ref{sec:sboterm-type} and~\ref{sec:sboTerm}).  When
+a value is given to this attribute in a \SimpleSpeciesReference
+instance, it should be an SBO identifier belonging to the branch
+for type \SimpleSpeciesReference indicated in
+Table~\ref{tab:sboterm-availability}.  The relationship is of the
+form ``the species reference \emph{is a} X'', where X is the SBO
+term.  The term chosen should be the most precise (narrow) one
+that captures the role of the species reference in the model.
 
 As discussed in Section~\ref{sec:sboTerm}, SBO labels are optional
 information on a model.  Applications are free to ignore
 \token{sboTerm} values.  A model must be interpretable without the
 benefit of SBO labels.
 
+
 \subsubsection{\class{SpeciesReference}}
 \label{subsec:speciesreference}
 
-The \Reaction object class provides a way to express which species
-act as reactants and which species act as products in a reaction.
-In a given reaction, references to those species acting as
-reactants and/or products are made using instances of
-\SpeciesReference objects in \Reaction's lists of reactants and
-products.  The \SpeciesReference structure inherits the mandatory
-attribute \token{species} and optional attributes \token{id},
-\token{name}, and \token{sboTerm} from the parent type
-\SimpleSpeciesReference; see
-Section~\ref{subsec:simplespeciesreference} for their definitions.
-It also defines the optional attribute \token{stoichiometry} and 
-the mandatory attribute \token{constant}, described below.
+\Reaction provides a way to express which species act as reactants
+and which species act as products in a reaction.  The
+\SpeciesReference structure inherits the mandatory attribute
+\token{species} and optional attributes \token{id}, \token{name},
+and \token{sboTerm} from the parent type \SimpleSpeciesReference;
+see Section~\ref{subsec:simplespeciesreference} for their
+definitions.  It also defines the optional attribute
+\token{stoichiometry} and the mandatory attribute
+\token{constant}, described below.
 
-The \token{species} attribute value must be the
-identifier of an existing species defined in the enclosing \Model;
-the species is thereby designated as a reactant or product in the
-reaction.  Which one it is (\ie reactant or product) is indicated
-by whether the \SpeciesReference appears in the \Reaction's
-\token{reactant} or \token{product} lists.
+The \token{species} attribute value must be the identifier of an
+existing species defined in the enclosing \Model; the species is
+thereby designated as a reactant or product in the reaction.
+Which one it is (\ie reactant or product) is indicated by whether
+the \SpeciesReference appears in the \Reaction's \token{reactant}
+or \token{product} lists.
 
 
 \paragraph{The \token{stoichiometry} attribute}
 
-The {\em stoichiometry} of a species in a reaction describes how much 
-the value of the species changes when the reaction takes place, \ie 
-how much of the reactants is consumed and how much of the products is produced.
-Product and reactant stoichiometries are specified using
-the optional \token{stoichiometry} attribute 
-in a \SpeciesReference object.  The \token{stoichiometry}
-attribute is of type double and should contain values greater than
-zero (0). 
+The {\em stoichiometry} of a species in a reaction describes how
+much of the species changes when a reaction event takes place.  In
+SBML, product and reactant stoichiometries are specified using the
+optional \token{stoichiometry} on \SpeciesReference object.  The
+\token{stoichiometry} attribute is of type \primtype{double} and
+should contain values greater than zero (0).  A missing
+\token{stoichiometry} implies that the stoichiometry is either
+unknown, or to be obtained from an external source, or determined
+by an initial assignment (Section~\ref{sec:initialAssignment}) or
+other SBML construct elsewhere in the model.
 
-A missing \token{stoichiometry} implies that the stoichiometry is either unknown, 
-or to be obtained from an external source, or determined by an initial
-assignment (Section~\ref{sec:initialAssignment}) or other SBML
-construct elsewhere in the model.
-
-A species reference's stoichiometry is set by its \token{stoichiometry} 
-attribute exactly once.  If the species reference's \token{constant} 
-attribute has the value
-\val{true}, then the stoichiometry is fixed and cannot be
-changed except by an \InitialAssignment.  These two methods of
-setting the stoichiometry differ in that the \token{stoichiometry}
-attribute can only be used to set it to a literal scalar value,
-whereas \InitialAssignment allows the stoichiometry to be set using an
-arbitrary mathematical expression.  If the species reference's
-\token{constant} attribute has the value \val{false}, the species reference's
-value may be overridden by an \InitialAssignment or changed by
-\AssignmentRule or \AlgebraicRule, and in addition, for simulation
-time $t > 0$, it may also be changed by a \RateRule or \Event{}s.
-(However, some of these constructs are mutually exclusive; see
+A species reference's stoichiometry is set by its
+\token{stoichiometry} attribute exactly once.  If the
+\SpeciesReference object's \token{constant} attribute (see below)
+has the value \val{true}, then the stoichiometry is fixed and
+cannot be changed except by an \InitialAssignment.  These two
+methods of setting the stoichiometry (\ie using
+\token{stoichiometry} directly, or using an \InitialAssignment)
+differ in that the \token{stoichiometry} attribute can only be set
+to a literal scalar value, whereas \InitialAssignment allows the
+stoichiometry to be set using an arbitrary mathematical expression
+and to values that are not expressible in the data type
+\primtype{double}.  (As an example, the approach could be used to
+set the stoichiometry to a rational number, something that is
+occasionally useful in the context of biochemical reaction
+networks.)  If the species reference's \token{constant} attribute
+has the value \val{false}, the species reference's value may be
+overridden by an \InitialAssignment or changed by \AssignmentRule
+or \AlgebraicRule, and in addition, for simulation time $t > 0$,
+it may also be changed by a \RateRule or \Event{}s.  (However,
+some of these constructs are mutually exclusive; see
 Sections~\ref{sec:rules} and~\ref{sec:events}.)  It is not an
-error to define \token{stoichiometry} on a species reference and also 
-redefine the stoichiometry using an \InitialAssignment, but the 
-\token{stoichiometry} attribute in that case is ignored.  
-Section~\ref{sec:before-t0} provides additional
-information about the semantics of assignments, rules and values
-for simulation time $t \leq 0$.
+error to define \token{stoichiometry} on a species reference and
+also redefine the stoichiometry using an \InitialAssignment, but
+the \token{stoichiometry} attribute in that case is ignored.
+Section~\ref{sec:before-t0} provides additional information about
+the semantics of assignments, rules and values for simulation time
+$t \leq 0$.
 
-An explanation of how exactly the stoichiometry is used in the mathematical interpretation 
-of the model is given in Section~\ref{sec:about-kinetic-laws}.
+An explanation of how exactly the stoichiometry is used in the
+mathematical interpretation of the model is given in
+Section~\ref{sec:about-kinetic-laws}.
 
 
 \paragraph{The \token{constant} attribute}
 
-The \SpeciesReference object has a mandatory boolean attribute named
-\token{constant} which indicates whether the stoichiometry can
-vary during a simulation. A value \val{true} for this attribute means that 
-the stoichiometry of the referenced species takes the value of the 
-\token{stoichiometry} attribute, unless it is changed by an \InitialAssignment.
-A value of \val{false} indicates the stoichiometry 
-can be changed by rules (see Section~\ref{sec:rules}) and
-that the value of the \token{stoichiometry} attribute is actually intended to be the initial
-value of the stoichiometry.
+The \SpeciesReference object has a mandatory boolean attribute
+named \token{constant}, used to indicate whether the stoichiometry
+can vary during a simulation.  A value of \val{true} for this
+attribute means that the corresponding species' stoichiometry in
+the reaction cannot be changed by other constructs elsewhere in
+the model except by an \InitialAssignment.  A value of \val{false}
+means the stoichiometry can be changed by other SBML constructs
+such as rules (see Section~\ref{sec:rules}), as described above in
+the section on the \token{stoichiometry} attribute.
+
 
 \paragraph{Use of species reference identifiers in mathematical expressions}
 \label{sec:reaction:speciesReferences-in-mathematical-expressions}
-The value of the \token{id} attribute of a \SpeciesReference can be
-used as the content of a \token{ci} element in MathML formulas
-elsewhere in the model. Such a \token{ci} element or symbol
-represents the stoichiometry of the given species in the given reaction.
 
-Furthermore, the \token{id} attribute of a \SpeciesReference can be
-used in the \token{variable} attribute of an \InitialAssignment, \RateRule,
-\AssignmentRule or \EventAssignment object, providing a way to describe
-variable stoichiometries. This is only allowed if the 
-\token{constant} attribute is set to false. 
+The value of the \token{id} attribute of a \SpeciesReference can
+be used as the content of a \token{ci} element in MathML formulas
+elsewhere in the model.  When the identifier appears in \token{ci}
+element, it represents the stoichiometry of the corresponding
+species in the reaction where the \SpeciesReference object
+instance appears.  More specifically, it represents the value of
+the \token{stoichiometry} attribute on the \SpeciesReference
+object.
+
+% 2009-08-12 <mhucka@caltech.edu>
+% Redundant with what's written in previous 2 subsections:
+%
+% As explained above, the identifier of a \SpeciesReference object
+% can be the subject of an \InitialAssignment object.  (An example
+% of this is given below.)  In addition, if the \SpeciesReference
+% object's \token{constant} attribute has the value \val{false}, the
+% \token{id} can also appear in \RateRule, \AssignmentRule, or
+% \EventAssignment constructs in the model; this thereby provides a
+% means of defining variable stoichiometries, for those models where
+% it is appropriate.
 
 
 \paragraph{The units of a {\SpeciesReference}'s stoichiometry value}
 
-The units associated with the stoichiometry of a species reference 
-are always considered to be \token{dimensionless}.
-
-This has the following implications:
+The units associated with the stoichiometry of a species reference
+are always considered to be \token{dimensionless}.  This has the
+following implications:
 \begin{itemize}
 
-\item When the species reference's identifier appears in mathematical
-  formulas expressed in MathML in a model, the units associated
-  with it are \token{dimensionless}.
+\item When a species reference's identifier appears in
+  mathematical formulas elsewhere in the model, the units
+  associated the value are \token{dimensionless}.
 
 \item The units of the \token{math} element of an \AssignmentRule,
-  \InitialAssignment or \EventAssignment setting the stoichiometry of the
-  species reference should be \token{dimensionless}.
+  \InitialAssignment or \EventAssignment setting the stoichiometry
+  of the species reference should be \token{dimensionless}.
 
 \item The units of the \token{math} element of a \RateRule that
-  acts on the species reference's stoichiometry should be 
-  identical to 1/\quantity{time}, where \quantity{time} is the model-wide 
-  \token{time} units.
+  acts on the species reference's stoichiometry should be
+  identical to 1/\quantity{time}, where \quantity{time} is the
+  model-wide \token{time} units (Section~\ref{sec:timeunits}).
 
 \end{itemize}
-
 
 
 \paragraph{Examples}
@@ -3447,9 +3544,9 @@ reactants within a reaction having the identifier \val{J1}:
 </model>
 \end{example}
 
-The following is a more complex example of a species reference with an id ``sr01'' and 
-an initial assignment that specifies a rational number for the stoichiometry:
-
+The following is a more complex example of a species reference
+with an id \val{sr01} and an initial assignment that assigns a
+rational number to the stoichiometry:
 
 \begin{example}
 <model>
@@ -3480,12 +3577,12 @@ an initial assignment that specifies a rational number for the stoichiometry:
 
 A species can occur more than once in the lists of reactants and
 products of a given \Reaction instance.  The effective
-stoichiometry for a species in a reaction is the sum of the
-stoichiometry values given in the \SpeciesReference objects in
-the list of products minus the sum of stoichiometry values given
-in the \SpeciesReference objects in the list of reactants.  A
-positive value indicates the species is effectively a product and
-a negative value indicates the species is effectively a reactant.
+stoichiometry for the species is the sum of the stoichiometry
+values given in the \SpeciesReference objects in the list of
+products \emph{minus} the sum of stoichiometry values given in the
+\SpeciesReference objects in the list of reactants.  A positive
+value indicates the species is effectively a product and a
+negative value indicates the species is effectively a reactant.
 SBML places no restrictions on the effective stoichiometry of a
 species in a reaction; for example, it can be zero.  In the
 following SBML fragment, the two reactions have the same effective
@@ -3545,26 +3642,30 @@ products of the same reaction where it is designated as a
 modifier, as well as to appear in the list of reactants, products
 and modifiers of other reactions in the model.
 
+
 \subsubsection{\class{LocalParameter}}
 \label{subsec:localparameter}
 
-The kinetic law of a \Reaction can contain a list of local parameters that
-are only used by the rate law of this specific reaction. The list contains
-\LocalParameter objects that associate a symbol  with a
-value; this symbol can then be used in the kinetic law. 
-The definition of \LocalParameter is shown in Figure~\vref{fig:reaction}.
+The kinetic law of a \Reaction instance can contain a list of
+local parameters that are only accessible by the kinetic law
+formula of that particular reaction.  The list contains
+\LocalParameter objects that each associate an identifier with a
+value; this identifier can then be used in the kinetic law.  The
+definition of \LocalParameter is shown in
+Figure~\vref{fig:reaction}.
 
 
 \paragraph{The \token{id} and \token{name} attributes}
 
-\LocalParameter has a required attribute \token{id}, of type
+\LocalParameter has a required attribute \token{id}, of data type
 \primtype{SId}, to give the local parameter an identifier by which
-the rate law can refer to it.  A local
-parameter can also have an optional \token{name} attribute of type
-\primtype{string}.  The identifier of a local parameter needs to be 
-unique only within the list of local parameters of one reaction. The details 
-about the scope for identifiers are given in Section~\ref{sec:identifiers}, about
-the use of names in Section~\ref{sec:name}.
+the kinetic law formula can refer to it.  A local parameter can
+also have an optional \token{name} attribute of type
+\primtype{string}.  The identifier of a local parameter needs to
+be unique only within the list of local parameters of one
+reaction.  The details about the scope for identifiers are given
+in Section~\ref{sec:identifiers}, and about the use of names in
+Section~\ref{sec:name}.
 
 
 \paragraph{The \token{value} attribute}
@@ -3581,27 +3682,39 @@ parameters are local to reactions.)
 
 \paragraph{The \token{units} attribute}
 
-The units associated with the value of the local parameter can be specified
-by the optional attribute \token{units}. 
+The units associated with the value of the local parameter can be
+specified by the optional attribute \token{units}.  The
+attribute's value must have the data type \primtype{UnitSIdRef}
+(Section~\ref{sec:unitsidref}).  There are no constraints on the
+units that can be assigned to a parameter; there are also no units
+to inherit from the enclosing \Model object (unlike the case for,
+e.g., \Species and \Compartment).
+
+The units of the parameter are used in the following way: when the
+local parameter's identifier appears in the content of the
+\token{math} element of the \KineticLaw object, the units
+associated with the value are those declared by the local
+parameter's \token{units} attribute.
 
 
 \paragraph{The \token{sboTerm} attribute}
 
-\LocalParameter inherits an optional \token{sboTerm}
-attribute of type \primtype{SBOTerm} from its parent
-class \SBase (see Sections~\ref{sec:sboterm-type}
-and~\ref{sec:sboTerm}).  When a value is given to this
-attribute in a  \LocalParameter instance, it should be an
-SBO identifier belonging to the branch for type  \LocalParameter
-indicated in Table~\ref{tab:sboterm-availability}.  The relationship is
-of the form ``the local parameter \emph{is a} X'', where X is
-the SBO term.  The term chosen should be the most precise (narrow)
-one that captures the role of the local parameter in the model.
+\LocalParameter inherits an optional \token{sboTerm} attribute of
+type \primtype{SBOTerm} from its parent class \SBase (see
+Sections~\ref{sec:sboterm-type} and~\ref{sec:sboTerm}).  When a
+value is given to this attribute in a \LocalParameter instance, it
+should be an SBO identifier belonging to the branch for type
+\LocalParameter indicated in Table~\ref{tab:sboterm-availability}.
+The relationship is of the form ``the local parameter \emph{is a}
+X'', where X is the SBO term.  The term chosen should be the most
+precise (narrow) one that captures the role of the local parameter
+in the model.
 
 As discussed in Section~\ref{sec:sboTerm}, SBO labels are optional
 information on a model.  Applications are free to ignore
 \token{sboTerm} values.  A model must be interpretable without the
 benefit of SBO labels.
+
 
 \subsubsection{\class{KineticLaw}}
 \label{subsec:kinetic-law}
@@ -3613,20 +3726,22 @@ Figure~\vref{fig:reaction}, \KineticLaw has elements called
 \token{math} and \token{listOfParameters}, in addition to the
 attributes and elements it inherits from \SBase.
 
+
 \paragraph{The \token{math} element}
 
-As shown in Figure~\vref{fig:reaction}, \KineticLaw 
-has an element called \token{math} for holding a MathML formula
-defining the rate of the reaction.  The expression in \token{math}
-may refer to species identifiers, as discussed in
-Section~\ref{sec:ci-token}.  The only \Species identifiers that
-can be used in \token{math} are those declared in the lists of
-reactants, products and modifiers in the \Reaction object (see
+As shown in Figure~\vref{fig:reaction}, \KineticLaw has an element
+called \token{math} for holding a MathML formula defining the rate
+of the reaction.  The expression in \token{math} may refer to
+species identifiers, as discussed in Section~\ref{sec:ci-token}.
+The only \Species identifiers that can be used in \token{math} are
+those declared in the lists of reactants, products and modifiers
+in the \Reaction object (see
 Sections~\ref{subsec:simplespeciesreference},
 \ref{subsec:speciesreference} and~\ref{subsec:modifierreference}).
-\LocalParameter identifiers can only be taken from the \KineticLaw's list of
-local parameters (see below); \Parameter identifiers refer to the parameters defined globally on
-the \Model instance.
+\LocalParameter identifiers can only be taken from the
+\KineticLaw's list of local parameters (see below); \Parameter
+identifiers refer to the parameters defined globally on the \Model
+instance.
 
 Section~\ref{sec:about-kinetic-laws} provides important
 discussions about the meaning and interpretation of SBML ``kinetic
@@ -3635,25 +3750,24 @@ laws''.
 
 \paragraph{The list of local parameters}
 
-An instance of \KineticLaw can contain a list of
-one or more \LocalParameter objects (Section~\ref{subsec:localparameter})
+An instance of \KineticLaw can contain a list of one or more
+\LocalParameter objects (Section~\ref{subsec:localparameter})
 which define new parameters whose identifiers can be used in the
 \token{math} formula.  As discussed in
 Section~\ref{sec:identifiers}, reactions introduce local
 namespaces for local parameter identifiers, and within a
 \KineticLaw object, a local parameter whose identifier is
 identical to a global identifier defined in the model takes
-precedence over the value associated with
-the global identifier.  Note that this introduces the potential
-for a local parameter definition to shadow a global identifier
-\emph{other} than a parameter.  In SBML's simple symbol system, 
-there is no separation of symbols by class of object;
-consequently,  inside the kinetic law mathematical
-formula, the value of a local parameter having the same
-identifier as a species or compartment or other global model
-entity will override the global value.  Modelers and software
-developers may wish to take precautions to avoid this happening
-accidentally.
+precedence over the value associated with the global identifier.
+Note that this introduces the potential for a local parameter
+definition to shadow a global identifier \emph{other} than a
+parameter.  In SBML's simple symbol system, there is no separation
+of symbols by class of object; consequently, inside the kinetic
+law mathematical formula, the value of a local parameter having
+the same identifier as a species or compartment or other global
+model entity will override the global value.  Modelers and
+software developers may wish to take precautions to avoid this
+happening accidentally.
 
 
 \paragraph{The \token{sboTerm} attribute}
@@ -3673,6 +3787,96 @@ As discussed in Section~\ref{sec:sboTerm}, SBO labels are optional
 information on a model.  Applications are free to ignore
 \token{sboTerm} values.  A model must be interpretable without the
 benefit of SBO labels.
+
+
+\paragraph{SBML ``kinetic laws'' compared to traditional rate
+  laws}
+
+It is important to make clear that a ``kinetic law'' in SBML is
+\emph{not} identical to a traditional rate law.  The reason is
+that SBML must support multicompartment models, and the units
+normally used in traditional rate laws are problematic when used
+for defining reactions between multiple compartments.
+
+When modeling species as continuous amounts (\eg concentrations),
+the rate laws used are traditionally expressed in terms of
+\quantity{amount of substance concentration per time}, embodying a
+tacit assumption that reactants and products are all located in a
+single, constant volume.  Attempting to describe reactions between
+multiple volumes using \quantity{concentration}/\quantity{time}
+(which is to say,
+\quantity{substance}/\quantity{volume}/\quantity{time}) quickly
+leads to difficulties.  Here is an illustration of this.  Suppose
+we have two species pools $S_1$ and $S_2$, with $S_1$ located in a
+compartment having volume $V_1$, and $S_2$ located in a
+compartment having volume $V_2$.  Let the volume $V_2 = 3 V_1$.
+Now consider a transport reaction $S_1 \rightarrow S_2$ in which
+the species $S_1$ is moved from the first compartment to the
+second.  Assume the simplest type of chemical kinetics, in which
+the rate of the transport reaction is controlled by the activity
+of $S_1$ and this rate is equal to some constant $k$ times the
+activity of $S_1$.  For the sake of simplicity, assume $S_1$ is in
+a diluted solution and thus that the activity of $S_1$ can be
+taken to be equal to its concentration $[S_1]$.  The rate
+expression will therefore be $k \cdot [S_1]$, with the units of
+$k$ being $1/\emph{time}$.  Then:
+
+\vspace*{-3ex}
+\begin{linenomath}
+  \begin{equation*}
+    \frac{d[S_2]}{dt} = -\frac{d[S_1]}{dt} = k \cdot [S_1]
+  \end{equation*}
+\end{linenomath}
+
+So far, this looks normal---until we consider the number of
+molecules of $S_1$ that disappear from the compartment of volume
+$V_1$ and appear in the compartment of volume $V_2$.  The number
+of molecules of $S_1$ (call this $n_{S_1}$) is given by $[S_1]
+\cdot V_1$ and the number of molecules of $S_2$ (call this
+$n_{S_2}$) is given by $[S_2] \cdot V_2$.  Since our volumes have
+the relationship $V_2 / V_1 = 3$, the relationship above implies
+that $n_{S_1} = k \cdot [S_1] \cdot V_1$ molecules disappear from
+the first compartment per unit of time and $n_{S_2} = 3
+\cdot k \cdot [S_1] \cdot V_1$ molecules appear in the second
+compartment.  In other words, we have created matter out of
+nothing!
+
+The problem lies in the use of concentrations as the measure of
+what is transfered by the reaction, because concentrations depend
+on volumes and the scenario involves multiple unequal volumes.
+The problem is not limited to using concentrations or volumes; the
+same problem also exists when using density, \ie
+\quantity{mass}/\quantity{volume}, and dependency on other spatial
+distributions (\ie areas or lengths).  What must be done instead
+is to consider the number of ``items'' being acted upon by a
+reaction process irrespective of their distribution in space
+(volume, area or length).  An ``item'' in this context may be a
+molecule, particle, mass, or other ``thing'', as long as the
+substance measurement is independent of the size of the space in
+which the items are located and the processes take place.
+
+For the current example, the expressions in terms of $n_{S_1}$ and
+$n_{S_2}$ are straightforward:
+\begin{linenomath}
+\begin{equation*}
+  \frac{dn_{S_2}}{dt} = -\frac{dn_{S_1}}{dt} = k \cdot [S_1] \cdot V_1
+\end{equation*}
+\end{linenomath}
+Given numbers of items, it is then easy to recover concentrations
+by dividing the item counts of each species by the volume of the
+compartment in which the species is located: $[S_1] = n_{S_1}/V_1$
+and $[S_2] = n_{S_2}/V_2$.
+
+In multicompartment models, if one wants to be able to specify a
+rate law only once and then use it unmodified in equations for
+different substances, the rate law needs to be expressed in terms
+of \quantity{substance}/\quantity{time}, rather than the more
+typical \quantity{substance}/\quantity{size}/\quantity{time}.  As
+a result, modelers and software tools in general cannot insert
+textbook rate laws unmodified as the rate expression in the
+\token{math} element of a \KineticLaw.  The unusual term ``kinetic
+law'' was chosen to alert users to this difference.
+
 
 \paragraph{Example}
 
@@ -3741,88 +3945,139 @@ expression.
 
 
 
-\subsubsection{Mathematical interpretation of SBML kinetic laws}
+\subsubsection{Mathematical interpretation of SBML reactions and kinetic laws}
 \label{sec:about-kinetic-laws}
 
-In SBML, \emph{reactions} are the central machanism to describe processes that
-change the concentration or amount of substance of species. The \emph{kinetic law} 
-provides the quantitative description on how fast this happens. This section 
-specifies how a system of ordinary differential equations (ODEs) can be constructed 
-from an SBML description of a set of reactions.  
+In SBML, \emph{reactions} are the central machanism to describe
+processes that change the quantities of species in a model.  The
+\emph{kinetic law} of an SBML reaction provides a quantitative
+description of the speed with which this happens.  In this
+section, we provide an interpretation of SBML kinetic laws in the
+framework of a system of ordinary differential equations (ODEs).
+However, the choice of ODEs as the framework is only for
+exposition purposes here, in order to allow us to present a
+concrete mathematical expression of the model in terms that many
+readers will be familiar with; it is equally possible to translate
+a model into other frameworks, and some formulations, such as
+discrete stochastic systems, are indeed quite common.
 
-\question{Is this needed? Or should it be made more clear that different interpretations are equally valid?} 
-Other mathematical interpretations of an SBML model are possible (such as in a
-stochastic simulation framework). If applicable, the interpretation of the
-rate law in these cases should be done in a way that is consistent with the 
-ODE interpretation described here. E.g., a stochastic interpretation of the rate
-law should make sure that it approximates the ODE behaviour for very large particle 
-numbers. 
 
 \paragraph{Semantics of rate law and stoichiometry}
 
-The value of the mathematical expression in the \token{math} element describes the
-\emph{rate} of the reaction. The \emph{stoichiometry} describes how much the amount
-of substance of a species changes when the reaction happens. More specifically, 
-the product of the reaction rate (of a given reaction) and the stoichiometry
-(of a given species in this reaction)
-describes the contribution of the reaction to the rate of change of the amount of 
-substance of the species.
+The \emph{stoichiometry} of a species $S$ in a reaction describes
+the proportion, relative to other species participating in that
+reaction, of $S$ involved in each reaction event.  For example, in
+a reaction $S_1 + 2 S_2 \rightarrow S_3$, twice as many entities
+of $S_2$ as entities of $S_1$ are involved each time a reaction
+event is counted.  The value of the mathematical expression in the
+\KineticLaw's \token{math} element describes the \emph{rate} at
+which the reaction takes place.  The product of the reaction rate
+(of a given reaction) and the stoichiometry (of a given species in
+this reaction) describes the contribution of the reaction to the
+rate of change of the quantity of the species in the overall
+system.
 
-\paragraph{Constructing the ODE}
 
-\todo{sven}{formatting of this section}
-Assume we have a model with some species $S_{1}$, $S_{2}$, \ldots{},
-$S_{N}$ and some reactions $R_{1}$, $R_{2}$, \ldots{}, $R_{M}$.
-We only consider species where the {boundaryValue} attribute is set
-to {}``false'', since all other species are not affected by reactions.
-The amount of substance of a species $S_{i}$ is $n_{S_{i}}$, the
-rate of a reaction $R_{j}$ is $v_{R_{j}}$. The stoichiometry of
-a species $S_{i}$ in the reaction $R_{j}$ is $\text{stoich}{}_{S_{i},R_{j}}$.
-More specifically, $\textrm{stoich}_{S_{i},R_{j}}$ is the sum of
-the stoichiometry values of all species references in the listOfReactants
-of reaction $R_{j}$ whose species attribute points to the species
-$S_{i}$ minus the sum of the stoichiometry values of all species
-references in the listOfProducts of reaction $R_{j}$ whose species
-attribute points to the species $S_{i}$. This implies that $\textrm{stoich}_{S_{i},R_{j}}=0$
-if species $S_{i}$ is neither reactant nor product of reaction $R_{j}$.
+\paragraph{Constructing rate-of-change equations for the species}
+\label{sec:constructing-equations}
 
-Now we have to consider three cases, depending on whether the conversionFactor
-attribute is set on the Species element or on the Model element.
+When constructing a set of equations dictating the rates of change
+of the different species in an SBML model, we only need to
+consider those species with \Species object attributes
+\token{constant}=\val{false} and
+\token{boundaryValue}=\val{false}, because as discussed in
+Section~\ref{sec:species-constant}, species not meeting these
+criteria are not affected by the reactions in the model.  (The
+latter kind of species may be affected by other SBML constructs,
+but here, we are focusing specifically on the implications of
+reactions.)  Assume now a model in which $N$ species $S_{1}$,
+$S_{2}$, \ldots{}, $S_{N}$ having \token{constant}=\val{false} and
+\token{boundaryValue}=\val{false} participate in $M$ reactions
+$R_{1}$, $R_{2}$, \ldots{}, $R_{M}$.
 
-\begin{itemize}
-\item If the conversionFactor attribute is set neither on species $S_{i}$
-nor on the model it is implied that the rate of change of the amount
-of the species can be calculated from the reaction rate without any
-unit conversion. \\
-In this case the ODE for the amount of the species is:\[
-\frac{dn_{S_{i}}}{dt}=\sum_{j=1}^{M}\textrm{stoich}_{S_{i},R_{j}}\cdot v_{R_{j}}.\]
+\newcommand{\si}{\ensuremath{S_i}\xspace}
+\newcommand{\nsi}{\ensuremath{n_{S_i}}\xspace}
+\newcommand{\rj}{\ensuremath{R_j}\xspace}
+\newcommand{\rx}{\ensuremath{R_x}\xspace}
+\newcommand{\vrj}{\ensuremath{v_{R_j}}\xspace}
+\newcommand{\stoichij}{\ensuremath{\textrm{stoich}_{S_{i},R_{j}}}\xspace}
+\newcommand{\stoichix}{\ensuremath{\textrm{stoich}_{S_{i},R_{x}}}\xspace}
+\newcommand{\csi}{\ensuremath{c_{S_i}}\xspace}
+\newcommand{\csg}{\ensuremath{c_{\,\textrm{model}}}\xspace}
 
-\item If the conversionFactor attribute on species $S_{i}$ is set it must
-be the id of a global parameter in the model. The value of this parameter
-(called $\textrm{conversion}_{S_{i}}$ in the equation below) is used
-to convert from the units used in the definition of the rate law to
-the units used for the amount of the species: \[
-\frac{dn_{S_{i}}}{dt}={\textstyle \textrm{conversion}_{S_{i}}}\cdot\sum_{j=1}^{M}\textrm{stoich}_{S_{i},R_{j}}\cdot v_{R_{j}}.\]
+Let \vrj represent the rate or velocity of reaction \rj as given
+by the formula in the \token{math} element of \KineticLaw object
+for \rj.  The units associated with this rate expression are
+\emph{extent}/\emph{time} units, where the extent and time units
+are specified by the corresponding attributes on the \Model
+object.  Let \stoichij represent the overall stoichiometry of
+species \si in reaction \rj.  (By ``overall stoichiometry'', we
+mean the number that results from taking the sum of the
+stoichiometry values of all references to \si in \rj's
+\token{listOfReactants} and subtracting the sum of the
+stoichiometric values of all references to \si in \rj's
+\token{listOfProducts}.)  If \si is neither a reactant nor product
+in some reaction \rx, then $\stoichix\!= 0$.  Finally, let \nsi
+represent the amount of species \si in the model (and note that
+this value is \emph{not} a concentration or density).
 
-\item A conversionFactor attribute can also be set on the Model element.
-If it is not set on the species but set on the model, the value of
-the parameter it refers to (called $\textrm{conversion}_{\textrm{global}}$
-in the equation) is used in the ODE. This basically means that a unit
-conversion is necessary, but it is the same for all species that do
-not specify their own conversion factor.\[
-\frac{dn_{S_{i}}}{dt}={\textstyle \textrm{conversion}_{\textrm{global}}}\cdot\sum_{j=1}^{M}\textrm{stoich}_{S_{i},R_{j}}\cdot v_{R_{j}}.\]
+There are three possible cases to consider when constructing
+rate-of-change equations for the species:
+\begin{enumerate}
 
-\end{itemize}
+\item \emph{No conversion factors defined}.  If the \Species
+  object instance for \si does not define a value for its
+  \token{conversionFactor} attribute, and the \Model object also
+  does define a value for its \token{conversionFactor} attribute,
+  then the implication is that the units of the reaction extent
+  are identical to the units of amount of species \si.  In that
+  case, the formula for the rate of change of the species amount
+  is as follows:
+  \begin{linenomath}
+    \begin{equation*}
+      \frac{d \nsi}{dt} = \sum_{j=1}^{M} \, \stoichij \cdot \vrj      
+    \end{equation*}
+  \end{linenomath}
 
-\paragraph{Concentration vs. Amount}
+\item \emph{Global conversion factor defined}.  If the \Model
+  object instance defines a value for its \token{conversionFactor}
+  attribute, \emph{and} the \Species object for \si does
+  \emph{not} define a value for its \token{conversionFactor}, then
+  the global conversion factor is used to convert between the
+  units of reaction \emph{extent} in the model and the units of
+  amount of species \si.  Let \csg represent the value of the
+  parameter object identified by the \token{conversionFactor}
+  attribute value on \Model (see
+  Section~\ref{sec:model-conversionFactor}).  The formula for the
+  rate of change of \si's amount then becomes the following:
+  \begin{linenomath}
+    \begin{equation*}
+      \frac{d \nsi}{dt} = \csg \cdot \sum_{j=1}^{M} \, \stoichij \cdot \vrj      
+    \end{equation*}
+  \end{linenomath}
 
-One important point about ODEs and rate laws in SBML is that the left
-hand side of the ODE is always the rate of change of the \emph{amount}
-of the species, never the \emph{concentration.} What does this imply
-for the right hand side of the ODE? The stoichiometries are simply
-(dimensionless) numbers. The conversion factors cannot change the
-dimension...
-\todo{sven}{finish this section}
+\item \emph{Conversion factor defined for the species}.  If the
+  \Species object instance for \si defines a value for its
+  \token{conversionFactor} attribute, then this factor is used to
+  convert between the units of reaction \emph{extent} in the model
+  and the units of amount of species \si.  (The factor defined by
+  the species is used regardless of whether a value also exists
+  for the \Model object's \token{conversionFactor}.)  Let \csi
+  represent the value of the parameter object identified by \si's
+  \token{conversionFactor} attribute value (see
+  Section~\ref{sec:species-conversion}).  The formula for the rate
+  of change of \si's amount then becomes the following:
+  \begin{linenomath}
+    \begin{equation*}
+      \frac{d \nsi}{dt} = \csi \cdot \sum_{j=1}^{M} \, \stoichij \cdot \vrj      
+    \end{equation*}
+  \end{linenomath}
+
+\end{enumerate}
+
+In Section~\ref{sec:bp:reactions}, we discuss some recommendations
+and examples of how to encode models and reactions in SBML.
+
 
 \subsubsection{Use of reaction identifiers in mathematical expressions}
 \label{subsec:reaction-as-symbol}

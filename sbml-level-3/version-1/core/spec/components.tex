@@ -87,7 +87,7 @@ ellipses are used to indicate content elided from this example):
 
 The \token{sbml} element may contain additional attributes, in
 particular, attributes to support the inclusion of SBML Level~3
-packages.
+packages; see Section~\ref{sec:sbml-packages}.
 
 
 \subsubsection{The \token{model} element}
@@ -346,16 +346,12 @@ quantity inherits the units specified by the \Model
 value for this attribute, then there are no units to inherit, and
 all species that do not specify individual \token{substanceUnits}
 attribute values then have \emph{no} declared units for their
-quantities.  As discussed elsewhere in this specification
-document, leaving the units of species quantities undefined in an
-SBML model does not render the model invalid; however, as a matter
-of best practice, we strongly recommend that all models specify
-the units of measurement for every species quantity, using the
-\token{substanceUnits} attribute on either \Model or \Species.
+quantities.  Section~\ref{sec:species-substanceunits} provides
+more information about the units of species quantities.
 
 Note that the overall units associated with the identifier of a
 species (when that identifier appears in a model's mathematical
-expressions) are not \emph{only} determined by setting
+expressions) are \emph{not solely determined} by setting
 \token{substanceUnits} on \Model or \Species.
 Sections~\ref{sec:species-units} and~\ref{sec:species-meaning}
 explain this in more detail.
@@ -436,14 +432,9 @@ attribute, as appropriate based on the \Compartment object's
 does not define the relevant units attribute, then there are no
 units to inherit, and all compartments that do not set a value for
 the \Compartment \token{units} attribute then have \emph{no}
-declared units for the compartment size.  As discussed elsewhere,
-leaving the units of a compartment's size undefined does not
-render the SBML model invalid; however, as a matter of best
-practice, we strongly recommend that all models specify the units
-of measurement for every compartment size, using either the \Model
-\token{volumeUnits}, \token{areaUnits} or \token{lengthUnits}
-attributes (as appropriate), or the \token{units} attribute on
-an individual \Compartment object.
+declared units for the compartment size.
+Section~\ref{sec:compartment-units} provides more information
+about the units of compartment sizes.
 
 The use of three separate attributes is a carry-over from SBML
 Level~2.  Note that it is entirely possible for a model to define
@@ -793,7 +784,9 @@ Consequently, the SBML unit system has been consciously designed
 in a way that attempts to simplify implementation of unit support
 for the most common cases in systems biology, at the cost of
 requiring units with offsets to be handled explicitly by the
-modeler.
+modeler.  Section~\ref{sec:bp:unitdefinitions:offset} discusses
+suggested approaches for handling situations requiring units with
+offsets.
 
 
 \subsubsection{\class{UnitDefinition}}
@@ -938,9 +931,9 @@ it easier for models to define units in these terms, the SBML unit
 system includes the pseudo-unit \val{avogadro}, whose definition
 is identical to the definition of the \emph{avogadro}
 \token{csymbol} described in Section~\ref{sec:csymbol}.  The
-numerical value is taken to be the one recommended by the 2006
-edition of CODATA~\citep{codata_2008}, but the unit is
-\token{dimensionless}.  In other words, it is defined as
+numerical value is taken to be the one recommended by
+CODATA~\citep{codata_2008}, but the unit is \token{dimensionless}.
+In other words, it is defined as
 \begin{linenomath}
   \begin{equation*}
     (6.02214179 \cdot 10^{23}) \cdot \texttt{dimensionless}
@@ -1176,13 +1169,11 @@ the multiplier in the latter case is $5/9$, \ie
 decimal precision).  If, on the other hand, the actual temperature
 is relevant to a quantity (\eg if a model uses a quantity that has
 particular values at particular temperatures), then offsets are
-required in the unit calculations and a formula must be used as
-discussed above.
-
-While the SBML unit system does not allow a means of specifying
-offsets directly, it is still possible to encode models using such
-units.  Section~\ref{sec:bp:unitdefinitions:offset} provides 
-information on ways of handling units that require offsets.
+required in the unit calculations.  While the SBML unit system
+does not allow a means of specifying offsets directly, it is still
+possible to encode models using such units.
+Section~\ref{sec:bp:unitdefinitions:offset} provides suggestions
+for possible ways of handling such cases.
 
 
 \subsubsection{References to units}
@@ -1257,6 +1248,7 @@ to the guidelines described in Section~\ref{sec:idnameattribs}.
 
 
 \subsubsection{The \token{spatialDimensions} attribute}
+\label{sec:compartment-spatialdimensions}
 
 A \Compartment object has an optional floating-point attribute
 named \token{spatialDimensions} whose value indicates the number
@@ -1285,6 +1277,7 @@ detail below in Section~\ref{sec:compartment-units}.
 
 
 \subsubsection{The \token{size} attribute}
+\label{sec:compartment-size}
 \label{sec:size}
 
 The optional \Compartment attribute \token{size}, with a data type
@@ -1324,10 +1317,10 @@ assignment (Section~\ref{sec:initialAssignment}) or other SBML
 construct elsewhere in the model.  Further, due to the fact that
 alternative methods available for setting the size of a
 compartment, the \token{size} attribute must be defined as
-optional; however, \emph{it is extremely good practice to specify
-  a value the size of every compartment in a model}, no matter
-what method is used, when compartment size values are available.
-The reasons for this are explained in Section~\ref{sec:bp:size}.
+optional; however, \emph{it is good practice to specify a value
+  the size of every compartment in a model}, no matter what method
+is used, when compartment size values are available.  The reasons
+for this are explained in Section~\ref{sec:bp:size}.
 
 
 \subsubsection{The \token{units} attribute}
@@ -1365,7 +1358,6 @@ Section~\ref{sec:bp:unitdefinitions:recommendedunits:sizeUnits}.
 \begin{table}[tbh]
   \small
   \centering
-  \vspace*{-2ex}
   \begin{edtable}{tabular}{cl}
     \toprule
     \textbf{Value of attribute} & \class{Model} \textbf{attribute used} \\[-2pt]
@@ -1462,11 +1454,11 @@ The following example illustrates two compartments in an
 abbreviated SBML example of a model definition:
 
 \begin{example}
-<model>
+<model ...>
     ...
     <listOfCompartments>
-        <compartment id="cytosol" size="2.5" constant="true"/>
-        <compartment id="mitochondria" size="0.3" constant="true"/>
+        <compartment id="cytosol" size="2.5" constant="true" spatialDimensions="3"/>
+        <compartment id="mitochondria" size="0.3" constant="true" spatialDimensions="3"/>
     </listOfCompartments>
     ...
 </model>
@@ -1565,6 +1557,7 @@ attribute.  (This also implies that every model with one or more
 \subsubsection{The \token{initialAmount},
   \token{initialConcentration}, and \token{substanceUnits} attributes}
 \label{sec:initialAmount}
+\label{sec:species-substanceunits}
 
 The optional attributes \token{initialAmount} and
 \token{initialConcentration}, both having a data type of
@@ -2053,6 +2046,8 @@ parameter's \token{value} cannot be changed by any construct
 except \InitialAssignment.  Conversely, if
 \token{constant}=\val{false}, other constructs in SBML, such as
 rules and events, can change the \token{value} of the parameter.
+More information about the effects of \token{constant} on
+\token{value} is presented in Section~\ref{sec:parameter-value}.
 
 What if a parameter has its \token{constant} attribute set to
 \val{false}, but the model does not contain any rules, events or
@@ -3621,10 +3616,11 @@ reaction but is itself neither created nor destroyed in that
 reaction (for example, because it acts as a catalyst or
 inhibitor).  In SBML, all such species are simply called
 \emph{modifiers} without regard to the detailed role of those
-species in the model.  The \Reaction object class provides a way
-to express which species act as modifiers in a given reaction.
-This is the purpose of the list of modifiers available in
-\Reaction.  The list contains instances of
+species in the model (though a model could use SBO terms to
+clarify the roles; see Section~\ref{sec:sbo}).  The \Reaction
+object class provides a way to express which species act as
+modifiers in a given reaction.  This is the purpose of the list of
+modifiers available in \Reaction.  The list contains instances of
 \ModifierSpeciesReference object.
 
 As shown in Figure~\vref{fig:reaction}, the
@@ -3814,7 +3810,7 @@ Section~\ref{sec:species}), and so the rate expression $k \cdot
 [X_0] \cdot [S_2]$ needs to be multiplied by the compartment
 volume (represented by its identifier, \val{c1}) to produce the
 final units of \quantity{substance}/\quantity{time} for the rate
-expression.
+expression. \todo{MH}{the example lacks units}
 
 \begin{example}
 <model>

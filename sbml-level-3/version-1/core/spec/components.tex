@@ -458,16 +458,16 @@ dimensions.
 \label{extentunits}
 
 Reactions are processes that occur over time.  These processes
-involve events of some sort.  A single reaction event is one
-in which some set of entities (known as ``reactants'' and
+involve events of some sort.  A single reaction event is one in
+which some set of entities (known as ``reactants'' and
 ``modifiers'' in SBML) interact, once.  As time moves forward in a
 system, the reaction keeps occurring as long as there are entities
 left to participate in the reaction.  The \emph{extent} of the
-reaction is how many times the reaction has happened after the
-system has started.  The time derivative of this extent gives the
-rate at which the reaction is occurring.  Thus, what is
-colloquially referred to as the ``rate of the reaction'' is in
-fact equal to the rate of change of the extent.
+reaction is a count of how many times the reaction has occurred,
+while the time derivative of this extent gives the rate at which
+the reaction is occurring.  Thus, what is colloquially referred to
+as the ``rate of the reaction'' is in fact equal to the rate of
+change of the extent.
 
 The units to be associated with reaction extent in a given model
 can be set by the attribute \token{extentUnits} on the \Model
@@ -1273,12 +1273,15 @@ possibility of representing structures with fractal dimensions.
 
 In SBML \thisLV, the number of spatial dimensions possessed by a
 compartment cannot enter into mathematical formulas, and therefore
-cannot alter the numerical interpretation of a model.  However, the
-value of \token{spatialDimensions} does affect the interpretation
-of the units associated with a compartment's \token{size} value,
-as described in the next section.  In addition, some SBML Level~3
-packages may use the value of \token{spatialDimensions} in ways
-not defined in \thisLV.
+cannot alter the numerical interpretation of a model.  However,
+the value of \token{spatialDimensions} does affect the
+interpretation of the units associated with a compartment's
+\token{size} value.  Specifically, the value of
+\token{spatialDimensions} is used to select among the \Model
+attributes \token{volumeUnits}, \token{areaUnits} and
+\token{lengthUnits} when a \Compartment object does not define a
+value for its \token{units} attribute.  This is described in more
+detail below in Section~\ref{sec:compartment-units}.
 
 
 \subsubsection{The \token{size} attribute}
@@ -1314,7 +1317,7 @@ $t \leq 0$.
 
 It is important to note that in SBML Level~3, a missing
 \token{size} value \emph{does not imply that the compartment size
-  is~\val{1}}. A missing value for \token{size} for a given
+  is~\val{1}}.  A missing value for \token{size} for a given
 compartment signifies that the value either is unknown, or to be
 obtained from an external source, or determined by an initial
 assignment (Section~\ref{sec:initialAssignment}) or other SBML
@@ -1341,10 +1344,18 @@ units defined by one of the attributes on the enclosing \Model
 object instance.  The applicable attribute on \Model depends on
 the value of the compartment's \token{spatialDimensions}
 attribute; the relationship is shown in
-Table~\vref{tab:comp-size-units}.  If neither the \token{units}
-attribute nor a relevant attribute on \Model is specified in a
-given SBML model, then the units associated with the compartment's
-size are undefined.  Leaving the units of compartment sizes
+Table~\vref{tab:comp-size-units}.  If the \Model object does not
+define the relevant attribute (\token{volumeUnits},
+\token{areaUnits} or \token{lengthUnits}) for a given
+\token{spatialDimensions} value, the units associated with that
+\Compartment object's size are undefined.   If \emph{both}
+\token{spatialDimensions} and \token{units} are left unset on a
+given \Compartment object instance, then no units can be chosen
+from among the \Model's \token{volumeUnits}, \token{areaUnits} or
+\token{lengthUnits} attributes (even if the \Model instance
+provides values for those attributes), because there is no basis to
+select between them and there is no default value of
+\token{spatialDimensions}.  Leaving the units of compartment sizes
 undefined in an SBML model does not render the model invalid;
 however, as a matter of best practice, we strongly recommend that
 all models specify the units of measurement for every compartment
@@ -3080,19 +3091,18 @@ and~100:
 \label{sec:reactions}
 %-----------------------------------------------------------------------------
 
-A \emph{reaction} in SBML represents any transformation,
-transport, binding or other kind of process that can change the
-quantity of one or more species in a model.  The classical meaning
-of a \emph{reaction} is a process in which some entities (\ie
-species) interact in some way, at some rate.  In SBML, the notion
-of a reaction is slightly generalized to allow entities that may
-not be chemical substances; thus, a reaction in SBML does not
-necessarily have to be a biochemical reaction---a biochemical
-reaction is just one possible kind of process.
+A \emph{reaction} in SBML represents any kind of process that can
+change the quantity of one or more species in a model.  Examples
+of such processes can include transformation, transport, molecular
+interactions, and more.  In SBML, the notion of a reaction is
+slightly generalized to allow entities that may not be chemical
+substances; thus, a reaction in SBML does not necessarily have to
+be a biochemical reaction---a biochemical reaction is just one
+possible kind of process.
 
 At minimum, to describe a reaction in SBML, it is necessary to
-define its \emph{structural} properties, \ie the participating
-reactants and/or products (and their corresponding
+define its \emph{structural} properties, specifically the
+participating reactants and/or products (and their corresponding
 stoichiometries) and the reversibility of the process.  In
 addition, an SBML reaction can also contain a \emph{quantitative}
 description of the rate of the reaction; this aspect consists of a
@@ -3125,7 +3135,8 @@ Figure~\vref{fig:reaction}.
 
 Each reaction in an SBML model is defined using an instance of a
 \Reaction object.  As shown in Figure~\vref{fig:reaction}, it
-contains several scalar attributes and several lists of objects.
+contains several scalar attributes and several lists of other
+objects.
 
 
 \paragraph{The \token{id} and \token{name} attributes}
@@ -3209,8 +3220,7 @@ whether the reaction is reversible.  To say that a reaction is
 or the reverse direction.  This information may be redundant in
 cases where the reversibility of the reaction can be deduced by
 inspecting its rate expression.  However, a reaction is not
-required to have a rate formula (because \KineticLaw is an
-optional component of \Reaction), and besides, when a rate
+required to have a rate formula, and besides, when a rate
 expression is present, it may not always be possible to deduce the
 reversibility by inspecting it.  Having a separate attribute for
 \token{reversible} allows certain kinds of structural analysis,
@@ -3219,16 +3229,16 @@ such as elementary mode analysis, even in these cases.
 Mathematically, the \token{reversible} attribute on \Reaction has
 no impact on the construction of the equations for change of the
 species quantities.  However, labeling a reaction as irreversible
-would be interpreted as an assertion that the rate expression will
-not have negative values during a simulation.  Software developers
-may wish to provide their software systems with a means of testing
+is interpreted as an assertion that the rate expression will not
+have negative values during a simulation.  Software developers may
+wish to provide their software systems with a means of testing
 that this condition holds.
 
 The presence of reversibility information in two places (\ie the
 rate expression, and the \token{reversible} flag) leaves open the
 possibility that a model could contain contradictory information,
-but this would be considered as a problem of the encoded model,
-rather than as an invalid SBML encoding.
+but this would be considered to be a problem of the encoded model,
+rather than an invalid SBML encoding.
 
 
 \paragraph{The \token{fast} attribute}
@@ -3293,7 +3303,7 @@ already be implicit in the kinetic law (although this cannot
 always be guaranteed).  Nevertheless, software tools may find the
 \token{compartment} attribute value useful for such purposes as
 analyzing the structure of the model, guiding the modeler in
-choosing correct rate laws, and visualization purposes.
+constructing correct rate formulas, and visualization purposes.
 
 
 \paragraph{The \token{sboTerm} attribute on \class{Reaction}}
@@ -3347,15 +3357,13 @@ Section~\ref{sec:idnameattribs}.
 
 The \token{id} value (whether it is in a \SpeciesReference or
 \ModifierSpeciesReference object) exists in the global namespace
-of the model.  This optional identifier allows \SpeciesReference
-and \ModifierSpeciesReference instances to be referenced from
-other objects.  In the case of \SpeciesReference objects, the
-identifier also has a special meaning: \emph{it stands for the
-  value of the \token{stoichiometry} attribute} of a
-\SpeciesReference object instance.  This allows the stoichiometry
-of a species to be accessed from other parts of the model.  This
-feature is discussed in more detail in
-Section~\ref{subsec:speciesreference} below.
+of the model.  In SBML \thisLV, the only meaning defined for the
+use of such identifiers concerns the \token{id} of a
+\SpeciesReference object (discussed further in
+Section~\ref{subsec:speciesreference}); no meaning or value is
+associated with the identifiers of \ModifierSpeciesReference.
+However, the identifiers are present on both object classes for
+possible use by SBML Level~3 packages.
 
 
 \paragraph{The \token{species} attribute}
@@ -3398,21 +3406,13 @@ benefit of SBO labels.
 \label{subsec:speciesreference}
 
 \Reaction provides a way to express which species act as reactants
-and which species act as products in a reaction.  The
-\SpeciesReference structure inherits the mandatory attribute
-\token{species} and optional attributes \token{id}, \token{name},
-and \token{sboTerm} from the parent type \SimpleSpeciesReference;
-see Section~\ref{subsec:simplespeciesreference} for their
-definitions.  It also defines the optional attribute
-\token{stoichiometry} and the mandatory attribute
-\token{constant}, described below.
-
-The \token{species} attribute value must be the identifier of an
-existing species defined in the enclosing \Model; the species is
-thereby designated as a reactant or product in the reaction.
-Which one it is (\ie reactant or product) is indicated by whether
-the \SpeciesReference appears in the \Reaction's \token{reactant}
-or \token{product} lists.
+and which species act as products in a reaction.  As mentioned
+above in Section~\ref{subsec:simplespeciesreference},
+\SpeciesReference inherits the mandatory attribute \token{species}
+and optional attributes \token{id}, \token{name}, and
+\token{sboTerm} from the parent type \SimpleSpeciesReference.  It
+also defines the optional attribute \token{stoichiometry} and the
+mandatory attribute \token{constant}, described below.
 
 
 \paragraph{The \token{stoichiometry} attribute}
@@ -3463,15 +3463,16 @@ Section~\ref{sec:about-kinetic-laws}.
 
 \paragraph{The \token{constant} attribute}
 
-The \SpeciesReference object has a mandatory boolean attribute
-named \token{constant}, used to indicate whether the stoichiometry
-can vary during a simulation.  A value of \val{true} for this
-attribute means that the corresponding species' stoichiometry in
-the reaction cannot be changed by other constructs elsewhere in
-the model except by an \InitialAssignment.  A value of \val{false}
-means the stoichiometry can be changed by other SBML constructs
-such as rules (see Section~\ref{sec:rules}), as described above in
-the section on the \token{stoichiometry} attribute.
+The \SpeciesReference attribute \token{constant} is a
+mandatory boolean attribute used to indicate whether the
+\token{stoichiometry} value can vary during a simulation.  If
+\token{constant}=\val{true}, the corresponding species'
+stoichiometry in the reaction cannot be changed by other
+constructs elsewhere in the model except by an \InitialAssignment.
+A value of \val{false} means the stoichiometry can be changed by
+other SBML constructs such as rules (see Section~\ref{sec:rules}),
+as described above in the section on the \token{stoichiometry}
+attribute.
 
 
 \paragraph{Use of species reference identifiers in mathematical expressions}
@@ -3479,7 +3480,7 @@ the section on the \token{stoichiometry} attribute.
 
 The value of the \token{id} attribute of a \SpeciesReference can
 be used as the content of a \token{ci} element in MathML formulas
-elsewhere in the model.  When the identifier appears in \token{ci}
+elsewhere in the model.  When the identifier appears in a \token{ci}
 element, it represents the stoichiometry of the corresponding
 species in the reaction where the \SpeciesReference object
 instance appears.  More specifically, it represents the value of
@@ -3620,18 +3621,24 @@ reaction but is itself neither created nor destroyed in that
 reaction (for example, because it acts as a catalyst or
 inhibitor).  In SBML, all such species are simply called
 \emph{modifiers} without regard to the detailed role of those
-species in the model.  The \Reaction object class provides a way to
-express which species act as modifiers in a given reaction.  This
-is the purpose of the list of modifiers available in \Reaction.
-The list contains instances of \ModifierSpeciesReference
-object.
+species in the model.  The \Reaction object class provides a way
+to express which species act as modifiers in a given reaction.
+This is the purpose of the list of modifiers available in
+\Reaction.  The list contains instances of
+\ModifierSpeciesReference object.
 
 As shown in Figure~\vref{fig:reaction}, the
 \ModifierSpeciesReference class inherits the mandatory attribute
-\token{species} and optional attributes \token{id} and \token{name}
-from the parent class \SimpleSpeciesReference; see
+\token{species} and optional attributes \token{id} and
+\token{name} from the parent class \SimpleSpeciesReference; see
 Section~\ref{subsec:simplespeciesreference} for their precise
-definitions.
+definitions.  As already explained in
+Section~\ref{subsec:simplespeciesreference}, no meaning is
+assigned to the identifier of \ModifierSpeciesReference object
+instances in SBML \thisLV, but the identifiers are available for
+possible use by SBML Level~3 packages.  Note also that modifiers
+in reactions also have no stoichiometries and therefore do not
+possess a \token{stoichiometry} attribute.
 
 The value of the \token{species} attribute must be the identifier of a
 species defined in the enclosing \Model; this species is
@@ -3664,8 +3671,9 @@ also have an optional \token{name} attribute of type
 \primtype{string}.  The identifier of a local parameter needs to
 be unique only within the list of local parameters of one
 reaction.  The details about the scope for identifiers are given
-in Section~\ref{sec:identifiers}, and about the use of names in
-Section~\ref{sec:name}.
+in Sections~\ref{sec:identifiers}
+and~\ref{subsec:listoflocalparameters}, and about the use of names
+in Section~\ref{sec:name}.
 
 
 \paragraph{The \token{value} attribute}
@@ -3676,7 +3684,7 @@ The optional attribute \token{value} determines the value (of type
 or to be obtained from an external source.  (Note that, unlike the
 case with global \Parameter objects, there is no way in SBML
 \thisLV for \InitialAssignment or other SBML constructs to be used
-for setting the value of \LocalParameter objects because local
+for setting the value of \LocalParameter objects, because local
 parameters are local to reactions.)
 
 
@@ -3690,11 +3698,11 @@ units that can be assigned to a parameter; there are also no units
 to inherit from the enclosing \Model object (unlike the case for,
 e.g., \Species and \Compartment).
 
-The units of the parameter are used in the following way: when the
+The units of the parameter are used in the following way: when a
 local parameter's identifier appears in the content of the
 \token{math} element of the \KineticLaw object, the units
-associated with the value are those declared by the local
-parameter's \token{units} attribute.
+associated with the value are those declared by the
+\LocalParameter object's \token{units} attribute.
 
 
 \paragraph{The \token{sboTerm} attribute}
@@ -3732,10 +3740,11 @@ attributes and elements it inherits from \SBase.
 As shown in Figure~\vref{fig:reaction}, \KineticLaw has an element
 called \token{math} for holding a MathML formula defining the rate
 of the reaction.  The expression in \token{math} may refer to
-species identifiers, as discussed in Section~\ref{sec:ci-token}.
-The only \Species identifiers that can be used in \token{math} are
-those declared in the lists of reactants, products and modifiers
-in the \Reaction object (see
+identifiers defined in the model, including species identifiers,
+as discussed in Section~\ref{sec:ci-token}.  However, the only
+\Species identifiers that can be used in \token{math} are those
+declared in the lists of reactants, products and modifiers in the
+\Reaction object (see
 Sections~\ref{subsec:simplespeciesreference},
 \ref{subsec:speciesreference} and~\ref{subsec:modifierreference}).
 \LocalParameter identifiers can only be taken from the
@@ -3789,114 +3798,26 @@ information on a model.  Applications are free to ignore
 benefit of SBO labels.
 
 
-\paragraph{SBML ``kinetic laws'' compared to traditional rate
-  laws}
-
-It is important to make clear that a ``kinetic law'' in SBML is
-\emph{not} identical to a traditional rate law.  The reason is
-that SBML must support multicompartment models, and the units
-normally used in traditional rate laws are problematic when used
-for defining reactions between multiple compartments.
-
-When modeling species as continuous amounts (\eg concentrations),
-the rate laws used are traditionally expressed in terms of
-\quantity{amount of substance concentration per time}, embodying a
-tacit assumption that reactants and products are all located in a
-single, constant volume.  Attempting to describe reactions between
-multiple volumes using \quantity{concentration}/\quantity{time}
-(which is to say,
-\quantity{substance}/\quantity{volume}/\quantity{time}) quickly
-leads to difficulties.  Here is an illustration of this.  Suppose
-we have two species pools $S_1$ and $S_2$, with $S_1$ located in a
-compartment having volume $V_1$, and $S_2$ located in a
-compartment having volume $V_2$.  Let the volume $V_2 = 3 V_1$.
-Now consider a transport reaction $S_1 \rightarrow S_2$ in which
-the species $S_1$ is moved from the first compartment to the
-second.  Assume the simplest type of chemical kinetics, in which
-the rate of the transport reaction is controlled by the activity
-of $S_1$ and this rate is equal to some constant $k$ times the
-activity of $S_1$.  For the sake of simplicity, assume $S_1$ is in
-a diluted solution and thus that the activity of $S_1$ can be
-taken to be equal to its concentration $[S_1]$.  The rate
-expression will therefore be $k \cdot [S_1]$, with the units of
-$k$ being $1/\emph{time}$.  Then:
-
-\vspace*{-3ex}
-\begin{linenomath}
-  \begin{equation*}
-    \frac{d[S_2]}{dt} = -\frac{d[S_1]}{dt} = k \cdot [S_1]
-  \end{equation*}
-\end{linenomath}
-
-So far, this looks normal---until we consider the number of
-molecules of $S_1$ that disappear from the compartment of volume
-$V_1$ and appear in the compartment of volume $V_2$.  The number
-of molecules of $S_1$ (call this $n_{S_1}$) is given by $[S_1]
-\cdot V_1$ and the number of molecules of $S_2$ (call this
-$n_{S_2}$) is given by $[S_2] \cdot V_2$.  Since our volumes have
-the relationship $V_2 / V_1 = 3$, the relationship above implies
-that $n_{S_1} = k \cdot [S_1] \cdot V_1$ molecules disappear from
-the first compartment per unit of time and $n_{S_2} = 3
-\cdot k \cdot [S_1] \cdot V_1$ molecules appear in the second
-compartment.  In other words, we have created matter out of
-nothing!
-
-The problem lies in the use of concentrations as the measure of
-what is transfered by the reaction, because concentrations depend
-on volumes and the scenario involves multiple unequal volumes.
-The problem is not limited to using concentrations or volumes; the
-same problem also exists when using density, \ie
-\quantity{mass}/\quantity{volume}, and dependency on other spatial
-distributions (\ie areas or lengths).  What must be done instead
-is to consider the number of ``items'' being acted upon by a
-reaction process irrespective of their distribution in space
-(volume, area or length).  An ``item'' in this context may be a
-molecule, particle, mass, or other ``thing'', as long as the
-substance measurement is independent of the size of the space in
-which the items are located and the processes take place.
-
-For the current example, the expressions in terms of $n_{S_1}$ and
-$n_{S_2}$ are straightforward:
-\begin{linenomath}
-\begin{equation*}
-  \frac{dn_{S_2}}{dt} = -\frac{dn_{S_1}}{dt} = k \cdot [S_1] \cdot V_1
-\end{equation*}
-\end{linenomath}
-Given numbers of items, it is then easy to recover concentrations
-by dividing the item counts of each species by the volume of the
-compartment in which the species is located: $[S_1] = n_{S_1}/V_1$
-and $[S_2] = n_{S_2}/V_2$.
-
-In multicompartment models, if one wants to be able to specify a
-rate law only once and then use it unmodified in equations for
-different substances, the rate law needs to be expressed in terms
-of \quantity{substance}/\quantity{time}, rather than the more
-typical \quantity{substance}/\quantity{size}/\quantity{time}.  As
-a result, modelers and software tools in general cannot insert
-textbook rate laws unmodified as the rate expression in the
-\token{math} element of a \KineticLaw.  The unusual term ``kinetic
-law'' was chosen to alert users to this difference.
-
-
 \paragraph{Example}
 
-The following is an example of a \Reaction object that defines
-a reaction with identifier $J_1$, in which $X_0 \rightarrow S_1$
-at a rate given by $k \cdot [X_0] \cdot [S_2]$, where $S_2$ is a catalyst
-and $k$ is a parameter, and the square brackets symbolizes that
-the species quantities have units of concentration.  The example
-demonstrates the use of species references and \KineticLaw
-objects.  The units on the species here are the defaults of
+The following is an example of a \Reaction object that defines a
+reaction with identifier $J_1$, in which $X_0 \rightarrow S_1$ at
+a rate given by $k \cdot [X_0] \cdot [S_2]$, where $S_2$ is a
+catalyst and $k$ is a parameter, and the square brackets
+symbolizes that the species quantities have units of
+concentration.  The reaction is assumed to take place all in one
+compartment identified as \val{c1}.  The example demonstrates the
+use of species references and \KineticLaw objects.  The units on
+the species here are the defaults of
 \quantity{substance}/\quantity{volume} (see
-Section~\ref{sec:species}), and so the rate expression $k \cdot [X_0]
- \cdot [S_2]$ needs to be multiplied by the compartment volume
-(represented by its identifier, \val{c1}) to produce the final
-units of \quantity{substance}/\quantity{time} for the rate
+Section~\ref{sec:species}), and so the rate expression $k \cdot
+[X_0] \cdot [S_2]$ needs to be multiplied by the compartment
+volume (represented by its identifier, \val{c1}) to produce the
+final units of \quantity{substance}/\quantity{time} for the rate
 expression.
 
 \begin{example}
 <model>
-    ...
     <listOfUnitDefinitions>
         <unitDefinition id="per_concent_per_time">
             <listOfUnits>
@@ -3906,7 +3827,9 @@ expression.
             </listOfUnits>
         </unitDefinition>
     </listOfUnitDefinitions>
-    ...
+    <listOfCompartments>
+        <compartment id="c1" units="litre" size="0.001"/>
+    </listOfCompartments>
     <listOfSpecies>
         <species id="S1" compartment="c1" initialConcentration="2.0" 
               hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false"/>
@@ -3915,7 +3838,6 @@ expression.
         <species id="X0" compartment="c1" initialConcentration="1.0" 
               hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false"/>
     </listOfSpecies>
-    ...
     <listOfReactions>
         <reaction id="J1" reversible="false" fast="false">
             <listOfReactants>
@@ -3939,7 +3861,6 @@ expression.
             </kineticLaw>
         </reaction>
     </listOfReactions>
-    ...
 </model>
 \end{example}
 
@@ -3969,31 +3890,145 @@ the proportion, relative to other species participating in that
 reaction, of $S$ involved in each reaction event.  For example, in
 a reaction $S_1 + 2 S_2 \rightarrow S_3$, twice as many entities
 of $S_2$ as entities of $S_1$ are involved each time a reaction
-event is counted.  The value of the mathematical expression in the
+event is counted.  The value of the expression in the
 \KineticLaw's \token{math} element describes the \emph{rate} at
 which the reaction takes place.  The product of the reaction rate
 (of a given reaction) and the stoichiometry (of a given species in
-this reaction) describes the contribution of the reaction to the
-rate of change of the quantity of the species in the overall
-system.
+the reaction) describes the reaction's contribution to the rate of
+change of the species's quantity in the overall system.
+
+It is important to make clear that a ``kinetic law'' in SBML is
+\emph{not} identical to a traditional rate law.  When modeling
+species as continuous amounts (\eg concentrations), the rate laws
+used are traditionally expressed in terms of \quantity{substance
+  concentration per time}.  Unfortunately, this approach only
+works well in cases where certain assumptions hold.  Three
+assumptions in particular are incompatible with generalized
+multicompartment modeling; they are listed in
+Table~\ref{tab:rate-law-problems} along with the problems they
+entail.
+
+\begin{table}[tbh]
+  \centering
+  \begin{tabular}{p{2.8in}p{3.26in}}
+    \toprule
+    \textbf{Assumption} & \textbf{Problem}\\
+    \midrule
+    All species that participate in a given reaction are located
+    in one compartment
+    &
+    SBML must support reaction processes (\eg transport) that
+    move species between compartments
+    \\[10pt]
+    Compartment are three-dimensional volume containers
+    &
+    SBML must support models where reactions may take place at
+    interfaces (\eg 2-D membranes) between compartments, thus
+    involving compartments with different dimensions.
+    \\[10pt]    
+    Compartment volumes are constant over time
+    &
+    SBML must support systems with compartments that can change
+    size over time \\
+    \bottomrule
+  \end{tabular}
+  \caption{Assumptions behind ``traditional'' rate laws, and the
+    problems they imply for general multicompartmental modeling.}
+  \label{tab:rate-law-problems}
+\end{table}
+
+A simple example can illustrate the problems that arise when
+describing reactions between multiple volumes using
+\quantity{concentration}/\quantity{time} units (which is to say,
+\quantity{substance}/\quantity{volume}/\quantity{time}).  Suppose
+we have two species pools $S_1$ and $S_2$, with $S_1$ located in a
+compartment having volume $V_1$, and $S_2$ located in a
+compartment having volume $V_2$.  Let the volume $V_2 = 3 V_1$.
+Now consider a transport reaction $S_1 \rightarrow S_2$ in which
+the species $S_1$ is moved from the first compartment to the
+second.  Assume we only want to model the overall effect, without
+getting into the molecular details (which might in reality involve
+such things as pores in a membrane between the compartments---such
+additional details would only worsen the problem being illustrated
+here).  Let us use the simplest type of chemical kinetics, in
+which the rate of the transport reaction is controlled by the
+activity of $S_1$ and this rate is equal to some constant $k$
+times the activity of $S_1$.  For the sake of simplicity, assume
+$S_1$ is in a diluted solution and thus that the activity of $S_1$
+can be taken to be equal to its concentration $[S_1]$.  The rate
+expression will therefore be $k \cdot [S_1]$, with the units of
+$k$ being $1/\emph{time}$.  Then:
+
+\begin{linenomath}
+  \begin{equation*}
+    \frac{d[S_2]}{dt} = -\frac{d[S_1]}{dt} = k \cdot [S_1]
+  \end{equation*}
+\end{linenomath}
+
+So far, this looks normal---until we consider the number of
+molecules of $S_1$ that disappear from the compartment of volume
+$V_1$ and appear in the compartment of volume $V_2$.  The number
+of molecules of $S_1$ (call this $n_{S_1}$) is given by $[S_1]
+\cdot V_1$ and the number of molecules of $S_2$ (call this
+$n_{S_2}$) is given by $[S_2] \cdot V_2$.  Since our volumes have
+the relationship $V_2 / V_1 = 3$, the relationship above implies
+that $n_{S_1} = k \cdot [S_1] \cdot V_1$ molecules disappear from
+the first compartment per unit of time and $n_{S_2} = 3
+\cdot k \cdot [S_1] \cdot V_1$ molecules appear in the second
+compartment.  In other words, we have created matter out of
+nothing!
+
+The problem lies in the use of concentrations as the measure of
+what is transfered by the reaction, because concentrations depend
+on volumes and the scenario involves multiple unequal volumes.
+The problem is not limited to using concentrations or volumes; the
+same problem also exists when using density, \ie
+\quantity{mass}/\quantity{volume}, as well as dependency on other
+spatial distributions (\ie areas or lengths).  What must be done
+instead is to consider the number of ``items'' being acted upon by
+a reaction process irrespective of their distribution in space
+(volume, area or length).  An ``item'' in this context may be a
+molecule, particle, mass, or other ``thing'', as long as the
+substance measurement is independent of the size of the space in
+which the items are located and the processes take place.
+
+In multicompartment models, to be able to specify a rate law only
+once and then use it unmodified in equations for different
+species, the rate law needs to be expressed in terms of an
+intensive property, that is, \quantity{substance}/\quantity{time},
+rather than the extensive property typically used,
+\quantity{substance}/\quantity{size}/\quantity{time}.  As a
+result, modelers and software tools in general cannot insert
+traditional textbook rate laws unmodified into the \token{math}
+element of a \KineticLaw.  The unusual term ``kinetic law'' was
+chosen to alert users to this difference.
 
 
 \paragraph{Constructing rate-of-change equations for the species}
 \label{sec:constructing-equations}
 
-When constructing a set of equations dictating the rates of change
-of the different species in an SBML model, we only need to
-consider those species with \Species object attributes
+A consequence of approach to ``kinetic laws'' discussed in the
+previous section is this: when constructing equations describing
+the time-rates of change of different species defined by an SBML
+model, the equations are assumed to be in terms of time-rates of
+changes to \emph{amounts, not concentrations} (or more
+generally \emph{densities}, \ie amount per size of compartment).
+A kinetic law does \emph{not} describe how often a reaction would
+take place in a compartment of unit size, but rather how often it
+takes place (per time unit) given the actual size of the
+compartment.  The dimension of the kinetic law is therefore
+\emph{number of reaction events per time.}
+
+When constructing a system of equations dictating the rates of
+change of the different species in an SBML model, we only need to
+consider those species having attribute values
 \token{constant}=\val{false} and
 \token{boundaryValue}=\val{false}, because as discussed in
-Section~\ref{sec:species-constant}, species not meeting these
-criteria are not affected by the reactions in the model.  (The
-latter kind of species may be affected by other SBML constructs,
-but here, we are focusing specifically on the implications of
-reactions.)  Assume now a model in which $N$ species $S_{1}$,
-$S_{2}$, \ldots{}, $S_{N}$ having \token{constant}=\val{false} and
-\token{boundaryValue}=\val{false} participate in $M$ reactions
-$R_{1}$, $R_{2}$, \ldots{}, $R_{M}$.
+Section~\ref{sec:species-constant}, these are the only species
+affected by the reactions in the model.  (Other species not
+meeting these criteria may be
+affected by other SBML constructs, but here, we are focusing
+specifically on the implications of reactions.)
 
 \newcommand{\si}{\ensuremath{S_i}\xspace}
 \newcommand{\nsi}{\ensuremath{n_{S_i}}\xspace}
@@ -4005,21 +4040,24 @@ $R_{1}$, $R_{2}$, \ldots{}, $R_{M}$.
 \newcommand{\csi}{\ensuremath{c_{S_i}}\xspace}
 \newcommand{\csg}{\ensuremath{c_{\,\textrm{model}}}\xspace}
 
-Let \vrj represent the rate or velocity of reaction \rj as given
-by the formula in the \token{math} element of \KineticLaw object
-for \rj.  The units associated with this rate expression are
-\emph{extent}/\emph{time} units, where the extent and time units
-are specified by the corresponding attributes on the \Model
-object.  Let \stoichij represent the overall stoichiometry of
-species \si in reaction \rj.  (By ``overall stoichiometry'', we
-mean the number that results from taking the sum of the
-stoichiometry values of all references to \si in \rj's
-\token{listOfReactants} and subtracting the sum of the
-stoichiometric values of all references to \si in \rj's
-\token{listOfProducts}.)  If \si is neither a reactant nor product
-in some reaction \rx, then $\stoichix\!= 0$.  Finally, let \nsi
-represent the amount of species \si in the model (and note that
-this value is \emph{not} a concentration or density).
+Assume now a model in which $N$ species $S_{1}$, $S_{2}$,
+\ldots{}, $S_{N}$ having attributes \token{constant}=\val{false}
+and \token{boundaryValue}=\val{false} participate in $M$ reactions
+$R_{1}$, $R_{2}$, \ldots{}, $R_{M}$.  Let \vrj represent the rate
+or velocity of reaction \rj as given by the formula in the
+\token{math} element of \KineticLaw object for \rj.  The units
+associated with this rate expression are \emph{extent}/\emph{time}
+units, where the extent and time units are specified by the
+corresponding attributes on the \Model object.  Let \stoichij
+represent the effective stoichiometry of species \si in reaction
+\rj.  (By ``effective stoichiometry'', we mean the number that
+results from taking the sum of the stoichiometry values of all
+references to \si in \rj's \token{listOfReactants} and subtracting
+the sum of the stoichiometric values of all references to \si in
+\rj's \token{listOfProducts}.)  If \si is neither a reactant nor
+product in some reaction \rx, then $\stoichix\!= 0$.  Finally, let
+\nsi represent the amount of species \si in the model (and note
+that this value is \emph{not} a concentration or density).
 
 There are three possible cases to consider when constructing
 rate-of-change equations for the species:
@@ -4075,85 +4113,9 @@ rate-of-change equations for the species:
 
 \end{enumerate}
 
-In Section~\ref{sec:bp:reactions}, we discuss some recommendations
-and examples of how to encode models and reactions in SBML.
+In Section~\ref{sec:bp:reactions}, we present some recommendations for
+how to encode rate laws and models in SBML.
 
-\paragraph{Dimensions of the kinetic law}
-
-One important point about ODEs and kinetic laws in SBML is that the
-left hand side of the ODE is always the rate of change of the \emph{amount}
-of the species, never the \emph{concentration }(or, more generally,
-the \emph{density}, i.e. the amount per size of the compartment)\emph{.
-}In other words, the left hand side is an \emph{extensive }quantity.
-Correspondingly the right hand side and therefore the result of the
-kinetic law has to be an extensive quantity as well. This means the
-kinetic law does \emph{not} describe how often the reaction would
-take place in a compartment of unit size but how often it takes place
-(per time unit) given the actual compartment sizes of the model. The
-dimension of the kinetic law is therefore \emph{number of reaction
-events per time.}
-
-This definition of the kinetic law differs from the traditional kinetic
-laws that can be found in many publications and textbooks where it
-is often given in units of \emph{concentration per time }(\emph{intensive
-}quantity)\emph{.}
-
-The reason that SBML uses a different definition is that the formalism
-using traditional kinetic laws only works well for the description
-of models for which certain assumptions hold, whereas SBML supports
-a more general class of models. Some of these assumptions are:
-
-\begin{itemize}
-\item All species that participate in a given reaction are located in one
-compartment. SBML allows transport reactions and other reactions that
-involve several compartments.
-\item Compartment volumes are constant. SBML allows variable compartment
-sizes.
-\item Kinetic laws in units of concentration per time assume that the reactions
-take place homogeneously in the compartment volume, not e.g. at a
-membrane. Mathematically this means the reaction rate scales with
-the compartment volume. SBML does not make this assumption.
-\end{itemize}
-
-\paragraph{Translating traditional kinetic laws to SBML kinetic laws}
-
-Consider a very simple model consisting of a single enzymatic reaction
-$R$ that converts $S_{1}$ to $S_{2}$ for which a traditional kinetic
-law $v_{R}$ is given ($v_{R}$ and $v_{max}$ are given in units
-of concentration per time). 
-
-\begin{center}
-$R$: \ce{S_1 ->[v_R] S_2}, with $v_{R}=\frac{v_{max}\cdot[S_{1}]}{K_{M}+[S_{1}]}$
-\par\end{center}
-
-As mentioned above, when the kinetic law is presented in the traditional
-way it is usually (implicitly or explicitly) assumed that all species
-are located in the same compartment, that the compartment size does
-not change, and that the reaction takes place uniformly throughout
-the volume of the compartment, i.e. the enzyme is not localized in
-any special way. Under these circumstances it is possible to construct
-rate equations for the \emph{concentration} of the species:\[
-\frac{d[S_{2}]}{dt}=-\frac{d[S_{1}]}{dt}=v_{R}\]
-
-
-In SBML, however, the rate equations are constructed for the rate
-of change of the \emph{amount }of the species:\[
-\frac{dn_{S_{2}}}{dt}=-\frac{dn_{S_{1}}}{dt}=\hat{v}_{R}=V\cdot v_{R}\]
-where $\hat{v}_{R}$ is the modified SBML kinetic law and $V$ is
-the volume of the compartment. Since the traditional kinetic law $v_{R}$
-describes how fast the amount of the species changes \emph{per volume}
-the SBML kinetic law $\hat{v}_{R}$ simply equals the product of $v_{R}$
-and the compartment Volume $V$. This means that the actual rate of
-change of the amounts of the species is proportional to the compartment
-size which is only true if the reaction takes place uniformly throughout
-the compartment (see section \vref{sec:reaction-membrane-eg} for
-an example of a reaction that is located at the boundary of a compartment).
-The concentrations of the species (that are needed in the definition
-of $v_{R}$) can easily be recovered through the relation $[S_{i}]=n_{S_{i}}/V$. 
-
-An important property of the amount rate equation is that it is still
-valid if the volume $V$ changes during a simulation. This is not
-true for the concentration rate eqations. 
 
 \subsubsection{Use of reaction identifiers in mathematical expressions}
 \label{subsec:reaction-as-symbol}
@@ -4689,34 +4651,27 @@ simultaneously in simulated time.  It is assumed that, although
 the precise time at which these events are \emph{executed} is not
 resolved beyond the given point in simulated time, the order in
 which the events occur is resolved.  This order can be significant
-in determining the overall outcome of a given simulation. SBML
-\thisL does not define the algorithm for determining this order
-(the tie-breaking algorithm).  As a result, the outcomes of
-simulations involving events may vary when simultaneous events
-occur during simulation.  It is anticipated that future versions
-or levels of SBML will define a specific set of tie-breaking
-algorithms and a mechanism for models to indicate which algorithm
-should be applied during simulation.
-
-Despite the absence of a specific tie-breaking algorithm, SBML
-event simulation is constrained as follows. When an event $X$
+in determining the overall outcome of a given simulation.  As a
+result, the outcomes of simulations involving events may vary when
+simultaneous events occur during simulation.  SBML event
+simulation is only constrained as follows. When an event $X$
 \emph{fires} another event $Y$ and event $Y$ has zero delay then
 event $Y$ is added to the existing set of simultaneous events that
 are pending \emph{execution}.  Events such as $Y$ do not have a
-special priority or ordering within the tie-breaking algorithm.
-Events $X$ and $Y$ form a cascade of events at the same point in
-simulation time.  All events in a model are open to being in a
-cascade.  The position of an event in the event list does not
-affect whether it can be in the cascade: $Y$ can be triggered
-whether it is before or after $X$ in the list of events.  A
-cascade of events can be infinite (never terminate).  When this
-occurs a simulator should indicate this has occurred; \ie it is
-incorrect for the simulator to arbitrarily break the cascade and
-continue the simulation without at least indicating the infinite
-cascade occurred. A variable can change more than once when
-processing simultaneous events at simulation time $t$.  The model
-behavior (output) for such a variable is the value of the variable
-at the end of processing all the simultaneous events at time $t$.
+special priority or ordering.  Events $X$ and $Y$ form a cascade
+of events at the same point in simulation time.  All events in a
+model are open to being in a cascade.  The position of an event in
+the event list does not affect whether it can be in the cascade:
+$Y$ can be triggered whether it is before or after $X$ in the list
+of events.  A cascade of events can be infinite (never terminate).
+When this occurs a simulator should indicate this has occurred;
+\ie it is incorrect for the simulator to arbitrarily break the
+cascade and continue the simulation without at least indicating
+the infinite cascade occurred. A variable can change more than
+once when processing simultaneous events at simulation time $t$.
+The model behavior (output) for such a variable is the value of
+the variable at the end of processing all the simultaneous events
+at time $t$.
 
 
 

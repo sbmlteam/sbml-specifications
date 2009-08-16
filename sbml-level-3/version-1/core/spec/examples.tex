@@ -26,20 +26,35 @@ Consider the following representation of an enzymatic reaction:
 \begin{center}
   \ce{E + S <=>[k_{\text{on}}][k_{\text{off}}] ES ->[k_{\text{cat}}] E + P}
 \end{center}
-The following is the minimal SBML document encoding the model shown above:
+Suppose we have the following initial species concentrations and
+parameter values,
+\begin{linenomath}
+  \begin{equation*}
+    \begin{array}{@{}lll@{}}
+      \textrm{[E]}   & = 5 \cdot 10^{-21}\; \emph{moles} \; \emph{litre}^{\,-1}\\
+      \textrm{[S]}   & = 10^{-20}\; \emph{moles} \; \emph{litre}^{\,-1}\\
+      \textrm{[P]}   & = 0\; \emph{moles} \; \emph{litre}^{\,-1}\\
+      \textrm{[ES]}  & = 0\; \emph{moles} \; \emph{litre}^{\,-1}\\
+      k_{\text{on}}  & = 1\:000\:000 \;\emph{litre} \;\emph{mole}^{\,-1} \emph{second}^{\,-1}\\
+      k_{\text{off}} & = 0.2 \;\emph{second}^{\,-1}\\
+      k_{\text{cat}} & = 0.1 \;\emph{second}^{\,-1}
+    \end{array}
+  \end{equation*}
+\end{linenomath}
+and we place everything in a single compartment called
+\token{comp} whose volume is $10^{-14}$ liters.  The following
+is a minimal but complete SBML document encoding this model:
 
 \sbmlexample{enzymekinetics.xml}
 
-In this example, the model has the identifier
-\val{EnzymaticReaction}.  The model contains one compartment (with
-identifier \val{cytosol}), four species (with identifiers
+In this example, the model contains one compartment (with
+identifier \val{comp}), four species (with identifiers
 \val{ES}, \val{P}, \val{S}, and \val{E}), and two reactions
 (\val{veq} and \val{vcat}).  The elements in the
 \token{listOfReactants} and \token{listOfProducts} in each
-reaction refer to elements listed in the
-\token{listOfSpecies}.  The correspondences between the various
-elements is explicitly stated by the \token{speciesReference}
-elements.
+reaction refer to elements listed in the \token{listOfSpecies}.
+The correspondences between the various elements is explicitly
+stated by the \token{speciesReference} elements.
 
 The model also features local parameter definitions in each
 reaction.  In this case, the three parameters (\val{kon},
@@ -49,14 +64,21 @@ model.  Local parameters frequently become more useful in larger
 models, where it may become tedious to assign unique identifiers
 for all the different parameters.
 
+Finally, the example above also demonstrates the use of unit
+specifications throughout the model.  The \token{model} components
+defines the units of kinetic laws as being
+\emph{mole}/\emph{second} by virtue of the values of the
+attributes \token{extentUnits} and \token{timeUnits}.  Elsewhere
+in the model, species, parameters and compartments are defined
+with appropriate units so that the mathematical formulas inside
+the \token{kineticLaw} elements work out to be
+\emph{mole}/\emph{second}.   
+
 
 %-----------------------------------------------------------------------------
 \subsection{Example of a discrete version of a simple dimerization reaction}
 \label{sec:discrete-eg}
 %-----------------------------------------------------------------------------
-
-\emph{(Model contributed by Darren J. Wilkinson, Newcastle
-  University, Newcastle upon Tyne, UK.)}
 
 This example illustrates subtle differences between models
 formulated for use in a continuous simulation framework (\eg using
@@ -89,11 +111,11 @@ rate expressions (here, \val{c1} and \val{c2}) contain a
 contribution from the kinetic constants of the reaction and the
 size of the compartment in which the reactions take
 place. This is a convention commonly adopted by stochastic
-modellers, but is in no way essential --- it is perfectly
+modellers, but is in no way essential---it is perfectly
 reasonable to factor volume out of the rate constants, and in
-certain situations it may be desirable to do so (eg. for models having
+certain situations it may be desirable to do so (\eg for models having
 time-varying compartment volume), but due to the use of substance
-units, it must be done differently to the deterministic case.
+units, it must be done differently compared to the deterministic case.
 Thirdly, although the reaction is reversible, it is encoded as two
 separate irreversible reactions, one each for the forward and
 reverse directions, as averaging over the reactions will affect
@@ -122,7 +144,7 @@ to the stochastic model even if it has no stochastic simulation
 capability.
 
 The interpretation of rate laws for stochastic models is similar
-to, yet different from that of deterministic models. Taking the
+to, yet different from, that of deterministic models. Taking the
 first reaction as an example, the rate law is $c_1P(P-1)/2$ reaction
 events per second. In the continuous deterministic case, the
 interpretation of this is that the extent of the reaction in time
@@ -158,7 +180,7 @@ the counting functions of these processes, so that for each
 $i=1,2$, $t>0$, $N_i(t)\sim \operatorname{Poisson}(t)$. Then,
 writing $P(t)$ and $P_2(t)$ for the numbers of molecules of $P$
 and $P_2$ at time $t$, respectively, we have that the stochastic process
-$\{P(t),P_2(t)|t>0\}$ satisfies the stochastic integral equation
+$\{P(t),P_2(t)\,|\,t>0\}$ satisfies the stochastic integral equation
 \begin{align*}
 P_2(t) &= N_1\left(\int_0^t
 c_1\frac{P(\tau)[P(\tau)-1]}{2}d\tau\right) - N_2\left(\int_0^t
@@ -211,32 +233,32 @@ attribute on a reaction element.  The system modeled is
 \begin{linenomath}
 \begin{equation*}
   \begin{array}{@{}ccc@{}}
-    X_0 & \overset{\underrightarrow{k_1 X_0}}{}           & S_1 \\[6pt]
-    S_1 & \overset{\underrightarrow{k_f S_1 - k_r S_2}}{} & S_2 \\[6pt]
-    S_2 & \overset{\underrightarrow{k_2 S_2}}{}           & X_1 \\[6pt]
+    X_0 & \overset{\underrightarrow{k_1 [X_0]}}{}           & S_1 \\[6pt]
+    S_1 & \overset{\underrightarrow{k_f [S_1] - k_r [S_2]}}{} & S_2 \\[6pt]
+    S_2 & \overset{\underrightarrow{k_2 [S_2]}}{}           & X_1 \\[6pt]
   \end{array}
 \end{equation*}
 \begin{equation*}
     k_1 = 0.1, \quad k_2 = 0.15, \quad k_f = K_{eq} 10000, \quad k_r = 10000, \quad K_{eq} = 2.5.
 \end{equation*}
 \end{linenomath}
-where $X_0$, $S_1$, $S_1$, and $S_2$ are species in concentration units,
+where $[X_0]$, $[S_1]$, $[S_1]$, and $[S_2]$ are species in concentration units,
 and $k_1$, $k_2$, $k_f$, $k_r$, and $K_{eq}$ are parameters.  This
 system of reactions can be approximated with the following new
 system:
 \begin{linenomath}
-\begin{equation*}
-  \begin{array}{@{}ccc@{}}
-    X_0 & \overset{\underrightarrow{k_1 X_0}}{} & T \\[6pt]
-    T & \overset{\underrightarrow{k_2 S_2}}{} & X_1\\[6pt]
-  \end{array}
-\end{equation*}
-\begin{equation*}
-\begin{aligned}
-    S_1 &= \dfrac{T}{1 + K_{eq}} \\[6pt]
-    S_2 &= K_{eq} S_1
-  \end{aligned}
-\end{equation*}
+  \begin{equation*}
+    \begin{array}{@{}ccc@{}}
+      X_0 & \overset{\underrightarrow{k_1 [X_0]}}{} & T \\[6pt]
+      T & \overset{\underrightarrow{k_2 [S_2]}}{} & X_1
+    \end{array}
+  \end{equation*}
+  \begin{equation*}
+    \begin{aligned}\\[-3ex]
+      [S_1] & = \dfrac{[T]}{1 + K_{eq}} \\[6pt]
+      [S_2] & = K_{eq} [S_1]
+    \end{aligned}
+  \end{equation*}
 \end{linenomath}
 
 where $T$ is a new species.  The following example SBML model
@@ -251,33 +273,31 @@ encodes the second system.
 %-----------------------------------------------------------------------------
 
 This section contains an example model that contains two
-\AlgebraicRule objects that are necessary to determine the 
-values of two variables within the model.  In this case 
-the rules cannot be rewritten as assignmentRules.  This
-example illustrates a more rigorous analysis of the 
-enzymatic reaction given in Example~\ref{sec:modeleg}.
-
+\AlgebraicRule objects that are necessary to determine the values
+of two variables within the model.  In this particular case, the
+rules cannot be rewritten in terms of \AssignmentRule.  This
+example illustrates a more rigorous analysis of the enzymatic
+reaction given in the example of Section~\ref{sec:modeleg}.
 \begin{center}
   \ce{E + S <=>[k1_{\text{on}}][k1_{\text{off}}] ES ->[k2] E + P}
 \end{center}
+In this example we describe a quasi-steady-state approximation of
+the enzymatic reaction equation shown above.  This is based on two
+assumptions.  First, the rate at which the concentration of the
+substrate bound enzyme ($[ES]$) changes is assumed to be slow
+compared to the rate of change of concentration of both the
+substrate ($[S]$) and product ($[P]$).  Second, the total
+concentration of the enzyme is assumed to stay constant over time.
+This means we can assume the concentration of $[ES]$ and $[E]$ are
+not governed by the reactions, and so some other equations must be
+used to determine the values of these concentrations in order to
+be able to simulate the model.
 
-In this example we describe a quasi-steady-state 
-approximation of the Michaelis-Menten equation shown above.
-This is based on two assumptions.  Firstly, the rate at 
-which the concentration of the substrate bound enzyme 
-($[ES]$) changes is slow compared to the rate of change 
-of concentration of both the substrate ($[S]$) and product 
-($[P]$).  Secondly, the total concentration of enzyme does 
-not change over time.  This means it can be assumed
-that the concentration of $[ES]$ and $[E]$ are not governed 
-by the reactions and that some other equations must be used 
-to determine the values of these concentrations if the model 
-is to be simulated.  
-
-Applying the first assumption the rate of change of $[ES]$ to be set to zero:
+Applying the first assumption means that the rate of change of
+$[ES]$ should be set to zero:
 \begin{linenomath}
 \begin{equation*}
-  \dfrac{d [ES]}{d t} = k1\sub{on} \cdot [E] \cdot [S] - (k1\sub{off} + k2) \cdot [ES] = 0 \\[6pt]
+  \dfrac{d [ES]}{d t} = k1\sub{on} \cdot [E] \cdot [S] - (k1\sub{off} + k2) \cdot [ES] = 0
 \end{equation*}
 \end{linenomath}
 
@@ -287,22 +307,25 @@ The second assumption can be written as
   [E\sub{total}] = [E] + [ES]\\[6pt]
 \end{equation*}
 \end{linenomath}
-which rearranging becomes:
+which, after rearranging, becomes
 \begin{linenomath}
 \begin{equation*}
-  [E\sub{total}] - ([E] + [ES]) = 0\\[6pt]
+  [E\sub{total}] - ([E] + [ES]) = 0
 \end{equation*}
 \end{linenomath}
- 
 
-Thus we have two algebraicRules that must be applied to determine the
-the values of $[E]$ and $[ES]$.  The SBML encoding of this model is given
-here.  It should be noted that the species $E$ and $ES$ have their
-\token{boundaryCondition} attribute set to \val{true}.  This means their
-values will be calculated using rules and not reactions.  Also, the
-model uses a dummy species $E\sub{total}$ with \token{constant} set to
-\val{true} to assign the total concentration of the enzyme.  This could 
-just as easily have been done using a parameter.
+Thus, we have two algebraic rules that must be applied to
+determine the the values of $[E]$ and $[ES]$.  The SBML encoding
+of this model is given below.  Note that the species $E$ and $ES$
+have their \token{boundaryCondition} attribute set to \val{true}.
+This means that a simulation tool should not construct equations
+for them based on the reactions in the system.  Their values are
+instead set using the rules in the model.  Also, the model uses a
+dummy species $E\sub{total}$ with its \token{constant} attribute
+set to \val{true}; its role is to assign the total concentration
+of the enzyme in the model.  This could just as easily have been
+done using a parameter instead of a constant dummy species, but we
+use the latter approach as an illustration.
 
 \sbmlexample{twoalgebraicrules.xml}
 
@@ -316,30 +339,31 @@ just as easily have been done using a parameter.
 
 In this section, we discuss a model that includes four species,
 each with a different combination of values for their
-\token{boundaryCondition} and \token{constant} attributes.  The model
-represents a hypothetical system containing one reaction,
+\token{boundaryCondition} and \token{constant} attributes.  The
+model represents a hypothetical system containing one reaction,
 \begin{linenomath}
 \begin{equation*}
   \begin{array}{@{}ccc@{}}
-    S_1 + S_2 & \overset{\underrightarrow{k_1 S_1 S_2 S_3}}{} & S_4 \\ \\[-4pt]
+    S_1 + S_2 & \overset{\underrightarrow{k_1 [S_1] [S_2] [S_3]}}{} & S_4 \\ \\[-4pt]
   \end{array}
 \end{equation*}
 \end{linenomath}
 where $S_3$ is a species that catalyzes the conversion of species
-$S_1$ and $S_2$ into $S_4$.  $S_1$ and $S_2$ are on the boundary
-of the system (\ie $S_1$ and $S_2$ are reactants but their values
-are not determined by a kinetic law).  The value of $S_1$ in the
-system is determined over time by the rate rule:
+$S_1$ and $S_2$ into $S_4$.  Species $S_1$ and $S_2$ are on the
+boundary of the system (\ie $S_1$ and $S_2$ are reactants but
+their values are not determined by kinetic laws).  The value of
+$S_1$ in the system is determined over time by the rate rule:
 \begin{linenomath}
 \begin{equation*}
-  \dfrac{d S_1}{d t} = k_2
+  \dfrac{d [S_1]}{d t} = k_2
 \end{equation*}
 \end{linenomath}
-The species $S_2$ and $S_3$ are not affected by the either the reaction
-or the rate rule and have initial values:
+The species $S_2$ and $S_3$ are not affected by the either the
+reaction or the rate rule, and have the following initial
+concentration values:
 \begin{linenomath}
 \begin{equation*}
-    S_2 = 1, \quad S_3 = 2
+    [S_2] = 1, \quad [S_3] = 2
   \end{equation*}
 \end{linenomath}
 The values of constant parameters in the system are:
@@ -351,21 +375,21 @@ The values of constant parameters in the system are:
 and the initial values of varying species are:
 \begin{linenomath}
 \begin{equation*}
-    S_1 = 0, \quad S_4 = 0
+    [S_1] = 0, \quad [S_4] = 0
 \end{equation*}
 \end{linenomath}
 
-The value of $S_1$ varies over time and it is on the boundary, so 
-in SBML $S_1$ has a \token{constant} attribute with a value of
-\val{false} and a \token{boundaryCondition} attribute with a
-value of \val{true}.  The
-value of $S_2$ is fixed and it is also on the boundary, so $S_2$ has a 
-\token{constant} attribute value of \val{false} and a 
-\token{boundaryCondition} attribute value of \val{true}. $S_3$ 
-is fixed but not on the boundary, so the \token{constant} 
-attribute is \val{true} and the \token{boundaryCondition} attribute
-is \val{false}.  $S_4$ is a product whose value is
-determined by a kinetic law and therefore in the SBML
+The value of $[S_1]$ varies over time and it is on the boundary,
+so in the SBML representation, \token{S1} has a \token{constant}
+attribute with a value of \val{false} and a
+\token{boundaryCondition} attribute with a value of \val{true}.
+The value of $[S_2]$ is fixed and it is also on the boundary, so
+\token{S2} has a \token{constant} attribute value of \val{false}
+and a \token{boundaryCondition} attribute value of \val{true}.
+$[S_3]$ is fixed but not on the boundary, so the \token{constant}
+attribute is \val{true} and the \token{boundaryCondition}
+attribute is \val{false}.  Finally, $[S_4]$ is a product whose
+value is determined by a kinetic law and therefore in the SBML
 representation has \val{false} for both its
 \token{boundaryCondition} and \token{constant} attributes.
 
@@ -379,11 +403,11 @@ The following is the SBML rendition of the model shown above:
 \label{sec:odeeg}
 %-----------------------------------------------------------------------------
 
-This section contains a model with 2 compartments and 4 reactions.
-The model is derived from Lotka-Volterra, with the addition of a
-reversible transport step.  When observed in a time-course
-simulation, three of this model's species display damped
-oscillations.
+This section contains a model with two compartments and four
+reactions.  The model is derived from Lotka-Volterra, with the
+addition of a reversible transport step.  When observed in a
+time-course simulation, three of this model's species display
+damped oscillations.
 
 \begin{figure}[htb]
   \vspace*{5pt}
@@ -404,59 +428,80 @@ oscillations.
 
 Figure~\ref{fig:multicomp} illustrates the arrangement of
 compartments and reactions in the model
-\token{LotkaVolterra\_transport}.  The text of the SBML
-representation of the model is shown below, and it is followed by
-its complete translation into ordinary differential equations.  In
-this SBML model, the reaction equations are in substance per time
-units.  The reactions have also been simplified to reduce common
-stoichiometric factors.  The species variables are in
-concentration units; their initial quantities are declared using
-the attribute \token{initialAmount} on the \token{species}
-definitions, but since the attribute \token{hasOnlySubstanceUnits}
-is \emph{not} set to true, the identifiers of the species
-represent their concentrations when those identifiers appear in
-mathematical expressions elsewhere in the model.  Note that the
-species whose identifier is \val{X} is a boundary condition, as
-indicated by the attribute \token{boundaryCondition}=\val{true} in
-its definition.  
+\token{LotkaVolterra\_transport}.  The reaction between the
+compartments called \token{cytosol} and \token{nucleus} is a
+transport reaction whose mechanisms are not modeled here; in
+particular, the reaction does not take place on the membrane
+between the compartments, and is modeled here simply as a process
+that spans the two three-dimensional compartments.
+
+The text of the SBML representation of the model is shown below,
+and it is followed by its complete translation into ordinary
+differential equations.  As usual, in this SBML model, the
+reaction rate equations in the kinetic laws are in substance per
+time units.  The reactions have also been simplified to reduce
+common stoichiometric factors in the original system depicted in
+Figure~\vref{fig:multicomp}.  The species variables in this SBML
+representation are in concentration units; their initial
+quantities are declared using the attribute \token{initialAmount}
+on the \token{species} definitions, but since the attribute
+\token{hasOnlySubstanceUnits} is \emph{not} set to true, the
+identifiers of the species represent their concentrations when
+those identifiers appear in mathematical expressions elsewhere in
+the model.  Note that the species whose identifier is \val{X} is a
+boundary condition, as indicated by the attribute
+\token{boundaryCondition}=\val{true} in its definition.
 
 \sbmlexample{multicomp.xml}
 
 The ODE translation of this model is as follows.  First, we give
 the values of the constant parameters:
 \begin{linenomath}
-\begin{equation*}
-  k_1 = 2500, \quad k_2 = 2500, \quad K_3 = 25000, \quad K_T = 2500
-\end{equation*}
+  \begin{equation*}
+    \begin{array}{@{}lll@{}}
+      k_1   & = 2500\; \emph{litre} \; \emph{mole}^{\,-1}\; \emph{second}^{\,-1}\\
+      k_2   & = 2500\; \emph{litre} \; \emph{mole}^{\,-1}\; \emph{second}^{\,-1}\\
+      K_3   & = 25000\; \emph{second}^{\,-1}\\
+      K_T   & = 25000\; \emph{second}^{\,-1}\\
+    \end{array}
+  \end{equation*}
 \end{linenomath}
 Now on to the initial conditions of the variables.  In the
-following, the symbols representing species ($X$, $Y_{1n}$,
-$Y_{1c}$, and $Y_2$) have values in terms of concentrations.
-(Readers may wonder why, when their values in the SBML
-model are given as initial \emph{amounts}.  The reason goes back
-to the meaning of the \token{hasOnlySubstanceUnits} attribute on
-a \Species; if the attribute is not
-set and the compartment in which the species is located has more
-than 0 spatial dimensions, a species' symbol in a model is
-interpreted as a concentration or density regardless of whether
-its initial value is set using \token{initialAmount} or
-\token{initialConcentration}.)  We use $V_n$ to represent the
-size of compartment \val{nucleus} and $V_c$ the
-size of compartment \val{cytoplasm}:
+following, the terms $[X]$, $[Y_{1n}]$, $[Y_{1c}]$, and $[Y_2]$
+refer to the species' concentrations.  Note that the corresponding
+species identifiers \token{X}, \token{Y\_{1n}}, \token{Y\_{1c}}
+and \token{Y\_2} in the model are in concentration units, even
+though all the values in the model are initialized in terms of
+amounts.  (The reason the species identifiers in the model are
+still in concentration units goes back to the meaning of the
+\token{hasOnlySubstanceUnits} attribute on a \Species; if the
+attribute is set to a value of \val{false}, a species' symbol in a
+model is interpreted as a concentration or density regardless of
+whether its initial value is set using \token{initialAmount} or
+\token{initialConcentration}.)  We use $V_n$ to represent the size
+of compartment \val{nucleus} and $V_c$ the size of compartment
+\val{cytoplasm}:
 \begin{linenomath}
-\begin{equation*}
-  V_n = 1, \quad V_c = 5, \quad X = 1, \quad Y_{1n} = 1, \quad Y_{1c} = 0, \quad Y_2 = 1/5
-\end{equation*}
+  \begin{equation*}
+    \begin{array}{@{}lll@{}}
+      V_n    & = 1\; \emph{litre}\\
+      V_c    & = 5\; \emph{litre}\\
+      X      & = 1\; \emph{mole}\\
+      Y_{1n} & = 1\; \emph{mole}\\
+      Y_{1c} & = 0\; \emph{mole}\\
+      Y_2    & = 1/5\; \emph{mole}\\
+    \end{array}
+  \end{equation*}
 \end{linenomath}
 And finally, here are the differential equations:
 \begin{linenomath}
 \begin{align*}
-  \dfrac{d X}{d t}    &= 0 \\[6pt]
-  V_n \dfrac{d Y_{1n}}{d t} &= k_1 \cdot X \cdot Y_{1n} \cdot V_n - K_T \cdot (Y_{1n} - Y_{1c}) \cdot V_c
+  \dfrac{d [X]}{d t}    &= 0 \\[6pt]
+  V_n \dfrac{d [Y_{1n}]}{d t} &= k_1 [X] [Y_{1n}] [V_n] - K_T \big([Y_{1n}] - [Y_{1c}]\big) V_c
     && \text{reactions production and transport} \\[6pt]
-  V_c \dfrac{d Y_{1c}}{d t} &= K_T \cdot (Y_{1n} - Y_{1c}) \cdot V_c - k_2 \cdot Y_{1c} \cdot Y_2 \cdot V_c
+  V_c \dfrac{d [Y_{1c}]}{d t} &= K_T \big([Y_{1n}] - [Y_{1c}]\big) V_c - k_2 [Y_{1c}] [Y_2] V_c
     && \text{reactions transport and transformation} \\[6pt]
-  V_c \dfrac{d Y_2}{d t}   &= k_2 \cdot Y_{1c} \cdot Y_2 \cdot V_c - k_3 \cdot Y_2 \cdot V_c
+  V_c \dfrac{d [Y_2]}{d t}    &= k_2 [Y_{1c}] [Y_2] V_c - k_3 [Y_2] V_c
     && \text{reactions transformation and degradation}
 \end{align*}
 \end{linenomath}
@@ -481,14 +526,14 @@ feature of SBML.  Consider the following hypothetical system:
 \begin{linenomath}
 \begin{equation*}
   \begin{array}{@{}ccc@{}}
-    S_1 & \overset{\underrightarrow{f(S_1)}}{} & S_2 \\ \\[-4pt]
+    S_1 & \overset{\underrightarrow{f([S_1])}}{} & S_2 \\ \\[-4pt]
   \end{array}
 \end{equation*}
 \end{linenomath}
 where
 \begin{linenomath}
 \begin{equation*}
-    f(x) = 2 \times x
+    f(x) = 2 x
 \end{equation*}
 \end{linenomath}
 
@@ -508,20 +553,20 @@ represent a gene that suppresses its own expression.  The model
 can be expressed in a single rule:
 \begin{linenomath}
 \begin{equation*}
-  \frac{d P}{d t} = \dfrac{ \dfrac{1}{1 + m (P_{delayed})^q} - P }{ \tau }
+  \frac{d [P]}{d t} = \dfrac{ \dfrac{1}{1 + m [P_{delayed}]^q} - [P] }{ \tau }\\
 \end{equation*}
 \end{linenomath}
 where
 \begin{linenomath}
-\begin{equation*}
-\begin{array}{rl}
-P_{delayed} & \mbox{is } delay(P, \Delta_t) \mbox{ or P at } t - \Delta_t\\
-P & \mbox{is protein concentration}\\
-\tau & \mbox{is the response time}\\
-m & \mbox{is a multiplier or equilibrium constant}\\
-q & \mbox{is the Hill coefficient}\\
-\end{array}
-\end{equation*}
+  \begin{equation*}
+    \begin{array}{rll}
+      [P_\text{delayed}] & \text{is } delay([P], \Delta_t) \text{ or [P] at } t - \Delta_t\\[0pt]
+      [P]           & \text{is protein concentration}\\
+      \tau          & \text{is the response time}\\
+      m             & \text{is a multiplier or equilibrium constant}\\
+      q             & \text{is the Hill coefficient}\\
+    \end{array}
+  \end{equation*}
 \end{linenomath}
 and the species quantities are in concentration units.
 The text of an SBML encoding of this model is given below:
@@ -544,12 +589,12 @@ concentration, $G_2$ switches on.  This system can be
 represented mathematically as follows:
 \begin{linenomath}
 \begin{eqnarray*}
-  \dfrac{d P_1}{d t} & = & k_1 (G_1 - P_1)\\[3pt]
-  \dfrac{d P_2}{d t} & = & k_2 (G_2 - P_2)\\
-  G_2 & = &
+  \dfrac{d [P_1]}{d t} & = & k_1 \big([G_1] - [P_1]\big)\\[3pt]
+  \dfrac{d [P_2]}{d t} & = & k_2 \big([G_2] - [P_2]\big)\\[0pt]
+  [G_2] & = &
     \begin{cases}
-      0 & \text{when $P_1 \leq \tau$},\\
-      1 & \text{when $P_1 > \tau$}.
+      0 & \text{when $[P_1] \leq \tau$},\\
+      1 & \text{when $[P_1] > \tau$}.
     \end{cases}
 \end{eqnarray*}
 \end{linenomath}
@@ -557,7 +602,7 @@ represented mathematically as follows:
 The initial values are:
 \begin{linenomath}
 \begin{equation*}
-  G_1 = 1, \quad G_2 = 0, \quad \tau = 0.25, \quad P_1 = 0, \quad P_2 = 0, \quad k_1 = k_2 = 1.
+  [G_1] = 1, \quad [G_2] = 0, \quad \tau = 0.25, \quad P_1 = 0, \quad P_2 = 0, \quad k_1 = k_2 = 1.
 \end{equation*}
 \end{linenomath}
 
@@ -594,25 +639,26 @@ in the same compartment but the enzyme is localized at the membrane
 surrounding the compartment.
 
 \begin{center}
-$R$: \ce{S ->[E] P}
+$R$: \ce{S ->[\ensuremath{[E]}] P}
 \par\end{center}
 
-The model contains two compartments, a three dimensional one called
-{}``cytosol'' and a two dimensional one called {}``membrane''
-that is assumed to be the boundary of the cell. The reaction $R$
-has a substrate $S$ and a product $P$ that are both located in the
-cytosol. The enzyme $E$ that catalyzes the reactions is located at
-the membrane. The kinetic law of reaction $R$ is\[
-v=A\cdot\frac{k_{cat}\cdot[E]\cdot[S]}{K_{M}+[S]}\]
-where $A$ is the area of the membrane (measured in $\mu m^{2}$),
-$[E]$ is the \emph{density }of the enzyme on the membrane (in $\frac{\mu\mathrm{mol}}{\mu m^{2}}$),
-$[S]$ is the \emph{concentration }of the substrate (in $\frac{\mu mol}{l}$),
-$K_{M}$ the Michaelis-Menten constant (also in $\frac{\mu mol}{l}$),
-and $k_{cat}$ the rate constant (in $\frac{1}{min}$). The units
-of the result of the kinetic law are in $\frac{\mu mol}{min}$. Since
-the units for the amounts of all species ($S$, $P$, and $E$) and
-for the reaction extent are the same ($\mu mol$) the model does not
-require unit conversion factors. 
+The model contains two compartments, a three dimensional one
+called {}``cytosol'' and a two dimensional one called
+{}``membrane'' that is assumed to be the boundary of the cell. The
+reaction $R$ has a substrate $S$ and a product $P$ that are both
+located in the cytosol. The enzyme $E$ that catalyzes the
+reactions is located at the membrane. The kinetic law of reaction
+$R$ is\[ v=A\cdot\frac{k_{cat}\cdot[E]\cdot[S]}{K_{M}+[S]}\] where
+$A$ is the area of the membrane (measured in $\mu m^{2}$), $[E]$
+is the \emph{density }of the enzyme on the membrane (in
+$\mu\mathrm{mol}~\mu m^{-2}$), $[S]$ is the \emph{concentration
+}of the substrate (in $\mu mol~l^{\,-1}$), $K_{M}$ the
+Michaelis-Menten constant (also in $\mu mol~l^{\,-1}$), and
+$k_{cat}$ the rate constant (in $min^{-1}$). The units of the
+result of the kinetic law are in $\mu mol~min^{-1}$. Since the
+units for the amounts of all species ($S$, $P$, and $E$) and for
+the reaction extent are the same ($\mu mol$) the model does not
+require unit conversion factors.
 
 The kinetic law as it is given here scales correctly for changes in
 cytosol volume, membrane area, or enzyme density. This means that

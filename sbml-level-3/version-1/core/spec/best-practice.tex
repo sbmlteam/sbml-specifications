@@ -3,18 +3,29 @@
 % $HeadURL: https://sbml.svn.sourceforge.net/svnroot/sbml/trunk/specifications/sbml-level-3/version-1/core/spec/best-practice.tex $
 % ----------------------------------------------------------------
 
-\section{Best practices}
+\section{Recommended practices}
 \label{sec:best-practices}
 
-This section gives further information regarding intended use and
-best practice for application of the specification to systems
-biological modelling. The information provided here is somewhat
-distinct from the formal technical specification, but nevertheless
-strongly advocated.  The sections below mirror the order of the
-components presented in Section~\ref{sec:elements}.
+In this section, we recommend a number of practices for using and
+interpreting various SBML constructs.  These recommendations are
+non-normative, but we advocate them strongly; ignoring them will
+not render a model invalid, but may hinder interoperability
+between different software systems exchanging SBML content.
 
 
-\subsection{Identifiers and names}
+\subsection{Recommended practices concerning common SBML
+  attributes and objects}
+\label{sec:bp:common}
+
+Many SBML components share some or all of the following attributes
+and objects.  We describe recommendations concerning them here,
+separately from discussing the specific SBML components.  In
+Section~\ref{sec:bp:specifics}, we turn to the specific SBML
+components, but the recommendations described here also apply to
+them.
+
+
+\subsubsection{Identifiers and names}
 \label{sec:bp:names}
 
 The \token{id} attribute is available on most (but not all)
@@ -22,105 +33,188 @@ objects in SBML, and all objects that have \token{id} attributes
 also have an optional \token{name} attribute.  How should models
 treat identifiers and names?
 
-The recommended practice for handling \token{name} is as follows.
-If a software tool has the capability for displaying the content
-of \token{name} attributes, it should display this content to the user
-as a component's label instead of the component's \token{id}.
-If the user interface does not have this capability (e.g.,
-because it cannot display or use special characters in symbol
-names), or if the \token{name} attribute is missing on a given
-component, then the user interface should display the value of the
-\token{id} attribute instead.  (Script language interpreters are
-especially likely to display \token{id} instead of
-\token{name}.)
+The following is the recommended practice for handling
+\token{name}.  If a software tool has the capability for
+displaying the content of \token{name} attributes, it should
+display this content to the user as a component's label instead of
+the component's \token{id}.  If the user interface does not have
+this capability (e.g., because it cannot display or use special
+characters in symbol names), or if the \token{name} attribute is
+missing on a given component, then the user interface should
+display the value of the \token{id} attribute instead.  (Script
+language interpreters are especially likely to display \token{id}
+instead of \token{name}.)
 
 As a consequence of the above, authors of systems that
-automatically generate the values of \token{id} attributes should be
-aware some systems may display the \token{id}'s to the user.
+automatically generate the values of \token{id} attributes should
+be aware some systems may display the \token{id}'s to the user.
 Authors therefore may wish to take some care to have their
 software create \token{id} values that are: (a) reasonably easy
 for humans to type and read; and (b) likely to be meaningful, \eg
-the \token{id} attribute is an abbreviated form of the name attribute value.
+the \token{id} attribute is an abbreviated form of the name
+attribute value.
 
-\subsection{Initial Values}
+
+\subsubsection{Initial Values}
 \label{sec:bp:initialvalues}
-SBML allows for the specification of \Compartment{}s, \Species, 
-\Parameter{}s and \LocalParameter{}s without the specification of 
-initial values, i.e.\ a \Compartment{}'s \token{size}, a \Species{}'s 
-\token{initialConcentration} or \token{initialAmount} or a 
-\Parameter{}'s/\LocalParameter{}'s \token{value}. In all these cases 
-a missing value implies that the value either is unknown, or to be 
-obtained from an external source, or determined by an \InitialAssignment. 
-However in all cases where 
-there is no \InitialAssignment present to determine the initial value
-of these elements it is considered best practice to specify the 
-initial values.
 
-\subsection{The \token{constant} flag}
+SBML allows for the creation of \Compartment, \Species,
+\Parameter, \LocalParameter and \SpeciesReference objects without
+declaring their initial values directly on the object instances.
+That is, a \Compartment object can be created without defining a
+value for its \token{size} attribute; a \Species object can be
+created without defining a value for either its
+\token{initialConcentration} or \token{initialAmount} attribute;
+\Parameter and \LocalParameter objects can be created without
+giving a value to their \token{value} attributes; and a
+\SpeciesReference can be created without assigning a value to its
+\token{stoichiometry} attribute.  A missing value in any of these
+cases implies that the value is either set via an
+\InitialAssignment object elsewhere in the model, or is meant to
+be obtained from an external source (\eg by querying the user of a
+software system), or is unknown.
+
+Where initial values are available and are scalar numbers that
+\emph{can} be set using the appropriate attribute on an object,
+the best practice recommendation is to use that approach in
+preference to using an \InitialAssignment construct if there is no
+particular reason to use \InitialAssignment.  Setting the relevant
+attribute directly on the \Compartment, \Species, \Parameter,
+\LocalParameter and \SpeciesReference object is simpler and may be
+more interoperable with different software systems.
+
+
+\subsubsection{The \token{constant} flag}
 \label{sec:bp:constant}
-SBML provides a mandatory boolean flag \token{constant} on \Compartment{}s, 
-\Species, \SpeciesReference{}s and \Parameter{}s. Wherever the \token{constant} attribute 
-appears with a \val{true} it has the implication that its SBML element cannot be 
-changed by other constructs  in SBML (with the exception of an \InitialAssignment ). 
-A value of \val{false} indicates that the element is likely to be changed as a 
-result of a \Rule, \Reaction or \Event. 
 
-It is considered good practice to mark all elements, that are not intended to be 
-modified by other SBML constructs with \token{constant}=\val{true}. The only exception
-to this practice is the \Species element, which usually \emph{is} a part of the reaction 
-system and thus will often have 
+SBML provides a mandatory boolean attribute called
+\token{constant} on the \Compartment, \Species, \SpeciesReference and
+\Parameter components.  A \token{constant} attribute value of
+\val{true} means that the SBML object in question will not be
+changed by other constructs in SBML (with the exception of an
+\InitialAssignment).  A value of \val{false} indicates an
+intention that the element \emph{is} subject to change by an
+\AssignmentRule, \RateRule, \AlgebraicRule, \Reaction or \Event in
+the model.
 
-\subsection{Annotations}
+A \token{constant} attribute value of \val{false} does not
+\emph{require} that the object in question is changed; strictly
+speaking, an SBML model is valid even if it sets all
+\token{constant} attributes to \val{false} but never actually
+modify any of the values.  However, the best practice
+recommendation is to communicate intentions by setting
+\token{constant} to \val{true} unless an entity in a model really
+is intended to be changed.  The exception to this is \Species,
+which are usually part of the reaction system and thus usually
+need to have \token{constant}=\val{false}.
+
+
+\subsubsection{Annotations}
 \label{sec:bp:annotations}
-\todo{someone}{this needs work}
+
+\paragraph{Appropriate uses of annotations}
+
+In the description of \SBase's \token{annotation} element, we
+already made the point that it is critical not to put data
+essential to understanding a model into an \token{annotation}.
+This raises a question: what kind of data may be appropriately
+put into annotations?
 
 Here are examples of the kinds of data that may be appropriately
-stored in \token{annotation}: (a) application-specific processing
-instructions that do not change the essential meaning of a model;
-(b) identification information for cross-referencing components in
-a model with items in a data resource such as a database;
-and (c) information about the model that cannot be
-readily encoded in existing SBML elements.
-
-In order to maximize the likelihood that multiple software
-tools will converge on the same syntax for particular types
-of information, before embarking on a proprietary syntax, 
-developers should consider the following:
+stored in \token{annotation} elements: 
 \begin{itemize}
 
-\item  For case (b) above (i.e., cross-references between model
-  components and data resources) SBML \thisLV recommends a
-  standard format for use within \token{annotation}
-  elements.  The recommended scheme is described in
-  Section~\ref{sec:finney-novere}.  
-  
-\item  The modular nature of SBML \thisLV means that information
-  previously stored as \token{annotation} is likely to be developed
-  into an L3 package.  Users should check the status of packages Ref??
-  \todo {someone} {add reference to l3 packages}
-  
-\item  A list of already defined syntaxes used in existing 
-  \token{annotation} is available here.  \todo {someone}{add reference to wiki page on existing annotations} 
+\item Application-specific processing instructions that do not
+  change the essential meaning of a model, but help a particular
+  application with tasks such as managing the model, maintaining
+  state data across editing sessions, etc.
+
+\item Identification information for cross-referencing components
+  in a model with items in a data resource such as a database.
+  This is the purpose of the annotation scheme described in
+  Section~\ref{sec:annotation-standard}.
+
+\item Evidence codes for annotating a model with controlled
+  vocabulary terms that indicate (e.g.) the quality of biological
+  evidence supporting the inclusion of each component in the
+  model.  The annotation shceme of
+  Section~\ref{sec:annotation-standard} can be used in this
+  capacity.
+
+\item Information about the model that cannot be readily encoded
+  in existing SBML elements, but that does not alter the
+  mathematical meaning of the model.
 
 \end{itemize}
 
 
+\paragraph{Specificity of annotations}
 
-\subsection{The SBML Container}
-\label{sec:bp:sbml}
+The annotation data (Section~\ref{sec:annotations}) attached to a
+specific SBML object in a model is assumed by other applications
+to be directly associated with that SBML object.  Therefore, it is
+important to decompose and locate annotation data appropriately in
+an SBML document.  Applications are advised to avoid encoding all
+their annotations in a single top-level attribute.  The data
+associated with, for example, an individual \Species object in a
+model should be encoded in the \token{<annotation>} element
+enclosed within the SBML \token{<species>} element representing
+that species in the SBML file.
 
-\subsection{Model}
-\label{sec:bp:model}
+
+\paragraph{Syntax of annotations}
+
+The annotation scheme described in
+Section~\ref{sec:annotation-standard} is admittedly only useful
+for a limited set of use cases, and it is tempting to develop new
+annotation syntaxes for situations that fall outside the scope of
+the SBML MIRIAM annotation scheme.  However, a proliferation of
+properietary annotation schemes hinders software interoperability
+in the long run.
+
+We recommend the following approach when faced with a need to use
+alternate annotation syntaxes:
+\begin{enumerate}
+
+\item The modular nature of SBML \thisLV means that data that in
+  SBML Level~2 could only be stored in annotations, may now be
+  supported using a full SBML Level~3 package extending the syntax
+  of SBML Level~3.  Therefore, software developers and modelers
+  should first check if there already exists a package that may
+  serve their needs.  A list of SBML Level~3 packages is always
+  maintained from at the SBML website, \url{http://sbml.org}.
+  
+\item If no package exists, developers and modelers may wish to
+  check if someone else has already developed a similar annotation
+  syntax for use with another software system.  A list of known
+  SBML annotation schemes is maintained online at 
+  \url{http://sbml.org/Community/Wiki/Known_SBML_annotations}.
+
+\item If none of the above alternatives provide a satisfactory
+  result, developers and modelers should query the SBML discussion
+  list (\link{http://sbml.org/Forums}{sbml-discuss@caltech.edu})
+  to see if anyone else has been faced with similar problems.
+  Other SBML users may have insights or even partial solutions
+  already available.
+
+\end{enumerate}
 
 
-\subsection{Function definitions}
-\label{sec:bp:functions}
+\subsection{Recommended practices concerning specific SBML components}
+\label{sec:bp:specifics}
 
-\subsection{Unit definitions}
+In this section, we describe expectations and recommendations
+concerning specific SBML components.  We do not reiterate the
+recommendations presented in Section~\ref{sec:bp:common}, but they
+apply to many of the SBML components discussed here and should be
+kept in mind.  The order of the components discuss here follows
+the order of their presentation in Section~\ref{sec:elements}, but
+we only include here those components for which we have specific
+recommendations.
+
+
+\subsubsection{Unit definitions}
 \label{sec:bp:unitdefinitions}
-
-\subsubsection{Recomended units}
-\label{sec:bp:unitdefinitions:recommendedunits}
 
 We advise modelers and software tools to declare the units of all
 quantities in a model, insofar as this is possible, using the
@@ -132,79 +226,107 @@ it can allow model-wide operations such as conversion or rescaling
 of units.
 
 
-\paragraph{Substance units}
-\label{sec:bp:unitdefinitions:recommendedunits:substanceUnits}
-The units chosen for the attribute \token{substanceUnits} should be
-be \token{mole}, \token{item}, \token{avogadro},
-\token{dimensionless}, \token{kilogram}, \token{gram}, or units
-derived from these.  
+\paragraph{Recommendations for choices of units}
+\label{sec:bp:unitdefinitions:recommendedunits}
 
-\paragraph{Time units}
-\label{sec:bp:unitdefinitions:recommendedunits:timeUnits}
-The units chosen for the attribute \token{timeUnits} should be
-be \token{second}, \token{dimensionless}, or units derived from
-these.   
+Table~\ref{tab:recommended-units} lists the units recommended for
+different SBML components.
 
-\paragraph{Compartment size units}
-\label{sec:bp:unitdefinitions:recommendedunits:sizeUnits}
-For compartments the recommended units depend on the value of for
-the attribute \token{spatialDimensions} 
-\begin{table}[h]
+\begin{table}[thb]
   \small
   \centering
-  \vspace*{-1ex}
-  \begin{edtable}{tabular}{cl}
+  \begin{tabular}{p{1.7in}p{4.5in}}
     \toprule
-    \textbf{Value of attribute} & \textbf{Recomended values} \\[-2pt]
-    \texttt{spatialDimensions}  &  \\
+    \textbf{Component or attribute} & \textbf{Unit recommendations} \\
     \midrule
-    \val{3}                     & Volume units
-    \ref{sec:bp:unitdefinitions:recommendedunits:volumeUnits} \\
-    \val{2}                     & Area units
-    \ref{sec:bp:unitdefinitions:recommendedunits:areaUnits} \\
-    \val{1}                     & Length units
-    \ref{sec:bp:unitdefinitions:recommendedunits:lengthUnits} \\
-    else                        & none \\
+    \Model \token{substanceUnits}
+    &
+    \token{mole}, \token{item}, \token{avogadro},
+    \token{dimensionless}, \token{kilogram}, \token{gram}, or units
+    derived from these
+    \\[10pt]
+    \Model \token{timeUnits}
+    & 
+    \token{second}, \token{dimensionless}, or units derived from
+    these
+    \\[10pt]
+    \Model \token{volumeUnits}
+    &
+    \token{litre}, \token{cubic metre}, \token{dimensionless}, or
+    units derived from these
+    \\[10pt]
+    \Model \token{areaUnits}
+    &
+    \token{square metre}, \token{dimensionless}, or units derived from
+    these
+    \\[10pt]
+    \Model \token{lengthUnits}
+    &
+    \token{metre}, \token{dimensionless}, or units derived from these
+    \\[10pt]
+    \Model \token{extentUnits}
+    &
+    \token{mole}, \token{item}, \token{avogadro},
+    \token{dimensionless}, or units derived from these
+    \\[10pt]
+    \Compartment \token{units}
+    &
+    \begin{minipage}{2.9in}
+      \small
+      \begin{tabular}{cp{3in}}
+        \toprule
+        \textbf{Value of attribute} \\
+        \token{spatialDimensions}   & \textbf{Recommended units}\\
+        \midrule
+        \val{3}
+        & 
+        \token{litre}, \token{cubic metre},
+        \token{dimensionless}, or units derived from these
+        \\[7pt]
+        \val{2}
+        &
+        \token{square metre}, \token{dimensionless}, or units
+        derived from these
+        \\[7pt]
+        \val{1}
+        & \token{metre}, \token{dimensionless}, or units derived
+        from these
+        \\[7pt] 
+        other
+        &
+        \emph{no specific recommendations}\\
+        \bottomrule
+      \end{tabular}
+    \end{minipage}
+    \\
+    \\
+    \Species \token{substanceUnits}
+    &
+    \token{mole}, \token{item}, \token{avogadro},
+    \token{dimensionless}, \token{kilogram}, \token{gram}, or units
+    derived from these
+    \\[10pt]
+    \Parameter \token{units}
+    &
+    \emph{no specific recommendations}
+    \\
     \bottomrule
-  \end{edtable}
-  \vspace*{-0.5ex}
-  \caption{Recomended units for compartment sizes dependent on the
-    value of  \token{spatialDimensions}.}
-  \label{tab:bp:unitdefinitions:recommendedunits:sizeUnits}
+  \end{tabular}
+  \caption{Units recommended for use on different SBML model components.}
+  \label{tab:recommended-units}
 \end{table}
 
-\paragraph{Volume units}
-\label{sec:bp:unitdefinitions:recommendedunits:volumeUnits}
-The units chosen for the attribute \token{volumeUnits} should be
-be \token{litre}, \token{cubic metre}, \token{dimensionless}, or
-units derived from these.  
 
-\paragraph{Area units}
-\label{sec:bp:unitdefinitions:recommendedunits:areaUnits}
-The units chosen for the attribute \token{areaUnits} should be be
-\token{square metre}, \token{dimensionless}, or units derived from
-these. 
-
-\paragraph{Length units}
-\label{sec:bp:unitdefinitions:recommendedunits:lengthUnits}
-The units chosen for the attribute \token{lengthUnits} should be
-be \token{metre}, \token{dimensionless}, or units derived from these.  
-
-\paragraph{Extent units}
-\label{sec:bp:unitdefinitions:recommendedunits:extentUnits}
-The units chosen for the attribute \token{extentUnits} should be
-be \token{mole}, \token{item}, \token{avogadro},
-\token{dimensionless}, or units derived from these.  
-
-\subsubsection{Handling units requiring the use of offsets}
+\paragraph{Handling units requiring the use of offsets}
 \label{sec:bp:unitdefinitions:offset}
 
 As mentioned in Section~\ref{sec:unit-structure} Unit definitions
 and conversions requiring offsets cannot be done using the simple
 approach described in \ref{sec:unit-simple-approach}.  In fact
-SBML does not included Celsius as a predefined unit, since this by
-default has an offset. Cases involving Celsius or offsets require
-a completely different approach.
+SBML does not included Celsius as a predefined unit because its
+definition requires the use of an offset.  Unit definitions
+involving Celsius, Fahrenheight or other units with offsets
+require a completely different approach.
 
 We first address the question of how to handle units that
 \emph{do} require offsets:
@@ -280,38 +402,33 @@ We first address the question of how to handle units that
   incorporate the conversion above wherever
   the quantity appears.
 
-  All of these approaches provide general solutions to the problem
-  of supporting any units requiring offsets in the unit system of
-  SBML Level~3.  It can be used for other temperature units
-  requiring an offset (\eg degrees Rankine, degrees R\'{e}aumur),
-  although the likelihood of a real-life model requiring such
-  other temperature units seems exceedingly small.
-
 \end{itemize}
 
-%In summary, the removal of \token{offset} does not
-In summary, the fact that SBML units do not support specifying an offset 
-does  not impede the creation of models using alternative units.  If
-conversions are needed, then converting between temperature in
-degrees Celsius and thermodynamic temperature can be handled
-rather easily by the simple substitution described above.  For the
-rarer case of Fahrenheit and other units requiring combinations of
-multipliers and offsets, users are encouraged to employ the power
-of \FunctionDefinition, \AssignmentRule, or other constructs in
-SBML.
+
+All of these approaches provide general solutions to the problem
+of supporting any units requiring offsets in the unit system of
+SBML Level~3.  It can be used for other temperature units
+requiring an offset (\eg degrees Rankine, degrees R\'{e}aumur),
+although the likelihood of a real-life model requiring such other
+temperature units seems exceedingly small.
+
+In summary, the fact that SBML units do not support specifying an
+offset does not impede the creation of models using alternative
+units.  If conversions are needed, then converting between
+temperature in degrees Celsius and thermodynamic temperature can
+be handled rather easily by the simple substitution described
+above.  For the rarer case of Fahrenheit and other units requiring
+combinations of multipliers and offsets, users are encouraged to
+employ the power of \FunctionDefinition, \AssignmentRule, or other
+constructs in SBML.
 
 
 
-\subsection{Compartments}
+\subsubsection{Compartments}
 \label{sec:bp:compartment}
 
-To add here:
 
-- use SBO:0000410 for compartments that are actually default
-compartments added to a model only because SBML requires a compartment
-
-
-\subsubsection{Setting the \token{size} attribute on a \token{compartment}}
+\paragraph{Setting the \token{size} attribute on a \token{compartment}}
 \label{sec:bp:size}
 
 As mentioned in Section~\ref{sec:size}, it is highly recommended
@@ -322,8 +439,7 @@ amounts are given in terms of concentrations, and there is at
 least one reaction in the model referencing such a species, then
 the model is numerically incomplete if it lacks a value for the
 size of the compartment in which the species is located.  The
-reason is simply that SBML
-\Reaction{}s are defined in units of
+reason is simply that SBML \Reaction{}s are defined in units of
 \quantity{substance}/\quantity{time} (see
 Section~\ref{subsec:kinetic-law}), not concentration per time, and
 thus the compartment size must at some point be used to convert
@@ -334,90 +450,93 @@ framework~\citep{gillespie:1977,wilkinson_2006} in which species
 are represented as item counts (\eg molecule counts).  If species'
 initial quantities are given in terms of concentrations or
 densities, it is impossible to convert the values to item counts
-without knowing compartment sizes.  Third,
-if a model contains multiple compartments whose sizes are not all
-identical to each other, it is impossible to quantify the reaction
-rate expressions without knowing the compartment volumes.  The
-reason for the latter is again that reaction rates in SBML are defined
-in terms of \quantity{substance}/\quantity{time}, and when species quantities are
-given in terms of concentrations or densities, the compartment
-sizes become factors in the reaction rate expressions.
+without knowing compartment sizes.  Third, if a model contains
+multiple compartments whose sizes are not all identical to each
+other, it is impossible to quantify the reaction rate expressions
+without knowing the compartment volumes.  The reason for the
+latter is again that reaction rates in SBML are defined in terms
+of \quantity{substance}/\quantity{time}, and when species
+quantities are given in terms of concentrations or densities, the
+compartment sizes become factors in the reaction rate expressions.
 
 
+\paragraph{Indicating a default compartment}
 
-\subsection{Species}
-\label{sec:bp:species}
+Some types of models do not use compartments, for example because
+they factor out volumes completely.  Since SBML requires at least
+one compartment to be defined if any species exist in a model, the
+representation of models where no compartments are needed
+sometimes leaves model creators wishing they could indicate that a
+compartment is only a ``default'' in some sense.  The recommended
+approach to handling this situation is to annotate the
+\Compartment object by setting its \token{sboTerm} attribute to an
+appropriate SBO term, specifically \val{SBO:0000410}.
 
 
-\subsection{Parameters}
-\label{sec:bp:parameters}
-
-
-\subsection{Initial assignments}
-\label{sec:bp:init-assign}
-
-
-\subsection{Rules}
+\subsubsection{Rules}
 \label{sec:bp:rules}
 
-Section~\ref{sec:ruleconstraints} establishes the fact that when 
-algebraicRules are used it is possible to produce a model that is overdetermined.
-When a model includes both events and reactions it is necessary to analyze
-the set of equations produced from rules and reactions and the set of equations
-produces from rules and the eventAssignments of each event.  Each set of equations 
-must not be overdetermined.  Additionally each set of equations must be fully
-determined, if accurate simulation is to be performed.
+Section~\ref{sec:ruleconstraints} establishes the fact that when
+\AlgebraicRule objects are used, it is possible to produce a model
+that is overdetermined.  When a model includes both \Event and
+\Reaction objects, it is necessary to analyze the set of equations
+produced from the rules and reactions and the set of equations
+produces from rules and the event assignments of each event.  Each
+set of equations must not be overdetermined.  In addition, each
+set of equations must be fully determined if accurate simulation
+is to be performed.
 
-The following example illustrates a case where the set of equations is fully determined:
+The following example illustrates a case where the set of
+equations is fully determined:
 
 \sbmlexample{fullydeterminedevent.xml}
 
-There are three species in the model whose values may vary.  The first set of equations
-to consider is the set produced by the reaction and the algebraicRule.
+There are three species in the model whose values may vary.  The
+first set of equations to consider is the set produced by the
+\Reaction and the \AlgebraicRule objects:
 \begin{linenomath}
 \begin{equation*}
-  \frac{d S1}{d t} = - C \cdot k1 \cdot S1
+  \frac{d [S1]}{d t} = - C \cdot k1 \cdot [S1]
 \end{equation*}
 \end{linenomath}
 \begin{linenomath}
 \begin{equation*}
-  \frac{d S2}{d t} = C \cdot k1 \cdot S1
+  \frac{d [S2]}{d t} = C \cdot k1 \cdot [S1]
 \end{equation*}
 \end{linenomath}
 \begin{linenomath}
 \begin{equation*}
-  S1 - S3 = 0
-\end{equation*}
-\end{linenomath}
-
-This set of equations is fully determined, \ie each of the three variables S1, S2 and S3
-are derived from one equation.
-
-The second set of equations to consider is the set produced by the event and 
-the algebraicRule.
-\begin{linenomath}
-\begin{equation*}
-  S1 = 1
-\end{equation*}
-\end{linenomath}
-\begin{linenomath}
-\begin{equation*}
-  S2 = 1.5
-\end{equation*}
-\end{linenomath}
-\begin{linenomath}
-\begin{equation*}
-  S1 - S3 = 0
+  [S1] - [S3] = 0
 \end{equation*}
 \end{linenomath}
 
-Again the set of equations is fully determined, but had the eventAssignment for
-species S1 been absent the algebraicRule would produce an ambiguity regarding
-which variable should be adjusted.  
+This set of equations is fully determined, \ie each of the three
+variables S1, S2 and S3 are derived from one equation.
 
-In this example, as if often the case
-when an algebraicRule has been used, the algebraicRule could be replaced by an
-assignmentRule.
+The second set of equations to consider is the set produced by the
+\Event and the \AlgebraicRule objects:
+\begin{linenomath}
+\begin{equation*}
+  [S1] = 1
+\end{equation*}
+\end{linenomath}
+\begin{linenomath}
+\begin{equation*}
+  [S2] = 1.5
+\end{equation*}
+\end{linenomath}
+\begin{linenomath}
+\begin{equation*}
+  [S1] - [S3] = 0
+\end{equation*}
+\end{linenomath}
+
+Again the set of equations is fully determined, but had the event
+assignment for species S1 been absent, the algebraic rule would
+produce an ambiguity regarding which variable should be adjusted.
+
+In this example, as if often the case when an \AlgebraicRule has
+been used, the \AlgebraicRule could be replaced by an \AssignmentRule.
 
 \begin{example}
 <assignmentRule variable="S3">
@@ -429,22 +548,14 @@ assignmentRule.
 </assignmentRule>
 \end{example}
 
-Replacing algebraicRules with assignmentRules, particularly in models that
-use events, reduces the possibilities for creating either overdetermined or
-ambiguous models and produces models that can be exchanged with greater ease.
-
-
- 
-
+Replacing \AlgebraicRule objects with \AssignmentRule objects,
+particularly in models that use events, reduces the possibilities
+for creating either overdetermined or ambiguous models and
+produces models that can be exchanged with greater ease.
 
 
 
-
-\subsection{Constraints}
-\label{sec:bp:constraints}
-
-
-\subsection{Reactions}
+\subsubsection{Reactions}
 \label{sec:bp:reactions}
 
 % \paragraph{Translating traditional kinetic laws to SBML kinetic laws}
@@ -487,85 +598,3 @@ An important property of the amount rate equation is that it is still
 valid if the volume $V$ changes during a simulation. This is not
 true for the concentration rate eqations. 
 
-
-\subsection{Events}
-\label{sec:bp:events}
-
-\subsubsection{Attaching time units to a \token{delay}ed event expressions}
-\label{sec:bp:event:delay}
-
-As illustrated in section in \ref{sec:event:delay:example}  specifying delays for 
-event expressions is possible. 
-
-\begin{example}
-<model>
-    ...
-    <listOfEvents>
-        <event>
-            ...
-            <delay>
-                <math xmlns="http://www.w3.org/1998/Math/MathML">
-                    <cn> 10 </cn>
-                </math>
-            </delay>
-            ...
-        </event>
-    </listOfEvents>
-    ...
-</model>
-\end{example}
-
-However when using numeric values as in  the \val{<cn> 10 </cn>} within 
-the mathematical formula, this value has no specified units.  The model is 
-not invalid because of this, but
-a recipient of the model may justifiably be concerned about what
-\val{10} really means.  (Ten seconds?  What if the global units of
-time on the model were changed from seconds to milliseconds?
-Would the modeler remember to change \val{10} to \val{10~000}?)
-As discussed elsewhere, leaving units unspecified may prevent
-software tools from performing complete validation and other
-useful operations such as global unit conversions.  There are
-two approaches; (1) declare units on the literal number; or (2) 
-define a parameter with declared units.  The example fragments
-illustrate both approaches:
-
-\begin{example}
-<model>
-    ...
-    <listOfEvents>
-        <event>
-            ...
-            <delay>
-                <math xmlns="http://www.w3.org/1998/Math/MathML"
-                  xmlns:sbml="http://www.sbml.org/sbml/level3/version1/core">
-                    <cn sbml:units="second"> 10 </cn>
-                </math>
-            </delay>
-            ...
-        </event>
-    </listOfEvents>
-    ...
-</model>
-\end{example}
-
-\begin{example}
-<model>
-    ...
-    <listOfParameters>
-        <parameter id="transcriptionDelay" value="10" units="second"/>
-    </listOfParameters>
-    ...
-    <listOfEvents>
-        <event>
-            ...
-            <delay>
-                <math xmlns="http://www.w3.org/1998/Math/MathML">
-                    <ci> transcriptionDelay </ci>
-                </math>
-            </delay>
-            ...
-        </event>
-    </listOfEvents>
-    ...
-</model>
-\end{example}

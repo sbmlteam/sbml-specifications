@@ -742,7 +742,8 @@ On the other hand, the following example is valid:
 </annotation>
 \end{example}
 
-For completeness, we note that annotations can legally be empty:
+For completeness, we note that annotations legally can be
+empty (but such annotations have no meaning):
 
 \begin{example}
 <annotation />
@@ -1183,57 +1184,58 @@ specific units, but the units are usually undeclared.  (Being
 units!)  If SBML defined numbers as being \emph{by default}
 dimensionless, it would result in many models being technically
 incorrect without the modeler being aware of it unless their
-software tools performed dimensional analysis.  Most software
-tools today still do not perform unit analysis, and so the
-inconsistency of units (and potential errors in the model) would
-not be detected until other researchers and database curators
-attempted to use the model in software packages that \emph{did}
-check units.  We believe the negative impact on interoperability
-and people's confidence in SBML as a reliable medium would be too
-high.
+software tools performed dimensional analysis.  Many software
+tools do not perform unit analysis, and so potential errors due to
+inconsistent units in a model would not be detected until other
+researchers and database curators attempted to use the model in
+software packages that \emph{did} check units.  We believe the
+negative impact on interoperability would be too high.
 
 SBML borrows an idea from CellML~\citep{hedley:2001b}, another
 model definition language with similar goals as SBML, and allows
 an additional attribute to appear on MathML \token{cn} elements;
-the value of this attribute can be used to indicate the units to
-be associated with the number inside the \token{cn} element.  The
-attribute is named \token{units} but, because it appears inside
-MathML content (which is in the XML namespace for MathML and not
-the namespace for SBML), it must always be prefixed with an XML
-namespace prefix for the SBML \thisLV namespace.  The value of the
-attribute must have the data type \primtype{UnitSIdRef}
-(Section~\ref{sec:unitsidref}) and can be the identifier of a
-\UnitDefinition object in the model or a base unit listed in
-Table~\vref{tab:unitkind}.  The following example illustrates how
-this attribute can be used to define a number with value \val{10}
-and unit of measurement \val{second}:
+the value of this attribute can be used to indicate the units
+associated with the number in the content of the \token{cn}
+element.  The attribute is named \token{units} but, because it
+appears inside MathML element (which is in the XML namespace for
+MathML and not the namespace for SBML), it must always be prefixed
+with an XML namespace prefix for the SBML \thisLV namespace.  The
+value of the attribute must have the data type
+\primtype{UnitSIdRef} (Section~\ref{sec:unitsidref}) and can be
+the identifier of a \UnitDefinition object in the model or a base
+unit listed in Table~\vref{tab:unitkind}.  The following example
+illustrates how this attribute can be used to define a number with
+value \val{10} and unit of measurement \val{second}:
+\vspace*{-0.5ex}
 \begin{example}
 <math xmlns="http://www.w3.org/1998/Math/MathML"
       xmlns:sbml="http://www.sbml.org/sbml/level3/version1/core">
     <cn type="integer" sbml:units="second"> 10 </cn>
 </math>
 \end{example} 
+\vspace*{-0.5ex}
 In this example, we chose to use the string \val{sbml} as the XML
-namespace prefix for the SBML \thisLV namespace; this leads to the
-use of \token{sbml:units} as the attribute on the \token{cn}
-element.  Other prefix strings besides \val{sbml} could have been
-chosen, and the definition of the prefix could also have appeared
-on a higher-level element in the model.  Section~\ref{sec:sbml}
-provides mo information about the XML namespace for SBML \thisLV.
+namespace prefix for the SBML \thisLV namespace, which leads to
+the use of \token{sbml:units} as the attribute on the \token{cn}
+element.  We could have used another prefix string besides
+\val{sbml}, and the definition of the prefix could also have
+appeared on a higher-level element in the model.
+Section~\ref{sec:sbml} provides more information about the XML
+namespace for SBML \thisLV.
 
-An alternative approach is to avoid using \token{cn} elements
-altogether, and always use \token{ci} elements to reference
-\Parameter objects having both value and units defined.  In the
-example above, we could have avoided putting the literal number
-\val{10} inside the mathematical expression, and instead, defined
-a parameter in the model, given it the value \val{10} and unit
-\val{second}, and finally, referred to that parameter in the
-\token{math} content above.  The approach of using named
-parameters provides additional power and advantages over simply
-using \token{sbml:units} attributes on \token{cn} elements; for
-example, \Parameter allows the association of terms from the
-Systems Biology Ontology (SBO; Section~\ref{sec:sbo}) as well as
-MIRIAM annotations (Section~\ref{sec:annotations}).
+An alternative approach to specifying units is to avoid using
+\token{cn} elements altogether, and always use \token{ci} elements
+to reference \Parameter objects having both value and units
+defined.  In the example above, we could have avoided putting the
+literal number \val{10} inside the mathematical expression, and
+instead, defined a parameter in the model, given it the value
+\val{10} and unit \val{second}, and finally, referred to that
+parameter in the \token{math} content above.  The approach of
+using named parameters provides additional power and advantages
+over simply using \token{sbml:units} attributes on \token{cn}
+elements; for example, \Parameter allows the association of terms
+from the Systems Biology Ontology (SBO; Section~\ref{sec:sbo}) as
+well as MIRIAM annotations (Section~\ref{sec:annotations}).
 
 In summary, a literal number within MathML content without an SBML
 \token{units} attribute has no declared units.  Either of the two
@@ -1245,9 +1247,15 @@ tools to perform dimensional analysis and, potentially, detect and
 report problems with the model.  Conversely, in the absence of an
 SBML \token{units} attribute on a MathML \token{cn} element, no
 units are associated with the number within the \token{cn}
-element; in other words, \emph{the units are undeclared}.  In the
-example above, if the attribute \token{sbml:units} were not been,
-the value \val{10} would have no declared units.
+element; in other words, \emph{the units are undeclared}.  If the
+example above lacked the attribute \token{sbml:units}, the value
+\val{10} would have no declared units.
+
+Finally, although SBML provides ways of associating units with
+numbers and entities, SBML does not stipulate that implicit unit
+conversions be performed.
+Section~\ref{sec:no-implicit-conversions} explores this topic in
+more detail.
 
 
 \subsubsection{Use of \token{ci} elements in MathML expressions in SBML}
@@ -1255,13 +1263,14 @@ the value \val{10} would have no declared units.
 
 The content of a \token{ci} element must be an SBML identifier
 that is declared elsewhere in the model.  The identifier can be
-preceded and succeeded by whitespace. The set of possible
-identifiers that can appear in a \token{ci} element depends on the
-containing element in which the \token{ci} is used:
+preceded and succeeded by whitespace within the \token{ci}.  The
+set of possible identifiers that can appear in a \token{ci}
+element depends on the containing element in which the \token{ci}
+is used:
 \begin{itemize}
   
-\item If a \token{ci} element appears in the body of a
-  \FunctionDefinition object
+\item If a \token{ci} element appears in the \token{math} body of
+  a \FunctionDefinition object
   (Section~\ref{sec:functiondefinition}), the referenced
   identifier must be either (i) one of the declared arguments to
   that function, or (ii) the identifier of another
@@ -1314,7 +1323,7 @@ containing element in which the \token{ci} is used:
   \item \emph{Species identifier}: When a \Species identifier
     occurs in a \token{ci} element, it represents the quantity of
     that species in units of either \quantity{amount of substance}
-    or units of \quantity{concentration}, depending on the
+    or \quantity{concentration}, depending on the
     species' definition; see Section~\ref{sec:species-units}.
 
   \item \emph{Species reference identifier}: When a
@@ -1741,6 +1750,7 @@ type.
 \subsubsection{Consistency of units in mathematical expressions
   and treatment of unspecified units}
 \label{sec:operator-arg-types}
+\label{sec:unit-consistency}
 
 Strictly speaking, physical validity of mathematical formulas
 requires not only that physical quantities added to or equated
@@ -1786,9 +1796,9 @@ conditions is not true):
 \item All of the possible return values from \token{piece} and
   \token{otherwise} subelements of a \token{piecewise} expression
   should have the same units, regardless of what those units are.
-  (Otherwise, the \token{piecewise} expression would return values
-  having different units depending on which case evaluated to
-  true.)
+  (Without this guideline, the \token{piecewise} expression would
+  return values having different units depending on which case
+  evaluated to true.)
 
 \item For the \emph{delay} \token{csymbol}
   (Section~\ref{sec:csymbol-token}) function, which has the form
@@ -1935,18 +1945,18 @@ the model writer to ensure that the units on both sides of an
 expression match, by inserting explicit unit conversion factors if
 necessary.
 
-It is simple enough to avoid expressions with mixed units such as
-in the example above: a modeler or a software tool can define a
-parameter that acts as a conversion factor, and then multiply one
-of the terms by this parameter.  Thus, a model could include a
-parameter ``\emph{g\_per\_kg}'' with a value of 1000, and the
-expression could be written as
-\begin{linenomath}
-  \begin{equation*}
-    1 * g\_per\_kg > 500
-  \end{equation*}
-\end{linenomath}
-which will then evaluate to \val{true}.
+% It is simple enough to avoid expressions with mixed units such as
+% in the example above: a modeler or a software tool can define a
+% parameter that acts as a conversion factor, and then multiply one
+% of the terms by this parameter.  Thus, a model could include a
+% parameter ``\emph{g\_per\_kg}'' with a value of 1000, and the
+% expression could be written as
+% \begin{linenomath}
+%   \begin{equation*}
+%     1 * g\_per\_kg > 500
+%   \end{equation*}
+% \end{linenomath}
+% which will then evaluate to \val{true}.
 
 
 

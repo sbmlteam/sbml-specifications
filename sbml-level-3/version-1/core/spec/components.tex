@@ -36,10 +36,10 @@ a required \token{model} element.
   \small
   \begin{tikzpicture}[level distance=1.05in]
     \node { \emptyClassbox{\textsl{SBase}} }
-      [open triangle 60-,edge from parent fork down,sibling distance=2.75in]
+      [open triangle 60-,edge from parent fork down,sibling distance=3.25in]
       child {node (a) {
           \begin{classbox}{SBML}
-            xmlns: string \{ "http://www.sbml.org/sbml/level3/version1/core" \} \\
+            xmlns: string \{ use="required" fixed="http://www.sbml.org/sbml/level3/version1/core" \} \\
             level: positiveInteger \{ use="required" fixed="3" \}   \\
             version: positiveInteger \{ use="required" fixed="1" \} \\
             \{ \emph{Additional attributes permitted} \} \\
@@ -131,7 +131,7 @@ declare in this namespace.
       xmlns:multi="http://www.sbml.org/sbml/level3/version1/multi/version1"
       xmlns:layout="http://www.sbml.org/sbml/level3/version1/layout/version1" ...>
   ...  
-  </sbml>\end{example}
+</sbml>\end{example}
   There are no restrictions on the prefixes used for XML namespaces
   referring to SBML Level~3 packages beyond those imposed by the
   relevant specifications of XML~1.0 and XML namespaces.  (In other
@@ -155,7 +155,7 @@ declare in this namespace.
       xmlns:layout="http://www.sbml.org/sbml/level3/version1/layout/version1"
       multi:required="true"
       layout:required="false" ... >
-...
+  ...
 </sbml>   \end{example}
   If a package is declared optional, it means that the elements and
   attributes added by the package can be ignored without any loss of
@@ -3007,9 +3007,7 @@ and~100:
                 </apply>
             </math>
             <message>
-                <p xmlns="http://www.w3.org/1999/xhtml"> 
-                  Species S1 is out of range. 
-                </p>
+                <p xmlns="http://www.w3.org/1999/xhtml"> Species S1 is out of range. </p>
             </message>
         </constraint>
     </listOfConstraints>
@@ -3050,8 +3048,8 @@ Figure~\vref{fig:reaction}.
   \includegraphics[scale=0.78]{figs/reaction-uml-v2}
   \caption{The definitions of \Reaction, \KineticLaw,
     \SpeciesReference, \ModifierSpeciesReference, \LocalParameter,
-    as well as the container classes \ListOfReactants,
-    \ListOfProducts, \ListOfModifiers, and \ListOfLocalParameters.
+    as well as the container classes \ListOfSpeciesReferences,
+    \ListOfModifierSpeciesReferences, and \ListOfLocalParameters.
     Note that \SimpleSpeciesReference is an abstract class used
     only to provide some common attributes to its derived
     classes.}
@@ -3090,15 +3088,25 @@ Section~\ref{sec:idnameattribs}.
 
 \paragraph{The lists of reactants, products and modifiers}
 
-The species participating as reactants, products, and/or modifiers
-in a reaction are declared using lists of \SpeciesReference and/or
-\ModifierSpeciesReference instances stored in
+Each species participating as a reactant, product, and/or modifier
+in a reaction must be declared using a \SpeciesReference and/or
+\ModifierSpeciesReference object stored in the list elements
 \token{listOfReactants}, \token{listOfProducts} and
-\token{listOfModifiers}.  \SpeciesReference and
+\token{listOfModifiers}.  The object classes \SpeciesReference and
 \ModifierSpeciesReference are described in more detail in
 Sections~\ref{subsec:speciesreference}
-and~\ref{subsec:modifierreference} below.  Certain restrictions
-are placed on the appearance of species in reaction definitions:
+and~\ref{subsec:modifierreference} below.  Throughout this text,
+we use the informal expressions ``list of reactants'', ``list of
+products'' and ``list of modifiers'' to mean, respectively, the
+list of species identified by \SpeciesReference objects within a
+\Reaction \token{listOfReactants} element, the list of species
+identified by \SpeciesReference objects within a \Reaction
+\token{listOfProducts} element, and the list of species identified
+by \ModifierSpeciesReference objects within a \Reaction
+\token{listOfModifiers} element.
+
+Certain restrictions are placed on the appearance of species in
+reaction definitions:
 \begin{itemize}
   
 \item The ability of a species to appear as a reactant or product
@@ -3125,10 +3133,10 @@ are placed on the appearance of species in reaction definitions:
 
 \paragraph{The \token{kineticLaw} element}
 
-A reaction can contain up to one \KineticLaw object in the
-\token{kineticLaw} element of the \Reaction.  This ``kinetic law''
-defines the speed at which the process defined by the reaction
-takes place.  A detailed description of \KineticLaw is left to
+A \Reaction object can contain up to one \KineticLaw object, in
+the \token{kineticLaw} element.  This ``kinetic law'' defines the
+speed at which the process defined by the reaction takes place.  A
+more detailed description of \KineticLaw is left to
 Section~\ref{subsec:kinetic-law} below.
 
 The inclusion of a \KineticLaw object in an instance of a
@@ -3143,16 +3151,16 @@ techniques, including simulation.
 \paragraph{The \token{reversible} attribute}
 \label{sec:reversible}
 
-The mandatory boolean attribute \token{reversible} indicates
-whether the reaction is reversible.  To say that a reaction is
-\emph{reversible} is to say it can proceed in either the forward
-or the reverse direction.  This information may be redundant in
-cases where the reversibility of the reaction can be deduced by
-inspecting the rate formula given in the kinetic law.  However, a
-reaction is not required to have a kinetic law, and besides, when
-a rate expression is present, it may not always be possible to
-deduce the reversibility by inspecting it.  Having a separate
-attribute for \token{reversible} allows certain kinds of
+The mandatory boolean attribute \token{reversible} on \Reaction
+indicates whether the reaction is reversible.  To say that a
+reaction is \emph{reversible} is to say it can proceed in either
+the forward or the reverse direction.  This information may be
+redundant in cases where the reversibility of the reaction can be
+deduced by inspecting the rate formula given in the kinetic law.
+However, a reaction is not required to have a kinetic law, and
+besides, when a rate expression is present, it may not always be
+possible to deduce the reversibility by inspecting it.  Having a
+separate attribute for \token{reversible} allows certain kinds of
 structural analysis, such as elementary mode analysis, even in
 these cases.
 
@@ -3262,19 +3270,19 @@ benefit of SBO labels.
 As mentioned above, every species that enters into a given
 reaction must appear in that reaction's lists of reactants,
 products and/or modifiers.  In an SBML model, all species that may
-participate in any reaction are listed in the
-\token{listOfSpecies} element of the top-level \Model instance
-(see Section~\ref{sec:model}).  Lists of products, reactants and
-modifiers in \Reaction objects do not introduce new species,
-but rather, they refer back to those listed in the model's
-top-level \token{listOfSpecies}.  For reactants and products, the
-connection is made using a \SpeciesReference object; for
-modifiers, it is made using a \ModifierSpeciesReference 
-object.  \SimpleSpeciesReference, defined in
-Figure~\vref{fig:reaction}, is an abstract type that serves as the
-parent class of both \SpeciesReference and
-\ModifierSpeciesReference.  It is used simply to hold the attributes
-and elements that are common to the latter two objects.
+participate in any reaction are listed in the \ListOfSpecies
+object of the top-level \Model object instance (see
+Section~\ref{sec:model}).  The lists of products, reactants and
+modifiers in \Reaction objects do not introduce new species, but
+rather, they refer back to those listed in the model's top-level
+\ListOfSpecies object.  For reactants and products, the connection
+is made using a \SpeciesReference object; for modifiers, it is
+made using a \ModifierSpeciesReference object.
+\SimpleSpeciesReference, defined in Figure~\vref{fig:reaction}, is
+an abstract type that serves as the parent class of both
+\SpeciesReference and \ModifierSpeciesReference.  It is used
+simply to hold the attributes and elements that are common to the
+latter two objects.
 
 
 \paragraph{The \token{id} and \token{name} attributes}
@@ -3482,7 +3490,7 @@ rational number to the stoichiometry:
         </initialAssignment>
         ...
     </listOfInitialAssignments>
-	...
+        ...
     <listOfReactions>
         <reaction id="J1" reversible="true" fast="false">
             <listOfReactants>
@@ -3572,11 +3580,87 @@ modifier, as well as to appear in the list of reactants, products
 and modifiers of other reactions in the model.
 
 
+\subsubsection{\class{KineticLaw}}
+\label{subsec:kinetic-law}
+\label{subsec:listoflocalparameters}
+
+The \KineticLaw object class is used to describe the rate at which
+the process defined by the \Reaction takes place.  As shown in
+Figure~\vref{fig:reaction}, \KineticLaw has elements called
+\token{math} and \token{listOfLocalParameters}, in addition to the
+attributes and elements it inherits from \SBase.
+
+
+\paragraph{The \token{math} element}
+
+As shown in Figure~\vref{fig:reaction}, \KineticLaw has an element
+called \token{math} for holding a MathML formula defining the rate
+of the reaction.  The expression in \token{math} may refer to
+global identifiers defined in the model as well as \LocalParameter object
+identifiers from the \KineticLaw's list of local parameters (see
+below).  However, the only \Species identifiers that can be used
+in \token{math} are those declared in the lists of reactants,
+products and modifiers in the \Reaction object (see
+Sections~\ref{subsec:simplespeciesreference},
+\ref{subsec:speciesreference} and~\ref{subsec:modifierreference}).
+
+Section~\ref{sec:about-kinetic-laws} provides important
+discussions about the meaning and interpretation of SBML ``kinetic
+laws''.
+
+
+\paragraph{The list of local parameters}
+
+An instance of \KineticLaw can contain a list of one or more
+\LocalParameter objects (Section~\ref{subsec:localparameter})
+defining new parameters whose identifiers can be used in the
+\token{math} formula.  These ``local parameters'' are optional---a
+kinetic law can always refer to global \Parameter objects.  The
+local parameter facility simply provides a way to add additional
+parameters that may be relevant only to a specific reaction, and
+that may therefore be better handled by encapsulating their
+definitions within that kinetic law.
+
+As discussed in Section~\ref{sec:identifiers}, reactions introduce
+local namespaces for local parameter identifiers, and within a
+\KineticLaw object, a local parameter whose identifier is
+identical to a global identifier defined in the model takes
+precedence over the value associated with the global identifier.
+Note that this introduces the potential for a local parameter
+definition to shadow a global identifier.  SBML does not separate
+symbols by class of object; consequently, inside the kinetic law
+mathematical formula, the value of a local parameter having the
+same identifier as a species, compartment, parameter or other
+global model entity will override the global value.  Modelers and
+software developers may wish to take precautions to avoid this
+happening accidentally.
+
+
+\paragraph{The \token{sboTerm} attribute}
+
+\KineticLaw  inherits an optional \token{sboTerm}
+attribute of type \primtype{SBOTerm} from its parent
+class \SBase (see Sections~\ref{sec:sboterm-type}
+and~\ref{sec:sboTerm}).  When a value is given to this
+attribute in a  \KineticLaw instance, it should be an
+SBO identifier belonging to the branch for type  \KineticLaw
+indicated in Table~\ref{tab:sboterm-availability}.  The relationship is
+of the form ``the kinetic law \emph{is a} X'', where X is
+the SBO term.  The term chosen should be the most precise (narrow)
+one that captures the role of the kinetic law in the model.
+
+As discussed in Section~\ref{sec:sboTerm}, SBO labels are optional
+information on a model.  Applications are free to ignore
+\token{sboTerm} values.  A model must be interpretable without the
+benefit of SBO labels.
+
+
 \subsubsection{\class{LocalParameter}}
 \label{subsec:localparameter}
 
-The kinetic law of a \Reaction instance can contain a list of
-local parameters that are only accessible by the kinetic law
+The \KineticLaw object within a \Reaction object can contain a
+\ListOfLocalParameters object containing the definitions of
+\emph{local parameter} that are only accessible by the kinetic law
 formula of that particular reaction.  The list contains
 \LocalParameter objects, each of which associates an identifier
 with a value.  This identifier can then be used in the kinetic
@@ -3613,12 +3697,12 @@ parameters are local to reactions.)
 \paragraph{The \token{units} attribute}
 
 The units associated with the value of the local parameter can be
-specified by the optional attribute \token{units}.  The
-attribute's value must have the data type \primtype{UnitSIdRef}
-(Section~\ref{sec:unitsidref}).  There are no constraints on the
-units that can be assigned to a parameter; there are also no units
-to inherit from the enclosing \Model object (unlike the case for,
-e.g., \Species and \Compartment).
+specified by the optional \LocalParameter attribute \token{units}.
+The attribute's value must have the data type
+\primtype{UnitSIdRef} (Section~\ref{sec:unitsidref}).  There are
+no constraints on the units that can be assigned to a parameter;
+there are also no units to inherit from the enclosing \Model
+object (unlike the case for, e.g., \Species and \Compartment).
 
 The units of the parameter are used in the following way: when a
 local parameter's identifier appears in the content of the
@@ -3646,81 +3730,6 @@ information on a model.  Applications are free to ignore
 benefit of SBO labels.
 
 
-\subsubsection{\class{KineticLaw}}
-\label{subsec:kinetic-law}
-\label{subsec:listoflocalparameters}
-
-The \KineticLaw object class is used to describe the rate at which
-the process defined by the \Reaction takes place.  As shown in
-Figure~\vref{fig:reaction}, \KineticLaw has elements called
-\token{math} and \token{listOfLocalParameters}, in addition to the
-attributes and elements it inherits from \SBase.
-
-
-\paragraph{The \token{math} element}
-
-As shown in Figure~\vref{fig:reaction}, \KineticLaw has an element
-called \token{math} for holding a MathML formula defining the rate
-of the reaction.  The expression in \token{math} may refer to
-global identifiers defined in the model, or \LocalParameter object
-identifiers from the \KineticLaw's list of local parameters (see
-below).  However, the only \Species identifiers that can be used
-in \token{math} are those declared in the lists of reactants,
-products and modifiers in the \Reaction object (see
-Sections~\ref{subsec:simplespeciesreference},
-\ref{subsec:speciesreference} and~\ref{subsec:modifierreference}).
-
-Section~\ref{sec:about-kinetic-laws} provides important
-discussions about the meaning and interpretation of SBML ``kinetic
-laws''.
-
-
-\paragraph{The list of local parameters}
-
-An instance of \KineticLaw can contain a list of one or more
-\LocalParameter objects (Section~\ref{subsec:localparameter})
-defining new parameters whose identifiers can be used in the
-\token{math} formula.  These ``local parameters'' are optional---a
-kinetic law can always refer to global \Parameter objects.  The
-local parameter facility simply provides a way to add additional
-parameters that may be relevant only to a specific reaction, and
-that may therefore be better handled by encapsulating their
-definitions within that kinetic law.
-
-As discussed in Section~\ref{sec:identifiers}, reactions introduce
-local namespaces for local parameter identifiers, and within a
-\KineticLaw object, a local parameter whose identifier is
-identical to a global identifier defined in the model takes
-precedence over the value associated with the global identifier.
-Note that this introduces the potential for a local parameter
-definition to shadow a global identifier.  In SBML's simple symbol
-system, there is no separation of symbols by class of object;
-consequently, inside the kinetic law mathematical formula, the
-value of a local parameter having the same identifier as a
-species, compartment, parameter or other global model entity will
-override the global value.  Modelers and software developers may
-wish to take precautions to avoid this happening accidentally.
-
-
-\paragraph{The \token{sboTerm} attribute}
-
-\KineticLaw  inherits an optional \token{sboTerm}
-attribute of type \primtype{SBOTerm} from its parent
-class \SBase (see Sections~\ref{sec:sboterm-type}
-and~\ref{sec:sboTerm}).  When a value is given to this
-attribute in a  \KineticLaw instance, it should be an
-SBO identifier belonging to the branch for type  \KineticLaw
-indicated in Table~\ref{tab:sboterm-availability}.  The relationship is
-of the form ``the kinetic law \emph{is a} X'', where X is
-the SBO term.  The term chosen should be the most precise (narrow)
-one that captures the role of the kinetic law in the model.
-
-As discussed in Section~\ref{sec:sboTerm}, SBO labels are optional
-information on a model.  Applications are free to ignore
-\token{sboTerm} values.  A model must be interpretable without the
-benefit of SBO labels.
-
-
 \paragraph{Example}
 
 The following is an example of a \Reaction object that defines a
@@ -3730,9 +3739,9 @@ catalyst and $k$ is a parameter, and the square brackets
 symbolizes that the species quantities have units of
 concentration.  The reaction is assumed to take place all in one
 compartment identified as \val{c1}.  The example demonstrates the
-use of species references and \KineticLaw objects.  The units
-associated with the species identifiers here are
-\quantity{amount}/\quantity{volume} (see
+use of species references, \KineticLaw objects and local
+parameters.  The units associated with the species identifiers
+here are \quantity{amount}/\quantity{volume} (see
 Section~\ref{sec:species}), and so the rate expression $k \cdot
 [X_0] \cdot [S_2]$ needs to be multiplied by the compartment
 volume (represented by its identifier, \val{c1}) to produce the
@@ -3744,7 +3753,7 @@ expression.
     <listOfUnitDefinitions>
         <unitDefinition id="per_concent_per_time">
             <listOfUnits>
-                <unit kind="litre" exponent="1" scale="0" multiplier="1"/>
+                <unit kind="litre"  exponent="1"  scale="0" multiplier="1"/>
                 <unit kind="mole"   exponent="-1" scale="0" multiplier="1"/>
                 <unit kind="second" exponent="-1" scale="0" multiplier="1"/>
             </listOfUnits>
@@ -4092,13 +4101,13 @@ the other when the event is \emph{executed}. The \Event type is
 defined in Figure~\vref{fig:event}.  The object classes \Event,
 \Trigger, \Delay and \EventAssignment are derived from \SBase{}
 (see Section~\ref{sec:sbase}).  An example of a model which uses
-events is given below.
+events is given in Section~\ref{sec:examples}.
 
 \begin{figure}[htb]
-  \vspace*{3ex}
   \centering
   \small
-  \includegraphics[scale=0.8]{figs/event-uml}
+  \includegraphics[scale=0.68]{figs/event-uml}
+  \vspace*{-1ex}
   \caption{The definitions of \Event, \Trigger, \Delay,
     \EventAssignment, and \ListOfEventAssignments.}
   \label{fig:event}
@@ -4108,9 +4117,9 @@ events is given below.
 \subsubsection{\class{Event}}
 
 An \Event definition has two required parts: a trigger condition
-and at least one \EventAssignment.  In addition, an event can
-include an optional delay.  These features of \Event are described
-below.
+expressed, and at least one \EventAssignment.  In addition, an
+event can include an optional delay.  These features of \Event are
+described below.
 
 
 \paragraph{The \token{id} and \token{name} attributes}
@@ -4126,11 +4135,11 @@ Section~\ref{sec:idnameattribs}.
 \label{sec:event-sboterm}
 
 \Event inherits an optional \token{sboTerm} attribute of type
-\primtype{SBOTerm} from its parent class \SBase (see
-Sections~\ref{sec:sboterm-type} and~\ref{sec:sboTerm}).  When a
-value is given to this attribute in a \Event instance, it should
-be an SBO identifier belonging to the branch for type \Event
-indicated in Table~\ref{tab:sboterm-availability}.  The
+\primtype{SBOTerm} from \SBase (see
+Sections~\ref{sec:sboterm-type} and~\ref{sec:sboTerm}).  When this
+attribute is present on a given \Event object instance, its value
+should be an SBO identifier belonging to the branch for type
+\Event indicated in Table~\ref{tab:sboterm-availability}.  The
 relationship is of the form ``the event \emph{is a} X'', where X
 is the SBO term.  The term chosen should be the most precise
 (narrow) one that captures the role of the event in the model.
@@ -4154,31 +4163,39 @@ evaluated at the same time the assignments are performed, i.e.,
 when the event is \emph{executed}, but it could also be defined to
 be evaluated at the time the event \emph{fired}.
 
-The mandatory attribute \token{useValuesFromTriggerTime} on \Event
-allows a model to indicate the time at which the event's
-assignments are intended to be evaluated.  A value of \val{true}
-indicates that values of the assignment formulas are to be
-computed at the moment the event fired, not after the delay.  If
-\token{useValuesFromTriggerTime}=\val{false}, it means that the
+The attribute \token{useValuesFromTriggerTime} on \Event allows a
+model to indicate the time at which the event's assignments are
+intended to be evaluated.  A value of \val{true} indicates that
+values of the assignment formulas are to be computed at the moment
+the event fired, not after the delay (whether a delay is defined
+or not).  If \token{useValuesFromTriggerTime}=\val{false}, the
 formulas in the event's assignments are to be computed after the
-delay, at the time the event is executed.
+delay, at the time the event is executed.  (Note that a value of
+\val{false} for this attribute also implies that a \Delay
+subobject must be present in the \Event object, in order to define
+the length of the delay.)  The attribute has no default value.
+
+In SBML Level~3, the attribute \token{useValuesFromTriggerTime} on
+an \Event object is optional \emph{unless} there exists a \Delay
+subobject in the \Event object, in which case,
+\token{useValuesFromTriggerTime} becomes mandatory.
 
 
 \subsubsection{\class{Trigger}}
 \label{sec:trigger}
 \label{sec:event-trigger}
 
-As shown in Figure~\ref{fig:event}, the \token{trigger} element of
-an \Event must contain exactly one object of class \Trigger.  This
-object contains one \token{math} element containing a MathML
-expression.  The expression must evaluate to a value of type
-\primtype{boolean}.  The exact moment at which the expression
-evaluates to \val{true} is the time point when the \Event is
-\emph{fired}.
+As shown in Figure~\ref{fig:event}, an \Event object must contain
+exactly one object of class \Trigger.  This \Trigger object in
+turn must contain a MathML \token{math} element.  The expression
+in the \token{math} element must evaluate to a value of type
+\primtype{boolean}.  The exact moment at which this expression
+evaluates to \val{true} during a simulation is taken to be the
+time point when the \Event is \emph{fired}.
 
-An event only fires when its \Trigger expression makes the
-transition in value from \val{false} to \val{true}.  The event
-will also fire at any future time points when the \token{trigger}
+An event only fires when the expression within its \Trigger object
+makes the transition in value from \val{false} to \val{true}.  The
+event will also fire at any future time points when the trigger
 make this transition; in other words, an event can fire multiple
 times during a simulation if its trigger condition makes the
 transition from \val{false} to \val{true} more than once.
@@ -4212,12 +4229,20 @@ benefit of SBO labels.
 \label{sec:event-delay}
 
 As shown in Figure~\ref{fig:event}, an \Event object can contain
-an optional \token{delay} element of class \Delay.  The \Delay is
-derived from \SBase and contains a mathematical formula stored in
-\token{math}.  The formula is used to compute the length of time
-between when the event has \emph{fired} and when the event's
-assignments (see below) are actually \emph{executed}.  If no delay
-is present on a given \Event, no delay is defined for that event.
+an optional \Delay object.  The \Delay class is derived from
+\SBase and contains a mathematical formula stored in \token{math}.
+The formula is used to compute the length of time between when the
+event has \emph{fired} and when the event's assignments (see
+below) are actually \emph{executed}.  If no delay is present on a
+given \Event, no delay is defined for that event.
+
+There is a dependency between the \Event attribute
+\token{useValuesFromTriggerTime} and the presence of a \Delay
+object within the event definition: a \Delay object must be
+defined if the value of \token{useValuesFromTriggerTime} is
+\val{false}.  As explained above, a value of \val{false} implies
+there is a delay, and so a \Delay object is necessary to indicate
+the duration of that delay.
 
 The expression in the \Delay object's \token{math} element must be
 evaluated at the time the event is \emph{fired}.  The expression
@@ -4228,12 +4253,12 @@ fire before it is triggered!).
 
 \paragraph{Units of delay expressions}
 
-The units of the numerical value computed by a \Delay instance's
-\token{math} expression should match the model's units of
-\quantity{time} (meaning the definition of the \val{timeUnits} in
-the model; see Section~\ref{sec:model-timeUnits}).  Note that, as
-in other cases of MathML expressions in SBML, units are \emph{not}
-automatically predefined or assumed.  As discussed in
+The units of the value computed by a \Delay object's \token{math}
+expression should match the model's units of \quantity{time} (set
+by the \Model \val{timeUnits}; see
+Section~\ref{sec:model-timeUnits}).  Note that, as in other cases
+of MathML expressions in SBML, units are \emph{not} automatically
+predefined or assumed.  As discussed in
 Section~\ref{sec:operator-arg-types}, expressions containing only
 literal numbers and/or \Parameter objects without declared units
 are considered to have unspecified units.  In such cases, the
@@ -4270,7 +4295,7 @@ because of this, but a recipient of the model may justifiably be
 concerned about what \val{10} really means.  (Ten seconds?  What
 if the global units of time on the model were changed from seconds
 to milliseconds?  Would the modeler remember to change \val{10} to
-\val{10~000}?)  A better approach would be to declare the units
+\val{10$\;$000}?)  A better approach would be to declare the units
 explicitly, as in the following example:
 
 \begin{example}
@@ -4342,15 +4367,15 @@ about events and event assignments in SBML.
 
 \paragraph{The \token{variable} attribute}
 
-The \token{variable} attribute is of type \primtype{SIdRef} and can
-contain the identifier of a \Compartment, \Species, \SpeciesReference,
-or \Parameter instance defined in the model.  
-When the event is executed, the value of
+The \Event attribute \token{variable} has type
+\primtype{SIdRef} and can contain the identifier of a
+\Compartment, \Species, \SpeciesReference, or \Parameter instance
+defined in the model.  When the event is executed, the value of
 the model component identified by \token{variable} is changed by
 the \EventAssignment to the value computed by the \token{math}
-element; that is, a species' quantity, species reference's stoichiometry, 
-compartment's size or parameter's value are reset to the value 
-computed by \token{math}.
+element; that is, a species' quantity, species reference's
+stoichiometry, compartment's size or parameter's value are reset
+to the value computed by \token{math}.
 
 Certain restrictions are placed on what can appear in
 \token{variable}:
@@ -4383,8 +4408,6 @@ Certain restrictions are placed on what can appear in
 
 \end{itemize}
 
-
-
 Note that the time of assignment of the object identified by the
 value of \token{variable} is always the time at which the \Event
 is \emph{executed}, not when it is \emph{fired}.  The timing is
@@ -4395,8 +4418,6 @@ attribute on \Event---that attribute affects the time at which the
 words, SBML allows decoupling the time at which the
 \token{variable} is assigned from the time at which its value
 expression is calculated.
-
-
 
 
 \paragraph{The optional \token{sboTerm} attribute on \class{EventAssignment}}
@@ -4422,7 +4443,8 @@ benefit of SBO labels.
 \paragraph{\class{EventAssignment}'s \token{math}}
 
 The \token{math} element contains a MathML expression that defines
-the new value of the object identified by the \token{variable}.
+the new value to be given to the object identified by the
+\EventAssignment attribute \token{variable}.
 
 The time at which this expression is evaluated is determined by
 \Event's \token{useValuesFromTriggerTime} attribute.  If the
@@ -4516,7 +4538,7 @@ assignment $k_2 = 0$ at the point when $P_1 \leq P_2$:
     </listOfParameters>
     ...
     <listOfEvents>
-        <event useValuesfromTriggerTime="true">
+        <event>
             <trigger>
                 <math xmlns="http://www.w3.org/1998/Math/MathML">
                     <apply>

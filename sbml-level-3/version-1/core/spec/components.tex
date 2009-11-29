@@ -217,7 +217,7 @@ Section~\ref{sec:sbml}.
 
 \begin{figure}[htb]
   \centering
-  \includegraphics[scale=0.75]{figs/model-uml}
+  \includegraphics[scale=0.76]{figs/model-uml}
   \caption{The definition of \Model and the many helper
       classes \ListOfFunctionDefinitions, \ListOfUnitDefinitions,
       \ListOfCompartments, \ListOfSpecies, \ListOfParameters,
@@ -468,7 +468,7 @@ for \token{timeUnits}.
 
 The attribute \token{conversionFactor} defines a global value
 inherited by all \Species object instances that do not define
-separate values for their \token{conversionFactor} attribute.  The
+separate values for their \token{conversionFactor} attributes.  The
 value of this attribute must be of type \primtype{SIdRef}
 (Section~\ref{sec:sidref}) and refer to a \Parameter object
 instance defined in the model.  The \Parameter object in question
@@ -612,16 +612,16 @@ the MathML subset listed in Section~\ref{sec:mathmlsubset}
 \emph{except} \token{lambda} (\ie a \token{lambda} element cannot
 contain another \token{lambda} element).
 
-A further restriction on the content of \token{math} is that it
-cannot contain references to variables other than the variables
-declared to the \token{lambda} itself.  That is, the contents of
-MathML \token{ci} elements inside the body of the \token{lambda}
-can only be the variables declared by its \token{bvar} elements,
-or the identifiers of other \FunctionDefinition{}s defined in
-the same model.  This restriction also applies to the
-  \token{csymbol} for \quantity{time}.  Functions must be written
-so that all variables or parameters used in the MathML content are
-passed to them via their function parameters.
+A further restriction on the content of \token{math} is it cannot
+contain references to variables other than the variables declared
+to the \token{lambda} itself.  That is, the contents of MathML
+\token{ci} elements inside the body of the \token{lambda} can only
+be the variables declared by its \token{bvar} elements, or the
+identifiers of other \FunctionDefinition{} objects defined in the
+same model.  This restriction also applies to the \token{csymbol}
+for \quantity{time} and \quantity{avogadro}.  Functions must be
+written so that all model variables they use are passed to them
+via their parameters.
 
 
 \subsubsection{The \token{sboTerm} attribute}
@@ -662,7 +662,8 @@ units associated with the function's return value, when the
 function is called from within MathML expressions elsewhere in
 SBML, are simply the overall units of the expression in
 \FunctionDefinition's \token{math} when applied to the arguments
-supplied in the call to the function.
+supplied in the call to the function.  (See also
+Section~\ref{sec:unit-consistency}.)
 
 
 \subsubsection{Examples}
@@ -727,17 +728,17 @@ SBML provides a facility for defining units that can be referenced
 throughout a model.  The SBML unit definition facility uses two
 classes of objects, \UnitDefinition and \Unit.  Their definitions
 are shown in Figure~\vref{fig:unitdefinition} and explained in
-more detail in Sections~\ref{sec:unitdefinition-structure}
-and~\ref{sec:unit-structure} below.
+more detail below.
 
 \begin{figure}[htb]
   \centering
-  \includegraphics[scale=0.79]{figs/unitdefinition-uml}
+  \vspace*{-1ex}
+  \includegraphics[scale=0.78]{figs/unitdefinition-uml}
   \caption{The definition of classes \UnitDefinition and
       \Unit.  A sequence of one or more instances of
       \UnitDefinition can be located in an instance of
       \ListOfUnitDefinitions in \Model
-      (Figure~\protect\ref{fig:model}).  \class{ListOfUnits} has
+      (Figure~\protect\ref{fig:model}).  \ListOfUnits has
       no attributes (beyond those it inherits from class \SBase);
       it merely acts as a container for one or more instances of
       \Unit objects.  Note that the only permitted values of
@@ -757,22 +758,21 @@ representing $second^{\,-2}$.  The combination is wrapped inside a
 optional name to the combination.  The identifier can then be
 referenced from elsewhere in a model.
 
-The vast majority of modeling situations requiring new SBML unit
+The vast majority of situations that require new SBML unit
 definitions involve simple multiplicative combinations of base
-units and factors.  An example of this might be ``moles per litre
-per second''.  What distinguishes these sorts of simpler unit
-definitions from more complex ones is that they may be expressed
-without the use of an additive offset from a zero point.  The use
-of offsets complicates all unit definition systems, yet in the
-domain of SBML the real-life cases requiring offsets are few (and
-in fact, to the best of our knowledge, only involve temperature).
-Consequently, the SBML unit system has been consciously designed
-in a way that attempts to simplify implementation of unit support
-for the most common cases in systems biology, at the cost of
-requiring units with offsets to be handled explicitly by the
-modeler.  Section~\ref{sec:bp:unitdefinitions:offset} discusses
-suggested approaches for handling situations requiring units with
-offsets.
+units and factors.  An example is ``moles per litre per second''.
+What distinguishes these sorts of unit definitions from more
+complex ones is that they may be expressed without the use of an
+additive offset from a zero point.  The use of offsets complicates
+all unit definition systems, yet in the domain of SBML, the
+real-life cases requiring offsets are few (and in fact, to the
+best of our knowledge, only involve temperature).  Consequently,
+the SBML unit system has been consciously designed to simplify
+implementation of unit support for the most common cases in
+systems biology.  The cost of this simplification is to require
+units with offsets to be handled explicitly by the modeler.
+Section~\ref{sec:bp:unitdefinitions:offset} discusses approaches
+for handling situations requiring units with offsets.
 
 
 \subsubsection{\class{UnitDefinition}}
@@ -814,7 +814,6 @@ The following skeleton of a unit definition illustrates an example
 use of \UnitDefinition:
 
 \begin{example}
-
 <model ...>
     <listOfUnitDefinitions>
         <unitDefinition id="unit1">
@@ -836,13 +835,12 @@ use of \UnitDefinition:
 \subsubsection{\class{Unit}}
 \label{sec:unit-structure}
 
-A \Unit object represents a (possibly transformed) reference to
-a base unit chosen from the list in
-  Table~\vref{tab:unitkind}.  The attribute
-\token{kind} indicates the chosen base unit, whereas the
-attributes \token{exponent}, \token{scale}, and
-\token{multiplier} define how the base unit is being transformed.
-These various attributes are described in detail below.
+A \Unit object represents a reference to a (possibly transformed)
+base unit chosen from the list in Table~\vref{tab:unitkind}.  The
+attribute \token{kind} indicates the base unit, whereas the
+attributes \token{exponent}, \token{scale}, and \token{multiplier}
+define how the base unit is being transformed.  The attributes
+are described in detail below.
 
 
 \paragraph{The \token{kind} attribute}
@@ -971,6 +969,7 @@ is the following:
 \label{eq:unit-semantics}
 \end{equation}
 \end{linenomath}
+
 This formula defines a new unit, \unew, in terms of another unit,
 \ukind.  The unit \ukind is one of the units listed in
 Table~\ref{tab:unitkind}; in a given \Unit object, it is
@@ -1009,7 +1008,7 @@ follows:
 \end{itemize}
 
 
-\subsubsection{Semantics and use of \Unit and \UnitDefinition}
+\subsubsection{Semantics and use of \class{Unit} and \class{UnitDefinition}}
 \label{sec:unit-structure:semantics}
 
 A single \Unit object instance takes one of the base units from
@@ -1216,12 +1215,12 @@ of \Compartment is shown in Figure~\vref{fig:compartment}.
 \end{figure}
 
 It is important to note that although compartments are optional in
-the overall definition of \Model (see Section~\ref{sec:model}),
-every species in an SBML model must be located in a compartment.
-This in turn means that if a model defines any species, the model
-must also define at least one compartment.  The reason is simply
-that species represent physical things, and therefore must exist
-\emph{somewhere}.  Compartments represent the \emph{somewhere}.
+the overall definition of \Model, every species in an SBML model
+must be located in a compartment.  This in turn means that if a
+model defines any species, the model must also define at least one
+compartment.  The reason is simply that species represent physical
+things, and therefore must exist \emph{somewhere}.  Compartments
+represent the \emph{somewhere}.
 
 
 \subsubsection{The \token{id} and \token{name} attributes}

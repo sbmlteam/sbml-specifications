@@ -34,8 +34,8 @@ also have an optional \token{name} attribute.  How should models
 treat identifiers and names?
 
 The following is the recommended practice for handling
-\token{name}.  If a software tool has the capability for
-displaying the content of \token{name} attributes, it should
+\token{name}.  If a software tool has the capability to
+display the content of \token{name} attributes, it should
 display this content to the user as a component's label instead of
 the component's \token{id}.  If the user interface does not have
 this capability (e.g., because it cannot display or use special
@@ -53,7 +53,6 @@ software create \token{id} values that are: (a) reasonably easy
 for humans to type and read, and (b) likely to be meaningful (\eg
 by making the \token{id} attribute is an abbreviated form of the
 \token{name} attribute value).
-
 
 \subsubsection{Initial Values}
 \label{sec:bp:initialvalues}
@@ -77,7 +76,7 @@ software system), or is unknown.  In the case of \LocalParameter
 objects, a missing value implies that the value is either unknown
 or meant to be obtained from an external source.
 
-Where initial values are available and are scalar numbers that
+Where initial values are available and are decimal numbers that
 \emph{can} be set using the appropriate attribute on an object,
 the best practice recommendation is to do that in preference to
 using an \InitialAssignment construct if there is no particular
@@ -88,6 +87,18 @@ with different software systems.  This is especially true of
 \token{stoichiometry} on \SpeciesReference, which in the vast
 majority of models, is never more than a scalar constant value
 anyway.
+
+\question{MH: new paragraph}
+An additional point is worth noting in passing.  Although the
+value attributes of various SBML components are of type
+\primtype{double} (\eg \Parameter's attribute \token{value}), this
+does not mean that component values are limited only to decimal
+numbers.  As noted above, other constructs such as
+\InitialAssignment can be used to set the value of an object, and
+since those constructs offer the power of MathML, the results may
+be rational numbers such as fractions.  Software developers should
+be aware of this possibility when planning the type of storage
+variables used to hold SBML objects' values.
 
 
 \subsubsection{The \token{constant} flag}
@@ -119,28 +130,29 @@ need to have \token{constant}=\val{false}.
 
 \paragraph{Appropriate uses of annotations}
 
-In the description of \SBase's \token{annotation} element, we
+In the description of the \Annotation object available on every
+component derived from \SBase (Section~\ref{sec:annotations}), we
 already made the point that it is critical not to put data
-essential to understanding a model into an \token{annotation}.
-This raises a question: what kind of data may be appropriately
-put into annotations?
+essential to understanding a model into annotations.  This raises
+a question: what kind of data may be appropriately put into
+annotations?
 
 Here are examples of the kinds of data that may be appropriately
-stored in \token{annotation} elements: 
+stored in \Annotation objects:
 \begin{itemize}
-
-\item Application-specific processing instructions that do not
-  change the essential meaning of a model, but help a particular
-  application with tasks such as managing the model, maintaining
-  state data across editing sessions, etc.
 
 \item Identification information for cross-referencing components
   in a model with items in a data resource such as a database.
   This is the purpose of the annotation scheme described in
   Section~\ref{sec:annotation-standard}.
 
+\item Application-specific processing instructions that do not
+  change the essential meaning of a model, but help a particular
+  application with tasks such as managing the model, maintaining
+  state data across editing sessions, etc.
+
 \item Evidence codes for annotating a model with controlled
-  vocabulary terms that indicate (e.g.) the quality of biological
+  vocabulary terms that indicate (e.g.)\ the quality of biological
   evidence supporting the inclusion of each component in the
   model.  The annotation scheme of
   Section~\ref{sec:annotation-standard} can be used in this
@@ -157,14 +169,15 @@ stored in \token{annotation} elements:
 
 The annotation data (Section~\ref{sec:annotations}) attached to a
 specific SBML object in a model is assumed by other applications
-to be directly associated with that SBML object.  Therefore, it is
-important to decompose and locate annotation data appropriately in
-an SBML document.  Applications are advised to avoid encoding all
-their annotations in a single top-level attribute.  The data
-associated with, for example, an individual \Species object in a
-model should be encoded in the \token{<annotation>} element
-enclosed within the SBML \token{<species>} element representing
-that species in the SBML file.
+to be directly associated with that particular SBML object.
+Therefore, it is important to decompose and locate annotation data
+appropriately in an SBML document.  Applications are advised to
+avoid encoding all their annotations in a single top-level
+attribute on (e.g.) the \Model object.  The data associated with,
+for example, an individual \Species object in a model should be
+encoded in the \token{<annotation>} element enclosed within the
+SBML \token{<species>} element representing that species in the
+SBML file.
 
 
 \paragraph{Syntax of annotations}
@@ -326,18 +339,15 @@ different SBML components.
 \paragraph{Handling units requiring the use of offsets}
 \label{sec:bp:unitdefinitions:offset}
 
-As mentioned in Section~\ref{sec:unit-structure} Unit definitions
-and conversions requiring offsets cannot be done using the simple
-approach described in \ref{sec:unit-simple-approach}.  In fact,
-SBML does not included Celsius as a predefined unit because its
-definition requires the use of an offset.  Unit definitions
-involving Celsius, Fahrenheight or other units with offsets
-require a different approach.
+Unit definitions and conversions requiring offsets cannot be done
+using the simple approach described in
+Section~\ref{sec:unit-simple-approach}.  In fact, SBML does not
+predefine a unit for Celsius because it would require the use of
+an offset.  Definitions involving Celsius, Fahrenheight or other
+units with offsets require a different approach.
 
-\clearpage
-
-We first address the question of how to handle units that
-\emph{do} require offsets:
+We discuss approaches to handling units with offsets, starting
+with the case of degrees Celsius:
 \begin{itemize}
 
 \item \emph{Handling Celsius}.  A model in which certain
@@ -359,7 +369,7 @@ We first address the question of how to handle units that
   unit, software tools could help users by providing users with
   the ability to express temperatures in Celsius in the tools'
   interfaces, and making substitutions automatically when writing
-  out the SBML.
+  out SBML.
 
 \item \emph{Handling other units requiring offsets}.  The only
   other units requiring offsets in SBML's domain of common
@@ -398,17 +408,17 @@ We first address the question of how to handle units that
         </lambda>
     </math>
 </functionDefinition>
-  \end{example}
-  
+  \end{example}\vspace*{-2ex}
+
   An alternative approach not requiring the use of function
   definitions is to use an \AssignmentRule for each variable in
   Fahrenheit units.  The \AssignmentRule could compute the
   conversion from Fahrenheit to (say) kelvin, assign its value to
-  a variable (in Kelvin units), and then that variable could be
-  used elsewhere in the model.  Still another approach is to
-  rewrite the mathematical formulas of a model to directly
-  incorporate the conversion above wherever
-  the quantity appears.
+  a variable (with units declared to be \val{kelvin}), and then
+  that variable could be used elsewhere in the model.  Still
+  another approach is to rewrite the mathematical formulas of a
+  model to directly incorporate the conversion above wherever the
+  quantity appears.
 
 \end{itemize}
 
@@ -416,7 +426,7 @@ We first address the question of how to handle units that
 All of these approaches provide general solutions to the problem
 of supporting any units requiring offsets in the unit system of
 SBML Level~3.  It can be used for other temperature units
-requiring an offset (\eg degrees Rankine, degrees R\'{e}aumur),
+requiring an offset (\eg degrees Rankine or degrees R\'{e}aumur),
 although the likelihood of a real-life model requiring such other
 temperature units seems exceedingly small.
 
@@ -451,21 +461,22 @@ SBML reactions are expected to be in terms of intensive properties
 such as \emph{amount}/\emph{time} (or more generally, \emph{extent
   units}/\emph{time units}; see
 Section~\ref{sec:constructing-equations}), and converting from
-concentration to amount requires the compartment size.  Second,
-models ideally should be instantiable in a variety of simulation
-frameworks.  A commonly-used one is the discrete stochastic
-framework~\citep{gillespie:1977,wilkinson_2006} in which species
-are represented as item counts (\eg molecule counts).  If species'
-initial quantities are given in terms of concentrations or
-densities, it is impossible to convert the values to item counts
-without knowing compartment sizes.  Third, if a model contains
-multiple compartments whose sizes are not all identical to each
-other, it is impossible to quantify the reaction rate expressions
-without knowing the compartment volumes.  The reason for the
-latter is again that reaction rates in SBML are defined in terms
-\emph{extent}/\emph{time}, and when species quantities are given
-in terms of concentrations or densities, the compartment sizes
-usually become factors in the reaction rate expressions.
+concentration to amount requires knowing the compartment size.
+Second, models ideally should be instantiable in a variety of
+simulation frameworks.  A commonly-used one is the discrete
+stochastic framework~\citep{gillespie:1977,wilkinson_2006} in
+which species are represented as item counts (\eg molecule
+counts).  If species' initial quantities are given in terms of
+concentrations or densities, it is impossible to convert the
+values to item counts without knowing compartment sizes.  Third,
+if a model contains multiple compartments whose sizes are not all
+identical to each other, it is impossible to quantify the reaction
+rate expressions without knowing the compartment volumes.  The
+reason for the latter is again that reaction rates in SBML are
+defined in terms \emph{extent}/\emph{time}, and when species
+quantities are given in terms of concentrations or densities, the
+compartment sizes usually become factors in the reaction rate
+expressions.
 
 
 \paragraph{Indicating a default compartment}
@@ -504,19 +515,11 @@ There are three species in the model above whose values may vary.
 The first set of equations to consider is the set produced by the
 \Reaction and the \AlgebraicRule objects:
 \begin{linenomath}
-\begin{equation*}
-  \frac{d [S_1]}{d t} = - C \cdot k_1 \cdot [S_1]
-\end{equation*}
-\end{linenomath}
-\begin{linenomath}
-\begin{equation*}
-  \frac{d [S_2]}{d t} = C \cdot k_1 \cdot [S_1]
-\end{equation*}
-\end{linenomath}
-\begin{linenomath}
-\begin{equation*}
-  [S_1] - [S_3] = 0
-\end{equation*}
+\begin{align*}
+  \frac{d [S_1]}{d t} &= - C \cdot k_1 \cdot [S_1] \\[2pt]
+  \frac{d [S_2]}{d t} &= C \cdot k_1 \cdot [S_1]   \\[2pt]
+  [S_1] - [S_3]       &= 0
+\end{align*}
 \end{linenomath}
 
 This set of equations is fully determined, \ie each of the three
@@ -524,19 +527,11 @@ variables $S_1$, $S_2$ and $S_3$ are derived from one equation.
 The second set of equations to consider is the set produced by the
 \Event and the \AlgebraicRule objects:
 \begin{linenomath}
-\begin{equation*}
-  [S_1] = 1
-\end{equation*}
-\end{linenomath}
-\begin{linenomath}
-\begin{equation*}
-  [S_2] = 1.5
-\end{equation*}
-\end{linenomath}
-\begin{linenomath}
-\begin{equation*}
-  [S_1] - [S_3] = 0
-\end{equation*}
+\begin{align*}
+  [S_1]         &= 1   \\[2pt]
+  [S_2]         &= 1.5 \\[2pt]
+  [S_1] - [S_3] &= 0
+\end{align*}
 \end{linenomath}
 
 Again the set of equations is fully determined, but had the event
@@ -544,7 +539,8 @@ assignment for species $S_1$ been absent, the algebraic rule would
 produce an ambiguity regarding which variable should be adjusted.
 
 In this example, as is often the case when an \AlgebraicRule has
-been used, the \AlgebraicRule could be replaced by an \AssignmentRule.
+been used, the \AlgebraicRule could be replaced by an
+\AssignmentRule:
 
 \begin{example}
 <assignmentRule variable="S3">
@@ -579,6 +575,7 @@ where
     v_{R} = \frac{v_\text{max} \cdot [S_{1}]}{K_{M} + [S_{1}]}
   \end{equation*}
 \end{linenomath}
+
 with $v_{R}$ and $v_\text{max}$ given in units of concentration
 per time.
 

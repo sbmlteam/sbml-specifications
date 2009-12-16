@@ -92,31 +92,67 @@ initial amounts of the species are as follows:
 \begin{linenomath}
   \begin{equation*}
     \begin{array}{@{}lll@{}}
-      \textrm{E}   & = 5 \cdot 10^{-18}\; \emph{millimole} \\
-      \textrm{S}   & = 10^{-17}\; \emph{millimole} \\
+      \textrm{E}   & = 8 \cdot 10^{-45}\; \emph{item} \\
+      \textrm{S}   & = 2 \cdot 10^{-44}\; \emph{item} \\
       \textrm{P}   & = 0\; \emph{gram} \\
-      \textrm{ES}  & = 0\; \emph{millimole} \\
+      \textrm{ES}  & = 0\; \emph{item} \\
     \end{array}
   \end{equation*}
 \end{linenomath}
 Note how species \val{E}, \val{S} and \val{ES} are given in units
-of \emph{millimoles}, but \val{P} is given in \emph{grams}.  The 
-\Model declares the \token{extentUnits} to be \emph{mole} and the 
+of \emph{item}, but \val{P} is given in \emph{grams}.  
+
+The \Model declares the \token{extentUnits} to be \emph{mole} and the 
 \token{timeUnits} to be \emph{second}. Thus, the
 unit associated with the rate of each \Reaction given by the \token{math} element of the
-\KineticLaw, \emph{extent}/\emph{time}, is \emph{mole}/\emph{second}.  Let
-\csg stand for the value of the \Model object's
+\KineticLaw must be \emph{mole}/\emph{second}.  
+
+The previous example
+defined the \KineticLaw \token{math} elements as
+\begin{linenomath}
+\begin{equation*}
+    \begin{array}{@{}lll@{}}
+  v\sub{1} & = V\sub{comp} \cdot (k\sub{on} \cdot [E] \cdot [S] - k\sub{off} \cdot [ES])\\
+  v\sub{2} & = V\sub{comp} \cdot k\sub{cat} \cdot [ES]  
+    \end{array}
+\end{equation*}
+\end{linenomath}
+where $V\sub{comp}$ stands for the size of compartment \val{comp} 
+and the values of the constants are
+\begin{linenomath}
+  \begin{equation*}
+    \begin{array}{@{}lll@{}}
+      k_{\text{on}}  & = 1\:000\:000 \;\emph{litre} \;\emph{mole}^{\,-1} \emph{second}^{\,-1}\\
+      k_{\text{off}} & = 0.2 \;\emph{second}^{\,-1}\\
+      k_{\text{cat}} & = 0.1 \;\emph{second}^{\,-1}
+    \end{array}
+  \end{equation*}
+\end{linenomath}
+These rate equations and values cannot be used in this version of the model 
+without accounting for the fact that the concentrations of the species
+as they appear in the \KineticLaw elements are now in units of \emph{item}/\emph{litre}.
+One approach is to define a constant that converts the declared substance unit to \emph{mole} and
+multiplies each occurence of a concentration by that constant.  A separate constant is necessary for
+each \Species appearing in a \KineticLaw; although in the situation under consideration these are
+identical as the units are the same.
+\begin{linenomath}
+  \begin{equation*}
+      c_{\text{e}} = c_{\text{s}} = c_{\text{es}} = 6 \cdot 10^{23}\;\emph{mole} \;\emph{item}^{\,-1}
+  \end{equation*}
+\end{linenomath}
+
+
+The construction of the rate equations from the model also needs to consider the different unit values.
+Let \csg stand for the value of the \Model object's
 \token{conversionFactor} attribute.  Using the guidelines
 described in Section~\ref{sec:about-kinetic-laws}, the
 rate-of-change equation for species \val{S} is:
 \begin{linenomath}
 \begin{equation*}
-  \dfrac{d n\sub{S}}{d t} = - \csg \cdot V\sub{comp} \cdot (k\sub{on} \cdot [E] \cdot [S] - k\sub{off} \cdot [ES])
+  \dfrac{d n\sub{S}}{d t} = - \csg \cdot V\sub{comp} \cdot (k\sub{on} \cdot [E] \cdot c\sub{e} \cdot [S] \cdot c\sub{s} - k\sub{off} \cdot [ES] \cdot c\sub{es})
 \end{equation*}
 \end{linenomath}
-where $V\sub{comp}$ stands for the size of compartment \val{comp} 
-and the values of $k\sub{on}$ and $k\sub{off}$ have been adjusted
-to reflect the units of the species.
+
 In the definition of species \val{P}, we use a separate value for
 the attribute \token{conversionFactor}, to convert between units of
 \emph{gram} and \emph{mole}.  By virtue of being defined on the
@@ -126,12 +162,17 @@ this conversion factor be represented by $c\sub{P}$, the equation
 for the rate-of-change of \val{P} is:
 \begin{linenomath}
 \begin{equation*}
-  \dfrac{d n\sub{P}}{d t} = c\sub{P} \cdot V\sub{comp} \cdot k\sub{cat} \cdot [ES]
+  \dfrac{d n\sub{P}}{d t} = c\sub{P} \cdot V\sub{comp} \cdot k\sub{cat} \cdot [ES] \cdot c\sub{es}
 \end{equation*}
 \end{linenomath}
+
+\newpage
+
 The SBML encoding of this model is given below:
 
 \sbmlexample{conversionfactor.xml}
+
+\newpage
 
 %-----------------------------------------------------------------------------
 \subsection{Example of a discrete version of a simple dimerization reaction}

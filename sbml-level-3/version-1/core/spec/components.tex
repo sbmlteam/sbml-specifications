@@ -660,38 +660,30 @@ law.  Note how the invocation of the function uses its identifier.
 
 \begin{example}
 <model ...>
-    ...
-    <listOfFunctionDefinitions>
-        <functionDefinition id="pow3">
-            <math xmlns="http://www.w3.org/1998/Math/MathML"
-                  xmlns:sbml="http://www.sbml.org/sbml/level3/version1/core">
-                <lambda>
-                    <bvar><ci> x </ci></bvar>
-                    <apply>
-                        <power/>
-                        <ci> x </ci>
-                        <cn sbml:units="dimensionless"> 3 </cn>
-                    </apply>
-                </lambda>
-            </math>
-        </functionDefinition>
-    </listOfFunctionDefinitions>
-    ...
-    <listOfReactions>
-        <reaction id="reaction_1" reversible="true" fast="false">
-            ...
-            <kineticLaw>
-                <math xmlns="http://www.w3.org/1998/Math/MathML">
-                    <apply>
-                        <ci> pow3 </ci>
-                        <ci> S1 </ci>
-                     </apply>
-                </math>
-            </kineticLaw>
-            ...
-        </reaction>
-    </listOfReactions>
-    ...
+   <listOfFunctionDefinitions>
+       <functionDefinition id="pow3">
+           <math xmlns="http://www.w3.org/1998/Math/MathML"
+                 xmlns:sbml="http://www.sbml.org/sbml/level3/version1/core">
+               <lambda>
+                   <bvar><ci> x </ci></bvar>
+                   <apply> <power/> <ci> x </ci> <cn sbml:units="dimensionless"> 3 </cn> </apply>
+               </lambda>
+           </math>
+       </functionDefinition>
+   </listOfFunctionDefinitions>
+   ...
+   <listOfReactions>
+       <reaction id="reaction_1" reversible="true" fast="false">
+           ...
+           <kineticLaw>
+               <math xmlns="http://www.w3.org/1998/Math/MathML">
+                   <apply> <ci> pow3 </ci> <ci> S1 </ci> </apply>
+               </math>
+           </kineticLaw>
+           ...
+       </reaction>
+   </listOfReactions>
+   ...
 </model>\end{example}
 
 
@@ -706,13 +698,57 @@ components and mathematical expressions comprising the formula, or
 in other words, the unit obtained by doing dimensional analysis on
 the formula.  To support this, units may be supplied in a number
 of contexts in an SBML model and associated with a variety of
-components.
+components, and SBML provides a facility for defining units that
+can be reused and referenced throughout a model.  The unit
+definition facility uses two classes of objects, \UnitDefinition
+and \Unit.  Their definitions are shown in
+Figure~\vref{fig:unitdefinition} and explained in more detail
+below.
 
-SBML provides a facility for defining units that can be reused and
-referenced throughout a model.  The SBML unit definition facility
-uses two classes of objects, \UnitDefinition and \Unit.  Their
-definitions are shown in Figure~\vref{fig:unitdefinition} and
-explained in more detail below.
+Before delving further into the definition of SBML units, we must
+highlight two important and sometimes-confusing points.  First,
+unit declarations in SBML models are \emph{optional}.  The
+consequence of this is that a model must be numerically
+self-consistent independently of unit declarations, for the
+benefit of software tools that cannot interpret or manipulate
+units.  Unit declarations in SBML are thus more akin to a type of
+annotation; they can indicate intentions, and can be used by model
+readers for checking the consistency of the model, labeling
+simulation output, etc., but any transformations of values implied
+by different units must be incorporated \emph{explicitly} into a
+model.  We revisit this topic in Section~\ref{sec:using-units},
+and illustrate it again with the example given in
+Section~\ref{sec:eg:conversionfactor}.
+
+Second, the vast majority of situations that require new SBML unit
+definitions involve simple multiplicative combinations of base
+units and factors.  An example is ``moles per litre per second''.
+What distinguishes these sorts of unit definitions from more
+complex ones is that they may be expressed without the use of an
+additive offset from a zero point.  The use of offsets complicates
+all unit definition systems, yet in the domain of SBML, the
+real-life cases requiring offsets are few (and in fact, to the
+best of our knowledge, only involve temperature).  Consequently,
+the SBML unit system has been consciously designed to simplify
+implementation of unit support for the most common cases in
+systems biology.  The cost of this simplification is to require
+units with offsets to be handled explicitly by the modeler.
+Section~\ref{sec:bp:unitdefinitions:offset} discusses approaches
+for handling situations requiring units with offsets.
+
+
+\subsubsection{\class{UnitDefinition}}
+\label{sec:unitdefinition-structure}
+
+The approach to defining units in SBML is compositional; for
+example, $meter\ second^{\,-2}$ is constructed by combining a
+\Unit object representing $meter$ with another \Unit object
+representing $second^{\,-2}$.  The combination is wrapped inside a
+\UnitDefinition, which provides for assigning an identifier and
+optional name to the combination.  These object classes are
+defined in Figure~\ref{fig:unitdefinition}.  Once a unit is
+defined using a \UnitDefinition object, it can then be referenced
+from elsewhere in a model.
 
 \begin{figure}[htb]
   \centering
@@ -733,37 +769,6 @@ explained in more detail below.
       not allow redefining the base units.}
   \label{fig:unitdefinition}
 \end{figure}
-
-The approach to defining units in SBML is compositional; for
-example, $meter\ second^{\,-2}$ is constructed by combining a
-\Unit object representing $meter$ with another \Unit object
-representing $second^{\,-2}$.  The combination is wrapped inside a
-\UnitDefinition, which provides for assigning an identifier and
-optional name to the combination.  The identifier can then be
-referenced from elsewhere in a model.
-
-The vast majority of situations that require new SBML unit
-definitions involve simple multiplicative combinations of base
-units and factors.  An example is ``moles per litre per second''.
-What distinguishes these sorts of unit definitions from more
-complex ones is that they may be expressed without the use of an
-additive offset from a zero point.  The use of offsets complicates
-all unit definition systems, yet in the domain of SBML, the
-real-life cases requiring offsets are few (and in fact, to the
-best of our knowledge, only involve temperature).  Consequently,
-the SBML unit system has been consciously designed to simplify
-implementation of unit support for the most common cases in
-systems biology.  The cost of this simplification is to require
-units with offsets to be handled explicitly by the modeler.
-Section~\ref{sec:bp:unitdefinitions:offset} discusses approaches
-for handling situations requiring units with offsets.
-
-
-\subsubsection{\class{UnitDefinition}}
-\label{sec:unitdefinition-structure}
-
-A unit definition in SBML consists of an instance of a
-\UnitDefinition object, shown in Figure~\ref{fig:unitdefinition}.
 
 
 \paragraph{The \token{id} and \token{name} attributes}
@@ -994,7 +999,7 @@ follows:
 \end{itemize}
 
 
-\subsubsection{Semantics and use of \class{Unit} and \class{UnitDefinition}}
+\subsubsection{Semantics of \class{Unit} and \class{UnitDefinition}}
 \label{sec:unit-structure:semantics}
 
 A single \Unit object instance takes one of the base units from
@@ -1081,88 +1086,73 @@ s^{-1}$:
 </listOfUnitDefinitions>
 \end{example}
 
-
-\paragraph{Comparing and/or converting units in a model}
-\label{sec:unit-simple-approach}
-
-The unit system in SBML allows model quantities to be expressed in
-units other than the base units of Table~\ref{tab:unitkind}.  For
-analyses and computations, the consumer of the model (be it a
-software tool or a human) will want to convert all model
-quantities to base SI units for purposes such as verifying the
-consistency of units throughout the model.  To understand this
-process in the context of SBML's unit system, let us consider how
-we would convert a quantity \ybase, measured in terms of the base
-units, to a new quantity \ynew, measured in terms of an
-alternative unit \udef.  The relationship between the two
-quantities will be given by
-\begin{linenomath}
-\begin{equation}
-  \ybase \cdot \uone^{z_1} \cdot \utwo^{z_2} \cdot \ldots \cdot \un^{z_n} = \ynew  \cdot \udef 
-\label{eq:unit-equality}
-\end{equation}
-\end{linenomath}
-where the unknown exponent of each base unit is denoted by $z_i$.
-Substituting Equation~\ref{eq:multip-units} for \udef into
-Equation~\ref{eq:unit-equality} results in the following
-expression:
-\begin{linenomath}
-\begin{equation}
-  \ybase \cdot \uone^{z_1} \cdot \utwo^{z_2} \cdot \ldots \cdot \un^{z_n}
-    = \ynew \cdot m \cdot 10^s \cdot \uone^{x_1} \cdot \utwo^{x_2} \cdot \ldots \cdot \un^{x_n}
-\label{eq:unit-conversion}
-\end{equation}
-\end{linenomath}
-Since the base units are independent, the equation above can be
-solved for the unknown exponents on the left-hand side:
-$z_i = x_i$ and $\ybase = \ynew \cdot m \cdot 10^s$.
-
-Some additional points are worth discussing about the unit scheme.
-First, and most importantly, the equations
-above are formulated with the assumption that the units do
-not require an additive offset as part of their definition.
-\emph{When temperature values in units other than kelvin are being
-  considered, then a different interpretation must be made}, as
-discussed in Section~\ref{sec:bp:unitdefinitions:offset}.
-
-A second point is that care is needed to avoid seemingly-obvious
-but incorrect translations into this scheme of units taken from
-textbooks.  The scheme above makes it easy to formulate statements
-such as ``1 foot = 0.3048 metres'' in the most natural way.
-However, the most common expression of the relationship between
-temperature in Fahrenheit and kelvin, ``$T_{Fahrenheit} = 1.8
-\cdot (T_{kelvin} - 273.15) + 32$'' might lead one to believe that
-defining Fahrenheit degrees in terms of kelvin degrees involves
-using \token{multiplier}=\val{1.8}.  \emph{Not so}, when degree
-changes are being considered and not temperature values.
-Converting \emph{temperature values} is different from expressing
-a relationship between degree measurements.  The proper value for
-the multiplier in the latter case is $5/9$, \ie
-\token{multiplier}=\val{0.555556} (where we picked an arbitrary
-decimal precision).  If, on the other hand, the actual temperature
-is relevant to a quantity (\eg if a model uses a quantity that has
-particular values at particular temperatures), then offsets are
-required in the unit calculations.  While the SBML unit system
-does not provide a means for specifying offsets directly, it is
-still possible to encode models using such units.
+As mentioned above, the SBML unit system does not provide a means
+for specifying offsets directly.
 Section~\ref{sec:bp:unitdefinitions:offset} provides suggestions
 for possible ways of handling such cases.
 
 
-\subsubsection{References to units}
+\subsubsection{Use of units in a model}
+\label{sec:using-units}
 
-An attribute that declares the unit associated with the value of
-a component (\eg the attribute \token{units} on \Parameter) can
-take a value chosen from among the following:
-\begin{itemize}
-  
-\item The identifier of a base unit listed in
-  Table~\vref{tab:unitkind}; and
+As already mentioned, unit declarations are optional in SBML.
+This design decision was a consensus choice among SBML developers
+and users, driven by the exigencies of non-commercial software
+development and the realities of models found in existence.  It
+has an important and possibly counterintuitive implication that
+must be kept in mind when writing and interpreting SBML models:
+units associated with quantities \emph{do not alter the numerical
+  interpretation} of those quantities.
 
-\item A new unit identifier defined by a \UnitDefinition as
-  described in Section~\ref{sec:unitdefinitions}.
+An example may help make this more clear.  We know that one meter
+equals 1000 millimeters:
+\begin{linenomath}
+  \begin{equation*}
+    1\, \{m\} = 1000\, \{mm\}
+  \end{equation*}
+\end{linenomath}
+However, the equality above relies on interpreting the units on
+both sides.  If readers ignored unit labels altogether or were
+unable to process them, they would see
+\begin{linenomath}
+  \begin{equation*}
+    1 = 1000
+  \end{equation*}
+\end{linenomath}
+which is obviously incorrect.  In an SBML model, the necessary
+factor must be included explicitly, even if it is part of the
+definition of the unit.  That is, an explicit factor needs to be
+inserted, such as
+\begin{linenomath}
+  \begin{equation}\label{eq:factor}
+    1 \, \{m\} = \frac{1 \, \{m\}}{1000 \, \{mm\}} \cdot 1000 \, \{mm\}
+  \end{equation}
+\end{linenomath}
+even though a unit definition for millimeters in SBML would take
+the following form:
 
-\end{itemize}
+\begin{example}
+<listOfUnitDefinitions>
+    <unitDefinition id="millimeter">
+        <listOfUnits>
+            <unit kind="metre" exponent="1" scale="-3" multiplier="1"/>
+        </listOfUnits>
+    </unitDefinition>
+</listOfUnitDefinitions>
+\end{example}
+
+In other words, the definition \emph{also} includes a factor of
+$1/1000$.  The reason, again, is that the numerical interpretation
+of an SBML model is made without regards to the units, which are
+in effect a kind of annotation attached to quantities in the
+model.  While the result is that information is duplicated between
+the definition of \token{millimeter} above and the explicit factor
+inserted into Equation~\ref{eq:factor}, the machinery provided by
+\UnitDefinition is still necessary in order to allow units to be
+properly defined.  The result is still useful and powerful: it
+permits software tools to check the consistency of a model,
+perform unit conversions, label numbers in the outputs of
+simulations, and so on.
 
 
 %-----------------------------------------------------------------------------

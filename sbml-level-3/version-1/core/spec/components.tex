@@ -752,7 +752,7 @@ from elsewhere in a model.
 
 \begin{figure}[htb]
   \centering
-  \vspace*{-1ex}
+  \vspace*{1ex}
   \includegraphics[scale=0.78]{figs/unitdefinition-uml}
   \caption{The definition of classes \UnitDefinition and
       \Unit.  A sequence of one or more instances of
@@ -861,14 +861,13 @@ the value space of the data type \primtype{UnitSId}
     (Section~\ref{sec:unitsid}).  All are names of base or derived
     SI units~\protect\citep{bipm:2006}, except for
     ``\token{avogadro}'', ``\token{dimensionless}'' and
-    ``\token{item}'', which are SBML additions important for
-    handling certain common situations.  The unit
+    ``\token{item}'', which are SBML additions.  The unit
     ``\token{dimensionless}'' is intended for cases where a
     quantity is a ratio whose units cancel out, the unit
     ``\token{avogadro}'' is the unit ``\token{dimensionless}''
     multiplied with Avogadro's number, 
     and ``\token{item}'' is used for expressing such things as 
-    ``N items'' (e.g., ``100 molecules'').  Also, note that the
+    ``N items'' (e.g., ``100 molecules'').   The
     gram and litre are not strictly part of SI; however, they are
     frequently used in SBML's areas of application and therefore
     are included as predefined unit identifiers.  (The standard SI
@@ -923,8 +922,8 @@ for \token{avogadro}.  However, all software reading models
 expressed in \emph{this} Version of SBML Level~3 should
 \emph{always} use the value of Avogadro's constant given above.
 
-For purposes of comparing units, the following relationship should
-be assumed:
+For purposes of comparing units in SBML, the following
+relationship should be assumed:
 \begin{linenomath}
   \begin{equation} \label{eq:unit-conversion-avogadro}
     \token{mole} = \token{avogadro} \cdot \token{item}
@@ -941,15 +940,15 @@ be assumed:
 
 \newcommand{\ynew}{\ensuremath{y}\xspace}
 \newcommand{\ybase}{\ensuremath{y_b}\xspace}
-\newcommand{\udef}{\ensuremath{\{u\}}\xspace}
-\newcommand{\unew}{\ensuremath{\{u_\text{new}\}}\xspace}
-\newcommand{\ubase}{\ensuremath{\{u_b\}}\xspace}
-\newcommand{\ukind}{\ensuremath{\{u_\token{\,kind}\}}\xspace}
-\newcommand{\uone}{\ensuremath{\{u_{b_1}\}}\xspace}
-\newcommand{\utwo}{\ensuremath{\{u_{b_2}\}}\xspace}
-\newcommand{\un}  {\ensuremath{\{u_{b_n}\}}\xspace}
+\newcommand{\udef}{\ensuremath{u}\xspace}
+\newcommand{\unew}{\ensuremath{u_\text{new}}\xspace}
+\newcommand{\ubase}{\ensuremath{u_b}\xspace}
+\newcommand{\ukind}{\ensuremath{u_\token{\,kind}}\xspace}
+\newcommand{\uone}{\ensuremath{u_{b_1}}\xspace}
+\newcommand{\utwo}{\ensuremath{u_{b_2}}\xspace}
+\newcommand{\un}  {\ensuremath{u_{b_n}}\xspace}
 
-The three other attributes \token{exponent}, \token{scale} and
+The attributes \token{exponent}, \token{scale} and
 \token{multiplier} work together to permit the use of \Unit for
 expressing new units in terms of the base units listed in
 Table~\vref{tab:unitkind}.  The formula underlying this definition
@@ -984,17 +983,16 @@ follows:
   for a power-of-ten multiplier that rescales the unit.  For
   example, a unit having a \token{kind} value of \val{gram} and a
   \token{scale} value of \val{-3} signifies $10^{-3} \cdot gram$,
-  or milligrams.  A value of \token{scale} must always be provided
-  in a \Unit object instance; in those cases where a unit does not
-  need to be scaled by a power of ten, the value of \token{scale}
-  can be set to \val{0} (zero), because $10^0 = 1$.
+  or milligrams.  In those cases where a unit does not need to be
+  scaled by a power of ten, the value of \token{scale} can be set
+  to \val{0} (zero), because $10^0 = 1$.
 
 \item The \token{exponent} attribute can be used to specify an
   overall exponent on the unit definition.  This provides a way to
   define units such as ``cubic meter'' in terms of the base unit
   \val{metre} (for which an \token{exponent} value of~\val{3}
   would be appropriate).  A value of \token{exponent} must always
-  be provided in a \Unit object instance.
+  be provided.
 
 \end{itemize}
 
@@ -1061,6 +1059,7 @@ define a unit for \val{foot} in terms of the base unit
 \end{linenomath}
 The following fragment of SBML illustrates how this could be
 represented in XML:
+
 \begin{example}
 <listOfUnitDefinitions>
     <unitDefinition id="foot">
@@ -1070,6 +1069,7 @@ represented in XML:
     </unitDefinition>
 </listOfUnitDefinitions>
 \end{example}
+
 To give another example, the following illustrates the definition
 of an abbreviation \val{mmls} for the unit $millimoles\ l^{-1}\
 s^{-1}$:
@@ -1108,12 +1108,13 @@ An example may help make this more clear.  We know that one meter
 equals 1000 millimeters:
 \begin{linenomath}
   \begin{equation*}
-    1\, \{m\} = 1000\, \{mm\}
+    1\, m = 1000\, mm
   \end{equation*}
 \end{linenomath}
 However, the equality above relies on interpreting the units on
-both sides.  If readers ignored unit labels altogether or were
-unable to process them, they would see
+both sides, and taking the ``1'' and ``1000'' to be dimensionless.
+If readers ignored unit labels altogether or were unable to
+process them, they would see
 \begin{linenomath}
   \begin{equation*}
     1 = 1000
@@ -1121,16 +1122,22 @@ unable to process them, they would see
 \end{linenomath}
 which is obviously incorrect.  In an SBML model, the necessary
 factor must be included explicitly, even if it is part of the
-definition of the unit.  That is, an explicit factor needs to be
-inserted, such as
+definition of the unit.  A necessary ramification of this is that
+units attached to SBML quantities must be viewed as a kind of
+independent annotation or label that does not enter into the
+numerical interpretation of the actual quantity or the
+mathematical formulas appearing in a model.  In the present simple
+formula, an explicit factor such as the following needs to be
+inserted (and here we put unit names in \{$\,$\} braces to
+indicate they are annotations that do not enter into the
+mathematics):
 \begin{linenomath}
   \begin{equation}\label{eq:factor}
-    1 \, \{m\} = \frac{1 \, \{m\}}{1000 \, \{mm\}} \cdot 1000 \, \{mm\}
+    1 \, \{m\} = 1000 \cdot \frac{1 \, \{m\}}{1000 \, \{mm\}} \, \{mm\}
   \end{equation}
 \end{linenomath}
-even though a unit definition for millimeters in SBML would take
-the following form:
-
+This is despite that a unit definition for millimeters in SBML
+would take the following form:
 \begin{example}
 <listOfUnitDefinitions>
     <unitDefinition id="millimeter">
@@ -1142,17 +1149,14 @@ the following form:
 \end{example}
 
 In other words, the definition \emph{also} includes a factor of
-$1/1000$.  The reason, again, is that the numerical interpretation
-of an SBML model is made without regards to the units, which are
-in effect a kind of annotation attached to quantities in the
-model.  While the result is that information is duplicated between
-the definition of \token{millimeter} above and the explicit factor
-inserted into Equation~\ref{eq:factor}, the machinery provided by
-\UnitDefinition is still necessary in order to allow units to be
-properly defined.  The result is still useful and powerful: it
-permits software tools to check the consistency of a model,
-perform unit conversions, label numbers in the outputs of
-simulations, and so on.
+$1/1000$.  While the result is that information is duplicated
+between the definition of \token{millimeter} above and the
+explicit factor inserted into Equation~\ref{eq:factor}, the
+machinery provided by \UnitDefinition is still necessary in order
+to allow units themselves to be properly defined.  The result is
+still useful and powerful: it permits software tools to check the
+consistency of a model, perform unit conversions, label numbers in
+the outputs of simulations, and so on.
 
 
 %-----------------------------------------------------------------------------

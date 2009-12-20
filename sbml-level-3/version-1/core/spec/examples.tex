@@ -120,6 +120,10 @@ parameters.
 \newcommand{\veq}  {v_{\token{veq}}}
 \newcommand{\vcat} {v_{\token{vcat}}}
 \newcommand{\Vcomp}{V_\text{comp}}
+\newcommand{\convE} {\ensuremath{c_\species{E}}}
+\newcommand{\convS} {\ensuremath{c_\species{S}}}
+\newcommand{\convP} {\ensuremath{c_\species{P}}}
+\newcommand{\convES}{\ensuremath{c_{\species{ES}}}}
 
 The unit associated with the rate of each reaction in the model is
 \emph{mole}/\emph{second} by virtue of the \token{extentUnits} and
@@ -144,9 +148,12 @@ compensate, we change the values of the constants \kon, \koff, and
 \kcat as follows:
 \begin{linenomath}
   \begin{align*}
-    k_{\text{on (new)}}  & = k_{\text{on (original)}} \cdot ???\\
-    k_{\text{off (new)}} & = k_{\text{off (original)}} \cdot ???\\
-    k_{\text{cat (new)}} & = k_{\text{cat (original)}} \cdot ???
+    k_{\text{on (new)}}  & = k_{\text{on (original)}} \cdot (\frac{1\:mole}{1000\:millimoles})^{2}
+    & = 1\;\emph{litre} \;\emph{mole} \;\emph{millimole}^{\,-2}\emph{second}^{\,-1}\\
+    k_{\text{off (new)}} & = k_{\text{off (original)}} \cdot \frac{1\:mole}{1000\:millimoles}
+    & = 0.0002\;\emph{mole} \;\emph{millimole}^{\,-1}\emph{second}^{\,-1}\\
+    k_{\text{cat (new)}} & = k_{\text{cat (original)}} \cdot \frac{1\:mole}{1000\:millimoles}
+    & = 0.0001\;\emph{mole} \;\emph{millimole}^{\,-1}\emph{second}^{\,-1}\\
   \end{align*}
 \end{linenomath}
 These are admittedly unconventional units for mass-action kinetic
@@ -158,6 +165,34 @@ being measured), the kinetic rate constants are likely to be
 measured in terms of the units above.  However, if that is not the
 case, then the approach of Section~\ref{sec:eg:conversionfactor2}
 may be more appropriate.
+
+The guidelines
+described in Section~\ref{sec:about-kinetic-laws}, can now
+be applied to produce the rate-of-change equations for
+each species in the model.  Let \csg stand for the value of the \Model
+object's \token{conversionFactor} attribute.  Thus the
+rate-of-change equation for \species{S} is:
+\begin{linenomath}
+\begin{equation*}
+  \dfrac{d n\sub{S}}{d t} = - \csg \cdot \Vcomp \cdot
+   (k_{\text{on (new)}} \cdot \concent{E} \cdot \concent{S} 
+   - k_{\text{off (new)}} \cdot \concent{ES})
+\end{equation*}
+\end{linenomath}
+
+For species \species{P}, we need a separate value for the \Species
+attribute \token{conversionFactor}, to convert between the units
+of \emph{gram} and \emph{mole}.  By virtue of being defined on the
+\Species object for \species{P}, this conversion factor value will
+override the global value defined on the \Model object.  Letting
+this conversion factor be represented by \convP, the equation for
+the rate-of-change of \species{P} is:
+\begin{linenomath}
+\begin{equation*}
+  \dfrac{d n\sub{P}}{d t} = \convP \cdot \Vcomp \cdot k_{\text{cat (new)}} \cdot \concent{ES}
+\end{equation*}
+\end{linenomath}
+ 
 
 The following is the SBML encoding of the present model:
 
@@ -172,10 +207,6 @@ The following is the SBML encoding of the present model:
 \label{sec:eg:conversionfactor2}
 %-----------------------------------------------------------------------------
 
-\newcommand{\convE} {\ensuremath{c_\species{E}}}
-\newcommand{\convS} {\ensuremath{c_\species{S}}}
-\newcommand{\convP} {\ensuremath{c_\species{P}}}
-\newcommand{\convES}{\ensuremath{c_{\species{ES}}}}
 
 Here we present an alternative formulation of the model from the
 previous section.  Once again, it involves the same enzymatic
@@ -223,30 +254,31 @@ consideration here, the constants are all identical:
       \convE = \convS = \convES = 10^{-3}\;\emph{mole} \;\emph{millimole}^{\,-1}
   \end{equation*}
 \end{linenomath}
-Next, we define the rate equations to be put in the \Reaction
-object definitions.  Let \csg stand for the value of the \Model
-object's \token{conversionFactor} attribute.  Using the guidelines
-described in Section~\ref{sec:about-kinetic-laws}, the
-rate-of-change equation for species \species{S} is:
+Applying this approach the reaction rate equations that must now 
+be encoded in the \Reaction object definitions are:
 \begin{linenomath}
-\begin{equation*}
-  \dfrac{d n\sub{S}}{d t} = - \csg \cdot \Vcomp \cdot
-   (\kon \cdot \concent{E} \cdot \convE \cdot \concent{S} \cdot \convS
-   - \koff \cdot \concent{ES} \cdot \convES)
-\end{equation*}
+  \begin{align*}
+    \veq  & = \Vcomp \cdot (\kon \cdot \concent{E} \cdot \convE \cdot \concent{S} \cdot \convS
+   - \koff \cdot \concent{ES} \cdot \convES)\\
+    \vcat & = \Vcomp \cdot \kcat \cdot \concent{ES} \cdot \convES
+  \end{align*}
 \end{linenomath}
-For species \species{P}, we need a separate value for the \Species
-attribute \token{conversionFactor}, to convert between the units
-of \emph{gram} and \emph{mole}.  By virtue of being defined on the
-\Species object for \species{P}, this conversion factor value will
-override the global value defined on the \Model object.  Letting
-this conversion factor be represented by \convP, the equation for
-the rate-of-change of \species{P} is:
+where again $V\sub{comp}$ stands for the size of compartment \val{comp}
+in the SBML model.  The rate-of-change equations for the each species are 
+constructed using the the guidelines
+described in Section~\ref{sec:about-kinetic-laws} and in this example the 
+equations for species \species{S} and \species{P} are 
 \begin{linenomath}
-\begin{equation*}
-  \dfrac{d n\sub{P}}{d t} = \convP \cdot \Vcomp \cdot \kcat \cdot \concent{ES} \cdot \convES
-\end{equation*}
+  \begin{align*}
+		\dfrac{d n\sub{S}}{d t} & = - \csg \cdot \Vcomp \cdot
+			(\kon \cdot \concent{E} \cdot \convE \cdot \concent{S} \cdot \convS
+			- \koff \cdot \concent{ES} \cdot \convES)\\
+       \dfrac{d n\sub{P}}{d t} & = \convP \cdot \Vcomp \cdot \kcat \cdot \concent{ES} \cdot \convES
+  \end{align*}
 \end{linenomath}
+where again \csg stands for the value of the \Model
+object's \token{conversionFactor} attribute and \convP is the \token{conversionFactor} attribute of
+\Species \species{P}.
 
 The SBML encoding of this model is given below:
 

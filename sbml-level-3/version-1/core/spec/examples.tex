@@ -3,6 +3,13 @@
 % $HeadURL$
 % ----------------------------------------------------------------
 
+% Macros used in this section to provide common typesetting styles.
+
+\newcommand{\species}[1]{\textit{#1}\xspace}
+\newcommand{\concent}[1]{\ensuremath{[\textit{#1}\,]}\xspace}
+
+
+
 \section{Example models expressed in XML using SBML}
 \label{sec:xml-rep}
 \label{sec:examples}
@@ -10,69 +17,61 @@
 In this section, we present several examples of complete models
 encoded in XML using SBML Level~3.
 
-%Our approach to translating
-%the UML-based structure definitions presented in the previous
-%sections is described elsewhere~\citep{hucka:2000b}.
-%Appendix~\ref{apdx:schemas} gives the full listing of an XML
-%Schema corresponding to SBML Level~2.
-
 
 %-----------------------------------------------------------------------------
 \subsection{A simple example application of SBML}
 \label{sec:modeleg}
 %-----------------------------------------------------------------------------
 
+\newcommand{\kon} {\ensuremath{k_\text{on}}\xspace}
+\newcommand{\koff}{\ensuremath{k_\text{off}}\xspace}
+\newcommand{\kcat}{\ensuremath{k_\text{cat}}\xspace}
+
 Consider the following representation of an enzymatic reaction:
 \begin{center}
-  \ce{E + S <=>[k_{\text{on}}][k_{\text{off}}] ES ->[k_{\text{cat}}] E + P}
+  \ce{\species{E} + \species{S} <=>[\kon][\koff] \species{ES} ->[\kcat] \species{E} + \species{P}}
 \end{center}
-Suppose we have the following initial species amounts and
-parameter values,
+In our model, we use the following initial species amounts:
 \begin{linenomath}
-  \begin{equation*}
-    \begin{array}{@{}lll@{}}
-      \textrm{E}   & = 5 \cdot 10^{-21}\; \emph{mole} \\
-      \textrm{S}   & = 10^{-20}\; \emph{mole} \\
-      \textrm{P}   & = 0\; \emph{mole} \\
-      \textrm{ES}  & = 0\; \emph{mole} \\
-      k_{\text{on}}  & = 1\:000\:000 \;\emph{litre} \;\emph{mole}^{\,-1} \emph{second}^{\,-1}\\
-      k_{\text{off}} & = 0.2 \;\emph{second}^{\,-1}\\
-      k_{\text{cat}} & = 0.1 \;\emph{second}^{\,-1}
-    \end{array}
-  \end{equation*}
+  \begin{align*}
+    \species{E}  &= 5 \cdot 10^{-21}\; \emph{mole} \\
+    \species{S}  &= 10^{-20}\; \emph{mole} \\
+    \species{P}  &= 0\; \emph{mole} \\
+    \species{ES} &= 0\; \emph{mole}
+  \end{align*}
 \end{linenomath}
-and we place everything in a single compartment called
-\token{comp} whose volume is $10^{-14}$ liters.  The following
-is a minimal but complete SBML document encoding this model:
+Note that the species quantities are initialized in terms of
+substance amounts rather than concentrations.  We also define the
+following values for the kinetic constants:
+\begin{linenomath}
+  \begin{align*}
+    \kon         &= 1\:000\:000 \;\emph{liter} \;\emph{mole}^{\,-1} \emph{second}^{\,-1}\\
+    \koff        &= 0.2 \;\emph{second}^{\,-1}\\
+    \kcat        &= 0.1 \;\emph{second}^{\,-1}
+  \end{align*}
+\end{linenomath}
+We place everything in a single compartment we call ``comp'' whose
+volume is $10^{-14}$ liters.  The following is a minimal but
+complete SBML document encoding this model:
 
 \sbmlexample{enzymekinetics.xml}
 
-In this example, the model contains one compartment (with
-identifier \val{comp}), four species (with identifiers
-\val{ES}, \val{P}, \val{S}, and \val{E}), and two reactions
-(\val{veq} and \val{vcat}).  The elements in the
-\token{listOfReactants} and \token{listOfProducts} in each
-reaction refer to elements listed in the \token{listOfSpecies}.
-The correspondences between the various elements are explicitly
-stated by the \token{speciesReference} elements.
+The model features local parameter definitions in each reaction.
+In this case, the three parameters (\val{kon}, \val{koff},
+\val{kcat}) all have unique identifiers and they could also have
+just as easily been declared global parameters in the model.
+Local parameters frequently become more useful in larger models,
+where it may become tedious to assign unique identifiers for all
+the different parameters.
 
-The model also features local parameter definitions in each
-reaction.  In this case, the three parameters (\val{kon},
-\val{koff}, \val{kcat}) all have unique identifiers and they could
-also have just as easily been declared global parameters in the
-model.  Local parameters frequently become more useful in larger
-models, where it may become tedious to assign unique identifiers
-for all the different parameters.
-
-Finally, the example above also demonstrates the use of unit
-specifications throughout the model.  The \token{model} components
-define the units of kinetic laws as being
-\emph{mole}/\emph{second} by virtue of the values of the
-attributes \token{extentUnits} and \token{timeUnits}.  Elsewhere
-in the model, species, parameters and compartments are defined
-with appropriate units so that the mathematical formulas inside
-the \token{kineticLaw} elements work out to be
-\emph{mole}/\emph{second}.   
+The example above also demonstrates the use of unit specifications
+throughout the model.  The \token{model} components define the
+units of kinetic laws as being \emph{mole}/\emph{second} by virtue
+of the values of the attributes \token{extentUnits} and
+\token{timeUnits}.  In the rest of the model, species, parameters
+and compartments are defined with appropriate units so that the
+mathematical formulas inside the \token{kineticLaw} elements work
+out to be \emph{mole}/\emph{second}.
 
 
 %-----------------------------------------------------------------------------
@@ -83,94 +82,174 @@ the \token{kineticLaw} elements work out to be
 This example involves the same enzymatic reaction as in the
 example of Section~\ref{sec:modeleg}:
 \begin{center}
-  \ce{E + S <=>[k_{\text{on}}][k_{\text{off}}] ES ->[k_{\text{cat}}] E + P}
+  \ce{\species{E} + \species{S} <=>[\kon][\koff] \species{ES} ->[\kcat] \species{E} + \species{P}}
 \end{center}
-In this version of the model, we define a species with different
-units from the unit of extent of the reactions and use a
-conversion factor to reconcile the differences.  First, the
-initial amounts of the species are as follows:
+In this new version of the model, we deliberately define species
+with different units from the unit of reaction extent in the
+model, then use conversion factors to reconcile the differences.
+Specifically, we set the overall unit of extent on the model to be
+\emph{mole} and the unit of time to be \emph{second} by assigning
+appropriate values to the attributes \token{extentUnits} and
+\token{timeUnits}, respectively, on the \Model object definition.
+In the \Species object definitions, we then set the initial
+amounts and units as follows:
+\begin{linenomath}
+  \begin{align*}
+    \species{E}   & = 5 \cdot 10^{-18}\; \emph{millimole} \\
+    \species{S}   & = 10^{-17}\; \emph{millimole} \\
+    \species{P}   & = 0\; \emph{gram} \\
+    \species{ES}  & = 0\; \emph{millimole}
+  \end{align*}
+\end{linenomath}
+Note how species \species{E}, \species{S} and \species{ES} are
+given in units of \emph{millimoles}, but \species{P} is given in
+\emph{grams}; all are different from the unit of extent
+(\emph{mole}) declared on the \Model object.  To construct
+mathematical expressions that equate the rates of changes of the
+species' quantities to the reaction fluxes, we have to adjust the
+reaction rate expressions.  In what follows, we illustrate one
+approach to doing so, and in
+Section~\ref{sec:eg:conversionfactor2} we illustrate a second
+approach.  The method in the present section involves changing the
+values of the kinetic rate constants in the reaction rate
+formulas, while the example of
+Section~\ref{sec:eg:conversionfactor2} does not change the kinetic
+constants but does require the introduction of additional
+parameters.
+
+\newcommand{\veq}  {v_{\token{veq}}}
+\newcommand{\vcat} {v_{\token{vcat}}}
+\newcommand{\Vcomp}{V_\text{comp}}
+
+The unit associated with the rate of each reaction in the model is
+\emph{mole}/\emph{second} by virtue of the \token{extentUnits} and
+\token{timeUnits} attribute values on the \Model object
+definition.  The reaction rates (\ie the formulas in the
+\token{math} elements of \KineticLaw objects) are the same as in
+the original model,
+\begin{linenomath}
+  \begin{align}
+    \label{eq:v1}
+    \veq  & = \Vcomp \cdot (\kon \cdot \concent{E} \cdot \concent{S} - \koff \cdot \concent{ES})\\
+    \label{eq:v2}
+    \vcat & = \Vcomp \cdot \kcat \cdot \concent{ES}
+  \end{align}
+\end{linenomath}
+where $V\sub{comp}$ stands for the size of compartment \val{comp}.
+In Equations~\ref{eq:v1} and~\ref{eq:v2}, the values of
+\species{E}, \species{S} and \species{ES} are all in
+\emph{millimoles}, which results in a mismatch with the
+\emph{mole}/\emph{second} unit of the reaction rates.  To
+compensate, we change the values of the constants \kon, \koff, and
+\kcat as follows:
+\begin{linenomath}
+  \begin{align*}
+    k_{\text{on (new)}}  & = k_{\text{on (original)}} \cdot ???\\
+    k_{\text{off (new)}} & = k_{\text{off (original)}} \cdot ???\\
+    k_{\text{cat (new)}} & = k_{\text{cat (original)}} \cdot ???
+  \end{align*}
+\end{linenomath}
+These are admittedly unconventional units for mass-action kinetic
+rate constants.  They are unlikely to correspond to values found
+in textbooks or databases.  The logic of this approach is that in
+an actual experimental situation, with the units of the species as
+given in the model (presumably representing how the species are
+being measured), the kinetic rate constants are likely to be
+measured in terms of the units above.  However, if that is not the
+case, then the approach of Section~\ref{sec:eg:conversionfactor2}
+may be more appropriate.
+
+The following is the SBML encoding of the present model:
+
+\color{red}
+\sbmlexample{conversionfactor1.xml}
+\color{black}
+
+\clearpage
+
+%-----------------------------------------------------------------------------
+\subsection{An alternative formulation of the \token{conversionFactor} example}
+\label{sec:eg:conversionfactor2}
+%-----------------------------------------------------------------------------
+
+\newcommand{\convE} {\ensuremath{c_\species{E}}}
+\newcommand{\convS} {\ensuremath{c_\species{S}}}
+\newcommand{\convP} {\ensuremath{c_\species{P}}}
+\newcommand{\convES}{\ensuremath{c_\species{ES}}}
+
+Here we present an alternative formulation of the model from the
+previous section.  Once again, it involves the same enzymatic
+reaction as in the example of Section~\ref{sec:modeleg}:
+\begin{center}
+  \ce{\species{E} + \species{S} <=>[\kon][\koff] \species{ES} ->[\kcat] \species{E} + \species{P}}
+\end{center}
+As in Section~\ref{sec:eg:conversionfactor}, we define the overall
+unit of extent on the model to be \emph{mole} and the unit of time
+to be \emph{second}; this means the unit of reaction rates is
+\emph{mole}/\emph{second} as before.  We also set the initial
+amounts and units as in the previous section:
+\begin{linenomath}
+  \begin{align*}
+    \species{E}   & = 5 \cdot 10^{-18}\; \emph{millimole} \\
+    \species{S}   & = 10^{-17}\; \emph{millimole} \\
+    \species{P}   & = 0\; \emph{gram} \\
+    \species{ES}  & = 0\; \emph{millimole}
+  \end{align*}
+\end{linenomath}
+Unlike in the previous section's model, however, here we retain
+the values of the kinetic constants as they were originally in the
+model of Section~\ref{sec:modeleg}:
+\begin{linenomath}
+  \begin{align*}
+    \kon  & = 1\:000\:000 \;\emph{litre} \;\emph{mole}^{\,-1} \emph{second}^{\,-1}\\
+    \koff & = 0.2 \;\emph{second}^{\,-1}\\
+    \kcat & = 0.1 \;\emph{second}^{\,-1}
+  \end{align*}
+\end{linenomath}
+We take a different approach to adjusting the reaction rate
+expressions to account for the fact that the concentrations of the
+species as they appear in the \KineticLaw elements are in units of
+\emph{millimole}/\emph{litre}, while the unit of reaction extent
+is \emph{mole}.  Our approach here is to introduce constants into
+the reaction rate expressions to convert the substance units to
+\emph{mole} and multiply each occurence of a concentration by that
+constant.  A separate constant is necessary for each \Species
+object appearing in a \KineticLaw object, although it turns out
+that in the particular situation under consideration here, the
+constants are all identical:
 \begin{linenomath}
   \begin{equation*}
-    \begin{array}{@{}lll@{}}
-      \textrm{E}   & = 5 \cdot 10^{-18}\; \emph{millimole} \\
-      \textrm{S}   & = 10^{-17}\; \emph{millimole} \\
-      \textrm{P}   & = 0\; \emph{gram} \\
-      \textrm{ES}  & = 0\; \emph{millimole} \\
-    \end{array}
+      \convE = \convS = \convES = 10^{-3}\;\emph{mole} \;\emph{millimole}^{\,-1}
   \end{equation*}
 \end{linenomath}
-Note how species \val{E}, \val{S} and \val{ES} are given in units
-of \emph{millimoles}, but \val{P} is given in \emph{grams}.  
-
-The \Model declares the \token{extentUnits} to be \emph{mole} and the 
-\token{timeUnits} to be \emph{second}. Thus, the
-unit associated with the rate of each \Reaction given by the \token{math} element of the
-\KineticLaw must be \emph{mole}/\emph{second}.  
-
-The previous example
-defined the \KineticLaw \token{math} elements as
-\begin{linenomath}
-\begin{equation*}
-    \begin{array}{@{}lll@{}}
-  v\sub{1} & = V\sub{comp} \cdot (k\sub{on} \cdot [E] \cdot [S] - k\sub{off} \cdot [ES])\\
-  v\sub{2} & = V\sub{comp} \cdot k\sub{cat} \cdot [ES]  
-    \end{array}
-\end{equation*}
-\end{linenomath}
-where $V\sub{comp}$ stands for the size of compartment \val{comp} 
-and the values of the constants are
-\begin{linenomath}
-  \begin{equation*}
-    \begin{array}{@{}lll@{}}
-      k_{\text{on}}  & = 1\:000\:000 \;\emph{litre} \;\emph{mole}^{\,-1} \emph{second}^{\,-1}\\
-      k_{\text{off}} & = 0.2 \;\emph{second}^{\,-1}\\
-      k_{\text{cat}} & = 0.1 \;\emph{second}^{\,-1}
-    \end{array}
-  \end{equation*}
-\end{linenomath}
-These rate equations and values cannot be used in this version of the model 
-without accounting for the fact that the concentrations of the species
-as they appear in the \KineticLaw elements are now in units of \emph{millimole}/\emph{litre}.
-One approach is to define a constant that converts the declared substance unit to \emph{mole} and
-multiplies each occurence of a concentration by that constant.  A separate constant is necessary for
-each \Species appearing in a \KineticLaw; although in the situation under consideration these are
-identical as the units are the same.
-\begin{linenomath}
-  \begin{equation*}
-      c_{\text{e}} = c_{\text{s}} = c_{\text{es}} = 10^{-3}\;\emph{mole} \;\emph{millimole}^{\,-1}
-  \end{equation*}
-\end{linenomath}
-
-
-The construction of the rate equations from the model also needs to consider the different unit values.
-Let \csg stand for the value of the \Model object's
-\token{conversionFactor} attribute.  Using the guidelines
+Next, we define the rate equations to be put in the \Reaction
+object definitions.  Let \csg stand for the value of the \Model
+object's \token{conversionFactor} attribute.  Using the guidelines
 described in Section~\ref{sec:about-kinetic-laws}, the
-rate-of-change equation for species \val{S} is:
+rate-of-change equation for species \species{S} is:
 \begin{linenomath}
 \begin{equation*}
-  \dfrac{d n\sub{S}}{d t} = - \csg \cdot V\sub{comp} \cdot (k\sub{on} \cdot [E] \cdot c\sub{e} \cdot [S] \cdot c\sub{s} - k\sub{off} \cdot [ES] \cdot c\sub{es})
+  \dfrac{d n\sub{S}}{d t} = - \csg \cdot \Vcomp \cdot
+   (\kon \cdot \concent{E} \cdot \convE \cdot \concent{S} \cdot \convS
+   - \koff \cdot \concent{ES} \cdot \convES)
 \end{equation*}
 \end{linenomath}
-
-In the definition of species \val{P}, we use a separate value for
-the attribute \token{conversionFactor}, to convert between units of
-\emph{gram} and \emph{mole}.  By virtue of being defined on the
-\Species object for \val{P}, this conversion factor value will
+For species \species{P}, we need a separate value for the \Species
+attribute \token{conversionFactor}, to convert between the units
+of \emph{gram} and \emph{mole}.  By virtue of being defined on the
+\Species object for \species{P}, this conversion factor value will
 override the global value defined on the \Model object.  Letting
-this conversion factor be represented by $c\sub{P}$, the equation
-for the rate-of-change of \val{P} is:
+this conversion factor be represented by \convP, the equation for
+the rate-of-change of \species{P} is:
 \begin{linenomath}
 \begin{equation*}
-  \dfrac{d n\sub{P}}{d t} = c\sub{P} \cdot V\sub{comp} \cdot k\sub{cat} \cdot [ES] \cdot c\sub{es}
+  \dfrac{d n\sub{P}}{d t} = \convP \cdot \Vcomp \cdot \kcat \cdot \concent{ES} \cdot \convES
 \end{equation*}
 \end{linenomath}
-
-\newpage
 
 The SBML encoding of this model is given below:
 
-\sbmlexample{conversionfactor.xml}
+\sbmlexample{conversionfactor2.xml}
 
 \newpage
 

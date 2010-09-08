@@ -21,7 +21,7 @@ SBML_TEXINPUTS    = .:$(SBML_TEX)//:$(TEXINPUTS)
 SBML_BIBINPUTS    = .:$(SBML_BIB)/:$(BIBINPUTS)
 
 MAIN_FILE = sbml-level-2-version-4
-MATHML_SCHEMA = ../../../sbml-mathml/sbml-mathml.xsd
+MATHML_SCHEMA = ../../sbml-mathml/sbml-mathml.xsd
 
 default: pdf
 

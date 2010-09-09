@@ -4092,27 +4092,31 @@ Section~\ref{sec:ruleconstraints}.
 %-----------------------------------------------------------------------------
 
 \Model has an optional list of \Event objects that describe the
-time and form of explicit instantaneous discontinuous state
-changes in the model.  For example, an event may describe that one
-species quantity is halved when another species' quantity exceeds a
-given threshold value.
+time and form of instantaneous, discontinuous state changes in the
+model.  For example, an event may describe that a certain species
+quantity in a model is halved when another species' quantity
+exceeds a given threshold value.
 
-An \Event object defines when the event can occur, the variables
-that are affected by the event, how the variables are
-affected, and its relationship to other events.  The effect of the event can optionally be delayed after
-the occurrence of the condition which invokes it.  Conceptually,
-the operation of an event is divided into two phases (even when
-the event is not delayed): one when the event is \emph{fired} and
-the other when the event is \emph{executed}. The \Event type is
-defined in Figure~\vref{fig:event}.  The object classes \Event,
-\Trigger, \Delay, \Priority, and \EventAssignment are derived from \SBase{}
-(see Section~\ref{sec:sbase}).  An example of a model which uses
-events is given in Section~\ref{sec:examples}.
+An SBML \Event object defines when the event can occur, the
+variables that are affected by it, how the variables are affected,
+and the event's relationship to other events.  The effect of the
+event can optionally be delayed after the occurrence of the
+condition which invokes it.  Conceptually, the operation of every
+event is divided into two phases (even when it is not delayed):
+the first phase when the event is \emph{fired} and the second
+phase when the event is \emph{executed}.  The object classes
+\Event, \Trigger, \Delay, \Priority, \EventAssignment and
+\ListOfEventAssignments are derived from \SBase{} (see
+Section~\ref{sec:sbase}) and are defined in
+Figure~\vref{fig:event}.  An example of a model which uses events
+is given in Section~\ref{sec:examples}.
 
 \begin{figure}[htb]
   \centering
   \small
+  \vspace*{-1ex}
   \includegraphics[scale=0.8]{figs/event-uml}
+  \vspace*{-1ex}
   \caption{The definitions of \Event, \Trigger, \Delay, \Priority,
     \EventAssignment, and \ListOfEventAssignments.}
   \label{fig:event}
@@ -4121,10 +4125,11 @@ events is given in Section~\ref{sec:examples}.
 
 \subsubsection{\class{Event}}
 
-An \Event definition has two required parts: a trigger condition
-expressed, and at least one \EventAssignment.  In addition, an
-event can include an optional delay and an optional priority.  These features of \Event are
-described below.
+An \Event definition has one required part: a trigger condition
+(in the form of a \Trigger subobject).  The remaining components
+(the attributes on \Event, and the subobjects \Delay, \Priority,
+\ListOfEventAssignments, \EventAssignment) are optional.  These
+various features of \Event are described below.
 
 
 \paragraph{The \token{id} and \token{name} attributes}
@@ -4158,27 +4163,31 @@ benefit of SBO labels.
 \paragraph{The \token{useValuesFromTriggerTime} attribute}
 \label{sec:event-usevaluesfromtriggertime}
 
-The optional \Delay within \Event means there are two times to
-consider when computing the results of an event: the time at which
-the event \emph{fires}, and the time at which assignments are
-\emph{executed}.  It is also possible to distinguish between the
-time at which the \EventAssignment's expression is calculated, and
-the time at which the assignment is made: the expression could be
-evaluated at the same time the assignments are performed, i.e.,
-when the event is \emph{executed}, but it could also be defined to
-be evaluated at the time the event \emph{fired}.
+The possibility of defining an optional \Delay within \Event means
+there are two times to consider when interpreting an event: the
+time at which the event \emph{fires}, and the time at which its
+assignments are \emph{executed}.  Similarly, it is also possible
+to distinguish between the time at which the mathematical
+expression of an \EventAssignment object is evaluated, and the
+time at which this value is assigned to the entity referenced by
+the \EventAssignment's \token{variable} attribute.  Specifically,
+a model could intend the \EventAssignment expression to be
+evaluated either at the time the event is \emph{fired}, or at the
+time the event assignments are actually \emph{executed}.  (In the
+former case, a model interpreter would have to save the calculated
+values until the time of execution.)
 
 The attribute \token{useValuesFromTriggerTime} on \Event allows a
-model to indicate the time at which the event's assignments are
-intended to be evaluated.  A value of \val{true} indicates that
-values of the assignment formulas are to be computed at the moment
-the event fired, not after the delay (whether a delay is defined
-or not).  If \token{useValuesFromTriggerTime}=\val{false}, the
-formulas in the event's assignments are to be computed after the
-delay, at the time the event is executed.  (Note that a value of
-\val{false} for this attribute also implies that a \Delay
-subobject must be present in the \Event object, in order to define
-the length of the delay.)  The attribute has no default value.
+model to indicate the time at which time the event's assignments
+are to be evaluated.  A value of \val{true} indicates that the values
+of \EventAssignment formulas are to be computed at the moment the
+event is triggered.  If
+\token{useValuesFromTriggerTime}=\val{false}, the formulas in the
+event's assignments are to be computed at the time the event is
+executed.  (Note that a value of \val{false} for this attribute
+also implies that a \Delay subobject must be present in the \Event
+object, in order to define the length of the delay.)  The
+attribute has no default value.
 
 In SBML Level~3, the attribute \token{useValuesFromTriggerTime} on
 an \Event object is optional \emph{unless} there exists a \Delay
@@ -4191,51 +4200,115 @@ subobject in the \Event object, in which case,
 \label{sec:event-trigger}
 
 As shown in Figure~\ref{fig:event}, an \Event object must contain
-exactly one object of class \Trigger.  This \Trigger object in
-turn must contain a MathML \token{math} element.  The expression
-in the \token{math} element must evaluate to a value of type
-\primtype{boolean}.  The exact moment at which this expression
-evaluates to \val{true} during a simulation is taken to be the
-time point when the \Event is \emph{fired}.
+exactly one object of class \Trigger.  This object in turn must
+contain two attributes, \token{persistent} and
+\token{initialValue}, as well as a MathML \token{math} element.
+The expression in the \token{math} element must evaluate to a
+value of type \primtype{boolean}.  The exact moment at which this
+expression evaluates to \val{true} during a simulation is taken to
+be the time point when the \Event is \emph{fired}.
 
 An event only fires when the expression within its \Trigger object
 makes the transition in value from \val{false} to \val{true}.  The
-event will also fire at any future time points when the trigger
-make this transition; in other words, an event can fire multiple
-times during a simulation if its trigger condition makes the
-transition from \val{false} to \val{true} more than once.
+event will fire again at any subsequent time points when the
+trigger makes the transition from \val{false} to \val{true}; in
+other words, an event can fire multiple times during a simulation
+if its trigger condition makes the transition from \val{false} to
+\val{true} more than once.  The behavior at the very start of
+simulation time (\ie $t = 0$, where $t$ stands for time) is
+treated specially and determined in part by the boolean flag
+\token{initialValue}, discussed below.
+
 
 \paragraph{The \token{persistent} attribute on \class{Trigger}}
 \label{sec:trigger-persistent}
 
-Sometimes in the interval between when
-the event \emph{fires} and the time at which assignments are
-\emph{executed}, the model has changed sufficiently that the \Event should no longer \emph{execute}.  This is particularly true if the modeler is using optional \Delay within \Event, but this interval may be significant even in models without \Delay if two or more Events are scheduled to be \emph{executed} simultaneously.
+Sometimes, in the time interval between when an \Event object
+\emph{fires} (\ie its trigger expression transitions in value from
+\val{false} to \val{true}) and the time at which its assignments
+are to be \emph{executed}, conditions in the model may change such
+that the trigger expression transitions back from \val{true} to
+\val{false}.  Should the event's assignments still be made if
+this happens?  Answering this question is the purpose of the
+\token{persistent} attribute on \Trigger.
 
-The \token{persistent} boolean attribute on the \class{Trigger} distinguishes between two types of triggers:  those which, once \emph{fired}, must \emph{execute} (\token{persistent}=false), and those whose \class{Trigger}, once \emph{fired}, must remain continually true until the time comes to \emph{execute} the Event, or the Event is not \emph{executed} at all (\token{persistent}=true).
+If the boolean attribute \token{persistent} has a value of
+\val{true}, then once the event is fired, all of its assignments
+are always performed when the time of execution is reached.  The
+name ``persistent'' is meant to evoke the idea that the trigger
+expression does not have to be re-checked after it fires if
+\token{persistent}=\val{true}.  Conversely, if the attribute value
+is \val{false}, then the trigger expression is not assumed to
+persist: if the expression transitions in value back to
+\val{false} at any time between when the event fired and when it
+is to be executed, the event is no longer considered to have fired
+and its assignments are not executed.  (If the trigger expression
+transitions once more to \val{true} after that point, then the
+event is fired, but this then constitutes a whole new event
+fire-and-execute sequence.)
 
-For delayed events, the interpretation of \token{persistent}=true \class{Trigger}s is straightforward:  The condition defined in the MathML \token{math} element of the \class{Trigger} must switch to `true' when the event \emph{fires}, and then must remain true for the time interval between \emph{firing} and \emph{execution}.  A more subtle condition arises when two or more Events are scheduled to \emph{execute} simultaneously (whether or not those Events had a \Delay).  In this case, the \emph{execution} of a first Event may change the \class{Trigger} state of a second \Event in the queue from true to false.  If this happens, and the second \Event is set `\token{persistent}=true', that \Event is taken off the queue, and does not \emph{execute}.
+The \token{persistent} attribute can be especially useful when
+\Event objects contain \Delay objects, but it is relevant even in
+a model without delays if the model contains two or more events.
+As explained in the introduction to this section, the operation of
+all events in SBML (delayed or not) is conceptually divided into
+two phases, \emph{firing} and \emph{execution}; however, unless
+events have priorities associated with them (see
+Section~\ref{sec:event-priority}), SBML does not mandate a
+particular ordering of event execution in the case of simultaneous
+events (see Section~\ref{sec:event-semantics}).  Models with
+multiple events therefore can lead to situations where the
+execution of one event affects another event's trigger expression
+value.  If that other event has \token{persistent}=\val{false},
+and its trigger expression evaluates to \val{false} before it is
+to be executed, the event must not be executed after all.
 
-\paragraph{The \token{initialValue} attribute on \class{Trigger}}
+
+\paragraph{The \token{initialValue} attribute on \Trigger}
 \label{sec:trigger-initialvalue}
 
-Events \emph{fire} when their value changes from false to true.  In order to determine whether an event may fire at the the initial simulation time, \ie $t = 0$, it is necessary to know what value the \class{Trigger} had before the simulation began.  This is defined by this boolean attribute.  Triggers with `\token{initialValue}=false' may fire at $t = 0$ should their condition evaluate to true at the beginning of the simulation.  Triggers with `\token{initialValue}=true' may not fire at $t = 0$, as it would be impossible to transition from false to true at that moment in time.  It probably need not be said that Events may not fire before the simulation begins, or $t < 0$.
+As mentioned above, an event \emph{fires} when the mathematical
+expression in its \Trigger object transitions in value from
+\val{false} to \val{true}.  An unanswered question concerns what
+happens at the start of a simulation: can event triggers make this
+transition at $t = 0$, where $t$ stands for time?
 
-In SBML Level 2, only the latter case was (essentially) allowed, so all SBML Level 2 models can be read as defining `\token{initialValue}=true' for all \Event \class{Trigger}s.
+In order to determine whether an event may fire at $t = 0$, it is
+necessary to know what value the \Trigger object's \token{math}
+expression had immediately prior to $t = 0$.  This starting value
+of the trigger expression is determined by the value of the
+boolean attribute \token{initialValue}.  A value of \val{true}
+means that the trigger expression is assumed to have the value
+\val{true}.  If that is the case, the trigger cannot transition in
+value at the moment simulation begins, and can only make the
+transition from \val{false} to \val{true} sometime after $t = 0$.
+Conversely, if \token{initialValue}=\val{false}, then the trigger
+expression is assumed to start with the value \val{false}, and
+therefore may fire at $t = 0$ if the expression evaluates to
+\val{true} at that moment.
+
+% [2010-09-09 MH] I'm thinking we should leave this for a
+% document explaining the differences between L2 and L3.
+%
+% We note in passing that in SBML Level~2, where \Trigger lacks the
+% \token{initialValue} attribute, event triggers can never
+% transition from \val{false} to \val{true} at precisely $t = 0$.
+% In this respect, SBML Level~2 events are similar to Level~3
+% events having \token{initialValue}=\val{true}.
 
 
-\paragraph{The optional \token{sboTerm} attribute on \class{Trigger}}
+\paragraph{The optional \token{sboTerm} attribute on \Trigger}
 \label{sec:trigger-sboterm}
 
 \Trigger inherits an optional \token{sboTerm} attribute of type
 \primtype{SBOTerm} from its parent class \SBase (see
-Sections~\ref{sec:sboterm-type} and~\ref{sec:sboTerm}).  When a
-value is given to this attribute in a \Trigger instance, it should
-be an SBO identifier belonging to the branch for type \Trigger
-indicated in Table~\ref{tab:sboterm-availability}.  The
-relationship is of the form ``the trigger \emph{is-a} X'', where X
-is the SBO term.  The term chosen should be the most precise
-(narrow) one that captures the role of the trigger in the model.
+Sections~\ref{sec:sboterm-type} and~\ref{sec:sboTerm}).  The value
+given to this attribute should be an SBO identifier belonging to
+the branch for type \Trigger indicated in
+Table~\ref{tab:sboterm-availability}.  The relationship is of the
+form ``the trigger \emph{is-a} X'', where X is the SBO term.  The
+term chosen should be the most precise (narrow) one that captures
+the role of the trigger in the model.
 
 As discussed in Section~\ref{sec:sboTerm}, SBO labels are optional
 information on a model.  Applications are free to ignore
@@ -4272,10 +4345,9 @@ fire before it is triggered!).
 
 The unit associated with the value of a \Delay object's
 \token{math} expression should match the model's unit of
-\quantity{time} as set by the \Model attribute \val{timeUnits}
-(Section~\ref{sec:model-timeUnits}).  Note that, as in other cases
-of MathML expressions in SBML, units are \emph{not} automatically
-predefined or assumed.  As discussed in
+\quantity{time} (see Section~\ref{sec:model-timeUnits}).  Note
+that, as in other cases of MathML expressions in SBML, units are
+\emph{not} automatically predefined or assumed.  As discussed in
 Section~\ref{sec:operator-arg-types}, expressions containing only
 literal numbers and/or \Parameter objects without declared units
 are considered to have unspecified units.  In such cases, the
@@ -4352,16 +4424,15 @@ associated with them.
 \paragraph{The optional \token{sboTerm} attribute on \class{Delay}}
 \label{sec:delay-sboterm}
 
-\Delay  inherits an optional \token{sboTerm}
-attribute of type \primtype{SBOTerm} from its parent
-class \SBase (see Sections~\ref{sec:sboterm-type}
-and~\ref{sec:sboTerm}).  When a value is given to this
-attribute in a  \Delay instance, it should be an
-SBO identifier belonging to the branch for type  \Delay
-indicated in Table~\ref{tab:sboterm-availability}.  The relationship is
-of the form ``the delay \emph{is-a} X'', where X is
-the SBO term.  The term chosen should be the most precise (narrow)
-one that captures the role of the delay  in the model.
+\Delay inherits an optional \token{sboTerm} attribute of type
+\primtype{SBOTerm} from its parent class \SBase (see
+Sections~\ref{sec:sboterm-type} and~\ref{sec:sboTerm}).  When a
+value is given to this attribute in a \Delay instance, it should
+be an SBO identifier belonging to the branch for type \Delay
+indicated in Table~\ref{tab:sboterm-availability}.  The
+relationship is of the form ``the delay \emph{is-a} X'', where X
+is the SBO term.  The term chosen should be the most precise
+(narrow) one that captures the role of the delay in the model.
 
 As discussed in Section~\ref{sec:sboTerm}, SBO labels are optional
 information on a model.  Applications are free to ignore
@@ -4373,42 +4444,141 @@ benefit of SBO labels.
 \label{sec:event-priority}
 
 As shown in Figure~\ref{fig:event}, an \Event object can contain
-an optional \Priority object.  The \Priority class, like \Delay, is derived from
-\SBase and contains a mathematical formula stored in \token{math}.
-The formula is used to compute a value that defines exactly how the simulator is to behave when two Events are \emph{executed} simultaneously.
-If no Priority is present on a given \Event, no priority is defined for that event.
+an optional \Priority subobject.  The \Priority object class, like
+\Delay, is derived from \SBase and contains a MathML formula
+stored in the element \token{math}.  This formula is used to
+compute a dimensionless numerical value that influences the order
+in which a simulator is to perform the assignments of two or more
+events that happen to be executed simultaneously.  If no \Priority
+object is present on a given \Event object, no priority is defined
+for that event.
 
-`Simultaneous event execution' is defined as a situation where multiple events are to be executed `at the same time':  the sum of the time at which the \class{Trigger} was \emph{fired} plus the \Delay for two Events are equal.  (Note that as far as the specification of the model is concerned, 'equal' means 'mathematically equal'.  Simulators attempting to adhere to this specification may have to rely on numerical equality instead of mathematical equality; robust models will ensure that this discrepancy will not cause significant diversions from expected behavior.)  In this case, if no \Priority objects are defined, the order in which the two events are to fire is undefined:  a given simulator may choose any algorithm it wishes to define for itself the order in which to \emph{execute} the Events, as long as any and all such simultaneous Events are indeed \emph{executed} exactly once, checking to see if other event \class{Trigger}s are enabled or disabled after each \Event's \emph{execution}.
 
-If instead a \Priority is defined for two or more simultaneously-firing events, the order in whice those Events must fire is defined by these Priorities:  if the calculated values for two Priorities are different, the \Event with the higher \Priority must \emph{execute} before the \Event with the lower \Priority.  If the two Priorities are equal, the two Events must fire in a randomly-determined order.  Note that a randomly-determined order is not the same as an undefined order:  an `undefined order' algorithm may place Event A before Event B every time those two Events \emph{execute} simultaneously, or it ay always place it second, or it may be random.  A randomly-determined order must have an equal chance of \emph{executing} Event A first or Event B first, every time those two Events \emph{execute} simultaneously.
+\paragraph{The interpretation of priorities on events in a model}
 
-Should a combination of simultaneous Events arise in which some have defined Priorities and others do not, the ones with defined Priorities must fire in \Priority order, and the ones without defined Priorities must fire as normal, in an undefined order with respect to each other and with respect to those events with defined Priorities.  (Again, `undefined order' does not mean `random', but a random order is one valid implementation of the `undefined order' algorithm.)
+For the purposes of SBML, \emph{simultaneous event execution} is
+defined as the situation in which multiple events have identical
+times of execution.  The time of execution is calculated as the
+sum of the time at which a given event's \Trigger is \emph{fired}
+plus its \Delay duration, if any.  Here, ``identical times'' means
+\emph{mathematically equal} instants in time.  (In practice,
+simulation software adhering to this specification may have to
+rely on numerical equality instead of strict mathematical
+equality; robust models will ensure that this difference will not
+cause significant discrepancies from expected behavior.)
 
-It follows that if there are four simultaneously-\emph{executing} Events, two with one \Priority and two with a different \Priority, the two events with the higher \Priority must fire first, in a random order with respect to each other, and the remaining two events must fire next, again in a random order, for a total of four possible and equally-likely \Event \emph{executions}: A-B-C-D, A-B-D-C, B-A-C-D, and B-A-D-C.  If these four Events had all had the same \Priority, there would be $4!$ or 24 possible orderings, each of which must be equally likely.  If none of those four Events had had a defined \Priority, or even if exactly one of those four Events had had a defined \Priority, there would still be 24 possible orderings, but likelihood of choosing any particular order would be undefined: the simulator would choose between them as it wished.  (Since Priorities only matter with respect to other Events with Priorities, a single defined \Priority can not change the defined order of a set of simultaneous Events.)
+If no \Priority subobjects are defined for two or more \Event
+objects, then those events are still executed simultaneously but
+their order of execution is \emph{undefined by this SBML
+  specification}.  A software implementation may choose to execute
+such simultaneous events in any order, as long as each event is
+executed only once and the requirements of checking the
+\token{persistent} attribute (and acting accordingly) are
+satisfied.  See Section~\ref{sec:trigger-persistent} for more
+information about the attribute \token{persistent}.
 
-The expression in the \Priority object's \token{math} element must be evaluated at the time the \Event is to be \emph{executed}, but before any other \Event is \emph{executed} at the same moment in time in the simulation.  This is so that the Priorities of these Events may be usefully compared with one another, and the Events ordered appropriately.  If one \Event's \emph{execution} causes another \Event with a defined \Priority and no \Delay to \emph{fire}, its \Priority must be calculated before the \emph{execution} of any other \Event currently queued to be \emph{executed} at this time, and inserted into that list appropriately.  Simulators should note that it is possible for one \Event's \emph{execution} to cause the \Priority of a different simultaneous \Event to change.  As such, the simplest algorithm to comply with this specification may be to \emph{execute} the highest-priority \Event, check to see if new Events should be added or removed from the list, then re-calculate all pending \Event Priorities.  The expression may evaluate to a positive or negative number, with positive numbers having a higher priority than negative numbers.
+If \Priority subobjects are defined for two or more
+simultaneously-firing events, the order in which those particular
+events must be fired is dictated by the \Priority objects, as
+follows.  If the values of the two \Priority objects' mathematical
+formulas differ, then the event having the higher priority value
+must be executed before the event with the lower value.  If,
+instead, the two priority values are mathematically equal, then
+the two events must be fired in a \emph{random} order.  It is
+important to note that a \emph{random order is not the same as an
+  defined order}: given multiple runs of the same simulation
+with identical conditions, an undefined ordering would permit a
+simulation system to execute the events in (for example) the same
+order every time (according to whatever scheme may have been
+implemented by the system), whereas the explicit requirement for
+random ordering means that the order of execution in different
+simulation runs depends on random chance.  In other words, given
+two events ``A'' and ``B'', a randomly-determined order must lead
+to an equal chance of selecting event ``A'' first or event ``B''
+first, every time those two events are executed simultaneously.
 
-Further discussion can be found in Section~\ref{sec:events-semantics}.
+A model may contain a mixture of events, some of which have
+\Priority subobjects and some do not.  Should a combination of
+simultaneous events arise in which some events have priorities
+defined and others do not, the set of events with defined
+priorities must fire in the order determined by their \Priority
+objects, and the set of events without \Priority objects must be
+executed in an \emph{undefined} order with respect to each other
+and with respect to the events with \Priority subobjects.  (Note
+that \emph{undefined order} does not necessarily mean random
+order, although a random ordering would be a valid implementation
+of this requirement.)
 
-\paragraph{Units of priority expressions}
+The following example may help further clarify these points.
+Suppose a model contains four events that should be executed
+simultaneously, with two of the events having \Priority objects
+with the same value and the other two events having \Priority
+objects with the same, but different, value.  The two events with
+the higher priorities must be executed first, in a random order
+with respect to each other, and the remaining two events must be
+executed after them, again in a random order, for a total of four
+possible and equally-likely event executions: A-B-C-D, A-B-D-C,
+B-A-C-D, and B-A-D-C.  If, instead, the model contains four events
+all having the same \Priority values, there are $4!$ or 24
+possible orderings, each of which must be equally likely to be
+chosen.  Finally, if none of the four events has a \Priority
+subobject defined, or even if exactly one of the four events has a
+defined \Priority, there are again 24 possible orderings, but the
+likelihood of choosing any particular ordering is undefined: the
+simulator can choose between events as it wishes.  (Since
+priorities only matter with respect to other events with
+priorities, a single event object with a priority cannot change
+the ordering of a set of simultaneous events.)
+
+Section~\ref{sec:event-semantics} includes additional discussion
+of these topics.
+
+
+\paragraph{Evaluation of \class{Priority} expressions}
+
+The expression in a \Priority object's \token{math} element must
+be evaluated at the time the \Event is to be \emph{executed}, but
+before any other \Event is \emph{executed} at the same moment in
+simulation time.  The reason for this is so that the priorities of
+events may be usefully compared with one another, and the events
+ordered appropriately.  If the execution of one event causes
+another event with a defined priority and no delay to fire, its
+\Priority object formula must be evaluated before the execution of
+any other \Event object currently queued for execution at that
+time, and based on the priority value thus calculated, the \Event
+object must be inserted into the appropriate position in the queue
+of events pending execution.  Software developers should take note
+that it is possible for the execution of one \Event object to
+cause the \Priority value of a different simultaneously-executing
+\Event object to change.  Section~\ref{sec:bp:events} provides
+suggestions for possible approaches to implementing support for
+this scheme.
+
+
+\paragraph{Units of \class{Priority} object's mathematical
+  expressions}
 
 The unit associated with the value of a \Priority object's
-\token{math} expression must be \token{dimensionless} (if defined), as the expression only has meaning with respect to other Priority expressions, and not with respect to any other element of the model.
+\token{math} expression should be \token{dimensionless}.  This is
+because the priority expression only serves to provide a relative
+ordering between different events, and only has meaning with
+respect to other \Priority object expressions.  The value of
+\Priority objects is not comparable to any other kind of object in
+an SBML model.
 
 
 \paragraph{The optional \token{sboTerm} attribute on \class{Priority}}
 \label{sec:priority-sboterm}
 
-\Priority  inherits an optional \token{sboTerm}
-attribute of type \primtype{SBOTerm} from its parent
-class \SBase (see Sections~\ref{sec:sboterm-type}
-and~\ref{sec:sboTerm}).  When a value is given to this
-attribute in a  \Priority instance, it should be an
-SBO identifier belonging to the branch for type  \Priority
-indicated in Table~\ref{tab:sboterm-availability}.  The relationship is
-of the form ``the priority \emph{is-a} X'', where X is
-the SBO term.  The term chosen should be the most precise (narrow)
-one that captures the role of the priority in the model.
+\Priority inherits an optional \token{sboTerm} attribute of type
+\primtype{SBOTerm} from its parent class \SBase (see
+Sections~\ref{sec:sboterm-type} and~\ref{sec:sboTerm}).  When a
+value is given to this attribute in a \Priority instance, it
+should be an SBO identifier belonging to the branch for type
+\Priority indicated in Table~\ref{tab:sboterm-availability}.  The
+relationship is of the form ``the priority \emph{is-a} X'', where
+X is the SBO term.  The term chosen should be the most precise
+(narrow) one that captures the role of the priority in the model.
 
 As discussed in Section~\ref{sec:sboTerm}, SBO labels are optional
 information on a model.  Applications are free to ignore
@@ -4433,7 +4603,7 @@ usual attributes and elements of its parent class.
 An ``event assignment'' has effect when the event is
 \emph{executed}; that is, at the end of any given delay period (if
 given) following the moment that the \Event is triggered.  See
-Section~\ref{sec:events-semantics} below for more information
+Section~\ref{sec:event-semantics} below for more information
 about events and event assignments in SBML.
 
 
@@ -4630,71 +4800,115 @@ Section~\ref{sec:eventeg}.
 
 
 \subsubsection{Detailed semantics of events}
-\label{sec:events-semantics}
+\label{sec:event-semantics}
 
-The description of events above describes the action of events in
-isolation from each other.  This section describes how events
-interact.
+Any transition of a \Trigger object's \token{math} formula from
+the value \val{false} to \val{true} will cause the enclosing
+\Event object to \emph{fire}.  Such a transition is not possible
+at the very start of a simulation (\ie at time $t = 0$) unless the
+\Trigger object's \token{initialValue} attribute has a value of
+\val{false}; this defines the value of the trigger formula to be
+\val{false} immediately prior to the start of simulation, thereby
+giving it the potential to change in value from \val{false} to
+\val{true} when the formula is evaluated at $t = 0$.  If
+\token{initialValue}=\val{true}, then the trigger expression
+cannot transition from \val{false} to \val{true} at $t = 0$ but
+may do so at some time $t > 0$.
 
-Events whose \token{trigger} expression is true at the start of a
-simulation may \emph{fire} at the start of the simulation ($t =
-0$) if their \token{Trigger}'s \token{initialValue} attribute is set to be `false'.  Events \emph{fire} only when the trigger \emph{becomes}
-true, \ie the trigger expression transitions from \val{false} to
-\val{true}.
+Consider an \Event object definition $E$ with delay $d$ in which
+the \Trigger object's \token{math} formula makes a transition in
+value from \val{false} to \val{true} at times $t_1$ and $t_2$.
+The \EventAssignment within the \Event object will have effect at
+$t_1+d$ and $t_2+d$ irrespective of the relative times of $t_1$
+and $t_2$.  For example, events can ``overlap'' so that $t_1 < t_2
+< t_1+d$ still causes an event assignments to occur at $t_1+d$ and
+$t_2+d$.
 
-Any transition of a \token{trigger} expression from \val{false} to
-\val{true} will cause an event to \emph{fire}.  Consider an \Event
-object definition $E$ with delay $d$ where the \token{trigger}
-expression makes a transition from \val{false} to \val{true} at
-times $t_1$ and $t_2$.  The \EventAssignment within the \Event
-object will have effect at $t_1+d$ and $t_2+d$ irrespective of the
-relative times of $t_1$ and $t_2$. For example events can
-``overlap'' so that $t_1 < t_2 < t_1+d$ still causes an event
-assignments to occur at $t_1+d$ and $t_2+d$.
-
-It is entirely possible for two events to be \emph{executed}
-simultaneously in simulated time, and it is possible for events to
-\emph{fire} other events (\ie an event assignment can cause an
-event to \emph{fire}).  This leads to several points:
+It is entirely possible for two events to be executed
+simultaneously, and it is possible for events to fire other events
+(\ie an event assignment can cause an event to fire).  This leads
+to several points:
 \begin{itemize}
 
 \item A software package should retest all event triggers after
   executing an event assignment in order to account for the
   possibility that the assignment causes another event trigger to
-  transition from \val{false} to \val{true}.  This check should be made after each individual \Event's \emph{execution}, even when several Events are \emph{executed} simultaneously.
+  transition from \val{false} to \val{true}.  This check should be
+  made after each individual \Event object's execution, even when
+  several events are to be executed simultaneously.
 
-\item Similarly, a software package should retest all event triggers for Events that have \emph{fired} but have not \emph{executed}, and which are set `\token{persistent}=true', to see if they should be removed from the list of Events pending \emph{execution}.  If this happens, the \Event is immedately removed from the `pending events' queue, and thereafter behaves like any other \Event whose \Trigger is `false' (and may be re-added to the queue should some other \Event \emph{fire} it again.  (see Section~\ref{sec:trigger-persistent})
-
-\item It is assumed that, although the precise time at which these
-  events are executed is not resolved beyond the given point in
-  simulated time, the order in which the events occur \emph{is}
+\item Although the precise time at which events are executed is
+  not resolved beyond the given execution point in simulated time,
+  it is assumed that the order in which the events occur \emph{is}
   resolved.  This order can be significant in determining the
   overall outcome of a given simulation.  When an event $X$
   \emph{fires} another event $Y$ and event $Y$ has zero delay,
   then event $Y$ is added to the existing set of simultaneous
-  events that are pending \emph{execution}.  Events such as $Y$ 
-  may have a special priority if the \Priority object is defined.  Events $X$ and $Y$
+  events that are pending \emph{execution}.  Events $X$ and $Y$
   form a cascade of events at the same point in simulation time.
+  An event such as $Y$ may have a special priority if it contains
+  a \Priority subobject.
 
 \item All events in a model are open to being in a cascade.  The
-  position of an event in the event list does not affect whether
-  it can be in the cascade: $Y$ can be triggered whether it is
-  before or after $X$ in the list of events.  A cascade of events
-  can be potentially infinite (never terminate); when this occurs
-  a simulator should indicate this has occurred---it is incorrect
-  for a simulator to break a cascade arbitrarily and continue the
-  simulation without at least indicating the infinite cascade
-  occurred.
+  position of an event in the event queue does not affect whether
+  it can be in the cascade: event $Y$ can be triggered whether it
+  is before or after $X$ in the queue of events pending execution.
+  A cascade of events can be potentially infinite (never
+  terminate); when this occurs a simulator should indicate this
+  has occurred---it is incorrect for a simulator to break a
+  cascade arbitrarily and continue the simulation without at least
+  indicating that the infinite cascade occurred.
 
-\item Events with no \Priority are \emph{executed} in an undefined order.  This does not mean that the behavior of the simulation is completely undefined; merely that the \emph{order} is undefined.  A given simulator may choose any algorithm it wishes to determine that order, from some form of a deterministic algorithm to some form of a random algorithm, as long as every \Event in the queue is \emph{exectuted} exactly once (see Section~\ref{sec:event-priority}).
+\item Any \Event object whose \Trigger \token{persistent}
+  attribute has the value \val{false} must have its trigger
+  expression reevaluated after the event has been fired and before
+  it is executed.  If its trigger expression now evaluates to
+  \val{false}, it must be removed from the queue of events pending
+  execution and treated as any other event whose trigger
+  expression evaluates to \val{false}.  (Note that it is possible
+  it may be triggered again as a result of another simultaneous
+  event's actions.)
 
+\item Simultaneous events having no defined priorities are
+  executed in an undefined order.  This does not mean that the
+  behavior of the simulation is completely undefined; merely that
+  the \emph{order} of execution of these particular events is
+  undefined.  A given simulator may use any algorithm to choose an
+  order as long as every event is executed exactly once.  (See
+  also Section~\ref{sec:event-priority}.)
 
-\item Events with a \Priority are \emph{executed} in \Priority order, with those Events with the highest \Priority \emph{executing} first, and those Events with identical Priorities \emph{executing} in a random order with respect to one another (as determined at run-time by some random algorithm akin to a coin flip).  As such, newly-\emph{fired} Events that are to \emph{execute} immediately when there are already pending Events to be \emph{executed} at the current time should be inserted into the list according to their \Priority:  Events with a defined \Priority must be inserted before pending Events with a lower \Priority, after pending Events with a higher \Priority, and inserted randomly among pending Events with the same \Priority.  Events with no \Priority must be inserted into the list in some fashion, but the algorithm used to place it in the list is up to the simulator.  Similarly, there is no restriction on the order of a newly-inserted \Event with a defined \Priority with respect to any other pending \Event with no defined \Priority.  (see Section~\ref{sec:event-priority})
+\item Events with defined priorities are executed in the order
+  implied by their \Priority \token{math} formula values, with
+  events having higher priorities being executed ahead of events
+  with lower priorities, and events with identical priorities
+  being executed in a random order with respect to one another (as
+  determined at run-time by some random algorithm equivalent to
+  coin-flipping).  Newly-fired events that are to be executed
+  immediately (\ie if they define no delays) should be inserted
+  into the queue of events pending execution according to their
+  priorities: events with higher priority values value must be
+  inserted ahead of events with lower priority values and after
+  any pending events with even higher priorities, and inserted
+  randomly among pending events with the same priority values.
+  Events without \Priority objects must be inserted into the queue
+  in some fashion, but the algorithm used to place it in the queue
+  is undefined.  Similarly, there is no restriction on the order
+  of a newly-inserted event with a defined \Priority with respect
+  to any other pending \Event without a defined \Priority.  (See
+  Section~\ref{sec:event-priority}.)
 
-\item Any \Event that has \emph{executed} is part of the history of the model, and not part of the current state of the model.  If the \emph{execution} of an \Event with a \Priority of 3 causes a different \Event with a \Priority of 10 to \emph{fire} and immedately \emph{execute}, it is not a problem that a `Priority 3' \Event \emph{executed} before a `Priority 10' Event.
+% [2010-09-09 MH] I don't think the following point is necessary.
+% 
+% \item Any event that has been executed is part of the history of
+%   the model, and not part of the current state of the model.  (For
+%   example, if the execution of an event with a low priority value
+%   causes a different event with a higher priority to fire and
+%   immedately be executed, it is not a problem that a
+%   lower-priority event executed before a higher-priority event.)
 
-\item A variable can change more than once when processing
-  simultaneous events at simulation time $t$.  The model behavior
+\item A model variable that is the target of one or more event
+  assignments can change more than once when simultaneous events
+  are processed at some time point $t$.  The model's behavior
   (output) for such a variable is the value of the variable at the
   end of processing all the simultaneous events at time $t$.
 

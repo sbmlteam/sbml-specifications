@@ -686,22 +686,110 @@ An important property of the amount rate equation is that it is still
 valid if the volume $V$ changes during a simulation. This is not
 true for the concentration rate equations. 
 
+
 \subsubsection{Events}
 \label{sec:bp:events}
 
-SBML Level~3 has a number of new semantics added (at the last minute) that were not present in SBML Level~2.  All Level~2 behavior can still be mimicked in Level~3:
+% --------------------
+% [2010-09-15 MH] This belongs in a FAQ item instead of here:
 
-\begin{itemize}
-\item In SBML Level~2, once \emph{fired}, all events were (eventually) \emph{executed}.  This behavior is equivalent to setting the new /token{persistent} flag on the \class{Trigger} to $true$.
+% SBML Level~3 has a number of new semantics added (at the last minute) that
+% were not present in SBML Level~2.  All Level~2 behavior can still be
+% mimicked in Level~3:
 
-\item Similarly, in SBML Level~2, no event could fire at the beginning of the simulation ($t=0$), as no transition of the Trigger's boolean state could take place at that time.  Now that the Trigger's boolean state is defined with the \token{initialValue} attribute, a transition from false to true is possible:  the old behavior is equivalent to setting the \token{initialValue} to $true$.
+% \begin{itemize}
 
-\item The largest change is that when multiple events were to be \emph{executed} at the same time in SBML Level~2, the order in which those events were to fire was left undefined, and was in fact undefinable.  In fact, some read the specification to say that not only was the order undefined, the behavior of the simulator was undefined entirely.  A clarification was issued to say that it was only the order of event firing that was left undefined in the SBML Level~2 specification, but regardless, we have attempted to be much clearer in this specification as to what exactly is undefined when, and how the modeler may override the old `undefined' behavior with the new \Priority object.  Level~2 behavior may be replicated by simply not including the new \Priority object.
-\end{itemize}
+% \item In SBML Level~2, once \emph{fired}, all events were
+%   (eventually) \emph{executed}.  This behavior is equivalent to
+%   setting the new /token{persistent} flag on the \class{Trigger}
+%   to $true$.
 
-Perhaps the largest issue facing simulator developers is in defining in what situations, exactly, two events would \emph{execute} simultaneously.  The model defines this situation mathematically (that is, exactly), while the limits of computational numerical precision make it such that a simulator may be only able to determine things numerically (that is, to some degree of precision).  This can cause events that were not intended to be simultaneous, simultaneous anyway, and events that were intended to be simultaneous, no longer so.  A good model writer can address this by writing robust models that do not require exact solutions to produce expected behavior, but a good simulator writer can help by doing things such as caching the calculated times at which embedded boolean elements in Trigger equations switched their truth state:  given two events with triggers $((s1>5) \&\& (s2>7))$ and $((s1>5) \&\& (s3>10))$, for example, the time at which $s1$ changes from being less than 5 to greater than 5 can be calculated only once, guaranteeing that if s3 is greater than 10 and s2 is greater than 7, both events fire simultaneously once s1 becomes greater than 5, as the modeler clearly intended.
+% \item Similarly, in SBML Level~2, no event could fire at the
+%   beginning of the simulation ($t=0$), as no transition of the
+%   Trigger's boolean state could take place at that time.  Now that
+%   the Trigger's boolean state is defined with the
+%   \token{initialValue} attribute, a transition from false to true
+%   is possible: the old behavior is equivalent to setting the
+%   \token{initialValue} to $true$.
 
-The modeler is likewise encouraged to write mathematically identical boolean elements in numerically-identical ways:  don't use `$9$' in one place and `$pow(3,2)$' in another.
+% \item change is that when multiple events were to be
+%   \emph{executed} at the same time in SBML Level~2, the order in
+%   which those events were to fire was left undefined, and was in
+%   fact undefinable.  In fact, some read the specification to say
+%   that not only was the order undefined, the behavior of the
+%   simulator was undefined entirely.  A clarification was issued to
+%   say that it was only the order of event firing that was left
+%   undefined in the SBML Level~2 specification, but regardless, we
+%   have attempted to be much clearer in this specification as to
+%   what exactly is undefined when, and how the modeler may override
+%   the old `undefined' behavior with the new \Priority object.
+%   Level~2 behavior may be replicated by simply not including the
+%   new \Priority object.
 
-Another open question is how to implement the `undefined' algorithm for determining event \emph{execution} order.  A simple method might be to simply give all events with undefined priorities a priority of your own.  Another might be simply to execute them in the order you are storing them in your program (as found in the file; alphabetically; or some other way).  The only thing the specification states is that for those events \emph{with} a \Priority, the order there is defined, whether mixed with undefined events or not.  If you have three simultaneously-firing events, one with priority 10, one with priority 4, and one with an undefined priority (`X'), there should be one of three possible results of your `undefined' algorithm interacting with your `priority' algorithm:  10-4-X, 10-X-4, and X-10-4.  It could always pick the same option of those three (as it would if you gave events with undefined priorities a priority of your own), or it could vary randomly between those three, as it would if you were trying to be robustly stochastic.  But your simulator should never execute them in the order 4-10-X, nor should it quit unexpectedly.  The modeler has clearly stated that the 10 is to \emph{execute} before the 4, and has told you that X must \emph{execute}.  Beyond that, you are on your own.  It is to be hoped, but is not required, that the results of the simulation will not vary among the three remaining options.
+% \end{itemize}
+
+% --------------------
+% [2010-09-15] This just doesn't seem like it belongs here.  A FAQ
+% might be better.
+
+% Perhaps the largest issue facing simulator developers is in defining in
+% what situations, exactly, two events would \emph{execute} simultaneously.
+% The model defines this situation mathematically (that is, exactly), while
+% the limits of computational numerical precision make it such that a
+% simulator may be only able to determine things numerically (that is, to
+% some degree of precision).  This can cause events that were not intended to
+% be simultaneous, simultaneous anyway, and events that were intended to be
+% simultaneous, no longer so.  A good model writer can address this by
+% writing robust models that do not require exact solutions to produce
+% expected behavior, but a good simulator writer can help by doing things
+% such as caching the calculated times at which embedded boolean elements in
+% Trigger equations switched their truth state: given two events with
+% triggers $((s1>5) \&\& (s2>7))$ and $((s1>5) \&\& (s3>10))$, for example,
+% the time at which $s1$ changes from being less than 5 to greater than 5 can
+% be calculated only once, guaranteeing that if s3 is greater than 10 and s2
+% is greater than 7, both events fire simultaneously once s1 becomes greater
+% than 5, as the modeler clearly intended.
+%
+% The modeler is likewise encouraged to write mathematically identical
+% boolean elements in numerically-identical ways: don't use `$9$' in one
+% place and `$pow(3,2)$' in another.
+
+% --------------------
+
+Section~\ref{sec:events} describes how to interpret SBML events;
+however, the explanation explicitly leaves \emph{undefined} how
+events should be ordered in the absense of priorites attached to
+the events.  This curious omission in the specification reflects
+the state of agreement in biological modeling software today, but
+at the same time, it does not help software developers with the
+goal of implementing support for SBML events.
+
+There are actually a variety of simple approaches that can satisfy
+the ``undefined ordering'' requirement.  For example, a software
+system could assign an arbitrary priority value to all events with
+undefined priorities.  Another approach is for a simulator to
+execute the events in whatever order they happen to be stored in
+the implementation of the software.
+
+Regardless of the above, developers should keep in mind that the
+ordering requirements for events \emph{with} \Priority subobjects
+\emph{are} defined, including for the case where such events in
+the model are mixed with events having undefined priorities.  For
+example, if a model contains three simultaneously-firing events,
+one with priority 10, one with priority 4, and one with an
+undefined priority (call it \emph{X}), there are three valid
+results for an implementation following the combined priority and
+``undefined ordering'' requirements in SBML: 10-4-X, 10-X-4, and
+X-10-4.  The implementation could always pick the same option
+among those three (as would happen if it assigned events with
+undefined priorities an artificial priority value, as mentioned
+above), or it could pick randomly between the three alternatives
+on different simulation runs, as it would if it were trying to be
+robustly stochastic.  But the simulator should never execute the
+events in the order 4-10-X, nor should it quit unexpectedly.  By
+defining the events in the model in this way, the creator of the
+model has clearly stated that the event with priority 10 should be
+executed before the event with priority 4, and that the event with
+\emph{X} must also be executed at \emph{some} point.  Beyond that,
+nothing more can be said or assumed about the modeler's intention.
 

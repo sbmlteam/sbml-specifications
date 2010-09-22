@@ -726,36 +726,15 @@ true for the concentration rate equations.
 %   the old `undefined' behavior with the new \Priority object.
 %   Level~2 behavior may be replicated by simply not including the
 %   new \Priority object.
-
 % \end{itemize}
-
 % --------------------
-% [2010-09-15] This just doesn't seem like it belongs here.  A FAQ
-% might be better.
 
-% Perhaps the largest issue facing simulator developers is in defining in
-% what situations, exactly, two events would \emph{execute} simultaneously.
-% The model defines this situation mathematically (that is, exactly), while
-% the limits of computational numerical precision make it such that a
-% simulator may be only able to determine things numerically (that is, to
-% some degree of precision).  This can cause events that were not intended to
-% be simultaneous, simultaneous anyway, and events that were intended to be
-% simultaneous, no longer so.  A good model writer can address this by
-% writing robust models that do not require exact solutions to produce
-% expected behavior, but a good simulator writer can help by doing things
-% such as caching the calculated times at which embedded boolean elements in
-% Trigger equations switched their truth state: given two events with
-% triggers $((s1>5) \&\& (s2>7))$ and $((s1>5) \&\& (s3>10))$, for example,
-% the time at which $s1$ changes from being less than 5 to greater than 5 can
-% be calculated only once, guaranteeing that if s3 is greater than 10 and s2
-% is greater than 7, both events fire simultaneously once s1 becomes greater
-% than 5, as the modeler clearly intended.
-%
-% The modeler is likewise encouraged to write mathematically identical
-% boolean elements in numerically-identical ways: don't use `$9$' in one
-% place and `$pow(3,2)$' in another.
 
-% --------------------
+The following recommendations concern \Event objects and their
+subcomponents.
+
+
+\paragraph{Undefined ordering}
 
 Section~\ref{sec:events} describes how to interpret SBML events;
 however, the explanation explicitly leaves \emph{undefined} how
@@ -765,12 +744,13 @@ the state of agreement in biological modeling software today, but
 at the same time, it does not help software developers with the
 goal of implementing support for SBML events.
 
-There are actually a variety of simple approaches that can satisfy
-the ``undefined ordering'' requirement.  For example, a software
+In practice, a variety of simple approaches can satisfy the
+``undefined ordering'' requirement.  For example, a software
 system could assign an arbitrary priority value to all events with
 undefined priorities.  Another approach is for a simulator to
 execute the events in whatever order they happen to be stored in
-the implementation of the software.
+the implementation of the software.  This part of SBML event
+behavior is left up to developers.
 
 Regardless of the above, developers should keep in mind that the
 ordering requirements for events \emph{with} \Priority subobjects
@@ -793,6 +773,52 @@ model has clearly stated that the event with priority 10 should be
 executed before the event with priority 4, and that the event with
 \emph{X} must also be executed at \emph{some} point.  Beyond that,
 nothing more can be said or assumed about the modeler's intention.
+
+
+\paragraph{Simultaneous event execution}
+
+Another concern with SBML events is how to implement true
+``simultaneous'' execution of events.  A model defines the
+conditions mathematically, but software realizations generally
+need to use numerical methods; the limited precision inherent with
+numerical methods can result in the system not executing precisely
+at the same time events that are meant to be simultaneous, or
+conversely, executing simultaneously some events that are
+\emph{not} meant to be exactly simultaneous.  Calculating the time
+of event execution depends on finding the trigger time, because an
+event's execution time is the sum (counting from the simulation
+start time) of the trigger time plus any delay in the event.  If
+two events have the same delay but different triggers, they should
+fire simultaneously if the moment that their trigger expressions
+transition to \val{true} is the same.
+
+In part, the ultimate behavior may depend on how the modeler has
+written the model, and careful modelers will write models that are
+robust against slight numerical imprecision.  For their part,
+software developers can take steps to increase the likelihood that
+the times at which trigger expressions transition in value are all
+detected equally, by doing such things as caching the calculated
+times at which embedded boolean subexpressions in \Trigger
+formulas switch their truth states.  (For example, given two
+events, one with trigger expression $[(s1 > 5)\ and\ (s2 > 7)]$
+and the other with trigger expression $[(s1 > 5)\ and\ (s3 >
+10)]$, the time at which $s1$ transitions from less than 5 to
+greater than 5 can be calculated just once, cached, and reused
+thereafter, thereby helping to mitigate against small timing
+differences that might occur if the expression is reevaluated at
+different times.)  If the trigger times are thus numerically
+identical, and if they have the same delay equation (which should
+also be cached if need be, for the same reason), they will then
+execute simultaneously, as they were intended to do in the model.
+
+When creating models containing (e.g.) two events $A$ and $B$ that
+have different delays, model authors should not expect to achieve
+simultaneous execution simply by arranging for the sum of $A$'s
+trigger time plus $A$'s delay to be equal to the sum of $B$'s
+trigger time plus $B$'s delay.  It is unlikely that different
+software implementations will resolve the execution times
+precisely in the same way, so it is unlikely the model will behave
+as the author expected in this scenario.
 
 \end{blockChanged}
 

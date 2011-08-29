@@ -1,0 +1,109 @@
+% -*- TeX-master: "main"; fill-column: 72 -*-
+
+\section{Best practices}
+\label{best-practices}
+
+In this section, we recommend a number of practices for using and
+interpreting various constructs in the Hierarchical Model Composition
+package.  These recommendations are non-normative, but we advocate them
+strongly; ignoring them will not render a model invalid, but may reduce
+interoperability between software and models.
+
+
+\subsection{Best practices for using \class{SBaseRef} for references}
+\label{best-practices-sbaseref}
+
+% There are clearly multiple approaches to using \SBaseRef objects to
+% refer to SBML components.  To help increase interoperability of models
+% that use Hierarchical Model Composition, we recommend the following
+% order of preference in choosing the reference approach:
+
+% \begin{enumerate}
+
+% \item \emph{By port}.  The best-designed models intended for reuse and
+%   composition will provide port definitions.  
+
+% \item \emph{By SId}. Most elements one would want to replace (such as
+%   species and reactions) will have SIds. If they do not have ports, you
+%   can reference them by this. The SIdRef namespace is the namespace of
+%   the submodel, not the parent model, and refers to that model's element
+%   namespace (see section 3.7; identifier scoping).
+
+% \item \emph{By UnitSId}. The SId of a UnitDefinition is defined in the
+%   core specification to exist in its own namespace. Therefore, this
+%   attribute is provided to be able to search that unit namespace of the
+%   submodel (see section 3.7; identifier scoping). It should be noted
+%   that even though this attribute is of type UnitSIdRef, the reserved
+%   identifier names that are usually valid for other constructs (see
+%   section 3.1.10 of the core specification) are not valid here, as these
+%   may not be replaced or deleted.
+
+% \item \emph{By MetaId}. Because some elements never have SIds and for
+%   some they are only optional, the modeler may wish to replace or delete
+%   an element that has no SId but does have a MetaID. (Since MetaIDs are
+%   optional attributes of SBase, all SBML element have the potential to
+%   have a MetaID.) If the element has no port or SId, you may use the
+%   metaID, if present.
+
+% \item \emph{By an element of a submodel}. The above four options will
+%   all give you access to elements in a submodel, but cannot give you
+%   access to elements in the submodel's submodels. If the object referred
+%   to by one of the above methods is itself a submodel, adding an
+%   SBaseRef child to the SBaseRef allows you to find elements 'buried' in
+%   the hierarchy. This can, in turn, refer to a deeper submodel, allowing
+%   access to any element of any arbitrary depth using this
+%   construct. This is considered inelegant design: it is better to
+%   'promote' any element in a submodel to a local element if it needs to
+%   be referenced by a containing model, but if the submodel is fixed, no
+%   other option is available.
+
+% \end{enumerate}
+
+% This does not actually allow access to any possible element in a model
+% definition that you do not control: if the element in question has no
+% port, id, or metaId, you must create a local copy of that model and add
+% (for instance) a metaId to the element you wish to reference. In a
+% future version of this specification, this restriction may be relaxed,
+% allowing one to reference submodel elements by xpath:element. For now,
+% this was considered to add too much of a burden to implementers of this
+% specification, and was therefore delayed to a future version.
+% Any element that has been replaced or deleted may not be referenced by
+% an SBaseRef, including anything replaced or deleted within the submodel.
+
+% If you replace or delete an element that itself has children, those
+% children are considered to be deleted unless replaced. If you replace a
+% KineticLaw, for example, any annotations that referred to the metaIDs of
+% its LocalParameters will be invalid. To correct this situation, those
+% annotations must themselves be deleted or replaced by valid elements, or
+% the referenced
+% LocalParameter must be explicitly replaced (by its equivalent in the new
+% KineticLaw, presumably).
+
+% It is legal to explicitly delete an element which was deleted by
+% implication in this way if you need to refer to it elsewhere; the
+% resulting model is exactly the same.
+
+
+\subsection{Best practices for deletions}
+\label{best-practices-deletions}
+
+Note that there may be model composition situations in which a model
+contains elements that do not have an identifier, nor a meta identifier,
+nor a port identifier.  In that case, there is no way to refer to it
+using the deletion scheme defined here.  A viable alternative to use in
+that case is to copy the original model and modify it, either to perform
+the desired deletions directly or to add the necessary identifiers so
+that \Deletion objects can be defined and used in a submodel.
+(Presumably, the original model was readable in the first place, or else
+composition would have been impossible anyway.)  Copying a model and
+making one's own version may have additional benefits, such as the
+ability to control versions explicitly and references.
+
+% .... However, don't go overboard with this capability: it is legal in
+% this scheme to replace an Event with a Species, but it is probably never
+% wise.  We expect that tools written to produce hierarchical SBML will
+% have their own restrictions that make sense in context.  This relaxation
+% of the official validation allows freer intercompatibility with other
+% package extensions-it may be that a Species could be validly replaced by
+% a multi-component species, or it may not, but we will rely here on the
+% normal validation rules that package supplies to dictate the results.

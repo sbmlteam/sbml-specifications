@@ -1,0 +1,458 @@
+% -*- TeX-master: "main"; fill-column: 72 -*-
+
+\section{Validation of SBML documents}
+\label{apdx-validation}
+
+An important issue for software systems is being able to determine the
+validity of a given SBML document that uses constructs from the
+Hierarchical Model Composition package.  This section describes
+operational rules for assessing validity.  
+
+
+\subsection{Validation procedure}
+\label{validation-procedure}
+
+
+\subsection{Validation and consistency rules}
+\label{validation-rules}
+
+This section summarizes all the conditions that must (or in some cases,
+at least \emph{should}) be true of an SBML Level~3 Version~1 model that
+uses the Hierarchical Model Composition package.  We use the same
+conventions as are used in the SBML Level~3 Version~1 Core specification
+document.  In particular, there are different degrees of rule
+strictness.  Formally, the differences are expressed in the statement of
+a rule: either a rule states that a condition \emph{must} be true, or a
+rule states that it \emph{should} be true.  Rules of the former kind are
+strict SBML validation rules---a model encoded in SBML must conform to
+all of them in order to be considered valid.  Rules of the latter kind
+are consistency rules.  To help highlight these differences, we use the
+following three symbols next to the rule numbers:
+
+\begin{description}
+
+\item[\hspace*{7.8pt}\vSymbol] A \vSymbolName indicates a
+  \emph{requirement} for SBML conformance. If a model does not follow
+  this rule, it does not conform to the Hierarchical Model Composition
+  specification.  (Mnemonic intention behind the choice of symbol:
+  ``This must be checked.'')
+
+\item[\hspace*{8.7pt}\cSymbol] A \cSymbolName indicates a
+  \emph{recommendation} for model consistency.  If a model does not
+  follow this rule, it is not considered strictly invalid as far as
+  the Hierarchical Model Composition specification is concerned;
+  however, it indicates that the model contains a physical or
+  conceptual inconsistency.  (Mnemonic intention behind the choice of
+  symbol: ``This is a cause for warning.'')
+
+\item[\hspace*{7.5pt}\mSymbol] A \mSymbolName indicates a strong
+  recommendation for good modeling practice.  This rule is not
+  strictly a matter of SBML encoding, but the recommendation comes
+  from logical reasoning.  As in the previous case, if a model does
+  not follow this rule, it is not strictly considered an invalid SBML
+  encoding.  (Mnemonic intention behind the choice of symbol: ``You're
+  a star if you heed this.'')
+
+\end{description}
+
+The validation rules listed in the following subsections are all stated
+or implied in the reset of this specification document.  They are
+enumerated here for convenience.  Unless explicitly stated, all
+validation rules concern objects and attributes specifically defined in
+the Hierarchical Model Composition package.
+
+
+\subsubsection*{General rules about this package} \begin{sbmlenum}
+
+\validRule{comp10101}{An SBML file with elements conforming to this
+  specification must use the namespace \\
+  \val{http://www.sbml.org/sbml/level3/version1/comp/version1}}
+
+\validRule{comp10102}{All new classes and attributes described in this
+  document must be defined using the \token{comp} namespace, either
+  explicitly or via an XML Namespace prefix.}
+
+
+\end{sbmlenum} \subsubsection*{General rules about identifiers} \begin{sbmlenum}
+
+\validRule{comp10201}{Within an SBMLDocument, the value of the
+  attribute \token{id} and \token{comp:id} on every instance of all
+  \Model and \ExternalModelDefinition objects must
+  be unique across the set of all \token{id} and \token{comp:id}
+  attribute values of such identifiers in the SBML document to which
+  they belong.}
+
+\validRule{comp10202}{(Extending L3V1 Core validation rule 10301) Within
+  a \Model or \ExternalModelDefinition object, the value of the
+  attribute \token{id} and \token{comp:id} on every instance of the
+  following classes of objects must be unique across the set of all
+  \token{id} and \token{comp:id} attribute values of all such objects in
+  a model: the \Model itself, plus all contained \FunctionDefinition,
+  \Compartment, \Species, \Reaction, \SpeciesReference,
+  \ModifierSpeciesReference, \Event, and \Parameter objects, plus the
+  newly-defined objects \Submodel and \Deletion.}
+
+\validRule{comp10203}{Within a \Model or \ExternalModelDefinition
+  object, the value of the attribute \token{comp:id} on every instance
+  of all \Port objects must be unique across the set of all
+  \token{comp:id} attribute values of all such objects in the model.}
+
+\validRule{comp10204}{The value of a \token{comp:id} attribute must
+  always conform to the syntax of the SBML data type \primtype{SId}.}
+
+\validRule{comp10205}{The value of model attributes on
+  \ExternalModelDefinition objects, \token{submodelRef},
+  \token{deletion}, and \token{conversionFactor} attributes on
+  \ReplacedElement objects, \token{modelRef},
+  \token{lengthConversionFactor}, \token{areaConversionFactor},
+  \token{volumeConversionFactor}, \token{substanceConversionFactor},
+  \token{timeConversionFactor}, and \token{extentConversionFactor}
+  attributes on \Submodel objects, and \token{port} and \token{idRef}
+  attributes on \SBaseRef objects must always conform to the syntax of
+  the SBML data type \primtype{SId}.}
+
+\validRule{comp10206}{The value of the \token{unitRef} attribute on
+  \SBaseRef objects must always conform to the syntax of the SBML data
+  type \primtype{UnitSId}.}
+
+\validRule{comp10207}{The value of the \token{metaIdRef} attributes on
+  \SBaseRef objects must always conform to the syntax of the XML data
+  type \primtype{ID}.}
+
+\validRule{comp10208}{The value of the \token{source} attribute on
+  \ExternalModelDefinition objects must always conform to the syntax of
+  the XML Schema 1.0 data type \primtype{anyURI}.}
+
+\validRule{comp10209}{The value of the \token{md5} attribute on
+  \ExternalModelDefinition objects must always conform to the syntax of
+  type \primtype{string}.}
+
+
+\end{sbmlenum} \subsubsection*{General rules about \class{SBaseRef} class objects and subclasses} \begin{sbmlenum}
+
+\validRule{comp10301}{No \Port object may use the optional \token{port}
+  attribute, as this would cause either a circular reference, or would
+  cause two port objects in the same model to point to the same
+  object.}
+
+\validRule{comp10302}{No two \Port objects in the same \Model may
+  reference the same XML element.  That is, the element pointed to
+  through the use of the \token{idRef}, \token{unitRef}, or
+  \token{metaIdRef} attributes, in conjunction with any child \SBaseRef
+  element, may not be the same element pointed to by a \Port object with
+  the same parent \ListOfPorts, whether it uses the same attribute to
+  point to that object or not.}
+
+\validRule{comp10303}{No two \ReplacedElement objects in the same \Model
+  may reference the same XML element unless that element is a \Deletion.
+  That is, the element pointed to through the use of the \token{port}, \token{idRef},
+  \token{unitRef}, or \token{metaIdRef} attributes, in conjunction with any child
+  \SBaseRef element, may not be the same element pointed to by any other
+  \ReplacedElement in the same \Model, whether it uses the same attribute
+  to point to that object or not.} 
+
+
+\end{sbmlenum} \subsubsection*{General rules about circular references in models} \begin{sbmlenum}
+
+\validRule{comp10401}{No \ExternalModelDefinition may reference an
+  \ExternalModelDefinition in a different SBML document that in turn
+  refers to the original \ExternalModelDefinition object, whether
+  directly or indirectly through a chain of \ExternalModelDefinition objects.} 
+
+\validRule{comp10402}{No \Model may contain a \Submodel which references
+  itself.  That is, the \token{id} attribute of a \Model may not match the
+  \token{modelRef} attribute on any of its \Submodel objects.} 
+
+\validRule{comp10403}{No \Model may contain a \Submodel which references
+  itself indirectly.  That is, the \token{modelRef} attribute of a \Submodel may
+  not point to a \Model, any of whose \Submodel objects point to the original
+  \Model, whether directly or indirectly through a chain of
+  \Model/\Submodel pairs.} 
+
+
+\end{sbmlenum} \subsubsection*{General rules about class inheritance} \begin{sbmlenum}
+
+\validRule{comp10501}{The \Deletion, \ExternalModelDefinition,
+  \ModelDefinition, \Port, \ReplacedElement, \SBaseRef, \Submodel,
+  \ListOfDeletions, \ListOfExternalModelDefinitions,
+  \ListOfModelDefinitions, \ListOfPorts, \ListOfReplacedElements, and
+  \ListOfSubmodels classes are comp namespace elements that inherit from
+  the SBML Level 3 Version 1 class \SBase.  As such, they must follow the
+  validation rules for L3v1 core attributes and child elements from the
+  \SBase class.} 
+
+\validRule{comp10502}{The \ListOfDeletions,
+  \ListOfExternalModelDefinitions, \ListOfModelDefinitions, \ListOfPorts,
+  \ListOfReplacedElements, and \ListOfSubmodels classes are comp namespace
+  elements that inherit from the SBML Level 3 Version 1 class ListOf.
+  As such, they must follow the validation rules for L3v1 core
+  attributes and child elements from the \ListOf class.} 
+
+\validRule{comp10501}{The \ModelDefinition class is a comp namespace
+  element that inherits from the SBML Level 3 Version 1 class \Model.  As
+  such, it must follow the validation rules for L3v1 core attributes and
+  child elements from the Model class.} 
+
+
+\end{sbmlenum} \subsubsection*{Rules for the extended \class{SBML} container object} \begin{sbmlenum}
+
+\validRule{comp20101}{There may be at most one instance of each of the
+  following kind of object in an SBML document:  \ListOfModelDefinitions,
+  and \ListOfExternalModelDefinitions. } 
+
+\validRule{comp20102}{The \token{required} attribute must be set true if its
+  \Model child contains any \Submodel objects with \Species, \Parameter,
+  \Reaction, or \Event objects (directly or indirectly) that have not been
+  replaced.  [Note:  This may be too hard to implement?maybe go for a
+  warning instead?]} 
+
+\validRule{comp20103}{Apart from the general notes and annotation
+  subobjects permitted on all SBML components, a \ListOfModelDefinitions
+  container object may only contain ModelDefinition objects.} 
+
+\validRule{comp20104}{Apart from the general notes and annotation
+  subobjects permitted on all SBML components, a
+  ListOfExternalModelDefinitions container object may only contain
+  ExternalModelDefinition objects.} 
+
+\validRule{comp20105}{A ListOfModelDefinitions object may define no
+  attribute from the comp namespace.} 
+
+\validRule{comp20106}{A ListOfExternalModelDefinitions object may define
+  no attribute from the comp namespace.} 
+
+
+\end{sbmlenum} \subsubsection*{Rules for \class{SBaseRef}, \class{Deletion}, \class{Port} and \class{ReplacedElement} objects} \begin{sbmlenum}
+
+\validRule{comp20201}{Every SBaseRef object must point to an object.
+  That is, SBaseRef, Deletion, and Port objects must define one of the
+  attributes port, idRef, unitRef, or metaIdRef, and ReplacedElement
+  objects must define one of the attributes port, idRef, unitRef,
+  metaIdRef, or deletion.} 
+
+\validRule{comp20202}{No SBaseRef object may point to an object using
+  more than one method.  That is, SBaseRef, Deletion, and Port objects
+  must not define more than one of the attributes port, idRef, unitRef,
+  or metaIdRef, and ReplacedElement objects must not define more than
+  one of the attributes port, idRef, unitRef, metaIdRef, or deletion.} 
+
+\validRule{comp20203}{The value of a port attribute on an SBaseRef
+  object must be the identifier of a Port object from the referenced
+  Model. } 
+
+\validRule{comp20204}{The value of an idRef attribute on an SBaseRef
+  object must be the identifier of an object from the referenced Model
+  within the SId namespace for that model.  This includes elements with
+  id attributes which are defined in packages other than Level 3 core or
+  this comp package.} 
+
+\validRule{comp20205}{The value of a unitRef attribute on an SBaseRef
+  object must be the identifier of a UnitDefinition object from the
+  referenced Model. } 
+
+\validRule{comp20206}{The value of a metaIdRef attribute on an SBaseRef
+  object must be the value of a metaId attribute on any element
+  contained in the referenced Model.  This includes elements with metaId
+  attributes which are defined in packages other than Level 3 core or
+  this comp package.} 
+
+\validRule{comp20207}{If an SBaseRef object contains an SBaseRef child,
+  it must point to a Submodel element.} 
+
+\validRule{comp20208}{The value of a submodelRef attribute on a
+  ReplacedElement object must be the identifier of a Submodel object
+  from the parent Model of the ReplacedElement. } 
+
+\validRule{comp20209}{The value of a deletion attribute on a
+  ReplacedElement object must be the identifier of a Deletion object
+  from the parent Model of the ReplacedElement. } 
+
+\validRule{comp20210}{The value of a submodelRef attribute on a
+  ReplacedElement object which also defines a deletion attribute must be
+  the identifier of the Submodel object to which the referenced Deletion
+  belongs. } 
+
+\validRule{comp20211}{The value of a conversionFactor attribute on a
+  ReplacedElement object must be the identifier of a Parameter object
+  from the parent Model of the ReplacedElement. } 
+
+\validRule{comp20212}{The value of an identical attribute on a
+  ReplacedElement object must, if present, have a value of type
+  Boolean.} 
+
+\validRule{comp20213}{If the value of the identical attribute on a
+  ReplacedElement object is true, the parent element of the
+  ListOfReplacedElements to which the ReplacedElement belongs must be
+  the same class as the referenced element.} 
+
+\validRule{comp20214}{If the value of the identical attribute on a
+  ReplacedElement object is true, the parent element of the
+  ListOfReplacedElements to which the ReplacedElement belongs must
+  define all of the attributes present on the referenced element.  This
+  includes attributes from other namespaces, such as from packages other
+  than Level 3 core and this ?comp? package.} 
+
+\validRule{comp20215}{If the value of the identical attribute on a
+  ReplacedElement object is true, the parent element of the
+  ListOfReplacedElements to which the ReplacedElement belongs must only
+  define attributes present on the referenced element, with the
+  exception of the id and metaId attributes, which may be added even if
+  not present on the referenced element.} 
+
+\validRule{comp20216}{If the value of the identical attribute on a
+  ReplacedElement object is true, all attributes of the parent element
+  of the ListOfReplacedElements to which the ReplacedElement belongs
+  (including attributes from other namespaces) must be identical to the
+  corresponding attributes of the referenced element, with the exception
+  of the id and metaId attributes, which may be anything, and with the
+  exception of attributes of type SIdRef, UnitSIdRef, PortSIdRef, and
+  IDREF, which must now reference elements of the parent model which
+  themselves are replacements for the original target of the reference
+  attribute.  Those referenced replacements need not be flagged with
+  ?identical=true?, and need not be identical to the elements they
+  replace.  If any attributes define a numerical value in the submodel
+  that would be converted to a new value in the parent model though the
+  use of a conversionFactor, that attribute must be set to be equal to
+  the new numerical value.} 
+
+\validRule{comp20217}{If the value of the identical attribute on a
+  ReplacedElement object is true, the children of the parent element of
+  the ListOfReplacedElements to which the ReplacedElement belongs must
+  be identical to the corresponding children of the referenced element,
+  with the exception of any child ListOfReplacedElements objects (which
+  have no restrictions).  ?Identical? means these child objects
+  themselves must follow validation rules comp20213, comp20214,
+  comp20215, comp20216, and comp20217.} 
+
+\validRule{comp20218}{(warning) If the identical attribute on a
+  ReplacedElement object is not set, all attributes with defined values
+  on the referenced element should be defined on the parent element of
+  the ListOfReplacedElements to which the ReplacedElement belongs.} 
+
+\validRule{comp20219}{(warning) If the identical attribute on a
+  ReplacedElement object is not set, the parent element of the
+  ListOfReplacedElements to which the ReplacedElement belongs should
+  contain the same number and type of children as the referenced
+  element, with the exception of ListOfReplacedElements children.} 
+
+\validRule{comp20220}{SBaseRef objects may define port, idRef, unitRef,
+  and metaIdRef attributes.  SBaseRef objects which are not Port,
+  Deletion, or ReplacedElement objects may not define any other
+  attributes from the comp namespace.} 
+
+\validRule{comp20221}{Port objects may define an id attribute in
+  addition to the port, idRef, unitRef, and metaIdRef attributes.  No
+  other attributes from the comp namespace are permitted on a Port
+  object.} 
+
+\validRule{comp20222}{Deletion objects may define an id attribute in
+  addition to the port, idRef, unitRef, and metaIdRef attributes.  No
+  other attributes from the comp namespace are permitted on a Deletion
+  object.} 
+
+\validRule{comp20223}{ReplacedElement objects must define a submodelRef
+  attribute, and may define deletion, identical, and conversionFactor
+  attributes, in addition to the port, idRef, unitRef, and metaIdRef
+  attributes.  No other attributes from the comp namespace are permitted
+  on a ReplacedElement object.} 
+
+
+\end{sbmlenum} \subsubsection*{Rules for \class{ModelDefinition} objects} \begin{sbmlenum}
+
+\validRule{comp20301}{ModelDefinition objects inherit from the Model
+  class, and must follow the same restrictions present on Model objects.
+  This includes any validation rules from the SBML Level 3 Version 1
+  core specification as well as this document.} 
+
+
+\end{sbmlenum} \subsubsection*{Rules for \class{Model} objects} \begin{sbmlenum}
+
+\validRule{comp20401}{There may be at most one instance of each of the
+  following kind of object in a Model:  ListOfSubmodels, and
+  ListOfPorts. } 
+
+\validRule{comp20402}{Apart from the general notes and annotation
+  subobjects permitted on all SBML components, a ListOfSubmodels
+  container object may only contain Submodels objects.} 
+
+\validRule{comp20403}{Apart from the general notes and annotation
+  subobjects permitted on all SBML components, a ListOfPorts container
+  object may only contain Port objects.} 
+
+\validRule{comp20404}{A ListOfSubmodels object may define no attribute
+  from the comp namespace.} 
+
+\validRule{comp20405}{A ListOfPorts object may define no attribute from
+  the comp namespace.} 
+
+
+\end{sbmlenum} \subsubsection*{Rules for \class{ExternalModelDefinition} objects} \begin{sbmlenum}
+
+\validRule{comp20501}{ExternalModelDefinition objects must define the id
+  and source attributes, and may define the model and md5 attributes.
+  No other attributes from the comp namespace are permitted on an
+  ExternalModelDefinition object.} 
+
+\validRule{comp20502}{The value of the source attribute on an
+  ExternalModelDefinition object must point to a SBML Level 3 document.}
+
+\validRule{comp20503}{The value of the model attribute on an
+  ExternalModelDefinition object, if present, must refer to an id in the
+  model namespace of the SBML document pointed to by the source
+  attribute.} 
+
+\consistencyRule{comp20504}{The value of the md5 attribute on an
+  ExternalModelDefinition object, if present, should match the
+  calculated md5 hash of the SBML document pointed to by the source
+  attribute. [Note: This is almost certainly too vague and perhaps also
+  incorrect, since I just made it up without knowing thing one about
+  md5?s, so consider this a placeholder.]}
+
+
+\end{sbmlenum} \subsubsection*{Rules for \class{Submodel} objects} \begin{sbmlenum}
+
+\validRule{comp20601}{Submodel objects must define the id and modelRef
+  attributes, and may define the lengthConversionFactor,
+  areaConversionFactor, volumeConversionFactor,
+  substanceConversionFactor, timeConversionFactor, and
+  extentConversionFactor attributes.  No other attributes from the comp
+  namespace are permitted on a Submodel object.} 
+
+\validRule{comp20602}{There may be at most one instance of the
+  ListOfDeletions object in a Submodel.} 
+
+\validRule{comp20603}{The lengthConversionFactor, areaConversionFactor,
+  volumeConversionFactor, substanceConversionFactor,
+  timeConversionFactor, and extentConversionFactor attributes on a
+  Submodel object must, if defined, refer to Parameter objects in the
+  same Model as the Submodel.} 
+
+\validRule{comp20605}{The modelRef attribute on a Submodel must refer to
+  the id of a Model, ModelDefinition, or ExternalModelDefinition object
+  in the same SBMLDocument as the Submodel. } 
+
+\validRule{comp20606}{Apart from the general notes and annotation
+  subobjects permitted on all SBML components, a ListOfDeletions
+  container object may only contain Deletion objects.} 
+
+\validRule{comp20607}{A ListOfDeletions object may define no attribute
+  from the comp namespace.} 
+
+
+\end{sbmlenum} \subsubsection*{Rules for the extended \class{SBase} class} \begin{sbmlenum}
+
+\validRule{comp20701}{SBase objects (that is, all elements inheriting
+  from the SBase class, as defined in the SBML Level 3 Version 1 core
+  specification, as defined in this package, and as defined in other
+  packages) may contain at most one instance of the
+  ListOfReplacedElements object.} 
+
+\validRule{comp20702}{Apart from the general notes and annotation
+  subobjects permitted on all SBML components, a ListOfReplacedElements
+  container object may only contain ReplacedElement objects.} 
+
+\validRule{comp20703}{A ListOfReplacedElements object may define no
+  attribute from the comp namespace.} 
+
+
+\end{sbmlenum}

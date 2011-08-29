@@ -1,0 +1,95 @@
+% -*- TeX-master: "main"; fill-column: 72 -*-
+
+\section{Examples}
+\label{examples}
+
+This section contains a variety of examples of SBML Level~3 Version~1
+documents employing the Hierarchical Model Composition package.
+
+\subsection{Simple aggregate model}
+
+The following is a simple aggregate model, with one defined model being
+instantiated twice:
+
+\exampleFile{figs/eg-simple-aggregate.xml}
+
+In the model above, we defined a two-step enzymatic process, with
+species \val{S} and \val{E} forming a complex, then dissociating to
+\val{E} and \val{D}.  The aggregate model instantiates it twice, so the
+resulting model \val{aggregate} has two parallel processes in two
+parallel compartments performing the same reaction.
+
+
+\subsection{Example of importing definitions from external files}
+
+Now suppose that we have saved the above SBML content to a file named
+\val{enzyme\_model.xml}.  The following example imports the model
+\val{enzyme} from that file into a new model:
+
+\exampleFile{figs/eg-import-external.xml}
+
+In the model above, we import ``enzyme'' twice, create a compartment and
+species local to the parent model, and replace the compartment
+\val{comp} and species \val{S} from the two instantiations with the new
+elements.  Now we have a model with a single compartment in which a
+species \val{S} can either bind with enzyme \val{A.E} to form \val{A.D},
+or bind with enzyme \val{B.E} to form \val{B.D}.
+
+
+\subsubsection{Example of using ports}
+
+In the following, we define one model (\val{simple}) with a single
+reaction involving species \val{S} and \val{D}, and ports, and we
+again import model \val{enzyme}:
+
+\exampleFile{figs/eg-ports.xml}
+
+In model \val{simple} above, we give ports to the compartment, the two
+species, and the reaction.  Then, in model \val{complexified}, we import
+both \val{simple} and the model \val{enzyme} from the file
+\val{enzyme\_model.xml}, and replace the simple reaction with the more
+complex two-step reaction by deleting reaction \val{J0} from model
+\val{simple} and replacing \val{S} and \val{D} from both models with
+local replacements.  Note that it is model \val{simple} that defines the
+initial concentrations of \val{S} and \val{D}, so our modeler set the
+attribute \token{identical} to \val{true} for those elements, faithfully
+reproducing the values \val{5} and \val{10} in the local copy, and set
+the attribute \token{identical} to \val{false} for the replacement of
+those elements from model \val{enzyme}.  Also note that since
+\val{simple} defines ports, the \val{port} attribute is used for the
+subelements that referenced \val{simple} model elements, but
+\val{symbol} still had to be used for subelements referencing
+\val{enzyme}.
+
+In the resulting model, \val{S} is converted to \val{D} by a two-step
+enzymatic reaction defined wholly in \val{enzyme}, with the initial
+concentrations of \val{S} and \val{D} set, in effect, in \val{simple}
+(through the appropriate setting of the attribute \token{identical}).
+If \val{simple} had other reactions that created \val{S} and destroyed
+\val{D}, \val{S} would be created, would bind with \val{E} to form
+\val{D}, and \val{D} would then be destroyed, even though those reaction
+steps were defined in separate models.
+
+
+\subsubsection{Example of replacement}
+
+In reference to the previous example, what if we would like to annotate
+that the deleted reaction had been \emph{replaced} by the two-step
+enzymatic process?  To do that, we must move those reactions to the
+parent model, and, since those reactions involve \val{E} and \val{ES},
+we must also move those species as well.  The following SBML fragment
+demonstrates one way of doing that.
+
+\exampleFile{figs/eg-replacement.xml}
+
+In the example above, we have recreated \val{enzyme} so as to give it
+ports, then recreated basically the entire model in the parent
+\val{complexified} so we can reference the deleted \val{oldrxn} in the
+replacements lists.  Note that we list that reaction deletion both for
+the two new reactions and for the two new species \val{E} and \val{ES},
+since those species were themselves elided in the simple form of the
+\val{S} to \val{D} reaction in \val{simple}.  The attribute
+\token{identical} is used throughout, so that any visualization or
+manipulation software knows that the only reason those elements exist in
+the parent model is to create a reference, not to actually change the
+element itself.

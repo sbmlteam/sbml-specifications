@@ -12,10 +12,150 @@ operational rules for assessing validity.
 \subsection{Validation procedure}
 \label{validation-procedure}
 
-Overall, there are two steps to the process of validating a model that
-uses the Hierarchical Model Composition package.  First, the structure
-and references are 
+We first note that the validation rules below only apply to models
+defined in the SBML document being validated.  Models defined in
+external files are not required to be valid in and of themselves; the
+only requirement is that the model containing the instantiation of an
+externally-defined model must be the one that is valid.  That may seem
+counterintuitive, but the reason is that replacements and deletions can
+be used to render valid what might otherwise be invalid.  For example,
+an external model that omits required attributes in its components
+(which would be invalid according to SBML Level~3 Version~1 Core) may
+become valid if those components are replaced by valid elements, or if
+they are deleted entirely.  Similarly, references to nonexistent
+components may themselves be deleted, illegal combinations of objects
+may be rectified, etc.
 
+
+\subsubsection{The two-phase validation approach}
+
+To understand the validation procedure for models that use Hierarchical
+Model Composition, it is helpful to think in terms of an analogy to
+baking.  To make a cake, one first assembles specific ingredients in a
+certain way, and then one bakes the result to produce the final
+product---the cake.  An SBML document using the Hierarchical Model
+Composition package constructs is analogous to \emph{only a recipe}: it
+is a description of how to assemble ingredients in a certain way to
+create a ``cake'', but it is \emph{not the cake itself}.  The cake is
+only produced after \emph{following} the instructions, which here
+involves traversing the various model, submodel, deletion, and
+replacement descriptions.
+
+We decompose validation of such a composite model into two phases:
+
+\begin{enumerate}\setlength{\parskip}{0ex}
+
+\item \emph{Validate the ``recipe''}.  The submodel, deletion, and
+  replacement constructs themselves must be valid.
+
+\item \emph{Validate the ``cake''}.  The model produced by interpreting
+  the various constructs must be valid SBML.
+
+\end{enumerate}
+
+The first validation phase involves checking the aggregation, deletion
+and linkage instructions defined by the Hierarchical Model Composition
+constructs in an SBML document.  The \Submodel, \Port, \Deletion,
+\ReplacedElement and other constructs defined in this specification must
+be valid according to the rules defined in \sect{validation-rules}.
+Passing this phase means that the constructs are well-formed, referenced
+files and models and other entities exist, ports have identifiers in the
+relevant namespaces, and so on.
+
+The second validation phase takes place after interpreting the
+Hierarchical Model Composition constructs.  The effect of intepreting
+the constructs is to produce a kind of ``flattened'' version of the
+model devoid of Hierarchical Model Composition features.  This
+``flattened'' version only exists in memory: the referenced files are
+not modified, but rather, the interpretation of the package constructs
+leads to an in-memory representation of a final, composite model implied
+by following the recipe.  This generated model must then be valid SBML
+according to the rules defined in the SBML Level~3 Version~1 Core
+specification.
+
+
+\subsubsection{Example algorithm for following the ``recipe'' to produce
+  a ``flattened'' model}
+
+The following is one possible algorithm for interpreting the
+Hierarchical Model Composition constructs and creating a ``flattened''
+SBML document.  Other algorithms besides this are possible, the main
+difference being how identifiers are handled.
+
+\begin{enumerate}
+
+\item Examine the submodels of the model being validated.  If any
+  submodel itself contains submodels, perform this algorithm in its
+  entirety on each submodel before proceeding to the next step on the
+  model.
+
+\item Find all submodels that do not have a unique identifier (i.e., a
+  value for their \token{id} attribute) in the containing model's
+  namespace, and give them identifiers for the purpose of this
+  algorithm.
+
+% FIXME this is wrong:
+
+\item For every submodel identifier ``\emph{M}'', verify that no component
+  identifier or meta identifier (i.e., the \token{id} or \token{metaid}
+  attribute values of the component) begin with the character sequence
+  ``\emph{M\_}''.  For example, if a submodel has identifier
+  \val{rocket}, change it (for the purposes of this algorithm) to
+  \val{rocket\_}.  If a component has identifier ``\emph{M\_}'' already,
+  add another underscore.
+
+\item Remove any submodel components that have been replaced or deleted.
+
+\item Tranform the remaining submodel components such that:
+
+  \begin{enumerate}
+
+  \item Every identifier (\token{id} attribute) is changed to a value of
+    the form ``\emph{M\_id}'', where ``\emph{id}'' is the original
+    \token{id} value and ``\emph{M}'' is the submodel identifier.
+
+  \item Every meta identifier (\token{metaid} attribute) is changed to a
+    value of the form ``\emph{M\_metaid}'', where ``\emph{metaid}'' is
+    the original \token{metaid} value and ``\emph{M}'' is the submodel
+    identifier.
+
+  \end{enumerate}
+
+\item For every component that has not been removed in the submodel,
+  adjust every reference to the identifiers that were transformed in the
+  previous step.  That is, change every \primtype{SIdRef} value to the
+  form form ``\emph{M\_id}'', where ``\emph{id}'' is the original
+  \primtype{SIdRef} value and ``\emph{M}'' is the submodel identifier,
+  and change every XML \primtype{ID} value to the form
+  ``\emph{M\_metaid}'', where ``\emph{metaid}'' is the original
+  \primtype{ID} value.  \textbf{FIXME: original version unclear; need
+    finish this}
+
+\item Verify identifier references.  If any identifier reference (values
+  of \primtype{SIdRef} and \primtype{ID}) is found pointing to deleted
+  component, the model is invalid, as it contains a reference to a
+  nonexistent component.
+
+\item After performing the tasks above for all remaining components,
+  merge the components of the remaining submodels into a single model.
+  The various lists (list of species, list of compartments, etc.) are
+  merged in this step.  Annotations must be preserved, as should
+  constructs from other SBML Level~3 packages.
+
+\item Test the resulting model for validity.
+
+\end{enumerate}
+
+After performing the steps above, the result will be either a model in
+SBML Level~3 Version~1 Core format (possibly containing constructs from
+other SBML Level~3 packages), or a declaration that the model is invalid.
+
+Note again that when instantiating a model, one does not have to first
+test the validity of that model.  If it is in the same file as the
+containing model, it will be tested anyway by this algorithm.  If it is
+in a different file, that file's validity (or lack thereof) should not
+affect the validity of the file being tested (though a validator may
+warn the user of this situation if it desires).
 
 
 \subsection{Validation and consistency rules}
@@ -69,11 +209,11 @@ the Hierarchical Model Composition package.
 
 \subsubsection*{General rules about this package} \begin{sbmlenum}
 
-\validRule{comp-10101} {  To conform to the  Hierarchical Model Composition
+\validRule{comp-10101} {To conform to the  Hierarchical Model Composition
   package specification for SBML Level~3 Version~1, an SBML document must
   declare the use of the following XML Namespace:\\
   ``\uri{http://www.sbml.org/sbml/level3/version1/comp/version1}''.
-  (References: SBML L3V1 comp V1 Section~\ref.) }
+  (References: SBML L3V1 comp V1 Section~\ref.)}
   
 
 \validRule{comp-10102} {  When appearing in an SBML document, all elements
@@ -141,25 +281,25 @@ the Hierarchical Model Composition package.
 \validRule{comp-20101} { Any \SBase objects (that is, all elements inheriting
   from the \SBase class, as defined in this package) may contain at most one 
   instance of the \ListOfReplacedElements object.
-  (References: SBML L3V1 comp V1 Section~\ref{extenced-sbase-class}.) }
+  (References: SBML L3V1 comp V1 Section~\ref{extended-sbase-class}.) }
 
 
 \validRule{comp-20102} { Apart from the general notes and annotation
   subobjects permitted on all SBML components, a \ListOfReplacedElements
   container object may only contain \ReplacedElement objects. 
-  (References: SBML L3V1 comp V1 Section~\ref{extenced-sbase-class}.) }
+  (References: SBML L3V1 comp V1 Section~\ref{extended-sbase-class}.) }
 
 
 \validRule{comp-20103} { A \ListOfReplacedElements object may have the optional 
   SBML core attributes \token{metaid} and \token{sboTerm}.  No other attributes 
   from the SBML Level~3 Core namespace or the comp namespace are permitted on 
   a \ListOfReplacedElements object. 
-  (References: SBML L3V1 comp V1 Section~\ref{extenced-sbase-class}.) }
+  (References: SBML L3V1 comp V1 Section~\ref{extended-sbase-class}.) }
 
 
 \validRule{comp-20104} { The \ListOfReplacedElements in an \SBase object is
   optional, but if present, must not be empty.
-  (References: SBML L3V1 comp V1 Section~\ref{extenced-sbase-class}.) }
+  (References: SBML L3V1 comp V1 Section~\ref{extended-sbase-class}.) }
 
 
 \end{sbmlenum} \subsubsection*{Rules for the extended \class{SBML} container object} \begin{sbmlenum}
@@ -199,7 +339,7 @@ the Hierarchical Model Composition package.
 
 \validRule{comp-20206} { Apart from the general notes and annotation
   subobjects permitted on all SBML components, a \ListOfModelDefinitions
-  container object may only contain \ModelDefinition objects.
+  container object may only contain ModelDefinition objects.
   (References: SBML L3V1 comp V1 Section~\ref{listofmodeldefinitions-class}.) }
 
 
@@ -210,14 +350,14 @@ the Hierarchical Model Composition package.
   (References: SBML L3V1 comp V1 Section~\ref{listofexternalmodeldefinitions-class}.) }
   
 
-\validRule{comp-20208}A \ListOfModelDefinitions object may have the optional 
+\validRule{comp-20208}{A \ListOfModelDefinitions object may have the optional 
   SBML core attributes \token{metaid} and \token{sboTerm}.  No other attributes 
   from the SBML Level~3 Core namespace or the comp namespace are permitted on 
   a \ListOfModelDefinitions object.
   (References: SBML L3V1 comp V1 Section~\ref{listofmodeldefinitions-class}.) }
 
 
-\validRule{comp-20209}A \ListOfExternalModelDefinitions object may have the optional 
+\validRule{comp-20209}{A \ListOfExternalModelDefinitions object may have the optional 
   SBML core attributes \token{metaid} and \token{sboTerm}.  No other attributes 
   from the SBML Level~3 Core namespace or the comp namespace are permitted on 
   a \ListOfExternalModelDefinitions object.
@@ -288,13 +428,13 @@ the Hierarchical Model Composition package.
 \validRule{comp-20310} { No \ExternalModelDefinition may reference an
   \ExternalModelDefinition in a different SBML document that in turn
   refers to the original \ExternalModelDefinition object, whether
-  directly or indirectly through a chain of \ExternalModelDefinition objects.
+  directly or indirectly through a chain of \ExternalModelDefinition
+  objects.
   (References: SBML L3V1 comp V1 Section~\ref{???}.) }
-
 
 \end{sbmlenum} \subsubsection*{Rules for \class{ModelDefinition} objects} \begin{sbmlenum}
 
-\validRule{comp-20401} { An \ModelDefinition object derives from the SBML
+\validRule{comp-20401} { A ModelDefinition object derives from the SBML
   Level~3 Core \class{Model} and as such must follow the same restrictions 
   present on Level~3 Core \Model objects.
   This includes any validation rules from the SBML Level 3 Version 1
@@ -328,14 +468,14 @@ the Hierarchical Model Composition package.
   (References: SBML L3V1 comp V1 Section~\ref{model-class}.) }
   
 
-\validRule{comp-20505} {A \ListOfSubmodels object may have the optional 
+\validRule{comp-20505}{A \ListOfSubmodels object may have the optional 
   SBML core attributes \token{metaid} and \token{sboTerm}.  No other attributes 
   from the SBML Level~3 Core namespace or the comp namespace are permitted on 
   a \ListOfSubmodels object.
   (References: SBML L3V1 comp V1 Section~\ref{model-class}.) }
 
 
-\validRule{comp-20506} {A \ListOfPorts object may have the optional 
+\validRule{comp-20506}{A \ListOfPorts object may have the optional 
   SBML core attributes \token{metaid} and \token{sboTerm}.  No other attributes 
   from the SBML Level~3 Core namespace or the comp namespace are permitted on 
   a \ListOfPorts object.
@@ -374,7 +514,7 @@ the Hierarchical Model Composition package.
   (References: SBML L3V1 comp V1 Section~\ref{listofdeletions-class}.) }
 
 
-\validRule{comp-20606}A \ListOfDeletions object may have the optional 
+\validRule{comp-20606} { A \ListOfDeletions object may have the optional 
   SBML core attributes \token{metaid} and \token{sboTerm}.  No other attributes 
   from the SBML Level~3 Core namespace or the comp namespace are permitted on 
   a \ListOfDeletions object.
@@ -435,21 +575,23 @@ the Hierarchical Model Composition package.
 
 
 \validRule{comp-20615} { The \token{comp:modelRef} attribute on a \Submodel must
-  be the identifier of a \Model, \ModelDefinition, or
+  be the identifier of a \Model, ModelDefinition, or
   \ExternalModelDefinition object in the same \class{sbml} element as the
   \Submodel. 
   (References: SBML L3V1 comp V1 Section~\ref{submodel-modelref}.) }
 
-
 \validRule{comp-20616} { No \Model may contain a \Submodel which references
-  that model itself.  That is, the \token{modelRef} attribute of a \Submodel 
+  that model itself.  That is, the \token{modelRef} attribute of a
+  \Submodel 
   may not match the
   \token{id} attribute on the parent \Model. 
   (References: SBML L3V1 comp V1 Section~\ref{submodel-modelref}.) }
 
 \validRule{comp-20617} { No \Model may contain a \Submodel which references
-  that model indirectly.  That is, the \token{modelRef} attribute of a \Submodel may
-  not point to the \token{id} of a \Model, any of whose \Submodel objects point to the original
+  that model indirectly.  That is, the \token{modelRef} attribute of a
+  \Submodel may
+  not point to the \token{id} of a \Model, any of whose \Submodel objects
+  point to the original
   \Model, whether directly or indirectly through a chain of
   \Model/\Submodel pairs. 
   (References: SBML L3V1 comp V1 Section~\ref{submodel-modelref}.) }
@@ -483,12 +625,10 @@ the Hierarchical Model Composition package.
    same \Model as the \Submodel.
   (References: SBML L3V1 comp V1 Section~\ref{submodel-conversion}.) }
 
-
 \validRule{comp-20623} { The \token{comp:extentConversionFactor} attribute
    on a \Submodel object must be the identifier of a \Parameter object in the 
    same \Model as the \Submodel.
   (References: SBML L3V1 comp V1 Section~\ref{submodel-conversion}.) }
-
 
 
 \end{sbmlenum} \subsubsection*{Rules for the \class{SBaseRef} abstract object} \begin{sbmlenum}
@@ -668,6 +808,5 @@ the Hierarchical Model Composition package.
 \validRule{comp-21011} { No two \ReplacedElement objects in the same \Model
   may reference the same XML element unless that element is a \Deletion.
   (References: SBML L3V1 comp V1 Section~\ref{replacedelement-class}.) }
-  
 
 \end{sbmlenum}

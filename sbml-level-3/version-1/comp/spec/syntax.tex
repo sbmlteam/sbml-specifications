@@ -1,5 +1,7 @@
 % -*- TeX-master: "main"; fill-column: 72 -*-
 
+\newcommand{\fixttspace}{\hspace*{1pt}}
+
 \section{Package syntax and semantics}
 \label{sec:syntax}
 
@@ -9,6 +11,36 @@ various data types and constructs defined in this package, then in
 \sect{examples}, we provide complete examples of using the constructs in
 example SBML models.
 
+% -----------------------------------------------------------------------------
+\subsection{Namespace URI and other declarations necessary for using this package}
+\label{xml-namespace}
+
+Every SBML Level~3 package is identified uniquely by an XML namespace
+URI.  For an SBML document to be able to use a given SBML Level~3
+package, it must declare the use of that package by referencing its URI.
+The following is the namespace URI for this version of the Hierarchical
+Model Composition package for SBML Level~3 Version~1:
+\begin{center}
+\uri{http://www.sbml.org/sbml/level3/version1/comp/version1}
+\end{center}
+
+In addition, SBML documents using a given package must indicate whether
+understanding the package is required for complete mathematical
+interpretation of a model, or whether the package is optional.  This is
+done using the attribute \token{required} on the \token{<sbml>} element
+in the SBML document.  For the Hierarchical Model Composition package,
+the value of this attribute must be set to \val{true}.
+
+The following fragment illustrates the beginning of a typical SBML model
+using SBML Level~3 Version~1 and this version of the Hierarchical Model
+Composition package:
+
+\begin{example}
+<?xml version="1.0" encoding="UTF-8"?>
+<sbml xmlns="http://www.sbml.org/sbml/level3/version1/core" level="3" version="1"
+      xmlns:comp="http://www.sbml.org/sbml/level3/version1/comp/version1" comp:required="true">
+\end{example}
+    
 
 % -----------------------------------------------------------------------------
 \subsection{Primitive data types}
@@ -18,13 +50,13 @@ Section~3.1 of the SBML Level~3 specification defines a number of
 primitive data types and also uses a number of XML Schema 1.0 data
 types~\citep{biron:2000}.  We assume and use some of them in the rest of
 this specification, specifically \primtype{boolean}, \primtype{ID},
-\primtype{IDREF}, \primtype{SId}, \primtype{SIdRef}, \primtype{UnitSId},
+\primtype{SId}, \primtype{SIdRef}, \primtype{UnitSId},
 \primtype{UnitSIdRef}, and \primtype{string}.  The Hierarchical Model
 Composition package also makes use of or defines other primitive types;
 they are described below.
 
 
-\subsubsection{Type \hspace*{1pt}\primtypeNC{anyURI}}
+\subsubsection{Type \fixttspace\primtypeNC{anyURI}}
 \label{primtype-anyuri}
 \label{primtype-uri}
 
@@ -34,13 +66,13 @@ string data type whose values are interpretable as URIs (\emph{Universal
 the W3C document RFC~3986~\citep{rfc3986}.
 
 
-\subsubsection{Type \hspace*{1pt}\primtypeNC{PortSId}}
+\subsubsection{Type \fixttspace\primtypeNC{PortSId}}
 \label{primtype-portid}
 
 The type \primtype{PortSId} is derived from \primtype{SId} (SBML Level~3
 Version~1 Core specification Section~3.1.7) and has identical syntax.
 The \primtype{PortSId} type is used as the data type for the identifiers
-of ports (Section~\ref{port-class}) in the Hierarchical Model Composition
+of \Port objects (Section~\ref{port-class}) in the Hierarchical Model Composition
 package.  The purpose of having a separate type for such identifiers is
 to enable the space of possible port identifier values to be separated
 from the space of all other identifier values in SBML.  The equality of
@@ -49,7 +81,7 @@ match; i.e., comparisons of these identifiers must be performed in a
 case-sensitive manner.
 
 
-\subsubsection{Type \hspace*{1pt}\primtypeNC{PortSIdRef}}
+\subsubsection{Type \fixttspace\primtypeNC{PortSIdRef}}
 \label{primtype-portidref}
 
 Type \primtype{PortSIdRef} is used for all attributes that refer to
@@ -65,106 +97,6 @@ case-sensitive manner.
 
 
 % -----------------------------------------------------------------------------
-\subsection{Namespace scoping rules for identifiers}
-\label{namespaces}
-
-In the Hierarchical Model Composition package, as in SBML Level~3
-Version~1 Core, the \Model object contains the main components of an
-SBML model, such as the species, compartments and reactions.  The package adds the
-ability to put \emph{multiple} models inside an SBML document, and therefore must define the scope of
-identifiers in such a way that identifier collisions are prevented.
-
-Although the definitions of the main constructs in the package are not
-presented until later in this section, the scoping rules apply to all
-constructs and therefore are appropriate to discuss separately.  Here
-are the rules:
-
-\begin{enumerate}
-
-\item A shared namespace exists for \primtype{SId} values defined at the
-  SBML document level.  This namespace applies to the identifiers of
-  \Model and \ExternalModelDefinition objects within the SBML document.
-  The identifier of every \Model and \ExternalModelDefinition object
-  must be unique across the set of all such identifiers in the document.
-  The namespace is limited to that SBML document, and is not shared with
-  any other SBML document, even if that document is referenced via an
-  \ExternalModelDefinition.  This namespace is known as \emph{the model
-    namespace of the document}.
-
-\item The namespace for \primtype{SId} identifiers defined \emph{within}
-  a \Model object used in Hierarchical Model Composition follows the
-  same rules as those defined in SBML Level~3 Core for plain \Model
-  objects.  That is, the scope of the identifiers is limited to the
-  enclosing \Model object.  This means that two or more \Model objects
-  in the same document may reuse the same identifiers---identifiers do not need to be unique
-  at the level of the SBML document.  (For example, two model
-  definitions could use the same \primtype{SId} value for
-  \Parameter objects within their respective contents.  However, this
-  does \emph{not} imply that the two objects are equated with each
-  other!)  This is known as the \emph{object namespace of the model}.
-  An implication of this rule is that to fully locate an object when
-  there are multiple models in an SBML document, one must know not only
-  the object's identifier, but also the identifier of the model in which
-  it is located.
-
-\item As in SBML Level~3 Version~1 Core, the identifier of every
-  \UnitDefinition object must be unique across the set of all such
-  identifiers in the \Model to which they belong.  This is referred to
-  as the \emph{unit namespace of the model}.  Similar to the case above,
-  an implication of this rule is that to fully locate a user-defined
-  unit definition when there are multiple models in an SBML document,
-  one must know not only the unit definition's identifier, but also the
-  identifier of the model in which it is located.
-
-\item The Hierarchical Model Composition package defines a new kind of
-  component: the port, represented by \Port objects.  The identifier of
-  every \Port object must be unique across the set of all such
-  identifiers in the \Model object to which they belong.  Again, an
-  implication of this rule is that to fully locate a port when there are
-  multiple models in an SBML document, one must know not only the port's
-  identifier, but also the identifier of the model in which it is
-  located.
-
-\item \Reaction objects introduce a local namespace for \LocalParameter
-  objects.  These objects cannot be referenced from outside a given
-  reaction definition.  For the Hierarchical Model Composition package,
-  the implication is that the the \SBaseRef class (\sect{sbaseref-class})
-  cannot reference reaction local parameters by their identifiers.
-  However, the \LocalParameter objects \emph{can} be given meta
-  identifiers (i.e., a value for their \SBase-derived \token{metaid}
-  attribute) and be referenced using those.
-
-% FIXME need move this somewhere else:
-% 
-%   If replaced, it must be by an element in the normal element namespace of
-%   a model (such as a global Parameter).  Old references to that replaced
-%   LocalParameter will then point to the new replacement element.  If a
-%   LocalParameter is deleted from a Reaction whose KineticLaw used it in
-%   its math, that KineticLaw may still be valid if there was an element
-%   in the element namespace of the model with that same id to which it
-%   can now refer (in other words, if the LocalParameter shadowed a global
-%   parameter).
-
-
-\end{enumerate}
-
-The following example may clarify some of these rules.  Suppose a given
-SBML document contains a \Model object having the identifier \val{mod1}.
-This \Model cannot contain another object with the same identifier
-(e.g., it could not have a \Parameter object with the identifier
-\val{mod1}), nor can there be any other \Model or
-\ExternalModelDefinition objects identified as \val{mod1} within the
-same SBML document.  The first restriction is simply the regular SBML
-rule about uniqueness of identifiers throughout a \Model object; the
-second restriction is due to point (1) above.  On the other hand, there
-could be a second \Model object in the same document containing a
-component (e.g., a \Parameter) with the identifier \val{mod1}.  This
-would not conflict with the first \Model identifier (because the
-\Parameter would be effectively hidden at a lower level within the
-second \Model).
-
-
-% -----------------------------------------------------------------------------
 \subsection{The extended \class{SBML} class}
 \label{sbml-class}
 \label{listofmodeldefinitions-class}
@@ -173,74 +105,150 @@ second \Model).
 The top level of an ``SBML document'' is a container whose structure is
 defined by the object class \SBML in the SBML Level~3 specification.  In
 Level~3 Core, this container can contain only one model, an object of
-class \Model.  As outlined in the introduction (\sect{intro}), the
-purpose of the Hierarchical Model Composition package is to allow SBML
-documents to contain \emph{more} than one model.  To explain how this is
-accomplished, we first need to introduce some new terms to help in our
-explanations.
+class \Model.  The Hierarchical Model Composition package allows SBML
+documents to contain \emph{more} than one model.
 
-In the approach taken here, we make a distinction between (a) the
-definition of a model, before it is actually used anywhere, and (b) the
-actual use of a model inside another.  We use the term \emph{model
-  definition} for the former, and \emph{submodel} for the latter.  A
-model definition is akin to a Platonic ideal: it may be a complete model
-in and of itself, but until it is instantiated, it exists only as a
-concept.  A submodel, on the other hand, is an instantiation or instance
-of a previously-defined model: it is the realization of that model
-inside another model.  From the perspective of the model that contains
-the submodel, it has come into being, and now exists as something that
-can be used (and possibly modified and adapted, as we will explain
-later).  If the containing model is the \Model object of the SBML file,
-it has been fully instantiated.  If the containing model is instead
-another model definition, the submodel becomes part of that larger
-model, but has not been fully instantiated in the SBML document until
-that model definition is itself instantiated in the \Model object.
+To explain how this is accomplished, we first need to introduce some
+terminology.  In the approach taken here, we make a distinction between
+(a) the definition of a model, before it is actually used anywhere, and
+(b) its actual use:
 
-Past proposals for model composition in SBML tended to call model
-definitions themselves the ``submodels''.  We avoid that term because the
-model definitions must be valid \Model objects in and of themselves, and
-may be used standalone (i.e., may not ever be included inside another
-model).  Instead, we reserve the term ``submodel'' specifically for the
-instance of a model inside a containing model.  Another term proposed in
-prior work is ``model template'', which is close to what is intended by
-our use of the term model definition, but tends to imply that the model
-in question is somehow incomplete and needs to be filled in.  While this
-is indeed possible in the scheme described here, it is not required; for
-example, in a model aggregation situation, several complete working
-models may be integrated to form a larger whole.  We therefore eschew
-the term ``model template'' in favor of \emph{model definition}.
+\begin{itemize}
 
-The components that are used to implement these notions of model
-definition and submodel are defined in
-Figures~\ref{hierarchical-sbml-uml}--\ref{submodel-uml} in the pages
-that follow.  The extension of SBML Level~3's standard \SBML class
-consists of adding two new lists, \token{listOfModelDefinitions} and
-\token{listOfExternalModelDefinitions}, of classes \ListOfModelDefinitions
-and \ListOfExternalModelDefinitions, respectively.
+\item The term \emph{model definition} refers to the former case; that
+  is, the definition of a model, before it is used.  A model definition
+  is akin to a Platonic ideal: it may be a complete model in and of
+  itself, but until it is instantiated, it exists only as a concept.
 
-\begin{figure}[hbt]
+\item The term \emph{submodel} refers to actual use of a model
+  definition.  A submodel is an instantiation or instance of a
+  previously-defined model: it is the realization of that model inside
+  another model.  From the perspective of the model that contains this
+  submodel, the model definition has come into being, and now exists as
+  something that can be used (and possibly modified and adapted).
+
+\end{itemize}
+
+% [MH] Took this out because it wasn't clear that it was needed:
+% 
+% The potentially arbitrary nesting possible in model composition adds an
+% additional wrinkle to the model definition/submodel distinction.  If the
+% model directly containing a given submodel is the \Model object of the
+% SBML document, then the submodel has been fully instantiated.  However,
+% if the containing model is instead \emph{another} model definition (call
+% it ``M''), the submodel becomes part of that larger model definition,
+% but has \emph{not} been fully instantiated in the SBML document.  The
+% submodel only becomes fully instantiated when the model definition
+% (``M'') is itself instantiated in the top-level \Model object of an SBML
+% document.
+
+It may be helpful to contrast these terms with those in other
+approaches to model composition.  Some approaches call the model
+definitions themselves the ``submodels''.  We avoid that usage because,
+in the present formulation, model definitions must be valid \Model
+objects in and of themselves, and might never appear inside other models
+in the SBML document where they are defined.  (This might be the
+situation, for example, if the document defines multiple models purely
+to serve as a sort of component library used by other files.)  We
+reserve the term ``submodel'' specifically for the \emph{instance of a
+  model inside a containing model}.  Another term used in other schemes
+is ``model template'', which is close to what is intended by ``model
+definition'' here, but ``template'' implies something that is incomplete
+and needs to be filled in.  While this is possible in the approach
+described here, it is not required; for example, in model aggregation,
+several complete working models may be integrated to form a larger
+whole.  We therefore eschew the term ``model template'' in favor of
+\emph{model definition}.
+
+\begin{figure}[b]
   \includegraphics{figs/hierarchical-sbml}
   \caption{The definitions of the extended \SBML class as well as the
     new classes \ListOfModelDefinitions,
     \ListOfExternalModelDefinitions, and \ExternalModelDefinition.  The
-    color conventions are explained in \protect\sect{conventions}.}
+    extended \Model class is defined in \sect{model-class}.}
   \label{hierarchical-sbml-uml}
   \label{sbml-uml}
 \end{figure}
 
+\fig{hierarchical-sbml-uml} gives the definition of the extended
+\SBML class that ties these different components together; it also
+provides the definition of \ExternalModelDefinition.  Readers familiar
+with the \SBML class in SBML Level~3 Core will notice that this package
+adds two new lists, \token{listOfModelDefinitions} and
+\token{listOfExternalModelDefinitions}, of class \ListOfModelDefinitions
+and \ListOfExternalModelDefinitions, respectively.  The class diagram
+also makes concrete the notions described above, that model definition
+objects are not ``owned'' by any other model (they can be instantiated
+anywhere, even by models in other files) and that they exist outside the
+\Model class entirely.
+
+\fig{hierarchical-sbml-uml} also makes clear how model definitions
+\emph{are} \Model objects.  At the same time, the scheme preserves the
+aspect of core SBML Level~3 in which a single \Model object appears at
+the top level of an SBML document.  As will become when we define
+\Model, submodels appear inside \Model objects.  This is a key feature
+of the design described above; namely, when the top-level model
+references submodels, the submodels are instantiated, whereas when a
+model definition references submodels, the submodels are simply part of
+that model definition---they are not instantiated until the model
+definitions themselves are instantiated.
+
+Finally, to give a more intuitive sense for how the pieces fit together,
+\fig{hierarchy} below shows a template structure of an SBML document
+with both a \token{listOfModelDefinitions} and
+\token{listOfExternalModelDefinitions}, as well as a list of \Submodel
+objects inside the \Model object.
+
+\newcommand{\sayOptional}{\raisebox{0pt}[0pt][0pt]{\bigg\} \textrm{\emph{optional}}}}
+
+\begin{figure}[hbt]
+  \begin{tt}
+    \examplespacing
+    \small
+    \fcolorbox{sbmlgray}{extremelylightgray}{%
+      \begin{minipage}{\textwidth - 12pt}
+        \begin{tabbing}
+\=xx\=xx\=xx\=xx\=\kill
+\+\>
+<?xml version="1.0" encoding="UTF-8"?>\\
+<sbml xmlns="http://www.sbml.org/sbml/level3/version1/core" level="3" version="1"\\
+\>\>\>xmlns:comp="http://www.sbml.org/sbml/level3/version1/comp/version1" comp:required="true">\\[3pt]
+\><model id="My\_Model">\\
+\>\><comp:listOfSubmodels>\\
+\>\>\>\textrm{\emph{one or more}} <comp:submodel> \ldots\ </comp:submodel> \textrm{\emph{elements}}  \` \sayOptional\\
+\>\></comp:listOfSubmodels>\\
+\></model>\\[3pt]
+\><comp:listOfModelDefinitions>\\
+\>\>\textrm{\emph{one or more}} <comp:modelDefinition> \ldots\ </comp:modelDefinition> \textrm{\emph{elements}}  \` \sayOptional\\
+\></comp:listOfModelDefinitions>\\[3pt]
+\><comp:listOfExternalModelDefinitions>\\
+\>\>\textrm{\emph{one or more}} <comp:modelExternalDefinition> \ldots\ </comp:modelExternalDefinition> \textrm{\emph{elements}}  \` \sayOptional\\
+\></comp:listOfModelDefinitions>\\[3pt]
+</sbml>
+        \end{tabbing}
+      \end{minipage}
+    }
+  \end{tt}
+  \vspace*{-2pt}
+  \caption{Example of a skeleton SBML Level~3 document containing the
+    possible top-level constructs defined by the Hierarchical Model
+    Composition package.}
+\label{hierarchy}
+\end{figure}
+
+
 
 \subsubsection{The lists of internal and external model definitions}
 
-Model definition objects are not ``owned'' by any other model (they can
-be instantiated anywhere, even by models in other files); therefore, the
-approach used here pulls them out of the \Model class entirely, and
-instead, puts them in a separate list.  The list is a child of the SBML
-object itself.  Like other \textsf{\textbf{ListOf\rule{0.15in}{0.5pt}}}
-classes in SBML, the \ListOfModelDefinitions is derived from \SBase
-(more specifically, the extended \SBase class defined in
-\sect{extended-sbase-class}).  It inherits \SBase's attributes
-\token{metaid} and \token{sboTerm}, as well as the subcomponents for
-\Annotation and \Notes, but adds no especial attributes of its own.
+As shown in \fig{sbml-uml}, \token{listOfModelDefinitions} and
+\token{listOfExternalModelDefinitions} are children of an extended \SBML
+object.  Like other \textsf{\textbf{ListOf\rule{0.15in}{0.5pt}}} classes
+in SBML, the \ListOfModelDefinitions and \ListOfExternalModelDefinitions
+are derived from \SBase (more specifically, the extended \SBase class
+defined in \sect{extended-sbase-class}).  They inherit \SBase's
+attributes \token{metaid} and \token{sboTerm}, as well as the
+subcomponents for \Annotation and \Notes, but they do not add any
+especial attributes of their own.
 
 If a model from an external SBML document is needed, it can be
 referenced with an \ExternalModelDefinition object
@@ -256,25 +264,39 @@ have.
 \subsubsection{The \class{ExternalModelDefinition} class}
 \label{externalmodeldefinition-class}
 
-As mentioned above, references to externally-located models are
-implemented as instances of \ExternalModelDefinition objects.  This
-class is defined in \fig{hierarchical-sbml-uml}.  It contains several
-attributes, two of them required (\token{source} and \token{id}), and
-two of them optional (\token{modelRef} and \token{md5}).  These
-attributes are defined in the subsections below.
+To describe model definitions contained in external documents, the
+Hierarchical Model Composition package uses a separate object class
+(\ExternalModelDefinition), defined in \fig{hierarchical-sbml-uml}.  In
+the sense being used here, \ExternalModelDefinition objects are model
+definitions---in and of themselves, they are definitions of models but
+not \emph{uses} of those models.  The \ExternalModelDefinition provides
+a way to declare and identify them so that the \Model object in the
+present SBML document can use them in \Submodel objects.
+
+\ExternalModelDefinition contains two required attributes
+(\token{source} and \token{id}) and three optional attributes
+(\token{modelRef}, \token{md5} and \token{name}).  These attributes are
+explained below.
 
 
-\paragraph{The \hspace*{1pt}\token{id} and \token{name} attributes}
+\paragraph{The \fixttspace\token{id} and \fixttspace\token{name} attributes}
 
 The \token{id} attribute serves to provide a handle for the external
 model reference so that \Submodel objects can refer to it.  (Crucially,
 it is \emph{not} the identifier of the model being referenced; rather,
 it is an identifier for this \ExternalModelDefinition object within the
-current model.)  The \token{id} attribute takes a required value of type
-\primtype{SId}.  The optional attribute \token{name} may be used to give a human-readable identifier to \ExternalModelDefinition objects.  
+current SBML document.)  The \token{id} attribute takes a required value
+of type \primtype{SId}.
+
+\ExternalModelDefinition also has an optional \token{name} attribute, of
+type \primtype{string}.  The \token{id} attribute must be used as
+described in \sect{namespaces}.  The \token{name} attribute may be used
+in the same manner as other \token{name} attributes on SBML Level~3 Core
+objects; see Section~3.3.2 of the SBML Level~3 Version~1 Core
+specification for more information.
 
 
-\paragraph{The \hspace*{1pt}\token{source} attribute}
+\paragraph{The \fixttspace\token{source} attribute}
 
 The required attribute \token{source} is used to locate the SBML
 document containing an external model definition.  The value of this
@@ -287,8 +309,50 @@ not supported by this package.  The entire file at the given location is
 referenced.  The \token{source} attribute must have a value for every
 \ExternalModelDefinition instance.
 
+Here are some examples of different \token{source} attribute values for
+the different cases.  Suppose we have a model with the identifier
+\val{glau} located in a file named \val{firefly.xml}.  The following
+fragment defines an external model definition and gives it the
+identifier \val{m1}, the latter being valid for use within the
+containing SBML document:
 
-\paragraph{The \hspace*{1pt}\token{modelRef} attribute}
+\begin{example}
+<comp:listOfExternalModelDefinitions>
+    <comp:externalModelDefinition comp:source="firefly.xml" comp:modelRef="glau" comp:id="m1"/>
+</comp:listOfExternalModelDefinitions>
+\end{example}
+
+(In the above, we assume the XML namespace prefix \val{comp} has been
+assigned to the correct XML namespace URI for the Hierarchical Model
+Composition package, but we do not show that part of the SBML document
+here.  \sect{xml-namespace} explains this in more detail.)  On the other
+hand, suppose that we wanted to reference the model defined as model
+\val{BIOMD0000000002} in BioModels Database.  Looking inside the text of
+that SBML document, it becomes evident that the model identifier (its
+\token{id} value) is set to \val{mod}.  Thus, using a URN to reference
+that model, we can write the following:
+
+\begin{example}
+<comp:listOfExternalModelDefinitions>
+    <comp:externalModelDefinition comp:id="m2" comp:modelRef="mod"
+                                  comp:source="urn:miriam:biomodels.db:BIOMD0000000002"/>
+</comp:listOfExternalModelDefinitions>
+\end{example}
+
+Finally, we can imagine the situation where a model is made accessible
+from a location accessible on the Internet, say via the HTTP protocol.
+The following is a (fake) example:
+
+\begin{example}
+<comp:listOfExternalModelDefinitions>
+    <comp:externalModelDefinition comp:id="m3" comp:modelRef="the_model_id"
+                                  comp:source="http://www.cds.caltech.edu/~mhucka/sbmlmodel.xml"/>
+</comp:listOfExternalModelDefinitions>
+\end{example}
+
+
+
+\paragraph{The \fixttspace\token{modelRef} attribute}
 
 \ExternalModelDefinition's optional attribute \token{modelRef}, of type
 \primtype{SIdRef}, in is used to identify a \Model object within the
@@ -306,7 +370,7 @@ value, then the main model (i.e., the \token{<model>} element within the
 the model referenced by this \ExternalModelDefinition instance.
 
 
-\paragraph{The \hspace*{1pt}\token{md5} attribute}
+\paragraph{The \fixttspace\token{md5} attribute}
 
 The optional \token{md5} attribute takes a \primtype{string} value.  If
 set, it must be an MD5 checksum value computed over the document
@@ -365,91 +429,80 @@ final answer.
 \label{listofsubmodels-class}
 \label{listofports-class}
 
-In the Hierarchical Model Composition package, a model definition is, in
-fact, a \Model object in a new context.  The SBML Level~3 Core \Model
-class is extended here, and consists of two new lists: one for holding
-submodels (\token{listOfSubmodels}, of class \ListOfSubmodels), and one
-for holding a list of ports (\token{listOfPorts}, of class
-\ListOfPorts).  The rest of this section defines the extended \Model
-class and the \Port class, while the \Submodel class is described in
-\sect{submodel-class}.
+The extension of SBML Level~3 Core's \Model class is relatively
+straightforward: the Hierarchical Composition Package adds two lists,
+one for holding submodels (\token{listOfSubmodels}, of class
+\ListOfSubmodels), and the other for holding ports (\token{listOfPorts},
+of class \ListOfPorts).  \fig{extended-model-uml} provides the UML
+diagram.  The rest of this section defines the extended \Model class and
+the \Port class; \Submodel is defined in \sect{submodel-class}.
 
 \begin{figure}[hbt]
-  \includegraphics{figs/extended-model-uml}
+  \vspace*{-1ex}
+  \begin{overpic}{figs/extended-model-uml}
+    \put(71,36.9){\emph{\sect{submodel-class}}}
+    \put(88.75,23.75){\emph{\sect{sbaseref-class}}}
+  \end{overpic}
   \caption{The extensions of the \Model class and the definitions of the
     classes \Port, \ListOfPorts, and \ListOfSubmodels.  \Submodel is
-    defined in \sect{submodel-class}. In other respects, \Model remains
-    defined as in the SBML Level~3 Core specification.}
+    defined in \sect{submodel-class} and \SBaseRef is defined in
+    \sect{sbaseref-class}.  In other respects, \Model remains defined as
+    in the SBML Level~3 Core specification.}
   \label{extended-model-uml}
   \label{port-uml}
 \end{figure}
 
-Comparing the definition of \SBML in \fig{hierarchical-sbml-uml} with
-the definition of \Model in \fig{extended-model-uml}, it becomes clear
-that submodels are permitted both inside model definitions (the entities
-contained by the \ListOfModelDefinitions) as well as in the top-level
-model itself.  This is a key feature of the design that permits the
-capabilities described in the introduction to the \sect{sbml-class}.
-When the top-level model references submodels, they are instantiated,
-whereas when the \Model object of a model definition references
-submodels, they are simply part of that model definition---they are not
-instantiated until the model definitions themselves are instantiated.
-
 
 \subsubsection{The list of submodels}
 
-The extended \Model class has an optional \token{listOfSubmodels}
-subcomponent for holding a \ListOfSubmodels container object.  If
-present, it must contain one or more \Submodel objects.  The \Submodel
-class and its use is discussed separately in \sect{submodel-class}.
+The optional \token{listOfSubmodels} subcomponent in \Model holds a
+\ListOfSubmodels container object.  If present, it must contain one or
+more \Submodel objects (see \sect{submodel-class}).
 
 
 \subsubsection{The list of ports}
 
-The \emph{port} concept allows a modeler to design a submodel such that
-it can be used in a particular way by a containing model.  The intention
-is that a modeler can indicate explicitly the intended points of
-interaction between a (sub)model and other models including or otherwise
-interacting with it.  Users of the model are encouraged to respect the
-intention.  However, note that in the present formulation of the
-Hierarchical Model Composition package, the use of ports is not
-\emph{enforced}, nor is there any mechanism to place restrictions on
-which ports may be used in what ways: they are only an advisory
-construct.  Future versions of this package may incorporate these
-attributes to provide additional functionality to support explicit
-restrictions on port use.
-
-In the Hierarchical Model Composition package, the concept of ports is
-implemented in the the form of a \Port object and a list of ports
-available on the extended \Model object (see \fig{extended-model-uml}).
-Ports are elements that are designed to be used in replacements or
-deletions, which are operations described below.
+The optional \token{listOfPorts} subcomponent in \Model holds a
+\ListOfPorts container object.  If present, it must contain one or more
+\Port objects (see \sect{submodel-class}).  Ports are described below.
 
 
 \subsubsection{The \class{Port} class}
 \label{port-class}
 
+In Hierarchical Model Composition, the \emph{port} concept allows a
+modeler to design a submodel such that other models interact with the
+submodel through designated interfaces.  The intention is that a modeler
+can indicate explicitly the intended points of interaction between a
+given model and other models that include or otherwise interact with it.
 The \Port class is defined in \fig{extended-model-uml}.  It is derived
-from \SBaseRef, a class whose exact definition we leave to
-\sect{sbaseref-class}; the class provides attributes \token{portRef},
-\token{idRef}, \token{unitRef} and \token{metaIdRef}, and a recursive
-subcomponent, \token{sbaseRef}.  In addition to what it inherits from
-\SBaseRef, \Port adds one required attribute, \token{id}, described
-below.
+from \SBaseRef, a class whose definition we leave to
+\sect{sbaseref-class}; for now, it is worth mentioning that \SBaseRef
+provides attributes \token{portRef}, \token{idRef}, \token{unitRef} and
+\token{metaIdRef}, and a recursive subcomponent, \token{sbaseRef}.
 
-We say that a \Port object defines a port for a component in a model.
-As will become clear in \sect{sbaseref-class}, the facilities of the
-\SBaseRef parent class from which \Port is derived are what provides the
-means for the component to be identified.  All of the options described
-in \sect{sbaseref-class} for referencing other objects are available to
-\Port objects.  For example, a port could be created by using the
-\token{metaIdRef} attribute to identify the object for which a given
-\Port instance is the port.  (In other words, ``what does this port
-correspond to?'' is answered by the value of the \token{metaIdRef}
-attribute.)
+We say that a \Port object instance \emph{defines a port} for a
+component in a model.  As will become clear in \sect{sbaseref-class},
+the facilities of the \SBaseRef parent class from which \Port is derived
+are what provides the means for the component to be identified.  For
+example, a port could be created by using the \token{metaIdRef}
+attribute to identify the object for which a given \Port instance is the
+port; then the question ``what does this port correspond to?'' would be
+answered by the value of the \token{metaIdRef} attribute.
+
+In the present formulation of the Hierarchical Model Composition
+package, the use of ports is not \emph{enforced}, nor is there any
+mechanism to restrict which ports may be used in what ways---they are
+only an advisory construct.  Future versions of this SBML package may
+provide additional functionality to support explicit restrictions on
+port use.  For the present definition of Hierarchical Model Composition,
+users of models containing ports are encouraged to respect the modeler's
+intention in defining ports, and use the port definitions to interact
+with components through their ports (when they have ports defined)
+rather than interact directly with the components.
 
 
-\paragraph{The \hspace*{1pt}\token{id} and \token{name} attribute}
+\paragraph{The \fixttspace\token{id} attribute}
 
 The required attribute \token{id} is used to give an identifier to a
 \Port object so that other objects can refer to it.  The attribute has
@@ -463,12 +516,17 @@ to \primtype{PortSId} values.  (See also \fig{sbaseref-uml}.)
 
 Note the implication of the separate namespaces of port identifiers
 (values of type \primtype{PortSId}) and other identifiers (values of
-\primtype{SId} or \primtype{UnitSId}).  Since \primtype{PortSId} values
+\primtype{SId} or \primtype{UnitSId}): since \primtype{PortSId} values
 are in their own namespace within the parent \Model, it is possible for
 a \primtype{PortSId} value to be the same as some \primtype{SId} value
-in the model, without causing an identifier collision. 
+in the model, without causing an identifier collision.
 
-The optional attribute \token{name} may be used to give a human-readable identifier to \Port objects.  
+
+\paragraph{The \fixttspace\token{name} attribute}
+
+The optional \token{name} attribute is provided on \Port so that port
+definitions may be given human-readable names.  Such names may be useful
+in situations when port names need to be displayed to modelers.
 
 
 \paragraph{Additional restrictions on \class{Port} objects}
@@ -513,30 +571,42 @@ rules, but they are worth making explicit:
 \label{submodel-class}
 \label{listofdeletions-class}
 
-In the Hierarchical Model Composition package, submodels are the
-concrete realization of models contained within other models.
-\fig{submodel-uml} shows the definition of \Submodel.
+In the SBML Hierarchical Model Composition package, submodels are
+instantiations of models contained within other models.  Submodel
+instances are expressed using objects of class \Submodel, defined in
+\fig{submodel-uml}.  Objects of this class represent submodels contained
+within \Model objects, as depicted in \fig{extended-model-uml}.
 
 \begin{figure}[hbt]
-  \includegraphics{figs/submodel-uml}
+  \begin{overpic}{figs/submodel-uml}
+    \put(89.25,30.25){\emph{\sect{sbaseref-class}}}
+  \end{overpic}
   \caption{The definition of the \Submodel, \Deletion and
     \ListOfDeletions classes.}
   \label{submodel-uml}
 \end{figure}
 
 A \Submodel object must say which \Model object it instantiates, and may
-additionally contain information about how the \Model object is to be
-modified.  There are two possible types of direct modifications:
-conversion factors, and deletions.  We describe these two mechanisms in
-more detail in the subsections below, but the following informal
-description may serve as a useful guide.  If numerical values in the
-referenced model must be changed in order to fit them into their new
-context as part of the submodel, the changes can be handled through
-conversion factors.  Deletions, on the other hand, are useful when a
-feature in the referenced model no longer makes sense in its new context, have no equivalent in the new model,
-and should be removed entirely; for example, it might be a
-no-longer-relevant initial assignment, reaction, or an event assignment
-within an \Event object.
+additionally define how the \Model object is to be modified before it is
+instantiated in the enclosing model.  With respect to the latter
+capability, this SBML package provides two possible types of direct
+modifications: conversion factors, and deletions.  We describe these two
+mechanisms in more detail in the subsections below, but the following
+informal summary may serve as a useful guide to get a general sense for
+how it things work:
+
+\begin{itemize}
+
+\item If numerical values in the referenced model must be changed in
+  order to fit them into their new context as part of the submodel, the
+  changes can be handled through conversion factors.
+
+\item If one or more structural features in the referenced model are
+  undesirable and should be removed, the changes can be handled through
+  deletions.  (For example, an initial assignment or reaction not be
+  relevant in its new context, and may need to be removed.)
+
+\end{itemize}
 
 
 \subsubsection{The attributes of \class{Submodel}}
@@ -547,7 +617,7 @@ attributes below, then turn to \token{listOfDeletions} in
 Sections~\ref{listofdeletions}--\ref{deletion-class}.
 
 
-\paragraph{The \hspace*{1pt}\token{id} and \token{name} attributes}
+\paragraph{The \fixttspace\token{id} attribute}
 
 The \token{id} is a required attribute of type \primtype{SId} that gives
 an identifier to the \Submodel instance.  It is required so that other
@@ -558,28 +628,41 @@ them).  The identifier has no mathematical meaning.
 This identifier must follow the normal restrictions on SBML
 \primtype{SId} values for uniqueness within \Model objects.  In
 addition, the \token{id} value may not be referenced by SBML Level~3
-Core components; this is necessary so that if a software package does
-not have support for the Hierarchical Model Composition package, it can
+Core components in a model.  For example, the identifier may not appear
+as the \token{<ci>} value in a mathematical formula of a component
+defined by SBML Level~3 Core (e.g., rules, initial assignments, etc.).
+This restriction is necessary so that if a software package does not
+have support for the Hierarchical Model Composition package, it can
 ignore the package constructs and still end up with a syntactically
-value (though perhaps diminished) SBML document.  
+valid (though perhaps diminished) SBML document.
 
-The optional attribute \token{name} may be used to give a human-readable identifier to \Submodel objects.  
 
-\paragraph{The \hspace*{1pt}\token{modelRef} attribute}
+\paragraph{The \fixttspace\token{name} attribute}
+
+The optional \token{name} attribute is provided on \Submodel so that
+submodel definitions may be given human-readable names.  Such names may
+be useful in situations when submodel names are displayed to modelers.
+
+
+\paragraph{The \fixttspace\token{modelRef} attribute}
 \label{submodel-modelref}
   
-The \Model object that a \Submodel object instantiates may either be
-another model in the same SBML document, or it may be a model defined in
-a separate SBML document.  The required attribute \token{modelRef}, of
-type \primtype{SIdRef}, must refer to the identifier of a \Model or
-\ExternalModelDefinition object within the enclosing SBML document
-(i.e., in the model namespace of the document).  
+The whole purpose of a \Submodel object is to instantiate a model
+definition, which is to say, either a \Model object defined in the same
+enclosing SBML document, or a model defined in an external SBML
+document.  The \token{modelRef} attribute is the means by which that
+model is identified.  This required attribute of type \primtype{SIdRef},
+must refer to the identifier of a \Model or \ExternalModelDefinition
+object within the enclosing SBML document (i.e., in the model namespace
+of the document).
 
-It is legal for the model referenced by \token{modelRef} to have its own submodels.
-The chain of inclusion should be followed.  The only restriction is that
-loops are not allowed: the referenced model may not refer to its parent
-model, nor may it refer to a model which in turn instantiates its parent
-model, etc.
+It is perfectly legitimate for the model referenced by \token{modelRef}
+to have its own submodels.  The composite model defined in that case is
+simply the composed model that results from following the change of
+inclusion.  However, there is one restriction: loops are not allowed.
+In other words, the referenced model may not refer to its parent model,
+nor may it refer to a model which in turn instantiates its parent model,
+etc.
 
 It is also legal for the model referenced by \token{modelRef} to refer
 to the \token{<model>} child of the enclosing SBML document, i.e., the
@@ -588,12 +671,13 @@ would mean that the document contains a model definition that itself
 contains (and perhaps modifies) the model it presents to the world as
 the main or top-level model in the document.  A possible use for this
 might be to define a common scenario in the main model, then create
-alternate scenarios with different initial conditions or parameter sets using the list of
-model definitions (\fig{hierarchical-sbml-uml}) in the \SBML object.
-Because the model namespace is defined per document, this means that it
-is possible to define and include a new model namespace by creating a
-new document, then importing one or more of those models using the
-\ExternalModelDefinition class.
+alternate scenarios with different initial conditions or parameter sets
+using the list of model definitions (\fig{hierarchical-sbml-uml}) in the
+\SBML object.  Because the model namespace is defined per document, this
+means that it is possible to define and include a new model namespace by
+creating a new document, then importing one or more of those models
+using the \ExternalModelDefinition class.  (\sect{namespaces} discusses
+identifier scoping in more detail.)
 
 
 \paragraph{The conversion factor attributes}
@@ -627,51 +711,62 @@ removed from the submodel when composing the overall model.  (This
 ``removal'' of course does not involve physically editing the files;
 rather, it is mathematical and conceptual.)
 
-Deletions may be needed for various reasons.  For example, some
-components in a submodel may be redundant in the composed model, perhaps
-because the same features are implemented in a different way in the
-new model.
-
 
 \subsubsection{The \class{Deletion} class}
 \label{deletion-class}
 
-The \Deletion object class is used to define a deletion operation to be
-applied when a submodel instantiates a model definition.  More
-specifically, when the \Model to which the \Submodel object refers (via
-the \token{modelRef} attribute) is read and processed for inclusion into
-the composed model, each \Deletion object identifies an object to
-``remove'' from that \Model instance.  The resulting submodel instance
-will consist of everything in the \Model object instance minus the
-entities referenced by the list of \Deletion objects.
+The \Deletion object class is used to define a \emph{deletion} operation
+to be applied when a submodel instantiates a model definition.
+Deletions may be useful in hierarchical model composition scenarios for
+various reasons.  For example, some components in a submodel may be
+redundant in the composed model, perhaps because the same features are
+implemented in a different way in the new model.
 
-As shown in \fig{submodel-uml}, \Deletion is subclassed from \SBaseRef,
-described in detail in \sect{sbaseref-class}.  It reuses all the
-machinery provided by \SBaseRef, and in addition, adds a single
-attribute, \token{id}.
+Deletions function as follows.  When the \Model to which the \Submodel
+object refers (via the \token{modelRef} attribute) is read and processed
+for inclusion into the composed model, each \Deletion object identifies
+an object to ``remove'' from that \Model instance.  The resulting
+submodel instance consists of everything in the \Model object instance
+\emph{minus} the entities referenced by the list of \Deletion objects.
+We discuss the implications of deletions further below.
+
+The definition of the \Deletion object class is shown in
+\fig{submodel-uml}.  It is subclassed from \SBaseRef, described in
+detail in \sect{sbaseref-class}, and reuses all the machinery provided
+by \SBaseRef.  In addition, it defines two optional attributes,
+\token{id} and \token{name}.
 
 
-\paragraph{The \hspace*{1pt}\token{id} and \token{name} attributes}
+\paragraph{The \fixttspace\token{id} and \fixttspace\token{name} attributes}
 
-The \Deletion attribute \token{id} can be used to give an identifier to
-a given deletion.  The identifier has no mathematical meaning, but
-providing it may be useful for creating submodels that can be
-manipulated more directly by other submodels.  The optional attribute \token{name} may be used to give a human-readable identifier to \Deletion objects.
+The optional attribute \token{id} on \Deletion can be used to give an
+identifier to a given deletion operation.  The identifier has no
+mathematical meaning, but it may be useful for creating submodels that
+can be manipulated more directly by other submodels.  (Indeed, it is
+legitimate for an enclosing model definition to delete a deletion!)
+
+The optional \token{name} attribute is provided on \Deletion for the
+same reason it is provided on other elements that have identifiers;
+viz., to provide for the possibility of giving a human-readable name to
+the object.  The name may be useful in situations when deletions are
+displayed to modelers.
 
 
 \paragraph{Implications of a deletion}
 
-There are several points worth clarifying about deletions.
+As might be expected, deletions can have wide-ranging implications,
+especially when the object deleted has substantial substructure, as in
+the case of reactions.  The following are rules regarding deletions and
+their effects.
 
 \begin{enumerate}
 
 \item An object that has been ``deleted'' is considered inaccessible.
-  Any element that has been replaced or deleted may not be referenced by
-  an \SBaseRef object, including anything deleted or replaced within the
-  submodel.
+  Any element that has been deleted (or replaced, as discussed in
+  \sect{replacements}) may not be referenced by an \SBaseRef object.
 
-\item If the deleted object has child objects or substructure, the child
-  objects and substructure are also considered to be deleted.
+\item If the deleted object has child objects and other structures, the
+  child objects and substructure are also considered to be deleted.
 
 \item It is not an error to delete explicitly an object that is already
   deleted by implication (for example as a result of point number 2
@@ -682,215 +777,7 @@ There are several points worth clarifying about deletions.
 We leave additional comments about best practices surrounding deletions
 to \sect{best-practices-deletions}.
 
-
-% -----------------------------------------------------------------------------
-\subsection{The \class{SBaseRef} class}
-\label{sbaseref-class}
-
-With the extensions to \SBML described up to this point, and the
-introduction of \ExternalModelDefinition, the Hierarchical Model
-Composition package constructs introduced so far have only provided a
-means for aggregating models without \emph{connecting} them.  While this
-may be useful for some applications, more interesting uses of
-composition involving linking or restructuring components of different
-models---for example, telling a simulator that some component \emph{X}
-in one model is the same as a component \emph{Y} in a submodel, or
-indicating that a given component \emph{Z} should be removed from the
-composed whole model.  These operations require the capability to refer
-to specific components within enclosed models or even external models
-located in other files.  The machinery for constructing such references
-is embodied in the \SBaseRef class.  This class is the parent class of
-the \Port and \Deletion classes described in the previous section, and
-the \ReplacedElement class, described in the following section.
-
-\fig{sbaseref-uml} gives the definition of \SBaseRef.  It includes
-several attributes used to implement alternative approaches to
-referencing a particular component, and it also has a recursive
-structure, providing the ability to refer to elements buried within
-(say) a sub-submodel configuration.
-
-\begin{figure}[hbt]
-  \includegraphics{figs/sbaseref-uml}
-  \caption{The extensions of the \SBaseRef class.  The four attributes
-    \token{portRef}, \token{idRef}, \token{unitRef} and \token{metaIdRef}
-    are mutually exclusive; only one can have a value in a given object
-    instance.  The recursive structure also allows referencing entities
-    in submodels of submodels, to arbitrary depths, as described in the
-    text.}
-  \label{sbaseref-uml}
-\end{figure}
-
-Readers may wonder why so many different alternatives are necessary.
-The reason is that in a given scenario, the referenced model may be
-located in an external file beyond the direct control of the modeler,
-and so the preferred methods of referencing the subobjects may not be
-available.  \SBaseRef provides multiple alternatives so that a variety
-of modeling scenarios can be supported.
-
-%  far, we have described how to aggregate models together, and
-% synchronize them so that their math is compatible.  A simulation of the
-% resulting model would be equivalent to simulating the parent model and
-% the submodels separately, scaling them appropriately, and then
-% overlaying the results from each on the same graph.  This is usually not
-% sufficient.  What is needed is a way to tell the simulator that this
-% element of one submodel is the same as this other element of a second
-% submodel.  In the case of a species, one submodel may control its
-% creation and destruction, and the second may define how its presence
-% modulates the rate of a related reaction.  It may have even been modeled
-% as a constant parameter in the second submodel, if its concentration
-% never changed under the conditions it was designed to imitate.  The new
-% parent model may be an attempt to relax the assumptions in the
-% submodels, and create a more complicated and robust model of the system
-% being studied.
-
-
-\subsubsection{The attributes of \class{SBaseRef}}
-\label{sbaseref-class}
-
-The four different attributes on \SBaseRef are mutually exclusive: only
-one of the attributes can have a value at any given time, and exactly
-one must have a value in a given \SBaseRef object instance.  (Note that
-this is true of the basic \SBaseRef class; however, derived classes such
-as \ReplacedElement may add additional attributes and extend or override
-the basic attributes and mechanisms.)
-
-
-\paragraph{The \hspace*{1pt}\token{portRef} attribute}
-\label{sbaseref-portref}
-
-The optional attribute \token{portRef} takes a value of type
-\primtype{PortSIdRef}.  As its name implies, this attribute is used to
-refer to a port identifier, in the case when the reference being
-constructed with the \SBaseRef is intended to refer to a port on a
-submodel.  The namespace of the \primtype{PortSIdRef} value is the set
-of identifiers of type \primtype{PortSId} defined in the submodel, not
-the parent model.
-
-
-\paragraph{The \hspace*{1pt}\token{idRef} attribute}
-\label{sbaseref-idref}
-
-The optional attribute \token{idRef} takes a value of type
-\primtype{SIdRef}.  As its name implies, this attribute is used to
-refer to a regular identifier (i.e., the value of an \token{id}
-attribute on some other object), in the case when the reference being
-constructed with the \SBaseRef is intended to refer to an object that
-does not have a port identifier.  The namespace of the \primtype{SIdRef}
-value is the set of identifiers of type \primtype{SId} defined in the
-submodel, not the parent model.
-
-
-\paragraph{The \hspace*{1pt}\token{unitRef} attribute}
-\label{sbaseref-unitref}
-
-The optional attribute \token{unitRef} takes a value of type
-\primtype{UnitSIdRef}.  This attribute is used to refer to the identifier
-of a \UnitDefinition object.  The namespace of the \primtype{UnitSIdRef}
-value is the set of unit identifiers defined in the submodel, not the
-parent model.
-
-Note that even though this attribute is of type \primtype{UnitSIdRef},
-the reserved unit identifiers that are defined by SBML Level~3 (see
-Section~3.1.10 of the SBML Level~3 Version~1 core specification) are
-\emph{not} permitted as values of \token{unitRef}.  Reserved unit
-identifiers may not be replaced or deleted.
-
-
-\paragraph{The \hspace*{1pt}\token{metaIdRef} attribute}
-\label{sbaseref-metaidref}
-
-The optional attribute \token{metaIdRef} takes a value of type XML
-\primtype{IDREF}.  This attribute is used to refer to a \token{metaid}
-attribute value on some other object, in the case when the reference
-being constructed with the \SBaseRef is intended to refer to an object
-that does not have a port identifier.  Since meta identifiers are
-optional attributes of \SBase, all SBML objects have the potential to
-have a meta identifier value.
-
-\subsubsection{Recursive \class{SBaseRef} structures}
-\label{sbaseref-recursive-sbaseref}
-
-%% FIXME see LS's comments
-%% Fixed (at least, I tried ;-) --LS
-
-\SBaseRef has the capability to have up to one subcomponent of type
-\SBaseRef named \token{sbaseRef} (see \fig{sbaseref-uml}), leading to
-the possbility of constructing nested or recursive chains of references.
-This feature can be used to refer to objects inside submodels in the
-following way.  All parent \SBaseRef instances in the chain must refer to
-a \Submodel (using either
-\token{idRef}, \token{portRef} or \token{metaIdRef}, as suits the
-particular object), and all child \SBaseRef objects in the chain must refer to an SBML component inside the \Model
-instance to which the \Submodel refers.
-
-
-\paragraph{Examples}
-
-The following example may help clarify the nested structure.  Suppose
-that we want to delete an object with the identifier \val{p1} inside the
-\Submodel \val{m1}.  The following XML fragment illustrates how the
-constructs will look:
-
-\begin{example}
-<listOfDeletions>
-  <deletion idRef="m1">
-    <sbaseRef idRef="p1" />
-  </deletion>
-</listOfDeletions>
-\end{example}
-
-If the desired element is within a submodel of a submodel (or deeper)
-this nested construct can be extended to an arbitrary depth: as long as
-an \SBaseRef object points to a \Submodel object, particular elements of
-that submodel (including other submodels) may be referenced by a child
-\SBaseRef.
-
-% This is the original paragraph here --LS
-%If instead, we had to make a reference to something contained inside a
-%nested submodel within the submodel, then the child \SBaseRef object in
-%\token{sbaseRef} will actually refer to the submodel's \Model or
-%\ExternalModelDefinition instance, and it will have its own child
-%\token{sbaseRef} object that then refers to a component inside the
-%sub-submodel.  This can be repeated to accommodate arbitrary levels of
-%submodel nesting.  
-
-To illustrate that possibility, suppose that the submodel \val{m1} from
-the previous example is actually nested inside another submodel
-\val{m2}.  Then we would have the following:
-
-\begin{example}
-<listOfDeletions>
-  <deletion idRef="m2">
-    <sbaseRef idRef="m1">
-      <sbaseRef idRef="p1" />
-    </sbaseRef>
-  </deletion>
-</listOfDeletions>
-\end{example}
-
-Although this use of nested \SBaseRef objects allows a model to refer to
-components buried inside submodels, it is considered inelegant model
-design.  It is better to promote any element in a submodel to a local
-element if it can be predicted that containing models may need to
-reference it.  However, if the submodel is fixed (e.g., if is in an
-external file), then no other option may be available except to use
-nested references.
-
-\subsubsection{Additional requirements for \class{SBaseRef}}
-
-As mentioned in \sect{namespaces}, attributes of type \primtype{SId},
-\primtype{UnitSId}, and \primtype{PortSId} need only be unique on a
-per-\Model basis.  Therefore, a reader must also know the model to which
-the \token{idRef}, \token{unitRef}, and \token{portRef} attributes
-refer.  In addition, even though \primtype{IDREF} attributes are unique
-on per-document level, the same SBML element may be instantiated in
-multiple submodels, in any number of \Model objects, and therefore the
-\token{metaIdRef} attribute must also know to which \Model instantiation
-it is referring.  This will vary based on \SBaseRef sub-class, and will
-be explained in those sections.  For ''bare'' \SBaseRef objects (which
-only exist as children of other \SBaseRef objects, as explained above)
-the \Model instance to which they are referring is the one referenced by
-the \Submodel to which its parent is pointing.
+\clearpage
 
 
 % -----------------------------------------------------------------------------
@@ -898,40 +785,47 @@ the \Submodel to which its parent is pointing.
 \label{replacements}
 \label{extended-sbase-class}
 
-Replacements are the glue that connects submodels together with each
-other and with the containing model.  To implement the replacement
-mechanism, this package extends the SBML \SBase class as shown in
-\fig{extended-sbase-uml}.
+The model definition, submodel and port constructs defined so far allow
+a modeler to identify and aggregate models, as well as (possibly) delete
+features from model definitions before the definitions are used create a
+final, composed model.  In this section, we turn to two final
+capabilities needed for effective model composition: linking and
+substituting components.  Both are implemented as \emph{replacements},
+which are the glue used to connect submodels together with each other
+and with a containing model.
+
+Replacements are implemented by extending the SBML Level~3 Core \SBase
+class as shown in \fig{extended-sbase-uml}.  This extension provides the
+means to define replacements in two directions: either the current
+object replaces one or more others, or the current object is itself
+replaced by another.  These two possibilities are captured by the
+\token{listOfReplacedElements} and \token{replacedBy} subcomponents
+shown in \fig{extended-sbase-uml}.
 
 \begin{figure}[hbt]
-  \includegraphics{figs/extended-sbase-uml}
+  \begin{overpic}{figs/extended-sbase-uml}
+    \put(89,40.25){\emph{\sect{sbaseref-class}}}
+  \end{overpic}
   \caption{The extension of \SBase and the definition of the
     \ListOfReplacedElements and \ReplacedElement classes.  The \SBaseRef
   class is defined in \sect{sbaseref-class}.}
   \label{extended-sbase-uml}
 \end{figure}
 
-
-% Some previous proposal for model composition in SBML have called this
-% concept 'links', as they link similar elements from different sources.
-% All previous model composition proposals have lumped these things
-% together in lists that were children of the Model class: one list of all
-% replacements (or even all replacements and deletions) between this model
-% and its submodels.
-
-% Here, the concept of replacements is distributed to the individual
-% elements that are replacing others.  This is accomplished by extending
-% the \SBase class itself, as shown in \fig{extended-sbase-uml}.
-
-\SBase in SBML is the abstract base class of almost all other object
-classes.  It is not instantiated directly; rather, other SBML component
-classes such as \Species, \Compartment and \Reaction objects are
-subclassed from \SBase.  In this context, the list of replacements shown
-in \fig{extended-sbase-uml} defines all of the replacements that
-\emph{this} object (i.e., the concrete instantiation, be it a species,
-parameter, or something else) replaces in any submodels where a
-replacement is to be performed.  The nature of replacements will become
-more clear in the \sect{replacedelement-class} below.
+Since \SBase in SBML is the abstract base class of all other SBML object
+classes, the extension of \SBase means all SBML objects gain the ability
+to define how they replace (or are replaced by) components in submodels.
+Replacements are a general mechanism that serve multiple purposes.  At
+their most basic, they allow a model builder to make a statement of the
+form ``entity \emph{W} in this model replaces entity \emph{X} in
+submodel \emph{Y}''.  In the final composed model, all references to
+\emph{X} in \emph{Y} are replaced with references to \emph{W}.  The same
+approach is used as the mechanism for linking or gluing entities from
+different models together.  Thus, to connect entity \emph{X} and some
+other entity \emph{Z} located in another submodel, a model could make
+\emph{W} define multiple replacements simultaneously: one for \emph{X}
+and another for \emph{Z}.  Entity \emph{W} will then act as an
+intermediary at the level of the containing model.
 
 
 \subsubsection{The list of replaced elements}
@@ -940,32 +834,20 @@ more clear in the \sect{replacedelement-class} below.
 Hierarchical Model Composition package adds an optional
 \token{listOfReplacedElements} subcomponent for holding a
 \ListOfReplacedElements container object.  If present, it must contain
-at least one \ReplacedElement object.
+at least one \ReplacedElement object (\sect{replacedelement-class}).
 
 
 \subsubsection{The \class{ReplacedElement} class}
 \label{replacedelement-class}
 \label{listofreplacedelements-class}
 
-Replacements are a general mechanism that serve multiple purposes.  At
-their most basic, they allow a model builder to make a statement of the
-form ``entity \emph{W} in this model replaces entity \emph{X} in
-submodel \emph{Y}''.  In the final composed model, all references to
-\emph{X} in \emph{Y} are replaced with references to \emph{W}.  This
-same approach is also used as the mechanism for linking or glueing
-entities from different models together.  Thus, to establish a
-connection between entity \emph{X} and some other entity \emph{Z}
-located in another submodel, make \emph{W} define multiple replacements
-simultaneously: one for \emph{X} and another for \emph{Z}.  Entity
-\emph{W} acts as an intermediary at the level of the containing model.
-
-The \ReplacedElement objects are essentially pointers to submodel
-objects that are being replaced.  The object \emph{holding} the
-\ReplacedElement instance is the one \emph{doing the replacing}; the
+A \ReplacedElement object is essentially a pointer to a submodel object
+that is should be considered ``replaced''.  The object \emph{holding}
+the \ReplacedElement instance is the one \emph{doing the replacing}; the
 object pointed to by the \ReplacedElement object is the object being
-replaced.  A replacement implies that the entire chain of dependencies
-linked to the replaced object must be followed---all references to the
-replaced object are instead taken to refer to the replacement object.
+replaced.  A replacement implies that dependencies involving the
+replaced object must be updated: all references to the replaced object
+elsewhere in the model are taken to refer to the replacement object.
 For example, if one species replaces another, then any reference to the
 original species in mathematical formulas, or lists of reactants or
 products or modifiers in reactions, or initial assignments, or any other
@@ -978,28 +860,11 @@ refer to the replacement species' \token{metaid} value instead; and
 anything else that referred either to the object identifier (i.e., the
 \token{id} attribute) or meta identifier (i.e., the \token{metaid}
 attribute) must be made to refer to the replacement species object
-instead.  
+instead.
 
-This identifier-redirection process has some additional important
-implications.  First, when anything refers to a replaced object's
-\token{id} and/or \token{metaid} value, the replacement object must
-itself define its own \token{id} and/or \token{metaid} value, or else
-the step of adjusting references will be impossible to perform because
-there will not be new \token{id} or \token{metaid} values to use in
-place of the old ones.  Second, if other SBML Level~3 packages attach
-identifiers in their own namespaces to an object being replaced, those
-identifiers must also be likewise redirected.  (And again, this implies
-that the SBML document must put suitable identifier attributes from
-those package namespaces on the \emph{replacement} object, so that the
-replacement object's identifiers can be substituted for those of the
-object being replaced.)
-
-Finally, an important and far-reaching consequence of replacements is
-that if the object being replaced contains other objects, then
-\emph{those other objects are considered deleted}.  For example,
-replacing a \Reaction or an \Event object means all of the substructure
-of those entities in a model are deleted, and references to the
-identifiers of those deleted entities are made invalid.
+\ReplacedElement inherits from \SBaseRef and adds three attributes: one
+required (\token{submodelRef}) and two optional (\token{deletion} and
+\token{conversionFactor}), as described below.
 
 
 \paragraph{Attributes inherited from \class{SBaseRef}}
@@ -1012,77 +877,50 @@ and \token{metaIdRef} attributes, as well as the subcomponent
 
 It is the properties of \SBaseRef that allow a \ReplacedElement object
 to refer to what is being replaced.  For example, if the object being
-replaced has a \Port identifying it, the instance of \ReplacedElement would
-have its \token{portRef} attribute value set to the id of the \Port pointing to 
-the object being replaced.  If there is no corresponding \Port object, but
-it has a regular identifier (typically an attribute named \token{id}), then
-the \ReplacedElement object would set \token{idRef} instead, and so on.
+replaced has a port identifying it, the instance of \ReplacedElement
+would have its \token{portRef} attribute value set to the identifier of
+the \Port pointing to the object being replaced.  If there is no
+corresponding port for the object being replaced, but the object has a
+regular identifier (typically an attribute named \token{id}), then the
+\ReplacedElement object would set \token{idRef} instead.  If there is no
+identifier, the replacement would use the next available option defined
+by \SBaseRef, and so on.  \sect{sbaseref-class} describes the
+alternatives in more detail.
 
 
-\paragraph{The \hspace*{1pt}\token{submodelRef} attribute}
+\paragraph{The \fixttspace\token{submodelRef} attribute}
 \label{replacedelement-submodelref}
 
 The required attribute \token{submodelRef} takes a value of type
-\primtype{SIdRef}.  It must be set to the identifier of a \Submodel
-object in the containing model.  The \Model to which this \Submodel refers defines the object namespace to which the  \token{portRef}, \token{idRef}, \token{unitRef} and \token{metaIdRef} attributes refer.
+\primtype{SIdRef}.  This value must be the identifier of a \Submodel
+object in the containing model.  The \Model object referenced by the
+\Submodel object establishes the object namespaces for the
+\token{portRef}, \token{idRef}, \token{unitRef} and \token{metaIdRef}
+attributes: only objects within the \Model object may be referenced by
+those attributes.
 
 
-\paragraph{The \hspace*{1pt}\token{identical} attribute}
-\label{replacedelement-identical}
-
-% FIXME:
-%
-% LS wrote: Also, I am now realizing that there's yet another caveat to the
-% 'identical' attribute: not only can id's and metaid's be different in
-% the replacement element, but any attribute that is an sidref, metaidref,
-% or unitsidref may also be different.
-
-The required attribute \token{identical} takes a \primtype{boolean}
-value.  Its purpose is to indicate that a replacement is meant to be
-effectively identical to the replaced object.  (This is the case when a
-replacement only exists in order to create a reference to an object in a
-submodel so that the containing model may work with that object.)
-
-When \token{identical} has the value \val{true}, the two linked objects
-are expected to be identical in all respects except possibly their
-identifiers (i.e., their \token{id} and \token{metaid} attribute values,
-as well as similar identifiers that may be added by other SBML Level~3
-packages).  If the objects differ in any other way, validation systems
-should report an error.  This applies to all attributes and
-subcomponents, including \Annotation and \Notes subcomponents; even a
-difference in the \token{name} attribute of the objects is considered a
-deviation from being ``identical''.  Importantly, the numerical values
-of all attributes (e.g., \token{initialAmount} on \Species) must be
-equivalent to each other \emph{after accounting for any relevant
- conversion factors}.
-
-When \token{identical} has the value \val{false}, no comparisons for
-identical properties need to be performed, and no warnings or errors can
-be reported if the two objects are or are not identical.
-
-
-\paragraph{The \hspace*{1pt}\token{deletion} attribute}
+\paragraph{The \fixttspace\token{deletion} attribute}
 \label{replacedelement-deletion}
 
 The optional attribute \token{deletion} takes a value of type
-\primtype{SIdRef}.  The value must be the identifier of a \Deletion object in
-the parent \Model of the \ReplacedElement (that is, the value of some \Deletion object's \token{id}
-attribute).  
+\primtype{SIdRef}.  The value must be the identifier of a \Deletion
+object in the parent \Model of the \ReplacedElement (i.e., the value of
+some \Deletion object's \token{id} attribute).  When \token{deletion} is
+set, it means the \ReplacedElement object is actually an annotation to
+indicate that the replacement object replaces something \emph{deleted}
+from a submodel.  The use of the \token{deletion} attribute overrides
+the use of the attributes inherited from \SBaseRef: instead of using,
+e.g., \token{portRef} or \token{idRef}, the \ReplacedElement instance
+sets \token{deletion} to the identifier of the \Deletion object.
 
-When \token{deletion} is set, it means the \ReplacedElement object is
-actually an annotation to indicate that the replacement object replaces
-something deleted from a submodel.  The use of the \token{deletion}
-attribute overrides the use of the attributes inherited from \SBaseRef:
-instead of using, e.g., \token{portRef} or \token{idRef}, the
-\ReplacedElement instance sets \token{deletion} to the identifier of the
-\Deletion object.  The use of \ReplacedElement objects to refer to
-deletions has no effect on the composition of models or the mathematical
-properties of the result.  It serves instead to help record the
-decision-making process that lead a modeler to construct the model they
-did.  It can be particularly useful for visualization purposes, as well
-as to serve as scaffolding where other types of annotations can be added
-using the normal \Annotation subcomponents available on all \SBase
-objects in SBML.
+The use of \ReplacedElement objects to refer to deletions has no effect
+on the composition of models or the mathematical properties of the
+result.  It serves instead to help record the decision-making process
+that lead to a given model.  It can be particularly useful for
+visualization purposes, as well as to serve as scaffolding where other
+types of annotations can be added using the normal \Annotation
+subcomponents available on all \SBase objects in SBML.
 
 % Original text, some of which should go into the best practices:
 %
@@ -1103,10 +941,10 @@ objects in SBML.
 % easier on visualization software that may try to display the results.
 
 
-\paragraph{The \hspace*{1pt}\token{conversionFactor} attribute}
+\paragraph{The \fixttspace\token{conversionFactor} attribute}
 \label{replacedelement-conversionfactor}
 
-The \ReplacedElement's \token{conversionFactor} attribute may be used to
+The \ReplacedElement class' \token{conversionFactor} attribute may be used to
 define how to transform or rescale the replaced object's value so that
 it is appropriate for the new contexts in which it appears.  The value
 of this attribute must be of type \primtype{SIdRef} and refer to a
@@ -1117,48 +955,353 @@ submodel's relevant conversion factors.  The details of this are left to
 \sect{conversion-factors}.
 
 
-\paragraph{Additional requirements for \class{ReplacedElement}}
+\subsubsection{The \fixttspace\tokenNC{replacedBy} subcomponent}
+
+As mentioned above, the extension of \SBase defined in
+\fig{extended-sbase-uml} introduces a new optional subcomponent,
+\token{replacedBy}.  Its value, if present on a given \SBase-derived
+object, must be a single object of the \ReplacedBy class (described in
+\sect{replacedby-class} below).
+
+
+\subsubsection{The \ReplacedBy class}
+\label{replacedby-class}
+
+Whereas a \ReplacedElement object indicates that the containing object
+replaces another, a \ReplacedBy object indicates the converse: the
+present object is to replaced by another object.  As is the case with
+\ReplacedElement, the \ReplacedBy class inherits from \SBaseRef.  It
+adds one required attribute (\token{submodelRef}) and one optional
+attribute (\token{conversionFactor}).
+
+
+\paragraph{Attributes inherited from \class{SBaseRef}}
+
+The \ReplacedBy class, being derived from \SBaseRef, inherits the latter
+class' attributes \token{portRef}, \token{idRef}, \token{unitRef} and
+\token{metaIdRef}, as well as the subcomponent \token{sbaseRef} and the
+recursive structure that it implies.  
+
+
+\paragraph{The \fixttspace\token{submodelRef} attribute}
+\label{replacedby-submodelref}
+
+The required attribute \token{submodelRef} takes a value of type
+\primtype{SIdRef}, which must be the identifier of a \Submodel object in
+the containing model.  This attribute is analogous to the corresponding
+attribute on \ReplacedElement; that is, the model referenced by the
+\Submodel object establishes the object namespaces for the
+\token{portRef}, \token{idRef}, \token{unitRef} and \token{metaIdRef}
+attributes: only objects within the \Model object may be referenced by
+those attributes.
+
+
+\paragraph{The \fixttspace\token{conversionFactor} attribute}
+\label{replacedby-conversionfactor}
+
+The \ReplacedBy class' \token{conversionFactor} attribute may be used to
+define how to transform or rescale this object's value so that it is
+appropriate for the new contexts in which it appears.  The value of this
+attribute must be of type \primtype{SIdRef} and refer to a
+\Parameter object instance defined in the model.  The conversion factor
+identified by the \token{conversionFactor} attribute overrides any
+automatic conversion that may have been performed based on the
+submodel's relevant conversion factors.  The details of this are left to
+\sect{conversion-factors}.
+
+
+\subsubsection{Additional requirements and implications}
 \label{replacedelement-additional}
 
-The element in the parent model always takes precedence over elements
-from the submodels, and no ``horizontal replacements'' are possible that
-involve only subelements.  An example of horizontal replacement might be
-when one species in one submodel is the conceptual replacement for a
-second species in a second submodel.  In practice, the lack of a direct
-mechanism for horizontal replacements is not a true limitation: to
-achieve the same effect as in the example, a local species would be
-created in the containing model replacing both species from the two
-submodels, setting \token{identical}=\val{true} for the first, and
-\token{identical}=\val{false} for the second.
+Replacements are a powerful mechanism and carry significant
+implications.  We focus on crucial ones below:
 
-% FIXME--is setting the \token like that the right thing to do, above? --LS DEBUG
-% FIX: no, use the form \token{attributename}=\val{value}.
+\begin{itemize}
 
-Note that there is no restriction here that replaced objects must be of
-the same type as the replacing object.  The only restriction is that all
-old references to the replaced object must now point to the replacing
-object, so they must continue to make sense and produce valid SBML.
-Thus, replacing a \Species object that appeared in a \Reaction object
-would lead to an invalid SBML document if the replacement was a
-\Parameter object.  There is no requirement for like-kind replacements,
-however, because errors do not \emph{necessarily} result.  To take the
-same example, the \Species object could be replaced by a \Parameter if
-that \Species never appeared in any \Reaction object or if all the
-\Reaction objects were deleted.  
+\item \emph{Identifier references must be updated}.  Both
+  \ReplacedElement and \ReplacedBy introduce the need to change
+  identifier references that refer to the object being replaced.  This
+  identifier-redirection process has some important implications.
+  First, when anything refers to the replaced object's \token{id} and/or
+  \token{metaid} value, the replacement object must itself define its
+  own \token{id} and/or \token{metaid} value, or else the step of
+  adjusting references will be impossible to perform because there will
+  not be new \token{id} or \token{metaid} values to use in place of the
+  old ones.  Second, if other SBML Level~3 packages attach identifiers
+  in their own namespaces to an object being replaced, those identifiers
+  must also be likewise redirected.  (And again, this implies that the
+  SBML document must put suitable identifier attributes from those
+  package namespaces on the \emph{replacement} object, so that the
+  replacement object's identifiers can be substituted for those of the
+  object being replaced.)
 
-Finally, any given object being replaced may only appear in exactly one
-\ReplacedElement object anywhere in a model; otherwise, it would imply
-multiple entities replace the same object, and this would lead to
-ambiguities (e.g., in old references to the entities being replaced).  
-A ``deletion'' \ReplacedElement (one that utilizes the 'deletion' attribute) is the sole exception to this rule, and
-is the only type of entity that may be listed in more than one
-\ListOfReplacedElements.
+\item \emph{Subcomponents of a replaced object become inaccessible}.  An
+  important and far-reaching consequence of replacements is that if the
+  object being replaced contains other objects, then \emph{those other
+    objects are considered deleted}.  For example, replacing a \Reaction
+  or an \Event object means all of the substructure of those entities in
+  a model are deleted, and references to the identifiers of those
+  deleted entities are made invalid.  (This has implications for such
+  things as \SpeciesReference identifiers that may be used in a model
+  outside of the \Reaction objects where they are defined.)
+
+\item \emph{Replacements must be unique}.  Unless the \token{deletion}
+  attribute on the \ReplacedElement object is \val{true}, a given object
+  being replaced may only appear in exactly one \ReplacedElement object
+  anywhere in a model; otherwise, it would imply multiple entities
+  replace the same object, and this would lead to ambiguities (e.g., in
+  old references to the entities being replaced).  A \ReplacedElement
+  object with \token{deletion}=\val{true} is the only type of entity
+  that may be listed in more than one \ListOfReplacedElements.
+
+\end{itemize}
+
+This scheme does not provide for direct ``horizontal replacements''
+involving only subelements.  An example might be when one species in one
+submodel is the conceptual replacement for a second species in a second
+submodel.  The lack of a direct mechanism for horizontal replacements is
+not a true limitation; the same effect can be achieved by creating an
+intermediate object in the containing model and linking it to the other
+objects via replacements.
+
+Finally, there is no requirement that replaced objects must be of the
+same type as the replacing object.  The only restriction is that all old
+references to the replaced object must now point to the replacing
+object.  Of course, the normal rules of SBML validity apply, so the
+resulting model must still make sense and be valid SBML.  There is no
+requirement for like-kind replacements, however, because errors do not
+\emph{necessarily} result.  For example, replacing a \Species object
+that appeared in a \Reaction object would lead to an invalid SBML
+document if the replacement was a \Parameter object, but replacing a
+\Species object by a \Parameter could be valid if that \Species never
+appeared in any \Reaction object or if all the \Reaction objects were
+deleted.
+
+
+% -----------------------------------------------------------------------------
+\subsection{The \class{SBaseRef} class}
+\label{sbaseref-class}
+
+Defining ports, deletions, and replacements requires a way to refer to
+specific components within enclosed models or even external models
+located in other files.  The machinery for constructing such references
+is embodied in the \SBaseRef class.  This class is the parent class of
+the \Port, \Deletion, \ReplacedElement and \ReplacedBy classes described
+in previous sections.
+
+\fig{sbaseref-uml} shows the definition of \SBaseRef.  This class
+includes several attributes used to implement alternative approaches to
+referencing a particular component, and it also has a recursive
+structure, providing the ability to refer to elements buried within
+(say) a sub-submodel configuration.
+
+\begin{figure}[hbt]
+  \includegraphics{figs/sbaseref-uml}
+  \caption{The extensions of the \SBaseRef class.  The four attributes
+    \token{portRef}, \token{idRef}, \token{unitRef} and \token{metaIdRef}
+    are mutually exclusive; only one can have a value in a given object
+    instance.  The recursive structure also allows referencing entities
+    in submodels of submodels, to arbitrary depths, as described in the
+    text.}
+  \label{sbaseref-uml}
+\end{figure}
+
+
+\subsubsection{The attributes of \class{SBaseRef}}
+
+The four different attributes on \SBaseRef are mutually exclusive: only
+one of the attributes can have a value at any given time, and exactly
+one must have a value in a given \SBaseRef object instance.  (Note that
+this is true of the basic \SBaseRef class; however, derived classes such
+as \ReplacedElement may add additional attributes and extend or override
+the basic attributes and mechanisms.)
+
+All of the attributes face the following common namespace issue.  As
+discussed in more detail in \sect{namespaces}, attributes of type
+\primtype{SId}, \primtype{UnitSId}, and \primtype{PortSId} need only be
+unique on a per-\Model basis.  This means that an interpreter of the
+SBML document must be able to determine the model to which
+\token{idRef}, \token{unitRef}, and \token{portRef} attributes refer.
+In addition, even though \primtype{ID} values are unique on per-document
+level, the same SBML element may be instantiated in multiple submodels,
+in any number of \Model objects, and therefore the \token{metaIdRef}
+attribute must also know to which \Model instantiation it is referring.
+Just exactly how this is done is something that is left up to the
+classes that subclass \SBaseRef.  The sections that describe \Port,
+\Deletion, \ReplacedElement and \ReplacedBy describe the approach taken
+in each case.
+
+Separately, readers may wonder why so many different alternatives are
+necessary.  The reason is that in a given scenario, the referenced model
+may be located in an external file beyond the direct control of the
+modeler, and so the preferred methods of referencing the subobjects may
+not be available.  \SBaseRef provides multiple alternatives so that a
+variety of modeling scenarios can be supported.
+
+
+\paragraph{The \fixttspace\token{portRef} attribute}
+\label{sbaseref-portref}
+
+The optional attribute \token{portRef} takes a value of type
+\primtype{PortSIdRef}.  As its name implies, this attribute is used to
+refer to a port identifier, in the case when the reference being
+constructed with the \SBaseRef is intended to refer to a port on a
+submodel.  The namespace of the \primtype{PortSIdRef} value is the set
+of identifiers of type \primtype{PortSId} defined in the submodel, not
+the parent model.
+
+
+\paragraph{The \fixttspace\token{idRef} attribute}
+\label{sbaseref-idref}
+
+The optional attribute \token{idRef} takes a value of type
+\primtype{SIdRef}.  As its name implies, this attribute is used to
+refer to a regular identifier (i.e., the value of an \token{id}
+attribute on some other object), in the case when the reference being
+constructed with the \SBaseRef is intended to refer to an object that
+does not have a port identifier.  The namespace of the \primtype{SIdRef}
+value is the set of identifiers of type \primtype{SId} defined in the
+submodel, not the parent model.
+
+
+\paragraph{The \fixttspace\token{unitRef} attribute}
+\label{sbaseref-unitref}
+
+The optional attribute \token{unitRef} takes a value of type
+\primtype{UnitSIdRef}.  This attribute is used to refer to the identifier
+of a \UnitDefinition object.  The namespace of the \primtype{UnitSIdRef}
+value is the set of unit identifiers defined in the submodel, not the
+parent model.
+
+Note that even though this attribute is of type \primtype{UnitSIdRef},
+the reserved unit identifiers that are defined by SBML Level~3 (see
+Section~3.1.10 of the SBML Level~3 Version~1 core specification) are
+\emph{not} permitted as values of \token{unitRef}.  Reserved unit
+identifiers may not be replaced or deleted.
+
+
+\paragraph{The \fixttspace\token{metaIdRef} attribute}
+\label{sbaseref-metaidref}
+
+The optional attribute \token{metaIdRef} takes a value of type XML
+\primtype{IDREF}.  This attribute is used to refer to a \token{metaid}
+attribute value on some other object, in the case when the reference
+being constructed with the \SBaseRef is intended to refer to an object
+that does not have a port identifier.  Since meta identifiers are
+optional attributes of \SBase, all SBML objects have the potential to
+have a meta identifier value.
+
+
+\subsubsection{Recursive \class{SBaseRef} structures}
+\label{sbaseref-recursive-sbaseref}
+
+An \SBaseRef object may have up to one subcomponent named
+\token{sbaseRef}, of type \SBaseRef (see \fig{sbaseref-uml}).  This
+arrangement permits recursive structures to be constructed so that
+objects inside submodels can be referenced.
+
+The form of such recursive references must be as follows.  The
+highest-level \SBaseRef object of such a chain (which will necessarily
+be an object of class \Port, \Deletion, \ReplacedElement or \ReplacedBy,
+because they are the only classes derived from the class \SBaseRef) must
+refer to a \Submodel object in the containing model.  All child
+\SBaseRef objects in the chain must refer to components inside the
+\Model instance to which the \Submodel refers.
+
+The following example may help clarify this.  Suppose that we want to
+delete an object with the identifier \val{p1} inside the \Submodel
+object identified as \val{m1}.  \fig{submodel-uml} shows that \Deletion
+objects are placed inside a \ListOfDeletions.  The following XML
+fragment illustrates how the constructs will look:
+
+\begin{example}
+<listOfDeletions>
+  <deletion idRef="m1">
+    <sbaseRef idRef="p1" />
+  </deletion>
+</listOfDeletions>
+\end{example}
+
+Suppose instead that the submodel \val{m1} from the previous example is
+actually nested inside another submodel \val{m2}.  Then, we would have
+the following:
+
+\begin{example}
+<listOfModelDefinitions>
+  <modelDefinition id="m1">
+    <listOfParameters>
+      <parameter id="p1" value="3"/>
+    </listOfParameters>
+  </modelDefinition>
+  <modelDefinition id="m2">
+    <listOfSubmodels>
+      <submodel id="sub_m1" modelRef="m1"/>
+    </listOfSubmodels>    
+  </modelDefinition>
+  <modelDefinition id="m3">
+    <listOfSubmodels>
+      <submodel id="sub_m2" modelRef="m2">
+        <listOfDeletions>
+          <deletion idRef="sub_m1">
+            <sbaseRef idRef="p1" />
+          </deletion>
+        </listOfDeletions>
+      </submodel>
+    </listOfSubmodels>    
+</listOfModelDefinitions>
+\end{example}
+
+Finally, what if we needed to go further down into nested submodels?
+The following example illustrates this:
+
+\begin{example}
+<listOfModelDefinitions> 
+  <modelDefinition id="m1"> 
+    <listOfParameters> 
+      <parameter id="p1" value="3"/> 
+    </listOfParameters> 
+  </modelDefinition> 
+  <modelDefinition id="m2"> 
+    <listOfSubmodels> 
+      <submodel id="sub_m1" modelRef="m1"/> 
+    </listOfSubmodels>     
+  </modelDefinition> 
+  <modelDefinition id="m3"> 
+    <listOfSubmodels> 
+      <submodel id="sub_m2" modelRef="m2"/> 
+    </listOfSubmodels>     
+  </modelDefinition> 
+  <modelDefinition id="m3"> 
+    <listOfSubmodels> 
+      <submodel id="sub_m2" modelRef="m3"> 
+        <listOfDeletions> 
+          <deletion idRef="sub_m1"> 
+            <sbaseRef idRef="sub_m2"> 
+              <sbaseRef idRef="p1" />
+            </sbaseRef> 
+          </deletion> 
+        </listOfDeletions> 
+      </submodel> 
+    </listOfSubmodels>     
+</listOfModelDefinitions> 
+\end{example}
+
+
+Although this use of nested \SBaseRef objects allows a model to refer to
+components buried inside submodels, it is considered inelegant model
+design.  It is better to promote any element in a submodel to a local
+element if it can be predicted that containing models may need to
+reference it.  However, if the submodel is fixed (e.g., if is in an
+external file), then no other option may be available except to use
+nested references.
+
 
 
 % -----------------------------------------------------------------------------
 \subsection{Conversion factors}
 \label{conversion-factors}
 
+\draftnote{[MH] I have not looked at this section.}
 In SBML Level~3 Version~1 Core, units of measurement are optional
 information.  Modelers are required to write their models in such a way
 that all conversions between units are explicitly incorporated into the
@@ -1393,4 +1536,109 @@ be converted explicitly by being replaced, or that package would have to
 extend this Hierarchical Model Composition package to define a new
 attribute on Submodel that could be used to automatically convert all
 such elements in the submodel with that unit type.
+
+
+\clearpage
+
+% -----------------------------------------------------------------------------
+\subsection{Namespace scoping rules for identifiers}
+\label{namespaces}
+
+In the Hierarchical Model Composition package, as in SBML Level~3
+Version~1 Core, the \Model object contains the main components of an
+SBML model, such as the species, compartments and reactions.  The
+package adds the ability to put \emph{multiple} models inside an SBML
+document, and therefore must define the scope of identifiers in such a
+way that identifier collisions are prevented.  In this section, we
+describe the scoping rules for all of the types and classes defined in
+Sections~\ref{new-primitive-types}--\ref{sbaseref-class}.
+
+\begin{enumerate}
+
+\item A shared namespace exists for \primtype{SId} values defined at the
+  level of the SBML document.  This namespace applies to the identifiers
+  (i.e., values of \token{id} attributes) of all \Model and
+  \ExternalModelDefinition objects within the SBML document.  (An
+  \ExternalModelDefinition object references a model elsewhere, so in
+  this sense, both \Model and \ExternalModelDefinition are types of
+  models.)  The identifier of every \Model and \ExternalModelDefinition
+  object must be unique across the set of all such identifiers in the
+  document.  The namespace is limited to that SBML document, and is not
+  shared with any other SBML document, even if that document is
+  referenced via an \ExternalModelDefinition.  This namespace is known
+  as \emph{the model namespace of the document}.
+
+\item The namespace for \primtype{SId} identifiers defined \emph{within}
+  a \Model object used in Hierarchical Model Composition follows the
+  same rules as those defined in SBML Level~3 Core for plain \Model
+  objects.  That is, the scope of the identifiers is limited to the
+  enclosing \Model object.  This means that two or more \Model objects
+  in the same document may reuse the same object identifiers inside of
+  them; the identifiers do not need to be unique at the level of the
+  SBML document.  (For example, two model definitions could use the same
+  \primtype{SId} value for \Parameter objects within their respective
+  contents.  Note, however, that this does \emph{not} imply that the two
+  objects are equated with each other!)  This is known as the
+  \emph{object namespace of the model}.  An implication of this rule is
+  that to fully locate an object, one must know not only the object's
+  identifier, but also the identifier of the model in which it is
+  located.
+
+\item The identifier of every \UnitDefinition object must be unique
+  across the set of all such identifiers in the \Model to which they
+  belong.  (This is the same as in SBML Level~3 Version~1 Core.)  This
+  namespace is referred to as the \emph{unit namespace of the model}.
+  Similar to the case above, an implication of this rule is that to
+  fully locate a user-defined unit definition when there are multiple
+  models in an SBML document, one must know not only the unit
+  definition's identifier, but also the identifier of the model in which
+  it is located.
+
+\item The Hierarchical Model Composition package defines a new kind of
+  component: the \emph{port}, represented by \Port objects.  The
+  identifier of every \Port object must be unique across the set of all
+  such identifiers in the \Model object to which they belong.  Again, an
+  implication of this rule is that to fully locate a port when there are
+  multiple models in an SBML document, one must know not only the port's
+  identifier, but also the identifier of the model in which it is
+  located.
+
+\item \Reaction objects introduce a local namespace for \LocalParameter
+  objects.  These objects cannot be referenced from outside a given
+  reaction definition.  For the Hierarchical Model Composition package,
+  the implication is that the the \SBaseRef class
+  (\sect{sbaseref-class}) cannot reference reaction local parameters
+  simply by their identifiers (i.e., the value of their \token{id}
+  attribute).  However, the \LocalParameter objects \emph{can} be given
+  meta identifiers (a value for their \SBase-derived \token{metaid}
+  attribute), and be referenced using those.
+
+% FIXME need move this somewhere else:
+% 
+%   If replaced, it must be by an element in the normal element namespace of
+%   a model (such as a global Parameter).  Old references to that replaced
+%   LocalParameter will then point to the new replacement element.  If a
+%   LocalParameter is deleted from a Reaction whose KineticLaw used it in
+%   its math, that KineticLaw may still be valid if there was an element
+%   in the element namespace of the model with that same id to which it
+%   can now refer (in other words, if the LocalParameter shadowed a global
+%   parameter).
+
+
+\end{enumerate}
+
+The following example may clarify some of these rules.  Suppose a given
+SBML document contains a \Model object having the identifier \val{mod1}.
+This \Model cannot contain another object with the same identifier
+(e.g., it could not have a \Parameter object with the identifier
+\val{mod1}), nor can there be any other \Model or
+\ExternalModelDefinition objects identified as \val{mod1} within the
+same SBML document.  The first restriction is simply the regular SBML
+rule about uniqueness of identifiers throughout a \Model object; the
+second restriction is due to point (1) above.  On the other hand, there
+could be a second \Model object in the same document containing a
+component (e.g., a \Parameter) with the identifier \val{mod1}.  This
+would not conflict with the first \Model identifier (because the
+\Parameter would be effectively hidden at a lower level within the
+second \Model).
 

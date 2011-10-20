@@ -53,109 +53,120 @@ We decompose validation of such a composite model into two phases:
 
 \end{enumerate}
 
-The first validation phase involves checking the aggregation, deletion
-and linkage instructions defined by the Hierarchical Model Composition
-constructs in an SBML document.  The \Submodel, \Port, \Deletion,
-\ReplacedElement and other constructs defined in this specification must
-be valid according to the rules defined in \sect{validation-rules}.
+The first phase involves checking the aggregation, deletion and linkage
+instructions defined by the Hierarchical Model Composition constructs in
+an SBML document.  The \Submodel, \Port, \Deletion, \ReplacedElement,
+\ReplacedBy and other constructs defined in this specification must be
+valid according to the rules defined in \sect{validation-rules}.
 Passing this phase means that the constructs are well-formed, referenced
 files and models and other entities exist, ports have identifiers in the
 relevant namespaces, and so on.
 
 The second validation phase takes place after interpreting the
-Hierarchical Model Composition constructs.  The effect of intepreting
-the constructs is to produce a kind of ``flattened'' version of the
-model devoid of Hierarchical Model Composition features.  This
-``flattened'' version only exists in memory: the referenced files are
-not modified, but rather, the interpretation of the package constructs
-leads to an in-memory representation of a final, composite model implied
-by following the recipe.  This generated model must then be valid SBML
-according to the rules defined in the SBML Level~3 Version~1 Core
-specification.
+Hierarchical Model Composition constructs.  The result of this phase
+must be a valid SBML model.  This verification can in principle be
+performed in various ways.  In this specification, we describe one
+approach below that involves interpreting the Hierarchical Model
+Composition constructs to produce a kind of ``flattened'' version of the
+model devoid of the Hierarchical Model Composition package constructs.
+The ``flattened'' version of the model only exists in memory: the
+referenced files are not actually modified, but rather, the
+interpretation of the package constructs leads to an in-memory
+representation of a final, composite model implied by following the
+recipe.  This generated model can then be tested against the rules for
+SBML validity defined in the SBML Level~3 Version~1 Core specification.
+Performing this ``flattening'' allows for the most straightforward way
+of testing the validity of the resulting SBML model; however, it is
+\emph{not part of the requirements for this package}.  The requirements
+are only that the model implied by the package constructs is valid.
 
 
-\subsubsection{Example algorithm for following the ``recipe'' to produce
-  a ``flattened'' model}
+\subsubsection{Example algorithm for producing a ``flattened'' model}
 
-The following is one possible algorithm for interpreting the
-Hierarchical Model Composition constructs and creating a ``flattened''
-SBML document.  Other algorithms besides this are possible, the main
-difference being how identifiers are handled.
+\fig{flattening-algo} presents one possible algorithm for interpreting
+the Hierarchical Model Composition constructs and creating a
+``flattened'' SBML document.  As explained above, this procedure can be
+used as part of the process for testing the validity of an SBML document
+that uses Hierarchical Model Composition.  After performing these steps,
+the result will be either a model in SBML Level~3 Version~1 Core format
+(possibly containing constructs from other SBML Level~3 packages), or a
+declaration that the model is invalid.
 
-\begin{enumerate}
+\begin{figure}[thb]
+  \renewcommand{\arraystretch}{1.2}
+  \newcounter{rownum}
+  \setcounter{rownum}{0}
+  \begin{edtable}{tabular}{>{\stepcounter{rownum}\therownum.}rp{6in}}
+    \toprule
+    \multicolumn{1}{r}{\textbf{Step}} & \textbf{Procedure} \\
+    \midrule
+    & Examine the submodels of the model being validated.  If any
+    submodel itself contains submodels, perform this algorithm in its
+    entirety on each submodel before proceeding to the next step on the
+    model.
+    \\
+    & For every submodel identifier ``\emph{M}'', verify that no
+    component identifier or meta identifier (i.e., the \token{id} or
+    \token{metaid} attribute values of the component) begin with the
+    character sequence ``\emph{M\_}''.  For example, if a submodel has
+    identifier \val{foo}, change it (for the purposes of this algorithm)
+    to \val{foo\_}.  If a component has identifier ``\val{foo\_}''
+    already, add another underscore.
+    \\
+    & Remove any submodel components that have been replaced or deleted.
+    \\
+    & Transform the remaining submodel components such that:
+    \begin{enumerate}[label={\alph*})]
 
-\item Examine the submodels of the model being validated.  If any
-  submodel itself contains submodels, perform this algorithm in its
-  entirety on each submodel before proceeding to the next step on the
-  model.
+    \item Every identifier (\token{id} attribute) is changed to a value of
+      the form ``\emph{M\_id}'', where ``\emph{id}'' is the original
+      \token{id} value and ``\emph{M}'' is the submodel identifier.
 
-\item Find all submodels that do not have a unique identifier (i.e., a
-  value for their \token{id} attribute) in the containing model's
-  namespace, and give them identifiers for the purpose of this
-  algorithm.
+    \item Every meta identifier (\token{metaid} attribute) is changed to a
+      value of the form ``\emph{M\_metaid}'', where ``\emph{metaid}'' is
+      the original \token{metaid} value and ``\emph{M}'' is the submodel
+      identifier.
 
-% FIXME this is wrong:
+    \vspace*{-1em}
+    \end{enumerate}
+    \\
+    & For every component that has not been removed in the submodel,
+    adjust every reference to the identifiers that were transformed in
+    the previous step as follows.  Change every \primtype{SIdRef} value
+    to the form form ``\emph{M\_id}'', where ``\emph{id}'' is the
+    original \primtype{SIdRef} value and ``\emph{M}'' is the submodel
+    identifier, and change every XML \primtype{IDREF} value to the form
+    ``\emph{M\_metaid}'', where ``\emph{metaid}'' is the original
+    \primtype{IDREF} value.  \emph{However}, if the submodel has been
+    replaced as a consequence of applying either a \ReplacedElement or
+    \ReplacedBy construct, the \primtype{SIdRef} and \primtype{IDREF}
+    values that pointed to the submodel need to be changed to the
+    \primtype{SId} or \primtype{ID} value, respectively, of the object
+    replacing it.
+    \\
+    & After performing the tasks above for all remaining components,
+    merge the components of the remaining submodels into a single model.
+    The various lists (list of species, list of compartments, etc.) are
+    merged in this step.  Annotations must be preserved, as should
+    constructs from other SBML Level~3 packages.
+    \\
+    & Test the resulting model for validity using the rules of SBML
+    Level~3 Version~1.
+    \\
+    \bottomrule
+  \end{edtable}
+  \caption{Example algorithm for ``flattening'' a model.  This removes
+    Hierarchical Model Composition package constructs by interpreting
+    and following them to their logical conclusion.}
+  \label{flattening-algo}
+\end{figure}
 
-\item For every submodel identifier ``\emph{M}'', verify that no component
-  identifier or meta identifier (i.e., the \token{id} or \token{metaid}
-  attribute values of the component) begin with the character sequence
-  ``\emph{M\_}''.  For example, if a submodel has identifier
-  \val{rocket}, change it (for the purposes of this algorithm) to
-  \val{rocket\_}.  If a component has identifier ``\emph{M\_}'' already,
-  add another underscore.
-
-\item Remove any submodel components that have been replaced or deleted.
-
-\item Tranform the remaining submodel components such that:
-
-  \begin{enumerate}
-
-  \item Every identifier (\token{id} attribute) is changed to a value of
-    the form ``\emph{M\_id}'', where ``\emph{id}'' is the original
-    \token{id} value and ``\emph{M}'' is the submodel identifier.
-
-  \item Every meta identifier (\token{metaid} attribute) is changed to a
-    value of the form ``\emph{M\_metaid}'', where ``\emph{metaid}'' is
-    the original \token{metaid} value and ``\emph{M}'' is the submodel
-    identifier.
-
-  \end{enumerate}
-
-\item For every component that has not been removed in the submodel,
-  adjust every reference to the identifiers that were transformed in the
-  previous step.  That is, change every \primtype{SIdRef} value to the
-  form form ``\emph{M\_id}'', where ``\emph{id}'' is the original
-  \primtype{SIdRef} value and ``\emph{M}'' is the submodel identifier,
-  and change every XML \primtype{ID} value to the form
-  ``\emph{M\_metaid}'', where ``\emph{metaid}'' is the original
-  \primtype{ID} value.  \textbf{FIXME: original version unclear; need
-    finish this}
-
-\item Verify identifier references.  If any identifier reference (values
-  of \primtype{SIdRef} and \primtype{ID}) is found pointing to deleted
-  component, the model is invalid, as it contains a reference to a
-  nonexistent component.
-
-\item After performing the tasks above for all remaining components,
-  merge the components of the remaining submodels into a single model.
-  The various lists (list of species, list of compartments, etc.) are
-  merged in this step.  Annotations must be preserved, as should
-  constructs from other SBML Level~3 packages.
-
-\item Test the resulting model for validity.
-
-\end{enumerate}
-
-After performing the steps above, the result will be either a model in
-SBML Level~3 Version~1 Core format (possibly containing constructs from
-other SBML Level~3 packages), or a declaration that the model is invalid.
-
-Note again that when instantiating a model, one does not have to first
-test the validity of that model.  If it is in the same file as the
-containing model, it will be tested anyway by this algorithm.  If it is
-in a different file, that file's validity (or lack thereof) should not
-affect the validity of the file being tested (though a validator may
-warn the user of this situation if it desires).
+Note that, when instantiating a model, one does not have to first test
+the validity of that model.  If it is in the same file as the containing
+model, it will be tested anyway by this algorithm.  If it is in a
+different file, that file's validity (or lack thereof) should not affect
+the validity of the file being tested (though a validator may warn the
+user of this situation if it desires).
 
 
 \subsection{Validation and consistency rules}
@@ -205,6 +216,7 @@ or implied in the reset of this specification document.  They are
 enumerated here for convenience.  Unless explicitly stated, all
 validation rules concern objects and attributes specifically defined in
 the Hierarchical Model Composition package.
+\draftnote{[MH] I haven't looked at the rest of this section.}
 
 
 \subsubsection*{General rules about this package} \begin{sbmlenum}
@@ -213,14 +225,14 @@ the Hierarchical Model Composition package.
   package specification for SBML Level~3 Version~1, an SBML document must
   declare the use of the following XML Namespace:\\
   ``\uri{http://www.sbml.org/sbml/level3/version1/comp/version1}''.
-  (References: SBML L3V1 comp V1 Section~\ref.)}
+  (References: SBML L3V1 comp V1 Section~\ref{}.)}
   
 
 \validRule{comp-10102} {  When appearing in an SBML document, all elements
   and attributes from the SBML Level~3 Version~1 Hierarchical Model
   Composition package must be placed in the XML namespace\\
   ``\uri{http://www.sbml.org/sbml/level3/version1/comp/version1}''.
-  (References: SBML L3V1 comp V1 Section~\ref.) }
+  (References: SBML L3V1 comp V1 Section~\ref{}.) }
 
 
 \end{sbmlenum} \subsubsection*{General rules about identifiers} \begin{sbmlenum}

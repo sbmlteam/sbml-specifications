@@ -1,4 +1,4 @@
-MAIN   = main
+MAIN   = qual-spec
 
 LATEX  = latex
 BIBTEX = bibtex

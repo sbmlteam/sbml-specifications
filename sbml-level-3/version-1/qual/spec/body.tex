@@ -38,8 +38,6 @@ using SBML Level~3 Version~1 and this version of the Qualitative Models package:
 \end{example}
     
 
-% XML namespace (end)
-
 % -----------------------------------------------------------------------------
 \subsection{Primitive data types}
 \label{primitive-types}
@@ -71,6 +69,28 @@ The \primtype{transitionInputEffect} is an enumeration of values used to indicat
 \label{primtype-outputeffect}
 The \primtype{transitionOutputEffect} is an enumeration of values used to indicate the effect of an \Output \Transition within the system.  The possible values are \const{production}, \const{assignmentLevel} and \const{assignmentSymbol}.
 
+% -----------------------------------------------------------------------------
+\subsection{Qualitative modelling}
+\label{qual}
+
+Before describing the classes and their attributes that have been used by this Qualitative Models Specification it is worth clarifying the intended meaning of some of the terms used. 
+
+\subsubsection{Levels and symbols}
+
+The entities being modelled have either a \emph{level} or a \emph{symbol} associated with them that indicate the current state of the entity. 
+
+A \emph{level} may be a boolean but may also represent more than two states and thus is considered to be an integer. In the case of the entity being a boolean its allowed levels would be \val{0} or \val{1}; but in other cases it may have any number of levels i.e. integer values up to and including a maximum. 
+
+A \emph{symbol} is intended to represent any value that might be appropriate in the model.  A user can merely define the set of symbols that might be used and how the \token{symbolValue} associated with an entity might be altered  by the model. Symbols can be considered as uninstantiated parameters. Such symbols may represent the different solutions of piecewise linear differential equations, along with different thresholds.
+\TODO{Some examples of this would be good}
+
+\subsubsection{Transitions}
+
+Qualitative Models consider \emph{transitions} between the levels/symbols of the entities involved in the model. This may involve the level of an entity being increased or decreased by a fixed amount; the level or symbol remaining unchanged; or the level or symbol being reassigned to an alternate value. Transitions occur when a set of conditions is met. These conditions may involve the levels/symbols falling above or below  a given \emph{threshold}. A simple example of this is the case where there are two entities A and B and the model states that when the level of A exceeds \val{1} (the threshold), the level of B is increased by \val{1}. The resulting value of an entity following a transition may have several possibilities that are governed by a number of conditions. Each transition can have a list of conditional functions, each associated with a result that allow the user to specify sets of piecewise conditions.
+
+
+
+
 
 % -----------------------------------------------------------------------------
 \subsection{The extended \class{Model} class}
@@ -78,10 +98,10 @@ The \primtype{transitionOutputEffect} is an enumeration of values used to indica
 
 The extension of SBML Level~3 Core's \Model class is relatively
 straightforward: the Qualitative Models Package adds two lists,
-one for holding qualitativeSpecies (\qual{listOfQualitativeSpecies}, of class
-\ListOfQualitativeSpecies), and the other for holding transitions (\qual{listOfTransitions},
-of class \ListOfTransitions).  \fig{} provides the UML
-diagram.  The \sbml{Model} element may contain at most one \listOf{QualitativeSpecies}, which must contain at least one \qual{QualitativeSpecies}. It may also contain at most one \listOf{Transitions} which must contain at least one \qual{Transition}.The \QualitativeSpecies class and
+one for holding qualitativeSpecies (\token{listOfQualitativeSpecies}, of class
+\ListOfQualitativeSpecies), and the other for holding transitions (\token{listOfTransitions},
+of class \ListOfTransitions).  \fig{qual-extended-model-uml} provides the UML
+diagram.  The \sbml{Model} element may contain at most one \ListOfQualitativeSpecies, which must contain at least one \QualitativeSpecies. It may also contain at most one \ListOfTransitions which must contain at least one \Transition.The \QualitativeSpecies class and
 the \Transition  class are defined in Sections \sect{qualSpecies-class} and \sect{transitions-class} respectively.
 
 \begin{figure}
@@ -97,7 +117,7 @@ the \Transition  class are defined in Sections \sect{qualSpecies-class} and \sec
 \label{qualSpecies-class}
 Similarly to the \sbml{Species} in SBML, the components of qualitative models refer to pools of entities that are considered indistinguishable and are each located in a specific \sbml{Compartment}. However, here components are characterised by their qualitative influences rather than by taking parts into reactions. Therefore, we define the \QualitativeSpecies element to represent such pools of entities.
 
-A \QualitativeSpecies describes a pool of indistinguishable entities in a \sbml{Compartment}. It is associated with either a \token{level} or a \token{symbolValue} from its \listOf{SymbolicValues}. \TODO{NEED EXPLANATION OF WHAT THESE STAND FOR} These objects classes are defined in Figure~\ref{qual-qualitative-species-uml}.
+A \QualitativeSpecies describes a pool of indistinguishable entities in a \sbml{Compartment}. It is associated with either a \token{level} or a \token{symbolValue} from its \ListOfSymbolicValues. These objects classes are defined in \fig{qual-qualitative-species-uml}.
 
 \begin{figure}
   \includegraphics{figs/qual-qualitative-species-uml.pdf}
@@ -105,162 +125,213 @@ A \QualitativeSpecies describes a pool of indistinguishable entities in a \sbml{
   \label{qual-qualitative-species-uml}
 \end{figure}
 
-
-\paragraph{The \fixttspace\token{id} and \fixttspace\token{name} attributes}
+\paragraph{The \fixttspace\token{id} attribute}
 
 The \token{id} attribute takes a required value
-of type \primtype{SId}. The \token{id} is used as an identifier for the particluar \QualitativeSpecies.  A \QualitativeSpecies also has an optional \token{name} attribute of type \primtype{string}. 
- The \token{id} and \token{name} attributes may be used
+of type \primtype{SId}. The \token{id} is used as an identifier for the particluar \QualitativeSpecies. It can be used as a 
+<ci> element within MathML, in which case it it interpreted as the \emph{level} or \emph{symbol} of this \QualitativeSpecies.
+
+\paragraph{The \fixttspace\token{name} attribute}
+
+A \QualitativeSpecies also has an optional \token{name} attribute of type \primtype{string}. 
+ The \token{name} attribute should be used
 in the same manner as on SBML Level~3 Core
 objects; see Section~3.3.2 of the SBML Level~3 Version~1 Core
 specification for more information.
 
 
 \paragraph{The \token{compartment} attribute}
-The required attribute \token{compartment}, of type \primtype{SIdRef}, is used to identify the compartment in which the qualitativeSpecies is located.  The attribute's value must be the identifier of an existing \sbml{Compartment} objecyt in the model.  This attribute is comparable with the \token{compartment} attribute on the \sbml{Species} element.
+The required attribute \token{compartment}, of type \primtype{SIdRef}, is used to identify the compartment in which the qualitativeSpecies is located.  The attribute's value must be the identifier of an existing \sbml{Compartment} object in the model.  This attribute is comparable with the \token{compartment} attribute on the \sbml{Species} element.
 
 \paragraph{The \token{constant} and \token{boundaryCondition} attributes}
-These attributes are treated as in \sbml{Species} elements.
+These attributes are treated as in \sbml{Species} elements. \Q{boundaryCondition irrelevant now ??}
 
-\paragraph{The \token{initialLevel}  attribute:}
-The \token{initialLevel} is an \type{integer} that defines the initial level of the \qual{QualitativeSpecies} in its \sbml{Compartment}. This attribute is optional.
+\paragraph{The \token{initialLevel}  attribute}
+The \token{initialLevel} is an \primtype{integer} that defines the initial \emph{level} of the \QualitativeSpecies in its \sbml{Compartment}. This attribute is optional.
 
-\paragraph{The \token{maxLevel} attribute:}
-The \token{maxLevel} is an \const{integer} that sets the maximal level of the \qual{QualitativeSpecies}. This attribute is optional.
+\paragraph{The \token{maxLevel} attribute}
+The \token{maxLevel} is an \const{integer} that sets the maximal \emph{level} of the \qual{QualitativeSpecies}. This attribute is optional.
 
 \subsubsection{The \class{SymbolicValue} class}
+The \QualitativeSpecies element may contain at most one \ListOfSymbolicValues that contains zero or more \SymbolicValue elements. An empty list is allowed, and useful for e.g. adding annotations.
+
+The \SymbolicValue element defines a non instantiated parameter that allows the model to associate undefined values with a particular \QualitativeSpecies.
+
+\paragraph{The \token{id} attribute}
+A \SymbolicValue element has an \token{id} attribute that takes a required value
+of type \primtype{SId}. The \token{id} is used as an identifier for the particluar \SymbolicValue and may be referenced by the \token{symbolicResult} attribute of a \FunctionTerm within a \Transition to indicate that this \SymbolicValue is the resulting value for this \QualitativeSpecies following a particular \Transition.
+
+\paragraph{The \token{name} attribute}
+There is an optional \token{name} attribute of type \primtype{string} that should be used
+in the same manner as on SBML Level~3 Core
+objects; see Section~3.3.2 of the SBML Level~3 Version~1 Core
+specification for more information.
+
+
+\paragraph{The \token{rank} attribute}
+The \token{rank} is an \primtype{integer} that defines the position of the symbol in the \ListOfSymbolicValues. This attribute is optional. \Q{What difference does the position make or does rank meaning ordering independent of physical position ?}
+
+\Q{Are symbols and levels exclusive?}
+
+
 
 % -----------------------------------------------------------------------------
 \subsection{The \class{Transition} class}
 \label{transitions-class}
+A \Transition element contains at most one \ListOfInputs, exactly one \ListOfOutputs and at most one \ListOfFunctionTerms.
+
+\paragraph{The \token{id} attribute}
+A \Transition element has an optional \token{id} attribute of type \primtype{SId}. 
+
+\paragraph{The \token{name} attribute}
+There is an optional \token{name} attribute of type \primtype{string} that should be used
+in the same manner as on SBML Level~3 Core
+objects; see Section~3.3.2 of the SBML Level~3 Version~1 Core
+specification for more information.
+
+\paragraph{The \token{temporisationType} attribute}
+A \Transition has an attribute \token{temporisationType} of type \primtype{temporisationType} used to indicate the updating policy associated with this \Transition element. This attribute is optional. \tab{transition-temporisation} describes the different updating policies.
+
+\begin{table}[thb]
+  \begin{edtable}{tabular}{p{1in}p{5in}}
+    \toprule
+    \textbf{TemporisationType} & \textbf{Interpretation} \\
+    \midrule
+    \const{timer} && TBD \\
+    \const{priority} && TBD \\
+    \const{sustain} && TBD \\
+    \const{proportion} && TBD \\
+    \const{rate} & TBD \\
+    \bottomrule
+  \end{edtable}
+  \caption{Interpretation of the \token{temporisationType} attribute on a \Transition.} 
+  \label{transition-temporisation}
+\end{table}
+
+\TODO{need more explanation of this}
 
 \subsubsection{The \class{Input} class}
+The \ListOfInputs contains zero or more elements of type \Input. A transition with zero inputs can be useful for defining an initial assignment, where the state of an output depends on a function but not on any input values. An empty list is allowed, and useful for e.g. adding annotations.
+Each \Input refers to a \QualitativeSpecies that participates in the corresponding \Transition.
+
+\paragraph{The \token{id} attribute}
+An \Input element has an optional \token{id} attribute of type \primtype{SId}. The identifier of an \Input can be used as a 
+<ci> element within MathML, in which case it it interpreted as the \token{thresholdLevel} or \token{thresholdSymbol}.
+
+\paragraph{The \token{name} attribute}
+There is an optional \token{name} attribute of type \primtype{string} that should be used
+in the same manner as on SBML Level~3 Core
+objects; see Section~3.3.2 of the SBML Level~3 Version~1 Core
+specification for more information.
+
+
+\paragraph{The \token{qualitativeSpecies} attribute}
+The \token{qualitativeSpecies} is a \primtype{SIdRef} referring to a \QualitativeSpecies that is the \emph{input} of this \Transition. The attribute's value must be the identifier of an existing \QualitativeSpecies object in the model. This attribute is mandatory.
+
+\paragraph{The \token{thresholdLevel} and \token{thresholdSymbol} attributes}
+The \token{thresholdLevel} is a \primtype{integer}. The \token{thresholdSymbol} is a \primtype{SIdRef} that must refer to the identifier of a \SymbolicValue. These attributes are optional and but mutually exclusive. It is invalid to define both.
+
+\Q{Must the thresholdSymbol refer to one of the listOfSymbolicValues in the QualitativeSpecies that is referenced by this Input ?}
+
+\paragraph{The \token{transitionEffect} attribute}
+The \token{transitionEffect} is an \primtype{transitionInputEffect} describing how the \QualitativeSpecies referenced by the \Input is affected by the \Transition. This attribute is mandatory. \tab{transition-input} shows the possible values with the interpretation of each value.
+
+\begin{table}[thb]
+  \begin{edtable}{tabular}{p{1in}p{5in}}
+    \toprule
+    \textbf{TransitionInputEffect} & \textbf{Interpretation} \\
+    \midrule
+    \const{none} & Neither the level nor the symbol associated with the \token{qualitativeSpecies} is modified.\\
+    \const{consumption} & The level of the \token{qualitativeSpecies} is decreased by the \token{resultLevel} of the selected term possibly modified by the \token{thresholdLevel} of the \Input.\\
+    \bottomrule
+  \end{edtable}
+  \caption{Interpretation of the \token{transitionEffect} attribute on an \Input.} 
+  \label{transition-input}
+\end{table}
+
+\TODO{An example of a resultLevel modified by a thresholdLevel}
+ 
+\paragraph{The \token{sign} attribute}
+The \token{sign} of type \primtype{sign} can be used as an indication as to whether the contribution of this input is positive, negative, or both. The sign is usually used for visualization purposes only. This attribute is optional.
+
 
 \subsubsection{The \class{Output} class}
+The \ListOfOutputs contains at least one \Output.
+Each \Output refers to a \QualitativeSpecies that participates in the corresponding \Transition.
+
+\paragraph{The \token{id} attribute}
+An \Output element has an optional \token{id} attribute of type \primtype{SId}. 
+
+\paragraph{The \token{name} attribute}
+There is an optional \token{name} attribute of type \primtype{string} that should be used
+in the same manner as on SBML Level~3 Core
+objects; see Section~3.3.2 of the SBML Level~3 Version~1 Core
+specification for more information.
+
+
+
+\paragraph{The \token{qualitativeSpecies} attribute}
+The \token{qualitativeSpecies} is a \primtype{SIdRef} referring to a \QualitativeSpecies that is the \emph{output} of this \Transition. The attribute's value must be the identifier of an existing \QualitativeSpecies object in the model. This attribute is mandatory.
+
+\paragraph{The \token{outputLevel} attribute}
+The \token{outputLevel} is an \primtype{integer} used along with the \token{transitionEffect} set to \const{production} to specify the effect of the \Transition on the corresponding \QualitativeSpecies. This attribute is optional. 
+\Q{This contradicts the table}
+
+\paragraph{The \token{transitionEffect} attribute}
+The \token{transitionEffect} is an \primtype{transitionOutputEffect} describing how the \QualitativeSpecies referenced by the \Output is affected by the \Transition. This attribute is mandatory. \tab{transition-output} shows the possible values with the interpretation of each value.
+
+\begin{table}[thb]
+  \begin{edtable}{tabular}{p{1in}p{5in}}
+    \toprule
+    \textbf{TransitionInputEffect} & \textbf{Interpretation} \\
+    \midrule
+    \const{production} & The level of the \token{qualitativeSpecies} is increased by the \token{resultLevel} of the selected term possibly modified by the \token{thresholdLevel} of the \Output.\\
+    \const{assignmentLevel} & The level of the \token{qualitativeSpecies} is set to the \token{resultLevel} of the selected term. \\
+    \const{assignmentSymbol} & The symbol of the \token{qualitativeSpecies} is set to the \token{resultSymbol} of the selected term.\\
+    \bottomrule
+  \end{edtable}
+  \caption{Interpretation of the \token{transitionEffect} attribute on an \Output.} 
+  \label{transition-output}
+\end{table}
 
 \subsubsection{The \class{FunctionTerm} class}
 
+The \ListOfFunctionTerms may contain any number of \FunctionTerm elements, and exactly one DefaultTerm. Each term is associated with a result (symbolic or level) and a \FunctionTerm is associated with a Boolean function inside a \sbml{Math} element. The disjunction of the terms defines the \emph{qualitative function} associated with a \Transition.
 
-\subsection{Not yet worked on}
-
-This proposal defines the following new main elements: \qual{QualitativeSpecies}, \qual{SymbolicValue}, \qual{Transition}, \qual{Input}, \qual{Output}, \qual{FunctionTerm}, \qual{DefaultTerm}. All inherit from \sbml{SBase} and all, except \qual{DefaultTerm}, are contained into the corresponding \sbml{ListOf}\textbf{\emph{ElementName}} element, which inherits from \sbml{ListOf}.%, itself inheriting from \sbml{SBase}.
-
-The SBML element \sbml{Model} is extended to include the new elements \listOf{QualitativeSpecies} and \listOf{Transitions}. The SBML elements \sbml{EventAssignment} and \sbml{AssignmentRule} are extended to refer to \qual{QualitativeSpecies}.
-
-The overall structure of this extension is described in Figure~\ref{fig:UML}.
-
-% proposed syntax (end)
-\bigskip
-\subsection*{Extension of the \sbml{Model} element} % (fold)
-\label{sub:model}
-The SBML element \sbml{Model} is extended to contain at most one \listOf{QualitativeSpecies} and at most one \listOf{Transitions}.
-% subsection model (end)
-
-\subsection*{Definition of \textsf{\textbf{\hypertarget{QualitativeSpecies}{QualitativeSpecies}}}} % (fold)
-
-
-% subsection qualitativespecies (end)
-\bigskip
-\subsection*{Definition of \qualt{SymbolicValue}} % (fold)
-The \qual{QualitativeSpecies} element may contain at most one \listOf{SymbolicValues} that contains zero or more \qual{SymbolicValue}s. An empty list is allowed, and useful for e.g. adding annotations.
-The \qual{SymbolicValue} element defines a non instantiated parameter. Such symbols may represent the different solutions of piecewise linear differential equations, along with different thresholds.
-
-\paragraph{The \token{id} and \token{name} attributes}
-These attributes are used according to the SBML L3.1 Section 3.3. The attribute \token{id} is mandatory and \token{name} is optional. 
-
-\paragraph{The \token{rank} attribute}
-The \token{rank} is an \type{integer} that defines the position of the symbol in the \listOf{SymbolicValues}. This attribute is optional.
-
-% subsection SymbolicValues (end)
-\bigskip
-\subsection*{Definition of \qualt{Transition} } % (fold)
-
-A \qual{Transition} element contains at most one \listOf{Inputs}, exactly one \listOf{Outputs} and one \listOf{FunctionTerms}.
-
-\paragraph{The \token{id} and \token{name} attributes:}
-These attributes are used according to the SBML L3.1 Section 3.3. They are both optional. 
-
-\paragraph{The \token{temporisationType} attribute:}
-The \token{temporisationType} is an \type{enumeration} the "temporisation" of the \qual{Transition}, that is the updating policy associated with the \qual{Transition}. It can be set to \const{timer}, \const{priority}, \const{sustain}, \const{proportion} or \const{rate}.
-This attribute is optional. 
-% subsection Transitions (end)
-
-\bigskip
-\subsection*{Definition of \qualt{Input}} % (fold)
-The \listOf{Inputs} contains zero or more \qual{Input}s. A transition with zero inputs can be useful to define an initial assignment, where the state of an output depends on a function but not on any input values. An empty list is allowed, and useful for e.g. adding annotations.
-Each \qual{Input} refers to a \qual{QualitativeSpecies} that participates to the corresponding \qual{Transition}.
-
-\paragraph{The \token{id} and \token{name} attributes:}
- These attributes are used according to the SBML L3.1 Section 3.3. They are both optional.
-
-\paragraph{The \token{qualitativeSpecies} attribute:}
-The \token{qualitativeSpecies} is a \type{SIdRef} referring to a \qual{QualitativeSpecies}. This attribute is mandatory.
-
-\paragraph{The \token{thresholdLevel} and \token{thresholdSymbol} attributes:}
-The \token{thresholdLevel} is an \type{integer} and \token{thresholdSymbol} is a \type{SIdRef}. They are optional and exclusive.
-
-\paragraph{The \token{transitionEffect} attribute:}
-The \token{transitionEffect} is an \type{enumeration} describing how the \token{qualitativeSpecies} is affected by the \qual{Transition}. On inputs, the value of \token{transitionEffect} can be either \const{none} or \const{consumption}. (See section \hyperlink{inter_trans}{Interpreting transitions}). This attribute is mandatory.
-
-\paragraph{The \token{sign} attribute}
-The \token{sign} is an \type{enumeration} that can be used as an indication on whether the contribution of this input is positive, negative, or both. Thus, possible values can be either \const{positive}, \const{negative} or \const{dual}. The sign is usually used for visualization purposes only. This attribute is optional.
-
-% subsection inputs (end)
-\bigskip
-\subsection*{Definition of \qualt{Output}} % (fold)
-The \listOf{Outputs} contains at least one \qual{Output}.
-Each \qual{Output} refers to a \qual{QualitativeSpecies} that participates to the corresponding \qual{Transition}.
-
-\paragraph{The \token{id} and \token{name} attributes:}
-These attributes are used according to the SBML L3.1 Section 3.3. They are both optional. 
-
-\paragraph{The \token{qualitativeSpecies} attribute:}
-The \token{qualitativeSpecies} is a \type{SIdRef} referring to a \qual{QualitativeSpecies}. This attribute is mandatory.
-
-\paragraph{The \token{outputLevel} attribute:}
-The \token{outputLevel} is an \type{integer} used along with the \token{transitionEffect} set to \const{production} to specify the effect of the \qual{Transition} on the corresponding \qual{QualitativeSpecies}. This attribute is optional.
-
-\paragraph{The \token{transitionEffect} attribute:}
-The \token{transitionEffect} is an \type{enumeration} describing how the \token{qualitativeSpecies} is affected by the \qual{Transition}. On outputs, the value of \token{transitionEffect} can be \const{production}, \const{assignmentLevel} or \const{assignmentSymbol}. (See section \hyperlink{inter_trans}{Interpreting transitions}). This attribute is mandatory.
-
-% subsection outputs (end)
-\bigskip
-\subsection*{Definitions of \qualt{FunctionTerm} and \qualt{DefaultTerm}} % (fold)
-The \listOf{FunctionTerms} may contain any number of \qual{FunctionTerm} elements, and exactly one \qual{DefaultTerm}. Each term is associated with a result (symbolic or level) and a \qual{FunctionTerm} is associated with a Boolean function inside a \sbml{Math} element. The disjunction of the terms defines the \emph{qualitative function} associated with a \qual{Transition}.
-
-\paragraph{The \token{resultLevel} and \token{resultSymbol} attributes:}
+\paragraph{The \token{resultLevel} and \token{resultSymbol} attributes}
 The result of the term is described by a \token{resultLevel} or a \token{resultSymbol}. Both are optional, but one of them must be defined.
 
-The \token{resultLevel} is an \type{integer} describing a level. The \token{resultSymbol} is a \type{SIdRef} referring to a \qual{SymbolicValue}.
+The \token{resultLevel} is an \primtype{integer} describing a level. The \token{resultSymbol} is a \primtype{SIdRef} referring to a \qual{SymbolicValue}.
 
 \paragraph{The \token{temporisationValue} attribute and the \sbml{TemporisationMath} element:}
-The attribute \token{temporisationValue} and the element \sbml{TemporisationMath} allow the specification of the "temporisation" of the \qual{Transition} under the corresponding \qual{FunctionTerm}. Both are optional. Depending on the value of the \token{temporisationType}, either one or both could be used.
+The attribute \token{temporisationValue} and the element \sbml{TemporisationMath} allow the specification of the "temporisation" of the \Transition under the corresponding \qual{FunctionTerm}. Both are optional. Depending on the value of the \token{temporisationType}, either one or both could be used.
 
-The \token{temporisationValue} is a \type{double}. The element \sbml{TemporisationMath} holds a MathML function returning a \type{double}. 
+The \token{temporisationValue} is a \primtype{double}. The element \sbml{TemporisationMath} holds a MathML function returning a \primtype{double}. 
 
 \paragraph{The \sbml{Math} element:}
 Each \qual{FunctionTerm} holds a Boolean function encoded in a \sbml{Math} element, using the subset of MathML 2.0 as defined in SBML L3v1 Section 3.4.6.
 This element encodes the conditions under which the \qual{FunctionTerm} is selected.
 
 
-% subsection Terms (end)
-\bigskip
+\subsection{YYYYYYY}
+
+
 \subsection*{\hypertarget{inter_trans}{Interpreting transitions}} % (fold)
 
 \paragraph{Determining the result of a qualitative function:}
-The qualitative function associated with a \qual{Transition} is encoded by a \listOf{FunctionTerms}. The \qual{Transition} contains exactly one \qual{DefaultTerm} describing the result of the function by default. A \qual{FunctionTerm} in a \qual{Transition} defines a result (\token{resultLevel} or \token{resultSymbol}) as well as the conditions (\sbml{Math} element) under which this \qual{FunctionTerm} is selected.
+The qualitative function associated with a \Transition is encoded by a \ListOfFunctionTerms. The \Transition contains exactly one \qual{DefaultTerm} describing the result of the function by default. A \qual{FunctionTerm} in a \Transition defines a result (\token{resultLevel} or \token{resultSymbol}) as well as the conditions (\sbml{Math} element) under which this \qual{FunctionTerm} is selected.
 The conditions are encoded in MathML as a Boolean function that returns \const{true} if the conditions are fulfilled.
 Several \qual{FunctionTerm} elements can have the same result; the qualitative function is then defined as the disjunction of their conditions. 
 
 \paragraph{Encoding the conditions:}
-To encode the conditions of the qualitative function, one can use \mathml{ci} elements of MathML to refer to SBML elements. A \mathml{ci} referring to the \token{id} of a \qual{QualitativeSpecies} then refers to the level or the symbol of this \qual{QualitativeSpecies}, while a \mathml{ci} referring to the \token{id} of an \qual{Input} then refers to the \token{thresholdLevel} or the \token{thresholdSymbol} of this \qual{Input}.
+To encode the conditions of the qualitative function, one can use \mathml{ci} elements of MathML to refer to SBML elements. A \mathml{ci} referring to the \token{id} of a \QualitativeSpecies then refers to the level or the symbol of this \QualitativeSpecies, while a \mathml{ci} referring to the \token{id} of an \Input then refers to the \token{thresholdLevel} or the \token{thresholdSymbol} of this \Input.
 
 
 \paragraph{The transitionEffect:}
-The \qual{Input} and \qual{Output} elements refer to a \qual{QualitativeSpecies} using the attribute \token{qualitativeSpecies}. They are defined with a \token{transitionEffect} attribute that takes one of the following values :
+The \Input and \qual{Output} elements refer to a \QualitativeSpecies using the attribute \token{qualitativeSpecies}. They are defined with a \token{transitionEffect} attribute that takes one of the following values :
 \begin{itemize}
 	\item \const{none}: Neither the level nor the symbol associated to the \token{qualitativeSpecies} is modified.
-	\item \const{consumption}: The level of the \token{qualitativeSpecies} is decreased by the \token{resultLevel} of the selected term possibly modified by the \token{thresholdLevel} of the \qual{Input}.
+	\item \const{consumption}: The level of the \token{qualitativeSpecies} is decreased by the \token{resultLevel} of the selected term possibly modified by the \token{thresholdLevel} of the \Input.
 	\item \const{production}: The level of the \token{qualitativeSpecies} is increased by the \token{resultLevel} of the selected term possibly modified by the \token{level} of the \qual{Output}.
 	\item \const{assignmentLevel}: The level of the \token{qualitativeSpecies} is set to the \token{resultLevel} of the selected term.
 	\item \const{assignmentSymbol}: The symbol associated to the \token{qualitativeSpecies} is set to the \token{resultSymbol} of the selected term.

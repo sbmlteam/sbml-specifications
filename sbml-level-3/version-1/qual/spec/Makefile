@@ -1,6 +1,6 @@
 MAIN   = qual-spec
 
-LATEX  = latex
+LATEX  = pdflatex
 BIBTEX = bibtex
 INDEX = makeindex
 DVIPS = dvips
@@ -11,5 +11,3 @@ all:
 	$(LATEX) $(MAIN).tex
 	$(LATEX) $(MAIN).tex
 	$(LATEX) $(MAIN).tex
-	$(DVIPS) $(MAIN).dvi -o $(MAIN).ps
-	$(DVIPDF) $(MAIN).dvi

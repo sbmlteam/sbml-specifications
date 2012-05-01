@@ -501,6 +501,11 @@ intention in defining ports, and use the port definitions to interact
 with components through their ports (when they have ports defined)
 rather than interact directly with the components.
 
+If a port references an object from a namespace that is not understood
+by the interpreter, the interpreter must consider the port to be not
+understood as well.   If an interpreter cannot tell whether 
+the referenced object does not exist or if exists in an unparsed namespace
+it may produce a warning.
 
 \paragraph{The \fixttspace\token{id} attribute}
 
@@ -772,6 +777,13 @@ their effects.
   deleted by implication (for example as a result of point number 2
   above).  The resulting model is the same.
 
+\item If the deleted object is from a SBML namespace that is not
+  understood by the interpreter, the deletion must be ignored--the 
+  object will not need to be deleted, as the interpreter could not
+  understand the package.  If an interpreter cannot tell whether 
+  a referenced object does not exist or if exists in an unparsed namespace
+  it may produce a warning.
+
 \end{enumerate}
 
 We leave additional comments about best practices surrounding deletions
@@ -861,6 +873,13 @@ anything else that referred either to the object identifier (i.e., the
 \token{id} attribute) or meta identifier (i.e., the \token{metaid}
 attribute) must be made to refer to the replacement species object
 instead.
+
+If a ReplacedElement references an object from a namespace that is not
+understood by the interpreter, the replaced element must be ignored--the 
+object will not exist to need to be replaced, as the interpreter could not
+understand the package.  If an interpreter cannot tell whether 
+a referenced object does not exist or if exists in an unparsed namespace
+it may produce a warning.
 
 \ReplacedElement inherits from \SBaseRef and adds three attributes: one
 required (\token{submodelRef}) and two optional (\token{deletion} and
@@ -973,6 +992,18 @@ present object is to replaced by another object.  As is the case with
 \ReplacedElement, the \ReplacedBy class inherits from \SBaseRef.  It
 adds one required attribute (\token{submodelRef}) and one optional
 attribute (\token{conversionFactor}).
+
+The \ReplacedBy class is the single class derived from \SBaseRef with a
+restriction on references to elements from other namespaces:  the referenced
+element must be discoverable by an interpreter which only knows enough about
+packages to read this element.  This means that a core element may not have
+a \ReplacedBy child that points to an element in a package namespace, because
+an interpreter might not understand that namespace, and attempt to read
+and manipulate this file.  Similarly, an element from one package may not
+have a \ReplacedBy child which points to an element from a different
+package.  It is fine for an element from a package to have a \ReplacedBy
+child which points to a core element, since to understand the package, one 
+must understand core.
 
 
 \paragraph{Attributes inherited from \class{SBaseRef}}
@@ -1138,6 +1169,25 @@ modeler, and so the preferred methods of referencing the subobjects may
 not be available.  \SBaseRef provides multiple alternatives so that a
 variety of modeling scenarios can be supported.
 
+It is also worth noting that SBaseRef classes may point to elements
+from other SBML Level 3 packages.  One possibility is that the package
+will define a new \SBase-derived class, which will inherit the \token{metaId}
+attribute.  These metaIDs may be referenced by the \SBaseRef \token{metaIdRef}
+attribute.  Another possibility is that the package will define a class,
+and define an attribute for that class of the type SId or UnitSId.  Should
+it do so, those elements may be referenced with the \token{idRef} or \token{unitRef}
+attributes, respectively.  A final possibility is that the package will 
+define a class with a child element from the core specification (as this 
+package does with core '\Model' objects being children of the 
+'\listOfModelDefinitions' class).  In that case, that child element may be 
+referenced by any of its IDs as if it was in its normal location in core.
+
+Because referencing elements in other namespaces is allowed, all classes that
+inherit from SBaseRef must declare what to do when the referenced element
+is part of a namespace that the current interpreter does not understand, and
+if there are any additional restrictions on referencing other namespaces.  Any
+\SBaseRef objects which are not derived classes defer to their \SBaseRef-derived
+parent for any such restrictions and rules.
 
 \paragraph{The \fixttspace\token{portRef} attribute}
 \label{sbaseref-portref}

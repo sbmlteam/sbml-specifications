@@ -29,7 +29,9 @@ understanding the package is required for complete mathematical
 interpretation of a model, or whether the package is optional.  This is
 done using the attribute \token{required} on the \token{<sbml>} element
 in the SBML document.  For the Hierarchical Model Composition package,
-the value of this attribute must be set to \val{true}.
+the value of this attribute may be set to \val{true} or \val{false},
+depending on whether the constructs described in this package are used
+in the model to change its mathematical meaning.
 
 The following fragment illustrates the beginning of a typical SBML model
 using SBML Level~3 Version~1 and this version of the Hierarchical Model
@@ -54,6 +56,14 @@ this specification, specifically \primtype{boolean}, \primtype{ID},
 \primtype{UnitSIdRef}, and \primtype{string}.  The Hierarchical Model
 Composition package also makes use of or defines other primitive types;
 they are described below.
+
+
+\subsubsection{Type \fixttspace\primtypeNC{IDREF}}
+\label{primtype-idref}
+
+Type \primtype{IDREF} is defined by XML Schema 1.0.  It is a character
+string data type whose value is identical to an \primtype{ID} defined 
+elsewhere in a referenced document, and has identical syntax.
 
 
 \subsubsection{Type \fixttspace\primtypeNC{anyURI}}
@@ -174,9 +184,9 @@ whole.  We therefore eschew the term ``model template'' in favor of
 \SBML class that ties these different components together; it also
 provides the definition of \ExternalModelDefinition.  Readers familiar
 with the \SBML class in SBML Level~3 Core will notice that this package
-adds two new lists, \token{listOfModelDefinitions} and
-\token{listOfExternalModelDefinitions}, of class \ListOfModelDefinitions
-and \ListOfExternalModelDefinitions, respectively.  The class diagram
+adds two new lists, \token{listOfModelDefinitions} of class 
+\ListOfModelDefinitions and \token{listOfExternalModelDefinitions} 
+of class \ListOfExternalModelDefinitions.  The class diagram
 also makes concrete the notions described above, that model definition
 objects are not ``owned'' by any other model (they can be instantiated
 anywhere, even by models in other files) and that they exist outside the
@@ -196,7 +206,7 @@ definitions themselves are instantiated.
 Finally, to give a more intuitive sense for how the pieces fit together,
 \fig{hierarchy} below shows a template structure of an SBML document
 with both a \token{listOfModelDefinitions} and
-\token{listOfExternalModelDefinitions}, as well as a list of \Submodel
+\token{listOfExternal\-Model\-Definitions}, as well as a list of \Submodel
 objects inside the \Model object.
 
 \newcommand{\sayOptional}{\raisebox{0pt}[0pt][0pt]{\bigg\} \textrm{\emph{optional}}}}
@@ -270,7 +280,7 @@ Hierarchical Model Composition package uses a separate object class
 the sense being used here, \ExternalModelDefinition objects are model
 definitions---in and of themselves, they are definitions of models but
 not \emph{uses} of those models.  The \ExternalModelDefinition provides
-a way to declare and identify them so that the \Model object in the
+a way to declare and identify them so that \Model objects in the 
 present SBML document can use them in \Submodel objects.
 
 \ExternalModelDefinition contains two required attributes
@@ -286,11 +296,10 @@ model reference so that \Submodel objects can refer to it.  (Crucially,
 it is \emph{not} the identifier of the model being referenced; rather,
 it is an identifier for this \ExternalModelDefinition object within the
 current SBML document.)  The \token{id} attribute takes a required value
-of type \primtype{SId}.
+of type \primtype{SId}, and must be used as described in \sect{namespaces}.  
 
 \ExternalModelDefinition also has an optional \token{name} attribute, of
-type \primtype{string}.  The \token{id} attribute must be used as
-described in \sect{namespaces}.  The \token{name} attribute may be used
+type \primtype{string}.  The \token{name} attribute may be used
 in the same manner as other \token{name} attributes on SBML Level~3 Core
 objects; see Section~3.3.2 of the SBML Level~3 Version~1 Core
 specification for more information.
@@ -358,9 +367,12 @@ The following is a (fake) example:
 \primtype{SIdRef}, in is used to identify a \Model object within the
 SBML document located at \token{source}.  The object referenced may be
 the main model in the document, or a model definition contained in the
-SBML document's \token{listOfModelDefinitions} list.
+SBML document's \token{listOfModelDefinitions} or 
+token{listOfExternalModelDefinitions} lists.  No loops are allowed:
+a chain of \ExternalModelDefinition objects must be followable to its end
+to a \Model object.
 
-In standard SBML, \token{id} on \Model is an optional attribute, and
+In standard SBML, the \token{id} on \Model is an optional attribute, and
 therefore, it is possible that the \Model object in a given SBML
 document does \emph{not} have an identifier.  In that case, there is no
 value to give to the \token{modelRef} attribute in
@@ -559,12 +571,12 @@ rules, but they are worth making explicit:
 % an object in the immediately-enclosing \Model object.  (For example, it
 % could refer to the \token{metaid} attribute value of a \Species object
 % defined elsewhere in the model.)  This is a further restriction to the
-% space of values than what is defined by XML \primtype{IDREF} alone.  The
+% space of values than what is defined by \primtype{IDREF} alone.  The
 % reason is simply that it makes no sense to allow one \Model object to
 % define a port on a \emph{different} \Model object.  This does not imply
 % a restriction or modification of the \token{metaid} values of \SBase
 % objects in an SBML document, nor does it negate the other properties of
-% XML type \primtype{IDREF}; it merely reduces the set of valid values
+% type \primtype{IDREF}; it merely reduces the set of valid values
 % that can be chosen for a given \token{metaIdRef} attribute on \Port
 % objects in an SBML document.
 %
@@ -608,16 +620,16 @@ how it things work:
 
 \item If one or more structural features in the referenced model are
   undesirable and should be removed, the changes can be handled through
-  deletions.  (For example, an initial assignment or reaction not be
-  relevant in its new context, and may need to be removed.)
+  deletions.  (For example, an initial assignment or reaction may not be
+  relevant in its new context and should be removed.)
 
 \end{itemize}
 
 
 \subsubsection{The attributes of \class{Submodel}}
 
-\fig{submodel-uml} shows that \Submodel has numerous attributes, as well
-as a single subcomponent, \token{listOfDeletions}.  We describe the
+\fig{submodel-uml} shows that \Submodel has several attributes, as well
+as a single subcomponent, \token{list\-Of\-De\-le\-tions}.  We describe the
 attributes below, then turn to \token{listOfDeletions} in
 Sections~\ref{listofdeletions}--\ref{deletion-class}.
 
@@ -689,21 +701,24 @@ identifier scoping in more detail.)
 \label{submodel-conversion}
 
 Conversion factors enable the matching up of mathematical values and
-units of measurement between submodels and models.  There are six
-possible conversion factors, corresponding to the six conversion factors
-defined by SBML Level~3 Core's basic \Model object class.  The six
+units of measurement between submodels and models.  There are three
+possible conversion factors, corresponding to three of the conversion factors
+defined by SBML Level~3 Core's basic \Model object class.  The three
 attributes representing these conversion factors on \Submodel are
-\token{lengthConversionFactor}, \token{areaConversionFactor},
-\token{volumeConversionFactor}, \token{substanceConversionFactor},
-\token{timeConversionFactor}, and \token{extentConversionFactor}.
+\token{substanceConversionFactor}, \token{timeConversionFactor}, 
+and \token{extentConversionFactor}.
 
 All of these optional attributes have type \primtype{SIdRef}.  If set,
 the value must be the identifier of a \Parameter object in the parent
 \Model object.  The parameter will be used to convert the value of the
-submodel quantities of the indicated type (e.g., volume, time, etc.) to
+submodel quantities of the indicated type (substance, time, or extent) to
 the units used in the parent model.  The procedures are involved, and a
 separate section (\sect{conversion-factors}) is devoted to explaining
 them.
+
+Missing from this list are conversion factors for length, area, and volume.
+This is because conversion factors for those measurements are not needed
+to create valid and consistent composite models.
 
 
 \subsubsection{The list of deletions}
@@ -777,7 +792,7 @@ their effects.
   deleted by implication (for example as a result of point number 2
   above).  The resulting model is the same.
 
-\item If the deleted object is from a SBML namespace that is not
+\item If the deleted object is from an SBML namespace that is not
   understood by the interpreter, the deletion must be ignored--the 
   object will not need to be deleted, as the interpreter could not
   understand the package.  If an interpreter cannot tell whether 
@@ -798,7 +813,7 @@ to \sect{best-practices-deletions}.
 \label{extended-sbase-class}
 
 The model definition, submodel and port constructs defined so far allow
-a modeler to identify and aggregate models, as well as (possibly) delete
+a modeler to identify and aggregate models, as well as to delete
 features from model definitions before the definitions are used create a
 final, composed model.  In this section, we turn to two final
 capabilities needed for effective model composition: linking and
@@ -866,13 +881,50 @@ products or modifiers in reactions, or initial assignments, or any other
 SBML construct, are taken to refer to the replacement species instead
 (with its value possibly modified by either this object's
 \token{conversionFactor} attribute or the relevant submodel's conversion
-factors---see \sect{conversion-factors}).  Moreover, any annotations
+factors---see \sect{conversion-factors}). Moreover, any annotations
 that refer to the replaced species' \token{metaid} value must be made to
 refer to the replacement species' \token{metaid} value instead; and
-anything else that referred either to the object identifier (i.e., the
-\token{id} attribute) or meta identifier (i.e., the \token{metaid}
-attribute) must be made to refer to the replacement species object
-instead.
+anything else that referred either to an object identifier (i.e., 
+attributes such as the \token{id} attribute whose types inherit from the SID 
+primitive data type) or the meta identifier (i.e., the \token{metaid} attribute 
+or any other attribute that inherits from the ID primitive data type) 
+must be made to refer to the replacement species object instead. 
+
+In SBML Level~3 core, this means: 
+\begin{itemize}
+\item Attributes of type \primtype{SIdRef} which used to point to the replaced element 
+ are now considered to point to the replacement element. 
+\item Attributes of type \primtype{UnitSIdRef} which used to point to the replaced 
+ unit are now considered to point to the replacement element. 
+\item \token{cn} elements in MathML that used to point to a replaced element are 
+ now considered to point to the replacement element. 
+\item Annotations with attributes of type \primtype{IDREF} that used to point to 
+ the metaID of replaced elements are now considered to point to the 
+ replacement element. In particular, this rule applies to the 
+ \token{rdf:about} attribute.
+\end{itemize}
+
+For packages that extend SBML Level~3 core, similar rules apply: 
+\begin{itemize}
+\item New attributes of type \primtype{SIdRef}, \primtype{UnitSIdRef} 
+ or \primtype{IDREF} which used to point 
+ to the replaced element are now considered to point to the replacement 
+ element.  
+\item New attributes of a type defined in the package specification that 
+ derive from the \primtype{SIdRef} or \primtype{IDREF} primitive data type which used to 
+ point to the replaced element are now considered to point to the 
+ replacement element. This includes, for example, attributes of type 
+ \primtype{SpIdRef}, defined in the Spatial Processes package. 
+\end{itemize}
+
+It is worth noting that Local Parameters pose an interesting edge case 
+for these rules: In order to determine which element is pointed to by a 
+\token{cn} element in the MathML of a Kinetic Law, it is necessary to examine 
+the local parameters of the Kinetic Law's parent Reaction object. 
+Whether or not that \token{cn} element should be considered to point to 
+something new, then, depends on whether it pointed to the Local 
+Parameter, and whether that Local Parameter was replaced, even if the 
+text of the element matched the SId of another element in the model. 
 
 If a ReplacedElement references an object from a namespace that is not
 understood by the interpreter, the replaced element must be ignored--the 
@@ -889,7 +941,7 @@ required (\token{submodelRef}) and two optional (\token{deletion} and
 \paragraph{Attributes inherited from \class{SBaseRef}}
 
 The \ReplacedElement class, being derived from \SBaseRef, inherits all
-of that class' attributes and its subelement.  This means that
+of that class's attributes and its subelement.  This means that
 \ReplacedElement has the \token{portRef}, \token{idRef}, \token{unitRef}
 and \token{metaIdRef} attributes, as well as the subcomponent
 \token{sBaseRef} and the recursive structure that it implies.
@@ -931,7 +983,9 @@ indicate that the replacement object replaces something \emph{deleted}
 from a submodel.  The use of the \token{deletion} attribute overrides
 the use of the attributes inherited from \SBaseRef: instead of using,
 e.g., \token{portRef} or \token{idRef}, the \ReplacedElement instance
-sets \token{deletion} to the identifier of the \Deletion object.
+sets \token{deletion} to the identifier of the \Deletion object.  In
+addition, the referenced \Deletion must be a child of the \Submodel
+referenced by the \token{submodelRef} attribute.
 
 The use of \ReplacedElement objects to refer to deletions has no effect
 on the composition of models or the mathematical properties of the
@@ -963,7 +1017,7 @@ subcomponents available on all \SBase objects in SBML.
 \paragraph{The \fixttspace\token{conversionFactor} attribute}
 \label{replacedelement-conversionfactor}
 
-The \ReplacedElement class' \token{conversionFactor} attribute may be used to
+The \ReplacedElement class's \token{conversionFactor} attribute may be used to
 define how to transform or rescale the replaced object's value so that
 it is appropriate for the new contexts in which it appears.  The value
 of this attribute must be of type \primtype{SIdRef} and refer to a
@@ -971,7 +1025,15 @@ of this attribute must be of type \primtype{SIdRef} and refer to a
 identified by the \token{conversionFactor} attribute overrides any
 automatic conversion that may have been performed based on the
 submodel's relevant conversion factors.  The details of this are left to
-\sect{conversion-factors}.
+\sect{conversion-factors}.  Do note, however, that the conversion 
+factors assigned to replaced \Species objects may have complicated formulas,
+particularly if one of the objects is set \token{hasOnlySubstanceUnits}=\val{true},
+and the other is set \token{hasOnlySubstanceUnits}=\val{false}, or if 
+the dimensionality of the compartments the objects are in has changed.
+
+It is invalid to use a \token{conversionFactor}
+attribute and a \token{deletion} attribute at the same time:  if something
+is being deleted, there is no way to convert it, since it no longer exists.
 
 
 \subsubsection{The \fixttspace\tokenNC{replacedBy} subcomponent}
@@ -999,17 +1061,17 @@ element must be discoverable by an interpreter which only knows enough about
 packages to read this element.  This means that a core element may not have
 a \ReplacedBy child that points to an element in a package namespace, because
 an interpreter might not understand that namespace, and attempt to read
-and manipulate this file.  Similarly, an element from one package may not
-have a \ReplacedBy child which points to an element from a different
-package.  It is fine for an element from a package to have a \ReplacedBy
-child which points to a core element, since to understand the package, one 
-must understand core.
+and manipulate this file.  Similarly, an element defined in one package's
+namespace may not have a \ReplacedBy child which points to an element 
+defined in a different package's namespace.  It is fine for an element 
+defined in one package's namespace to have a \ReplacedBy child which points 
+to a core element, since to understand the package, one must understand core.
 
 
 \paragraph{Attributes inherited from \class{SBaseRef}}
 
 The \ReplacedBy class, being derived from \SBaseRef, inherits the latter
-class' attributes \token{portRef}, \token{idRef}, \token{unitRef} and
+class's attributes \token{portRef}, \token{idRef}, \token{unitRef} and
 \token{metaIdRef}, as well as the subcomponent \token{sBaseRef} and the
 recursive structure that it implies.  
 
@@ -1030,7 +1092,7 @@ those attributes.
 \paragraph{The \fixttspace\token{conversionFactor} attribute}
 \label{replacedby-conversionfactor}
 
-The \ReplacedBy class' \token{conversionFactor} attribute may be used to
+The \ReplacedBy class's \token{conversionFactor} attribute may be used to
 define how to transform or rescale this object's value so that it is
 appropriate for the new contexts in which it appears.  The value of this
 attribute must be of type \primtype{SIdRef} and refer to a
@@ -1039,6 +1101,16 @@ identified by the \token{conversionFactor} attribute overrides any
 automatic conversion that may have been performed based on the
 submodel's relevant conversion factors.  The details of this are left to
 \sect{conversion-factors}.
+
+Note that the sense of this \token{conversionFactor} is the same as for
+the \token{conversionFactor} attribute on the \ReplacedElement class as 
+well as the various \token{conversionFactor} attributes on the \Submodel
+class, namely, it is the value one needs to use to multiply the mathematics
+in the submodel to match the mathematics in the containing model.
+Because the direction of the replacement is reversed for this construct,
+the \token{conversionFactor} will be used in its opposite sense, namely,
+as the parameter by which to divide the mathematics in the containing
+model in order to match the mathematics of the submodel.
 
 
 \subsubsection{Additional requirements and implications}
@@ -1049,24 +1121,53 @@ implications.  We focus on crucial ones below:
 
 \begin{itemize}
 
-\item \emph{Identifier references must be updated}.  Both
+\item \emph{Identifiers must be maitained}.  Both
   \ReplacedElement and \ReplacedBy introduce the need to change
   identifier references that refer to the object being replaced.  This
   identifier-redirection process has some important implications.
-  First, when anything refers to the replaced object's \token{id} and/or
-  \token{metaid} value, the replacement object must itself define its
-  own \token{id} and/or \token{metaid} value, or else the step of
-  adjusting references will be impossible to perform because there will
-  not be new \token{id} or \token{metaid} values to use in place of the
-  old ones.  Second, if other SBML Level~3 packages attach identifiers
-  in their own namespaces to an object being replaced, those identifiers
-  must also be likewise redirected.  (And again, this implies that the
-  SBML document must put suitable identifier attributes from those
-  package namespaces on the \emph{replacement} object, so that the
-  replacement object's identifiers can be substituted for those of the
-  object being replaced.)
+  First, when any replaced element defines an attribute of type 
+  \token{SId}, \token{UnitSId}, \token{ID},
+  the replacement object must itself have a defined attribute with the
+  corresponding id type.  This requirement
+  is present so that old references to the replaced element will be able
+  to reference the new element, and so that the type of the id won't change:
+  it is illegal to replace a UnitDefinition with a Parameter, for
+  example, because a Parameter has no attribute of type \token{UnitSId}.
 
-\item \emph{Subcomponents of a replaced object become inaccessible}.  An
+  Second, if other SBML Level~3 packages attach identifiers
+  in their own namespaces to an object being replaced), those identifiers
+  must also be likewise present on the replacement element.  In other words, if
+  it defines an element with an attribute of type \token{SId}, it may only
+  be replaced by an element with attribute of type \token{SId}.  If it defines
+  an element with an attribute of a type derived from \token{SId} or \token{ID} (such as the 
+  \token{spatialID} attribute, defined as type \token{SpId} in the
+  ``Spatial Processes'' package), it may only be replaced by an element with
+  a defined attribute of the same type (like \token{SpId}).
+
+%\item \emph{Mathematical elements must remain mathematical}.  Any element
+%  defined as having mathematical meaning (\Parameter, \Species, 
+%  \Compartment, \Reaction, \SpeciesReference, and \LocalParameter in SBML 
+%  Level~3 Core) may only be replaced by elements who themselves have 
+%  mathematical meaning. Similarly, \FunctionDefinition elements may only
+%  be replaced by \FunctionDefinition elements because no other element
+%  is used the same way in MathML.
+
+\item \emph{Units should stay the same}.  Any element with defined units
+  should only be replaced by elements with the same defined units (modulo
+  any conversionFactors, which themselves should have defined and compatible
+  units).  
+
+\item \emph{Identifier references must be redirected}.  With the above 
+  strictures in place, it should always be possible to replace any 
+  \token{SIdRef}, \token{IDREF}, etc. attributes or other references
+  to the replaced element with a reference to the replacement element
+  instead.  It may still not be legal to do so, however, if the 
+  referencing element contains further strictures on what may be referenced:
+  the \token{compartment} attribute of a \Species must point to a 
+  \Compartment, for example, so if a \Compartment so referenced
+  was replaced, the replacement element must itself be a \Compartment.
+  
+\item \emph{Subcomponents of replaced and deleted objects become inaccessible}.  An
   important and far-reaching consequence of replacements is that if the
   object being replaced contains other objects, then \emph{those other
     objects are considered deleted}.  For example, replacing a \Reaction
@@ -1076,13 +1177,14 @@ implications.  We focus on crucial ones below:
   things as \SpeciesReference identifiers that may be used in a model
   outside of the \Reaction objects where they are defined.)
 
-\item \emph{Replacements must be unique}.  Unless the \token{deletion}
-  attribute on the \ReplacedElement object is \val{true}, a given object
+\item \emph{Replacements must be unique}.  Unless the \ReplacedElement 
+  object is referring to a \Deletion through the use of the 
+  \token{deletion} attribute, a given object
   being replaced may only appear in exactly one \ReplacedElement object
   anywhere in a model; otherwise, it would imply multiple entities
   replace the same object, and this would lead to ambiguities (e.g., in
   old references to the entities being replaced).  A \ReplacedElement
-  object with \token{deletion}=\val{true} is the only type of entity
+  object referring to a \Deletion is the only type of entity
   that may be listed in more than one \ListOfReplacedElements.
 
 \end{itemize}
@@ -1095,26 +1197,33 @@ not a true limitation; the same effect can be achieved by creating an
 intermediate object in the containing model and linking it to the other
 objects via replacements.
 
-Finally, there is no requirement that replaced objects must be of the
-same type as the replacing object.  The only restriction is that all old
-references to the replaced object must now point to the replacing
-object.  Of course, the normal rules of SBML validity apply, so the
+Finally, apart from the above restrictions, there are no other
+requirements that replaced objects be of the
+same type as the replacing object.  The only restriction is that
+once all old references to the replaced object point instead to the
+replacing object, the normal rules of SBML validity apply, so the
 resulting model must still make sense and be valid SBML.  There is no
 requirement for like-kind replacements, however, because errors do not
 \emph{necessarily} result.  For example, replacing a \Species object
 that appeared in a \Reaction object would lead to an invalid SBML
 document if the replacement was a \Parameter object, but replacing a
 \Species object by a \Parameter could be valid if that \Species never
-appeared in any \Reaction object or if all the \Reaction objects were
-deleted.
+appeared in any \Reaction object or if all the \Reaction objects from
+the submodel were deleted.
 
+Note that the only functional difference between an element being replaced
+vs. that element being deleted is that in the former case, references
+to it are redirected, and in the latter case, references to it are 
+considered invalid.  Therefore, an element which has no identifiers or
+no references may be replaced or deleted, with no functional difference
+between the two options.
 
 % -----------------------------------------------------------------------------
 \subsection{The \class{SBaseRef} class}
 \label{sbaseref-class}
 
 Defining ports, deletions, and replacements requires a way to refer to
-specific components within enclosed models or even external models
+specific components within enclosed models or even within external models
 located in other files.  The machinery for constructing such references
 is embodied in the \SBaseRef class.  This class is the parent class of
 the \Port, \Deletion, \ReplacedElement and \ReplacedBy classes described
@@ -1179,7 +1288,7 @@ it do so, those elements may be referenced with the \token{idRef} or \token{unit
 attributes, respectively.  A final possibility is that the package will 
 define a class with a child element from the core specification (as this 
 package does with core '\Model' objects being children of the 
-'\listOfModelDefinitions' class).  In that case, that child element may be 
+'\ListOfModelDefinitions' class).  In that case, that child element may be 
 referenced by any of its IDs as if it was in its normal location in core.
 
 Because referencing elements in other namespaces is allowed, all classes that
@@ -1233,7 +1342,7 @@ identifiers may not be replaced or deleted.
 \paragraph{The \fixttspace\token{metaIdRef} attribute}
 \label{sbaseref-metaidref}
 
-The optional attribute \token{metaIdRef} takes a value of type XML
+The optional attribute \token{metaIdRef} takes a value of type 
 \primtype{IDREF}.  This attribute is used to refer to a \token{metaid}
 attribute value on some other object, in the case when the reference
 being constructed with the \SBaseRef is intended to refer to an object
@@ -1260,16 +1369,16 @@ refer to a \Submodel object in the containing model.  All child
 
 The following example may help clarify this.  Suppose that we want to
 delete an object with the identifier \val{p1} inside the \Submodel
-object identified as \val{m1}.  \fig{submodel-uml} shows that \Deletion
-objects are placed inside a \ListOfDeletions.  The following XML
-fragment illustrates how the constructs will look:
+object identified as \val{sub\_m1}.  \fig{submodel-uml} shows that \Deletion
+objects are placed inside a \ListOfDeletions within a \Submodel.  The 
+following XML fragment illustrates how the constructs will look:
 
 \begin{example}
-<listOfDeletions>
-  <deletion idRef="m1">
-    <sBaseRef idRef="p1" />
-  </deletion>
-</listOfDeletions>
+<submodel id="sub_m1" modelRef="m1">
+  <listOfDeletions>
+    <deletion idRef="p1" />
+  </listOfDeletions>
+</submodel>
 \end{example}
 
 Suppose instead that the submodel \val{m1} from the previous example is
@@ -1323,10 +1432,10 @@ The following example illustrates this:
   </modelDefinition> 
   <modelDefinition id="m3"> 
     <listOfSubmodels> 
-      <submodel id="sub_m2" modelRef="m3"> 
+      <submodel id="sub_m3" modelRef="m3"> 
         <listOfDeletions> 
-          <deletion idRef="sub_m1"> 
-            <sBaseRef idRef="sub_m2"> 
+          <deletion idRef="sub_m2"> 
+            <sBaseRef idRef="sub_m1"> 
               <sBaseRef idRef="p1" />
             </sBaseRef> 
           </deletion> 
@@ -1351,7 +1460,7 @@ nested references.
 \subsection{Conversion factors}
 \label{conversion-factors}
 
-\draftnote{[MH] I have not looked at this section.}
+%\draftnote{[MH] I have not looked at this section.}
 In SBML Level~3 Version~1 Core, units of measurement are optional
 information.  Modelers are required to write their models in such a way
 that all conversions between units are explicitly incorporated into the
@@ -1392,7 +1501,7 @@ math of the \Submodel object where the replaced element's identifier is
 found on the left-hand side of an equation, the right-hand side is
 multiplied by that conversion factor before assignment to that variable.
 For example, if a species has an initial assignment of $4x + 3$, and has
-a conversion factor of $c$, the initial assignment formula become
+a conversion factor of $c$, the initial assignment formula becomes
 $c (4x+3)$.  The same is true for assignment rules, rate
 rules, kinetic laws, event assignments, and the implied rates of change
 of species as calculated from kinetic laws, as described in section
@@ -1433,12 +1542,24 @@ the correct scale; it is only the 3 that must be converted.)
 
 \subsubsection{Conversion factors involving \class{Submodel}}
 
-The six attributes on \Submodel with the names of the form
+The three attributes on \Submodel with the names of the form
 \token{\rule{0.2in}{0.5pt}ConversionFactor} dictate how any submodel
 mathematics whose unit types are defined by the Level~3 Core
-specification are to be converted whether or not that element was
-replaced, in the absence of an explicit conversion factor for that
-element.  To understand the rules, it is first helpful to have a summary
+specification are to be converted when that element is \emph{not}
+replaced.  In other words, all elements that are replaced are assumed 
+to have been converted appropriately by the \token{conversionFactor}
+attribute of the \ReplacedElement or \ReplacedBy object.  It is only 
+the elements that remain unreplaced in the Submodel to which the
+\token{\rule{0.2in}{0.5pt}ConversionFactor} attributes apply.
+
+%LS NOTE:  I cannot for the life of me figure out how subelements
+% used as targets of ReplacedBy elements work in this scheme. Should
+% they be affected by the automatic conversion factors?  Only by their
+% conversionFactor?  Should they even *have* a conversionFactor attribute?
+% I'm totally confused, and will have to actually implement this before
+% I manage to figure out what's going on.
+
+To understand the rules, it is first helpful to have a summary
 of the conversion factors implied by the SBML Level~3 Version~1 Core
 specification.  We provide a summary in \tab{sbml-conversions}.
 
@@ -1446,40 +1567,31 @@ specification.  We provide a summary in \tab{sbml-conversions}.
 \newcommand{\persymb}{\emph{Conversion factor for referenced object}}
 \newcommand{\percomp}{\emph{Conversion factor for compartment}}
 \newcommand{\allat}{\emph{(All)}}
-\newcommand{\hosu}{\token{hasOnlySubstanceUnits}}
 
 \begin{table}[bht]
   \rowcolors{2}{sbmlrowgray}{}
   \renewcommand{\arraystretch}{1.175}
   \begin{edtable}{tabular}{p{1.1in}p{2.57in}l}
     \toprule
-    \textbf{Component}	& \textbf{Attribute value}	& \textbf{Automatic conversion factor}\\
+    \textbf{Component}			& \textbf{Automatic conversion factor}\\
     \midrule
-    \AlgebraicRule	& \allat			& 1\\
-    \AssignmentRule	& \allat			& \persymb\\
-    \Compartment	& \token{spatialDimensions}=\val{1}	& \token{lengthConversionFactor}\\
-    \Compartment	& \token{spatialDimensions}=\val{2}	& \token{areaConversionFactor}\\
-    \Compartment	& \token{spatialDimensions}=\val{3}	& \token{volumeConversionFactor}\\
-    \Compartment	& \token{spatialDimensions} not equal to \val{1}, \val{2}, or \val{3} & 1\\
-    \Constraint		& \allat			& \emph{(None needed)}\\
-    \Delay		& \allat			& \token{timeConversionFactor}\\
-    \EventAssignment	& \allat			& \persymb\\
-    \FunctionDefinition	& \allat			& 1\\
-    \InitialAssignment	& \allat			& \persymb\\
-    \sprd{4}{\KineticLaw} & \sprd{4}{\allat}		& \sprd{4}{$\frac{\token{extentConversionFactor}}{\token{timeConversionFactor}}$}\\
-    Implied rate of change of a species	& \sprd{4}{\allat}		& \sprd{4}{$\frac{\token{substanceConversionFactor}}{\token{timeConversionFactor}}$}\\
-    \Parameter		& \allat			& 1\\
-    \Priority		& \allat			& 1\\
-    \sprd{4}{\RateRule} & \sprd{4}{\allat}		& \sprd{4}{$\frac{\textsf{\persymb}}{\token{timeConversionFactor}}$}\\
-    \Species		& \hosu=\val{true}		& \token{substanceConversionFactor}\\
-    \sprd{4}{\Species}	& \sprd{4}{\hosu=\val{false}}	& \sprd{4}{$\frac{\token{substanceConversionFactor}}{\textsf{\persymb}}$}\\
-    \sprd{6}{\Species}	& \hosu=\val{true} replaced by a \Species having \hosu=\val{false}
-	    & \sprd{6}{$\frac{\token{substanceConversionFactor}}{\textsf{\emph{Compartment size}}}$}\\
-    \sprd{6}{\Species}	& \hosu=\val{false} replaced by a \Species having \hosu=\val{true}
-	    & \sprd{6}{$\frac{\token{substanceConversionFactor} \,\cdot\, \textsf{\emph{(Compart. size)}}}{\percomp}$}\\
-    \SpeciesReference	& \allat			& 1\\
-    \Trigger		& \allat			& \emph{(None needed)}\\
-    (Unknown)		& \allat			& 1\\
+    \AlgebraicRule			& 1\\
+    \AssignmentRule			& \persymb\\
+    \Compartment			& 1\\
+    \Constraint				& \emph{(None needed)}\\
+    \Delay				& \token{timeConversionFactor}\\
+    \EventAssignment			& \persymb\\
+    \FunctionDefinition			& 1\\
+    \InitialAssignment			& \persymb\\
+    \sprd{4}{\KineticLaw} 		& \sprd{4}{$\frac{\token{extentConversionFactor}}{\token{timeConversionFactor}}$}\\
+    Implied rate of change of a species	& \sprd{4}{$\frac{\token{substanceConversionFactor}}{\token{timeConversionFactor}}$}\\
+    \Parameter				& 1\\
+    \Priority				& 1\\
+    \sprd{4}{\RateRule} 		& \sprd{4}{$\frac{\textsf{\persymb}}{\token{timeConversionFactor}}$}\\
+    \Species				& \token{substanceConversionFactor}\\
+    \SpeciesReference			& 1\\
+    \Trigger				& \emph{(None needed)}\\
+    (Unknown)				& 1\\
     \bottomrule
   \end{edtable}
   \caption{Conversion factors used for the different components defined
@@ -1489,18 +1601,13 @@ specification.  We provide a summary in \tab{sbml-conversions}.
 
 The procedures for using the conversion factor attributes on \Submodel
 are based on the conversion factors defined by the Core.  Thus, all
-compartments that set \token{spatialDimension}=\val{1} in the submodel
-must be converted according to the \token{lengthConversionFactor}, with
-all assignments to that compartment multiplied by the conversion factor,
-and that compartment's identifier divided by it wherever it appears
-inside a math element.  All rates of change of species amounts (defined
+rates of change of species amounts (defined
 in section 4.11.7 of the Level~3 Version~1 Core specification) are
 converted by the \token{substanceConversionFactor} divided by the
 \token{timeConversionFactor}, after being converted (if necessary) by
 any internal conversion factors, as described.  All species
-concentrations from compartments of dimension 2 are converted by the
-\token{substanceConversionFactor} divided by the
-\token{areaConversionFactor}.  Non-replaced elements with defined unit
+concentrations and amounts are converted by the
+\token{substanceConversionFactor}.  Non-replaced elements with defined unit
 types are still converted, so that the output of any simulation will be
 on the same scale as elements from the containing model.
 
@@ -1510,17 +1617,22 @@ species amounts over time is defined to be equal to the rate of extent
 of the reaction over time, arguably creating a default conversion of
 extent to amount of 1.  Similarly, all conversion factors here
 effectively default to '1' as well, so that if (for example)
-'substanceConversionFactor' is defined but 'areaConversionFactor' is
-not, species concentrations from compartments of dimension 2 are still
-converted according to the substanceConversionFactor, 'divided by 1'.
+\token{extentConversionFactor} is defined but \token{timeConversionFactor} is
+not, kinetic laws are still
+converted according to the \token{extentConversionFactor}, 'divided by 1'.
 
-Critically, if an element's unit type cannot be determined, it has no
-default conversion factor, and one must be set explicitly for the
-element in question.  All \Parameter objects fall into this category, as
+Critically, if an element's unit type cannot be determined, or does not
+involve the units of substance, extent, or time, it has no
+default conversion factor, and will not be converted unless replaced.
+All \Parameter objects fall into this category, as
 parameters may have any unit at all, and have no defined unit type as a
-class.  Similarly, compartments with no \token{spatialDimension} set, or
-set to a fractal \token{spatialDimension} such as 2.6 should not be
-converted automatically.  This means that if a parameter is internal to
+class.  Similarly, all compartments will not be converted, because their
+unit types are either length, area, volume, or undefined.  (These dimensions
+do not need to be converted, as SBML models may already accomodate multiple
+compartments with different units and dimensionality.  This is not the case
+with rate rules, which are defined in terms of the model time units, or
+reactions, which are defined in terms of substance, extent, and time.)
+This means that if a parameter is internal to
 a submodel and not replaced, there is no way to convert it, and it will
 remain in its original scale.  This will not affect the math of the
 converted elements, as the rules above first convert all math to the
@@ -1532,57 +1644,32 @@ it an explicit conversion factor.
 
 Some math may use a combination of conversion factors defined on the
 \Submodel object with the conversion factors defined explicitly on an
-element's replacement construct.  The simplest example is that of a rate
+element's replacement construct.  The most complicated example is that of a rate
 rule that defines how a parameter changes with time.  If the \Parameter
 object has been replaced and given a conversion factor, the parameter's
 explicit conversion factor is divided by the submodel's
 \token{timeConversionFactor} to act as the overall conversion factor for
-the rate rule's formula.  As a slightly more complicated example, a
-species concentration that has no explicit conversion factor set for its
-replacement, and which is contained in a compartment that does have an
-explicit conversion factor, will be converted according to the
-\token{substanceConversionFactor} from the \Submodel object divided by
-the conversion factor defined by the compartment replacement construct.
+the rate rule's formula.
 
-Species concentrations of species from compartments with undefined unit
-types will be converted according to the
-\token{substanceConversionFactor} alone, if no conversion factor is
-defined for its compartment.  An odd potential situation arises here in
-the case where the species' compartment has been actually deleted
-instead of replaced, the replacement species being put into a new
-compartment in the containing model.  In this case, no automatic
-conversion factor is possible, and if one is needed, it must be set
-explicitly on the species' replacement itself.  Another complication is
-the situation where a species is set
-\token{hasOnlySubstanceUnits}=\val{true} in the submodel, but is set
-\token{hasOnlySubstanceUnits}=\val{false} in its replacement, or vice
-versa.  In this case, the species must be converted according to the
-actual value of its compartment.  If an explicit conversion factor is
-set, it is assumed that the modeler took this into consideration, and
-created an assignment rule (or similar) such that the conversion
-parameter would function appropriately.  If not, the automatic
-conversion must use the value for the compartment of the replacement
-species to convert the species values to amounts from concentrations,
-and back again.  Unreplaced species are still converted, but if they
-were in amounts before, they remain in amounts afterwards and likewise
-when in concentrations.
-
-Any math not directly associated with a replaced element and that does
+Any math not directly associated with a replaced element and which does
 not have a defined unit type is assumed to exist in the same scale as
-all other similar elements across all submodels.  The only example of
-this in the Level~3 Core is the math associated with the \Priority
-subcomponent of \Event objects.  A \Priority element may be replaced
-directly by a \ReplacedElement construct or by replacing its parent
-\Event, but when comparing priority expressions from submodels with
-priority expressions from the containing model or from other submodels,
+all other similar elements across all submodels.  
+
+There is only one example of math that is assumed to be in the same scale
+across a single SBML model but that cannot be converted according to
+these conversion factors:  the math associated with the \Priority
+subcomponent of \Event objects.  When comparing priority expressions 
+across submodels,
 they are all assumed to be on the same scale relative to each other.
 (If one model had priorities set on a scale of 0 to 10 and another had
 priorities set on a scale of -100 to 100, that is just the way it is,
 and to fix it, all incompatible priorities would have to be replaced.)
 The same would be true of math defined in any other Level~3 package
-without a defined unit type, or with a newly-defined unit type: none of
-it would be converted automatically, and all such elements would have to
-be converted explicitly by being replaced, or that package would have to
+without the unit type of substance, extent, or time, but which was assumed to
+be universally consistent across multiple objects in the SBML model.
+To correctly compose models with different scales of such objects using
+this package, every nonconformant object would need to be replaced and
+given an explicit conversion factor, or that package would have to
 extend this Hierarchical Model Composition package to define a new
 attribute on Submodel that could be used to automatically convert all
 such elements in the submodel with that unit type.
@@ -1628,21 +1715,20 @@ Sections~\ref{new-primitive-types}--\ref{sbaseref-class}.
   SBML document.  (For example, two model definitions could use the same
   \primtype{SId} value for \Parameter objects within their respective
   contents.  Note, however, that this does \emph{not} imply that the two
-  objects are equated with each other!)  This is known as the
-  \emph{object namespace of the model}.  An implication of this rule is
+  objects are equated with each other!)  An implication of this rule is
   that to fully locate an object, one must know not only the object's
   identifier, but also the identifier of the model in which it is
-  located.
+  located.  This is known as the \emph{object namespace of the model}.  
 
 \item The identifier of every \UnitDefinition object must be unique
   across the set of all such identifiers in the \Model to which they
-  belong.  (This is the same as in SBML Level~3 Version~1 Core.)  This
-  namespace is referred to as the \emph{unit namespace of the model}.
+  belong.  (This is the same as in SBML Level~3 Version~1 Core.)
   Similar to the case above, an implication of this rule is that to
   fully locate a user-defined unit definition when there are multiple
   models in an SBML document, one must know not only the unit
   definition's identifier, but also the identifier of the model in which
-  it is located.
+  it is located.  This namespace is referred to as the 
+  \emph{unit namespace of the model}.
 
 \item The Hierarchical Model Composition package defines a new kind of
   component: the \emph{port}, represented by \Port objects.  The
@@ -1651,7 +1737,8 @@ Sections~\ref{new-primitive-types}--\ref{sbaseref-class}.
   implication of this rule is that to fully locate a port when there are
   multiple models in an SBML document, one must know not only the port's
   identifier, but also the identifier of the model in which it is
-  located.
+  located.  This namespace is referred to as the 
+  \emph{port namespace of the model}.
 
 \item \Reaction objects introduce a local namespace for \LocalParameter
   objects.  These objects cannot be referenced from outside a given
@@ -1661,7 +1748,8 @@ Sections~\ref{new-primitive-types}--\ref{sbaseref-class}.
   simply by their identifiers (i.e., the value of their \token{id}
   attribute).  However, the \LocalParameter objects \emph{can} be given
   meta identifiers (a value for their \SBase-derived \token{metaid}
-  attribute), and be referenced using those.
+  attribute), and be referenced using those.  This namespace is
+  referred to as the \emph{local namespace of the reaction}.
 
 % FIXME need move this somewhere else:
 % 
@@ -1682,7 +1770,7 @@ SBML document contains a \Model object having the identifier \val{mod1}.
 This \Model cannot contain another object with the same identifier
 (e.g., it could not have a \Parameter object with the identifier
 \val{mod1}), nor can there be any other \Model or
-\ExternalModelDefinition objects identified as \val{mod1} within the
+\ExternalModelDefinition object identified as \val{mod1} within the
 same SBML document.  The first restriction is simply the regular SBML
 rule about uniqueness of identifiers throughout a \Model object; the
 second restriction is due to point (1) above.  On the other hand, there

@@ -599,7 +599,7 @@ within \Model objects, as depicted in \fig{extended-model-uml}.
 
 \begin{figure}[hbt]
   \begin{overpic}{figs/submodel-uml}
-    \put(89.25,30.25){\emph{\sect{sbaseref-class}}}
+    \put(89.25,28.5){\emph{\sect{sbaseref-class}}}
   \end{overpic}
   \caption{The definition of the \Submodel, \Deletion and
     \ListOfDeletions classes.}
@@ -700,28 +700,40 @@ using the \ExternalModelDefinition class.  (\sect{namespaces} discusses
 identifier scoping in more detail.)
 
 
-\paragraph{The conversion factor attributes}
-\label{submodel-conversion}
+\label{submodel-timeconversionfactor}
+\paragraph{The \fixttspace\token{timeConversionFactor} attribute}
 
-Conversion factors enable the matching up of mathematical values and
-units of measurement between submodels and models.  There are three
-possible conversion factors, corresponding to three of the conversion factors
-defined by SBML Level~3 Core's basic \Model object class.  The three
-attributes representing these conversion factors on \Submodel are
-\token{substanceConversionFactor}, \token{timeConversionFactor}, 
-and \token{extentConversionFactor}.
+The optional \token{timeConversionFactor} attribute is provided to allow
+references and assumptions about the scale of time in the \Submodel to be converted to 
+the scale of the containing model.  It has the type \primtype{SIdRef},
+and, if set, must be the identifier of a \Parameter object in the 
+parent \Model object.  The units of that \Parameter object, if present,
+should reduce to being dimensionless.
 
-All of these optional attributes have type \primtype{SIdRef}.  If set,
-the value must be the identifier of a \Parameter object in the parent
-\Model object.  The parameter will be used to convert the value of the
-submodel quantities of the indicated type (substance, time, or extent) to
-the units used in the parent model.  The procedures are involved, and a
-separate section (\sect{conversion-factors}) is devoted to explaining
-them.
+If present, all references to time in the submodel must be multiplied
+by the referenced \Parameter.  This includes the \token{time} and 
+\token{delay} MathML Csymbols, and any \Delay children of \Event objects.
+Since \RateRule and \KineticLaw elements are defined in terms of inverse
+time, they must be divided by the referenced \Parameter.  If a package
+defines a new element or a mathematical symbol in terms of time, it too
+must be converted appropriately by the \token{timeConversionFactor}.
+See \sect{conversion-factors} for more details.
 
-Missing from this list are conversion factors for length, area, and volume.
-This is because conversion factors for those measurements are not needed
-to create valid and consistent composite models.
+\label{submodel-extentconversionfactor}
+\paragraph{The \fixttspace\token{extentConversionFactor} attribute}
+  
+
+The optional \token{extentConversionFactor} attribute is provided to allow
+references and assumptions about the scale of extent to be converted to 
+the scale of the containing model.  It has the type \primtype{SIdRef},
+and, if set, must be the identifier of a \Parameter object in the 
+parent \Model object.  The units of that \Parameter object, if present,
+should reduce to being dimensionless.
+
+If present, all references to extent in the submodel must be multiplied
+by the referenced Parameter.  In SBML Level~3 Version~1 core, this only
+includes \KineticLaw elements, but would also apply to any mathematical 
+reference to extent in a package. See \sect{conversion-factors} for more details.
 
 
 \subsubsection{The list of deletions}
@@ -1036,7 +1048,8 @@ the dimensionality of the compartments the objects are in has changed.
 
 It is invalid to use a \token{conversionFactor}
 attribute and a \token{deletion} attribute at the same time:  if something
-is being deleted, there is no way to convert it, since it no longer exists.
+is being deleted, there is no way to convert it, since references to it are
+no longer valid.
 
 It is likewise illegal to use a \token{conversionFactor} attribute on a 
 \ReplacedElement that points to an element with no mathematical meaning.  For
@@ -1071,10 +1084,18 @@ a \ReplacedBy child that points to an element in a package namespace, because
 an interpreter might not understand that namespace, and attempt to read
 and manipulate this file.  Similarly, an element defined in one package's
 namespace may not have a \ReplacedBy child which points to an element 
-defined in a different package's namespace.  It is fine for an element 
+defined in an unrelated package's namespace.  It is fine for an element 
 defined in one package's namespace to have a \ReplacedBy child which points 
 to a core element, since to understand the package, one must understand core.
 
+Note that the \ReplacedBy class does not have a \token{conversionFactor}
+attribute.  This is because the modeler already knows the units
+and scale of the object being pointed to, and can write the model such that 
+references to that object are scaled appropriately.  Note that if the target
+of a \ReplacedBy element is a \Reaction, it may be scaled by the
+\token{timeConversionFactor} and \token{extentConversionFactor} attributes
+on the \Submodel it is a member of, so references to the object in the
+containing model should take that into account.
 
 \paragraph{Attributes inherited from \class{SBaseRef}}
 
@@ -1178,16 +1199,14 @@ implications.  We focus on crucial ones below:
 \item \emph{Subcomponents of replaced and deleted objects become inaccessible}.  An
   important and far-reaching consequence of replacements is that if the
   object being replaced contains other objects, then \emph{those other
-    objects are considered deleted}.  For example, replacing a \Reaction
+  objects are considered deleted}.  For example, replacing a \Reaction
   or an \Event object means all of the substructure of those entities in
   a model are deleted, and references to the identifiers of those
   deleted entities are made invalid.  (This has implications for such
   things as \SpeciesReference identifiers that may be used in a model
   outside of the \Reaction objects where they are defined.)
 
-\item \emph{Replacements must be unique}.  Unless the \ReplacedElement 
-  object is referring to a \Deletion through the use of the 
-  \token{deletion} attribute, a given object
+\item \emph{Replacements must be unique}.  A given object
   being replaced may only appear in exactly one \ReplacedElement object
   anywhere in a model; otherwise, it would imply multiple entities
   replace the same object, and this would lead to ambiguities (e.g., in
@@ -1482,124 +1501,102 @@ defines how a species amount changes in time, and a second submodel
 defines an initial assignment for that same species in terms of
 concentration, something must be done to make the model as a whole
 coherent without editing the submodels directly.  That is the purpose of
-the conversion factor attributes on the \Submodel and \ReplacedElement
+the conversion factor attributes on the \ReplacedElement and \Submodel
 classes.
-
-There are many situations to account for, so unfortunately, the topic of
-conversion factors is rather involved.  We begin with the relatively
-straightforward case of \ReplacedElement.
 
 
 \subsubsection{Conversion factors involving \class{ReplacedElement}}
 
-As explained in \sect{replacedelement-class}, the various conversion
-factor attributes on \ReplacedElement override any conversion factors
-defined on the \Submodel object that the \ReplacedElement references via
-its \token{modelRef} attribute.
+When an element in a submodel has been replaced by an element in a
+containing model, old references to the replaced element are replaced by
+references to the replacement element.  However, the mathematical
+formulas associated with that replaced element may be in a different
+scale than the ones used for the replacement element.  Correcting this is the purpose
+of the \token{conversionFactor} attribute on \ReplacedElement objects.
 
-If the submodels of the merged model retain any mathematical formulas
-(that is, if there are any reactions, assignments, or any other
-construct with a MathML \token{<math>} element that has not been
-replaced or deleted from the submodel), then those formulas may be
-subject to different scales and units than the mathematical formulas of
-the containing model.  In that case, the entities and formulas should be
-converted to the new units.  If a replaced element has a defined
-conversion factor, then any time a calculation is performed within the
-math of the \Submodel object where the replaced element's identifier is
-found on the left-hand side of an equation, the right-hand side is
-multiplied by that conversion factor before assignment to that variable.
+There are two types of mathematical references possible in SBML:  assignments
+to a variable, and the use of a variable in calculations.  In the former
+case, when an assignment (an \InitialAssignment, \EventAssignment, \AssignmentRule,
+or \RateRule) targets a replaced element, that formula should be 
+multiplied by the conversion factor before being used.  In the latter
+case, when a MathML <cn> element references the replaced element's ID, that
+reference should be considered to be divided by the conversion factor.
+
 For example, if a species has an initial assignment of $4x + 3$, and has
 a conversion factor of $c$, the initial assignment formula becomes
-$c (4x+3)$.  The same is true for assignment rules, rate
-rules, kinetic laws, event assignments, and the implied rates of change
-of species as calculated from kinetic laws, as described in section
-4.11.7 of the SBML Level~3 Version~1 Core specification.
-
-Conversely, wherever the identifier of a replaced element appears on the
-right-hand side of an equation in its original submodel, its appearance
-in that equation should be \emph{divided} by the conversion factor.  In
-our previous example of an initial assignment of $4x+3$, if the $x$ had
+$c (4x+3)$.  Conversely, if the $x$ has
 been replaced and given a conversion factor of $c_x$, that initial
-assignment formula would become $4(x/c_x)+3$.  This holds true for any
+assignment formula would become $4((x/c_x)+3)$.  This holds true for any
 mathematical equation in the model, including algebraic rules.  This
 also means that if a value appears on the right and left-hand sides of
 an equation, you must apply the conversion factor twice: if the rate
 rule of $x$ is $4x+3$, it becomes $c_x(4(x/c_x) + 3)$.  (This
 simplifies to $4x + 3c_x$, as you would expect---the $x$ is already in
-the correct scale; it is only the 3 that must be converted.)
+the correct scale; it is only the $3$ that must be converted.)
 
-% The situation becomes trickier when talking about implied units of model
-% elements.  The SBML Level~2 specification defined what the 'base units'
-% of the model were, even if none were defined in the model itself.  SBML
-% Level 3 no longer does this, but it retains the concept of unit types
-% for certain elements, even if those units are left undefined.  A
-% compartment with 'spatialDimensions=3' is of the unit type 'volume', for
-% example, even if exactly what units those are (liters; millicubits3;
-% etc.) is left undefined.  Similarly, all species are either of the unit
-% type 'substance' or 'concentration', depending on the value of the
-% required Boolean attribute 'hasOnlySubstanceUnits'.  ('Concentration'
-% is, in turn, defined as 'substance divided by the units of the
-% containing compartment'.)  Rate rules of elements are defined as the
-% unit of that element divided by time.  The implied equations derived
-% from reactions (see section 4.11.7 of the core specification) are
-% defined as being substance over time.  Regardless of what those units
-% are defined to be, or even if those units are left undefined, the unit
-% types are set, and must be consistent throughout the model, so nothing
-% is implicitly converted.
 
 
 \subsubsection{Conversion factors involving \class{Submodel}}
 
-The three attributes on \Submodel with the names of the form
-\token{\rule{0.2in}{0.5pt}ConversionFactor} dictate how any submodel
-mathematics whose unit types are defined by the Level~3 Core
-specification are to be converted when that element is \emph{not}
-replaced.  In other words, all elements that are replaced are assumed 
-to have been converted appropriately by the \token{conversionFactor}
-attribute of the \ReplacedElement object.  It is only 
-the elements that remain unreplaced in the Submodel to which the
-\token{\rule{0.2in}{0.5pt}ConversionFactor} attributes apply.  Note that
-targets of \ReplacedBy objects are still converted by the
-\token{\rule{0.2in}{0.5pt}ConversionFactor} elements.
+Most of the math in an SBML model may have arbitrary units, but there are
+two exceptions to this rule:  time, and reaction extent.  While both of
+these mathematical concepts may be scaled to arbitrary units, multiple
+such scales in a single document are not allowed:  all references to
+time assume a single scale, and all reactions are assumed to process
+their reactants and products in the same way.
 
-%LS NOTE:  I am going to assume for now that ReplacedBy elements do not
-% need conversionFactors, and that the element should be considered to
-% be 'left behind' in the submodel, where it will be converted
-% as normal by the Submodel conversion factors.
+The \token{timeConversionFactor} and \token{extentConversionFactor} attributes 
+on \Submodel dictate how time and reaction extent are to be converted to 
+match the scale of the containing model.  As described in 
+\sect{submodel-timeconversionfactor},
+this includes the MathML csymbols
+\token{time} and \token{delay}, as well as any \Delay, \KineticLaw, or
+\RateRule objects which are \emph{not} replaced in the \Submodel.
 
-To understand the rules, it is first helpful to have a summary
-of the conversion factors implied by the SBML Level~3 Version~1 Core
-specification.  We provide a summary in \tab{sbml-conversions}.
+The \token{conversionFactor} attributes on \Species and \Model objects defined
+in SBML Level~3 Version~1 core are unrelated to the above conversion factors.  They
+allow multiple substance scales to be converted to the single extent scale, so that
+\Species may have different units from each other, even though the units of all
+\KineticLaw elements are the same.  Because \Species are allowed to have different
+units of substance, there is no need for a \token{substanceConversionFactor}
+attribute on \Submodel.
+
+To understand the rules, the entire list of classes and MathML elements
+which are converted by these three factors (time, extent, and
+replaced) in the SBML Level~3 Version~1 Core specification are provided
+in \tab{sbml-conversions}.  Similar rules may be derived from other
+packages that require any particular mathematics to be universal over 
+a given \Model.
 
 \newcommand{\sprd}[2]{\raisebox{-#1pt}[0pt][(#1pt * 2) + 4pt]{#2}}
 \newcommand{\persymb}{\emph{Conversion factor for referenced object}}
-\newcommand{\percomp}{\emph{Conversion factor for compartment}}
 \newcommand{\allat}{\emph{(All)}}
 
 \begin{table}[bht]
   \rowcolors{2}{sbmlrowgray}{}
   \renewcommand{\arraystretch}{1.175}
-  \begin{edtable}{tabular}{p{1.1in}p{2.57in}l}
+  \begin{edtable}{tabular}{p{1.6in}p{2.3in}l}
     \toprule
     \textbf{Component}			& \textbf{Automatic conversion factor}\\
     \midrule
     \AlgebraicRule			& 1\\
     \AssignmentRule			& \persymb\\
     \Compartment			& 1\\
-    \Constraint				& \emph{(None needed)}\\
+    \Constraint				& \emph{(Boolean:  none needed)}\\
     \Delay				& \token{timeConversionFactor}\\
     \EventAssignment			& \persymb\\
     \FunctionDefinition			& 1\\
     \InitialAssignment			& \persymb\\
     \sprd{4}{\KineticLaw} 		& \sprd{4}{$\frac{\token{extentConversionFactor}}{\token{timeConversionFactor}}$}\\
-    Implied rate of change of a species	& \sprd{4}{$\frac{\token{substanceConversionFactor}}{\token{timeConversionFactor}}$}\\
+    \sprd{4}{MathML <cn> element}	& \sprd{4}{$\frac{1}{\textsf{\persymb}}$}\\
+    MathML csymbol \token{time}		& \token{timeConversionFactor}\\
+    The \token{time} argument of a MathML csymbol \token{delay} function & \sprd{4}{\token{timeConversionFactor}}\\
     \Parameter				& 1\\
     \Priority				& 1\\
     \sprd{4}{\RateRule} 		& \sprd{4}{$\frac{\textsf{\persymb}}{\token{timeConversionFactor}}$}\\
-    \Species				& \token{substanceConversionFactor}\\
+    \Species 				& 1\\
     \SpeciesReference			& 1\\
-    \Trigger				& \emph{(None needed)}\\
-    (Unknown)				& 1\\
+    \Trigger				& \emph{(Boolean:  none needed)}\\
     \bottomrule
   \end{edtable}
   \caption{Conversion factors used for the different components defined
@@ -1607,61 +1604,25 @@ specification.  We provide a summary in \tab{sbml-conversions}.
   \label{sbml-conversions}
 \end{table}
 
-The procedures for using the conversion factor attributes on \Submodel
-are based on the conversion factors defined by the Core.  Thus, all
-rates of change of species amounts (defined
-in section 4.11.7 of the Level~3 Version~1 Core specification) are
-converted by the \token{substanceConversionFactor} divided by the
-\token{timeConversionFactor}, after being converted (if necessary) by
-any internal conversion factors, as described.  All species
-concentrations and amounts are converted by the
-\token{substanceConversionFactor}.  Non-replaced elements with defined unit
-types are still converted, so that the output of any simulation will be
-on the same scale as elements from the containing model.
-
-In the core specification for SBML Level 3, if the conversion factor
-attributes for \Model and \Species are undefined, the rate of change of
-species amounts over time is defined to be equal to the rate of extent
-of the reaction over time, arguably creating a default conversion of
-extent to amount of 1.  Similarly, all conversion factors here
-effectively default to '1' as well, so that if (for example)
+Any listed automatic conversion factor of '1' simply means that the given 
+math is not converted.  Similarly, if a conversion factor is not defined,
+it too defaults to '1', so that if (for example)
 \token{extentConversionFactor} is defined but \token{timeConversionFactor} is
-not, kinetic laws are still
-converted according to the \token{extentConversionFactor}, 'divided by 1'.
+not, kinetic laws are converted according to the 
+\token{extentConversionFactor}, 'divided by~1'.
 
-Critically, if an element's unit type cannot be determined, or does not
-involve the units of substance, extent, or time, it has no
-default conversion factor, and will not be converted unless replaced.
-All \Parameter objects fall into this category, as
-parameters may have any unit at all, and have no defined unit type as a
-class.  Similarly, all compartments will not be converted, because their
-unit types are either length, area, volume, or undefined.  (These dimensions
-do not need to be converted, as SBML models may already accomodate multiple
-compartments with different units and dimensionality.  This is not the case
-with rate rules, which are defined in terms of the model time units, or
-reactions, which are defined in terms of substance, extent, and time.)
-This means that if a parameter is internal to
-a submodel and not replaced, there is no way to convert it, and it will
-remain in its original scale.  This will not affect the math of the
-converted elements, as the rules above first convert all math to the
-original scale, and only convert it to the new scale when assigning it
-to a variable.  However, if it is displayed as output, these values may
-be in a different scale from other displayed output.  The only way to
-correct this situation is to replace the parameter in question, and give
-it an explicit conversion factor.
+Note that for the MathML <cn> element conversion,
+the \token{SId} of a \Reaction references its \KineticLaw, meaning that if
+the \KineticLaw was converted as in \tab{sbml-conversions}, its appearance
+in MathML will also need to be converted by its inverse.  \AssignmentRule and \RateRule
+\token{SId}s cannot appear in any MathML, and thus do not need to be checked
+the same way.
 
-Some math may use a combination of conversion factors defined on the
-\Submodel object with the conversion factors defined explicitly on an
-element's replacement construct.  The most complicated example is that of a rate
-rule that defines how a parameter changes with time.  If the \Parameter
-object has been replaced and given a conversion factor, the parameter's
-explicit conversion factor is divided by the submodel's
-\token{timeConversionFactor} to act as the overall conversion factor for
-the rate rule's formula.
-
-Any math not directly associated with a replaced element and which does
-not have a defined unit type is assumed to exist in the same scale as
-all other similar elements across all submodels.  
+Converting the formula of a \RateRule may involve a combination of conversion factors.
+If the target of the \RateRule has been replaced
+and given a \token{conversionFactor}, and its \Submodel has a defined 
+\token{timeConversionFactor}, the formula must be multiplied by the \token{conversionFactor}
+and divided by the \token{timeConversionFactor} before being used.
 
 There is only one example of math that is assumed to be in the same scale
 across a single SBML model but that cannot be converted according to
@@ -1674,7 +1635,7 @@ priorities set on a scale of -100 to 100, the only way to reconcile the
 two would be to replace all events which had priorities on one scale with
 events with priorities on the new scale.
 The same would be true of math defined in any other Level~3 package
-without the unit type of substance, extent, or time, but which was assumed to
+without the unit type of extent or time, but which was assumed to
 be universally consistent across multiple objects in the SBML model.
 To correctly compose models with different scales of such objects using
 this package, every nonconformant object would need to be replaced and

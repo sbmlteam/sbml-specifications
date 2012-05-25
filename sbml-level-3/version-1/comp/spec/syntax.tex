@@ -708,15 +708,16 @@ references and assumptions about the scale of time in the \Submodel to be conver
 the scale of the containing model.  It has the type \primtype{SIdRef},
 and, if set, must be the identifier of a \Parameter object in the 
 parent \Model object.  The units of that \Parameter object, if present,
-should reduce to being dimensionless.
+should reduce to being dimensionless, and the \Parameter must be constant.
 
-If present, all references to time in the submodel must be multiplied
-by the referenced \Parameter.  This includes the \token{time} and 
-\token{delay} MathML Csymbols, and any \Delay children of \Event objects.
-Since \RateRule and \KineticLaw elements are defined in terms of inverse
-time, they must be divided by the referenced \Parameter.  If a package
-defines a new element or a mathematical symbol in terms of time, it too
-must be converted appropriately by the \token{timeConversionFactor}.
+The value of the time conversion factor should be defined such that a
+single unit of time in the parent model multiplied by the time conversion
+factor should equal a single unit of time in the \Submodel.  All references
+to time in the \Submodel should be modified accordingly before being used 
+mathematically in conjunction with the parent \Model.  The entire list of 
+such core SBML Level~3 Version~1 conversions is listed in \tab{sbml-conversions},
+and includes the \token{time} and 
+\token{delay} MathML Csymbols, and \Delay, \RateRule, and \KineticLaw elements.
 See \sect{conversion-factors} for more details.
 
 \label{submodel-extentconversionfactor}
@@ -728,10 +729,12 @@ references and assumptions about the scale of extent to be converted to
 the scale of the containing model.  It has the type \primtype{SIdRef},
 and, if set, must be the identifier of a \Parameter object in the 
 parent \Model object.  The units of that \Parameter object, if present,
-should reduce to being dimensionless.
+should reduce to being dimensionless, and the \Parameter must be constant.
 
-If present, all references to extent in the submodel must be multiplied
-by the referenced Parameter.  In SBML Level~3 Version~1 core, this only
+The value of the extent conversion factor should be defined such that a
+single unit of extent in the parent model multiplied by the extent conversion
+factor should equal a single unit of extent in the \Submodel. 
+In SBML Level~3 Version~1 core, this only
 includes \KineticLaw elements, but would also apply to any mathematical 
 reference to extent in a package. See \sect{conversion-factors} for more details.
 
@@ -938,7 +941,7 @@ for these rules: In order to determine which element is pointed to by a
 the local parameters of the Kinetic Law's parent Reaction object. 
 Whether or not that \token{cn} element should be considered to point to 
 something new, then, depends on whether it pointed to the Local 
-Parameter, and whether that Local Parameter was replaced, even if the 
+Parameter and whether that Local Parameter was replaced, even if the 
 text of the element matched the SId of another element in the model. 
 
 If a ReplacedElement references an object from a namespace that is not
@@ -1032,19 +1035,19 @@ subcomponents available on all \SBase objects in SBML.
 \paragraph{The \fixttspace\token{conversionFactor} attribute}
 \label{replacedelement-conversionfactor}
 
-The \ReplacedElement class's \token{conversionFactor} attribute may be used to
-define how to transform or rescale the replaced object's value so that
+The \ReplacedElement class's \token{conversionFactor} attribute, if present
+defines how to transform or rescale the replaced object's value so that
 it is appropriate for the new contexts in which it appears.  The value
 of this attribute must be of type \primtype{SIdRef} and refer to a
-\Parameter object instance defined in the model.  The conversion factor
-identified by the \token{conversionFactor} attribute overrides any
-automatic conversion that may have been performed based on the
-submodel's relevant conversion factors.  The details of this are left to
-\sect{conversion-factors}.  Do note, however, that the conversion 
-factors assigned to replaced \Species objects may have complicated formulas,
-particularly if one of the objects is set \token{hasOnlySubstanceUnits}=\val{true},
-and the other is set \token{hasOnlySubstanceUnits}=\val{false}, or if 
-the dimensionality of the compartments the objects are in has changed.
+\Parameter object instance defined in the model.  The value of the
+conversion factor should be defined such that a
+single unit of the replacement element multiplied by the conversion
+factor should equal a single unit of the replaced element, and the units
+of the conversion factor should be commensurate with that transformation.  
+The referenced \Parameter may be non-constant, however, particularly 
+if a \Species is replaced by a \Species with a different 
+value for its \token{hasOnlySubstanceUnits} attribute, thus changing amount
+to concentration, or visa versa.
 
 It is invalid to use a \token{conversionFactor}
 attribute and a \token{deletion} attribute at the same time:  if something
@@ -1053,8 +1056,8 @@ no longer valid.
 
 It is likewise illegal to use a \token{conversionFactor} attribute on a 
 \ReplacedElement that points to an element with no mathematical meaning.  For
-SBML Level~3 Version~1 core elements, this means that the \ReplacedElement 
-must point to a \Compartment, \Parameter, \Reaction, \Species, or \SpeciesReference.
+SBML Level~3 Version~1 core, this means \Compartment, \Parameter, 
+\Reaction, \Species, or \SpeciesReference elements.
 Elements defined in other packages may or may not have mathematical meaning, depending
 on their specifications.
 
@@ -1118,30 +1121,6 @@ attributes: only objects within the \Model object may be referenced by
 those attributes.
 
 
-% \paragraph{The \fixttspace\token{conversionFactor} attribute}
-% \label{replacedby-conversionfactor}
-
-% The \ReplacedBy class's \token{conversionFactor} attribute may be used to
-% define how to transform or rescale this object's value so that it is
-% appropriate for the new contexts in which it appears.  The value of this
-% attribute must be of type \primtype{SIdRef} and refer to a
-% \Parameter object instance defined in the model.  The conversion factor
-% identified by the \token{conversionFactor} attribute overrides any
-% automatic conversion that may have been performed based on the
-% submodel's relevant conversion factors.  The details of this are left to
-% \sect{conversion-factors}.
-
-% Note that the sense of this \token{conversionFactor} is the same as for
-% the \token{conversionFactor} attribute on the \ReplacedElement class as 
-% well as the various \token{conversionFactor} attributes on the \Submodel
-% class, namely, it is the value one needs to use to multiply the mathematics
-% in the submodel to match the mathematics in the containing model.
-% Because the direction of the replacement is reversed for this construct,
-% the \token{conversionFactor} will be used in its opposite sense, namely,
-% as the parameter by which to divide the mathematics in the containing
-% model in order to match the mathematics of the submodel.
-
-
 \subsubsection{Additional requirements and implications}
 \label{replacedelement-additional}
 
@@ -1150,51 +1129,37 @@ implications.  We focus on crucial ones below:
 
 \begin{itemize}
 
-\item \emph{Identifiers must be maitained}.  Both
-  \ReplacedElement and \ReplacedBy introduce the need to change
-  identifier references that refer to the object being replaced.  This
-  identifier-redirection process has some important implications.
-  First, when any replaced element defines an attribute of type 
-  \token{SId}, \token{UnitSId}, \token{ID},
-  the replacement object must itself have a defined attribute with the
-  corresponding id type.  This requirement
-  is present so that old references to the replaced element will be able
-  to reference the new element, and so that the type of the id won't change:
-  it is illegal to replace a UnitDefinition with a Parameter, for
-  example, because a Parameter has no attribute of type \token{UnitSId}.
+\item \emph{Type must be maitained}.  Replacements must be defined such
+  that the class of the replacement element is the same as the class
+  of the replaced element.  This means that a \Species
+  may only be replaced by \Species, a \Reaction with a \Reaction, etc.
+  An element of a derived class may replace an object of
+  its base class, but not the reverse.  No such elements exist in Level~3
+  Version~1 core, but the possibility exists for this to happen in a package definition.
 
-  Second, if other SBML Level~3 packages attach identifiers
-  in their own namespaces to an object being replaced), those identifiers
-  must also be likewise present on the replacement element.  In other words, if
-  it defines an element with an attribute of type \token{SId}, it may only
-  be replaced by an element with attribute of type \token{SId}.  If it defines
-  an element with an attribute of a type derived from \token{SId} or \token{ID} (such as the 
-  \token{spatialID} attribute, defined as type \token{SpId} in the
-  ``Spatial Processes'' package), it may only be replaced by an element with
-  a defined attribute of the same type (like \token{SpId}).
+  The single exception to this rule for core elements is that \Parameter
+  objects may be replaced by an element with mathematical meaning: a
+  \Compartment, \Reaction, \Species, or \SpeciesReference in core, or any
+  class defined as having mathematical meaning in a package definition.
+  The reverse is not true:  \Compartment, \Reaction, \Species, or
+  \SpeciesReference elements may not be replaced by a \Parameter.
 
-%\item \emph{Mathematical elements must remain mathematical}.  Any element
-%  defined as having mathematical meaning (\Parameter, \Species, 
-%  \Compartment, \Reaction, \SpeciesReference, and \LocalParameter in SBML 
-%  Level~3 Core) may only be replaced by elements who themselves have 
-%  mathematical meaning. Similarly, \FunctionDefinition elements may only
-%  be replaced by \FunctionDefinition elements because no other element
-%  is used the same way in MathML.
+  A package that wishes to define a new exception to this rule may do so
+  in its own specification if it explicitly lists what element may replace
+  an element of a different class, and whether the reverse is legal.
 
 \item \emph{Units should stay the same}.  Any element with defined units
-  should only be replaced by elements with the same defined units (modulo
-  any conversionFactors, which themselves should have defined and compatible
-  units).  
+  should only be replaced by elements with the same defined units if no
+  \token{conversionFactor} is defined.  If a \token{ConversionFactor} is
+  defined, the units of the replacement element times the units of the
+  conversion factor should equal the units of the replaced element.
 
-\item \emph{Identifier references must be redirected}.  With the above 
-  strictures in place, it should always be possible to replace any 
-  \token{SIdRef}, \token{IDREF}, etc. attributes or other references
-  to the replaced element with a reference to the replacement element
-  instead.  It may still not be legal to do so, however, if the 
-  referencing element contains further strictures on what may be referenced:
-  the \token{compartment} attribute of a \Species must point to a 
-  \Compartment, for example, so if a \Compartment so referenced
-  was replaced, the replacement element must itself be a \Compartment.
+\item \emph{Identifiers must be conserved}.  If a replaced element
+  defines one or more attributes of type \token{SIdRef} or \token{IDREF}
+  (or their derivatives, such as UnitSIdRef or SpIdRef),
+  the replacement element must also define those attributes.  This is
+  to ensure that any reference to the replaced element may be updated
+  with a reference to the replacement element.
   
 \item \emph{Subcomponents of replaced and deleted objects become inaccessible}.  An
   important and far-reaching consequence of replacements is that if the

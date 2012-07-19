@@ -3,9 +3,9 @@
 
 \begin{document}
 
-\packageTitle{The Distributions and Ranges Package\\for SBML Level 3}
-\packageVersion{Version 0.5 (Draft)}
-\packageVersionDate{6 January, 2012}
+\packageTitle{The Distributions Package\\for SBML Level 3}
+\packageVersion{Version 0.6 (Draft)}
+\packageVersionDate{19 July, 2012}
 %\packageGeneralURL{http://sbml.org/Community/Wiki/SBML_Level_3_Proposals/Distributions_and_Ranges}
 %\packageThisVersionURL{}
 
@@ -37,9 +37,12 @@
 \maketitlepage
 \maketableofcontents
 
+\newcommand\arrays{Arrays and Sets\xspace}
+\newcommand\arraysshort{arrays\xspace}
 \newcommand\distribshort{distrib\xspace}
-\newcommand\distrib{Distributions and Ranges\xspace}
+\newcommand\distrib{Distributions\xspace}
 \newcommand\uncertml{UncertML\xspace}
+\newcommand\numl{NuML\xspace}
 \newcommand\unidistrib{\abstractclass{IUncertainty}\xspace}
 \newcommand\mlambda{\class{Lambda}\xspace}
 \newcommand\mmath{\class{Math}\xspace}
@@ -62,7 +65,9 @@ semantics section.\\ \midrule
 0.4 (Draft) & 4 Jan 2012 & Stuart Moodie & Incorporated comments from
 NlN, MS and SK. Some minor revisions and corrections.\\  \midrule
 0.5 (Draft) & 6 Jan 2012 & Stuart Moodie & Incorporated addition
-comments on aim of package from NlN.\\ 
+comments on aim of package from NlN.\\ \midrule
+0.6 (Draft) & 19 Jul 2012 & Stuart Moodie & Incorporated revisions
+discussed and agreed at HARMONY 2012.\\ 
 \bottomrule
 \end{edtable}
 
@@ -70,40 +75,59 @@ comments on aim of package from NlN.\\
 
 \subsection{What is it?}
 
-The \distrib package provides an extension to SBML Level 3 that
-supports models that supports variables that cab take many values, for
-instance random variables obtained from a statistical
-distribution. Applications of the package include for instance
-descriptions of the alternative values based on prior knowledge (e.g.\,
-experiments), encoding of uncertainty of value and mostly statistical
-model or models that require the use of random values, such as PK/PD
-models.
+The \distrib package (also affectionately known as \distribshort for short) provides an extension to SBML Level 3 that
+enables it to encode models that sample vales from statistical
+distributions. Applications of the package include for instance
+descriptions population based models: an important subset of which are
+pharmacokinetic/pharmacodynamic (PK/PD) models\footnote{for more
+  information see: \url{http://www.pharmpk.com/}.}, which are used to
+model the action of drugs.
 
-% Even in the context of deterministic simulations, it is sometimes
-% useful to describe the sampling of a random number during
-% simulation. One example is that of a cell dividing once it has grown
-% to a given volume. It would be more realistic to initialise species
-% concentrations in the resultant daughter cell with random numbers to
-% reflect stochastic segragation of proteins, than to have a wholly
-% deterministic segregation.
+Note that originally the package was called Distributions and Ranges,
+but Ranges are no longer in the scope of this hence the name change.
+
+\subsection{Scope}
+
+The \distrib package provides a mechanism for sampling from a
+probability distribution for use in parts of an SBML model that are
+\textbf{not} continuously evaluated. in particular the following are
+in scope:
+
+\begin{itemize}
+\item Sampling from a continuous distribution.
+\item Sampling from a discrete distribution.
+\item Sampling from user-defined probability density function.
+\item Sampling from user-defined discrete probability density.
+\end{itemize}
+
+At one point the following were considered for inclusion in this
+package but are now \textbf{out of scope}:
+
+\begin{itemize}
+\item Stochastic differential equations.
+\item Cumulative distribution functions.
+\item Description of the uncertainty of a model parameter: for
+  example, standard deviation, standard error and similar descriptive
+  statistics.\footnote{It is proposed that this be provided
+    descriptive statistics in a separate package.}
+\end{itemize}
 
 \subsection{This Document}
 
-This proposal presents ideas for the \distrib package proposal, also
-``colloquially'' referred to by SBML developers as the \distribshort
-package. This is an early draft of the proposal and there are still
-many issues to be resolved. In its current state this document aims to
-establish a consensus about what has been agreed and what work remains
-to be carried out to complete the definition of this package.
+The authors' expectation is that this is close to a final draft of the
+proposal with only a limited number of issues to be resolved. In its
+current state this document aims to establish a consensus about what
+has been agreed and what work remains to be carried out to complete
+the definition of this package.
 
-This proposal is a working document and should be regarded as a first
-step towards the formal adoption of the \distribshort as a package in
-SBML Level 3. Later versions of this document will aim to record the
-details of the package specification as they evolve, and it will
-ultimately serve as a basis for a vote on its adoption by the SBML
-community and be the basis for a future package specification
-document. More details of the SBML package adoption process can be
-found at: \url{http://sbml.org/Documents/SBML_Development_Process}.
+This proposal is a working document and once finalised will be the
+first step towards the formal adoption of the \distribshort as a
+package in SBML Level 3. After this two implementations based on this
+proposal are required and then a vote on its adoption by the SBML
+community. The proposal will then provide the basis for a future
+package specification document. More details of the SBML package
+adoption process can be found at:
+\url{http://sbml.org/Documents/SBML_Development_Process}.
 
 \subsection{Conventions used in this document}
 
@@ -112,12 +136,13 @@ parts of this proposal where there is no clear consensus on the
 correct solution or only recent agreement or agreement by a group
 which may not be representative of the SBML community as a
 whole. These cases are indicated by the \contraversial question mark
-in the left margin (illustrated). The reader should pay particular attention to these
-points and ideally provide feedback, especially if they disagree with
-what is proposed. Similarly there will be points --- especially as the
-proposal is consolidated --- which are agreed, but which the reader
-should take note of and perhaps read again. These points \watchout are
-emphasised by the hand pointer in the left margin (illustrated),
+in the left margin (illustrated). The reader should pay particular
+attention to these points and ideally provide feedback, especially if
+they disagree with what is proposed. Similarly there will be points
+--- especially as the proposal is consolidated --- which are agreed,
+but which the reader should take note of and perhaps read again. These
+points \watchout are emphasised by the hand pointer in the left margin
+(illustrated),
 
 \section{Background}
 
@@ -261,6 +286,36 @@ presented below. However, at the end of the meeting there remained a
 number of unresolved issues that are still unresolved in this
 proposal. See section \vref{sec:hinxtonunresolved} for more details.
 
+
+\subsubsection{HARMONY 2012: Maastricht}
+
+Two sessions were dedicated to discussion of \distrib at HARMONY based
+around the proposals described in version 0.5 of this document. In
+addition there was discussion about the \arrays proposal which was
+very helpful in solving the problem of multivariate distributions in
+\distrib. The following were the agreed outcomes of the meeting:
+
+\begin{itemize}
+\item The original proposal included UncertML markup directly in the
+  function definition. This proved unwieldy and confusing and has been
+  replaced by a more elegant solution that eliminates the UncertML
+  markup and integrates well with the fallback function (see details
+  below).
+\item Multivariate distributions can be supported using the \arrays
+  package to define a covariance matrix.
+\item User defined continuous distributions would define a PDF in
+  \mathml.
+\item Usage semantics were clarified so that invokation of a function
+  definition implied a value was sampled from the specified
+  distribution.
+\item It was agreed from which sections of an SBML model a
+  distribution could be invoked.
+\item Statistical descriptors of variables (for
+  example mean and standard deviation) would be separated from
+  \distrib and either provided in a new package or in a later version
+  of SBML L3 core.
+\end{itemize}
+
 \section{Proposed syntax and semantics}
 
 \subsection{Colour Conventions}
@@ -306,521 +361,168 @@ correctly by supporting software.
 
 \subsection{FunctionDefinition Extension}
 
-As outlined above the \FunctionDefinition is extended to include the
-\Distribution class. When \FunctionDefinition contains an instance of
-\Distribution this instance must also be accompanied \watchout by an
-instance of \mmath that contains \mlambda (see figure
-\ref{fig:umluncertmldistrib}). This enables software that cannot understand the
-extension to fallback to the \mlambda definition of the function and
-so ensure that the SBML representation is self-consistent without the
-extension features. We refer to it as the \emph{fallback lambda
-  function}.  The fallback lambda function must contain the same
-number of input parmeters as the equivalent distribution defined
-within \Distribution.
+As outlined above the \FunctionDefinition is extended to include the attributes defined below.
 
-\subsection{Distribution}
-\label{sec:distribution}
+\paragraph{\token{function}}
 
-The \class{Distribution} class contains either an instance of
-\unidistrib from \uncertml (figure \ref{fig:umluncertmldistrib}) or an
-instance of \mlambda (figure \ref{fig:umlexplicitdistrib}). These instances
-are mutually exclusive so only one instance of one type is
-permitted. The former form is used when we are referring to an
-element define by \uncertml.
+This provides the external definition of the distribution to be
+invoked. The value of the attribute should be a URI that
+uniquely identifies a definition from an external resource. The exact
+nature of this URI and the external resource to use is discussed below
+(section \ref{sec:extlDefnDistn}). The attribute is optional.
 
-\begin{figure}[htb]
-\includegraphics[width=0.7\linewidth]{uncertmlDistrib.pdf}
-\caption{UML object diagram describing the definition of a
-  distribution using\uncertml.}
-\label{fig:umluncertmldistrib}
-\end{figure}
- 
-In this case a \unidistrib is used to reference a distribution defined
-by \uncertml. In the explicit form \mathml is used to define a lambda
-function that explicitly defines the distribution.
- 
+\paragraph{\token{explicit}}
 
-\begin{figure}[htb]
-\includegraphics[width=0.7\linewidth]{explicitDistrib.pdf}
-\caption{UML object diagram describing the explicit definition of a distribution.}
-\label{fig:umlexplicitdistrib}
-\end{figure}
- 
- The \mathml used in \mlambda is restricted to the same subset as used
-in SBML Core. The reader should refer to the SBML Level 3 Core
-specification document for more details~\cite{l3v1c}.
+This attribute indicates that a user-defined (or explicit) continuous
+distribution will be defined. If it has a value of \texttt{true} then
+the \mathml expression in the body of the function definition should
+define a probability definition function. In this case this also
+serves as the fallback function. This attribute is optional and a
+default value of \texttt{false} is assumed if it is not set
+explicitly. Note that a user define discrete distribution is defined
+in a different way (see section \ref{sec:userDefinedDiscrete}).
 
-\subsection{Attributes}
+\subsubsection{Usage Rules}
 
-Here we define the attributes used by the \Distribution class. Each
-attribute will have a primitive type and will be always required
-(mandatory) or not (optional).
+The \token{function} cannot have a value (i.e.\xspace it must be
+\texttt{null}) when the \token{explicit} attribute has a value of
+\texttt{true}.
 
-\paragraph{\token{mandatoryEvalRuntime}}
+\subsection{Using the \distribshort package}
 
-This attribute is a \primtype{boolean} and is required. If its value is \val{true}
-then this indicates that the uncertainty is intrinsic to the
-model. There is no selection of given values prior to simulation or
-analysis. Values are generated during simulation as needed. For
-example, a noisy measurement from which any particular value would
-lead to a bias and there is no reason to select a particular value,
-or white noise where at each realisation, we (may) get a different value.
+The distribution defined by a \FunctionDefinition instance can be
+used by instances of the following SBML classes:
 
-If the attribute's value is \val{false}, then the uncertainty may be
-resolved before simulation. The generation of initial conditions from
-the distribution is described in SED-ML. One can choose for instance
-to use the mean, or to do a sampling (e.g. parameter scan, random
-sampling). For example, a measured parameter for which there are two
-different values, or a parameter following a distribution from which
-to draw individuals prior to simulation.
+\begin{itemize}
+  \item InitialAssignment
+  \item EventAssignments
+  \item Delays
+  \item Priorities
+\end{itemize}
 
-\paragraph{\token{truncated}}
+An invocation of a distribution behaves like any other function call
+in SMBL and the function is executed. For a statistical distribution
+this means that one or more values are sampled from the distribution
+each time the function definition is invoked.
 
-This attribute is of type \primtype{boolean} and is required. It
-indicates that the distribution is being used only between a given
-range and that the attributes \token{lowerBound} and
-\token{upperBound} must be set when this instance is invoked.
+\subsection{Permitted Types}
 
-\paragraph{\token{lowerBound}}
+The \distrib package will support arrays and matrices via the \arrays
+package. This means that paramaters passed to a function definition
+can be arrays, matrices or scalar values and that a functions return
+type can be either a scalar or the above non-scalar types. Type
+consistency and conversion behaviour between scalar and non-scalar
+types is defined by the \arrays package.
 
-This value is of type \primtype{double} and is not required. It
-defines the lower bounds of range within which this distribution will
-be used.
+\subsection{External Definition of Distributions}
+\label{sec:extlDefnDistn}
 
-\paragraph{\token{upperBound}}
+The external definition is a URI that should refer to a standardised
+dictionary of distributions. It should unambiguously define the
+following:
 
-This value is of type \primtype{double} and is not required. It
-defines the upper bounds of a range within which this distribution will
-be used.
+\begin{itemize}
+\item A globally unique URI by which to refer to it.
+\item A meaningful name
+\item The parameter arguments used by the function, including for each
+ argument: its name and type (scalar or non-scalar). Note that all
+ arguments are mandatory.
+\item The value and its type returned by the function.
+\item A detailed mathematics description of the statistical distribution being
+  sampled from.
+\end{itemize}
 
-\subsection{Use of \uncertml Definitions}
+\subsection{Equivalence with Fallback Function}
 
-The abstract class \unidistrib is the super-class of the
-distributions,samples and statistics defined by \uncertml. The
-appropriate concrete sub-class from \uncertml should be selected and
-the appropriate parameters supplied for the distribution. A selection
-of \uncertml classes is shown in figure~\vref{fig:ucmldistribs}.
+The \mathml definition contained in the function definition is not
+used if \distribshort is supported and the \token{explicit} attribute
+is \texttt{false}. However, in order to ensure the SBML model is still
+valid when \distribshort is not supported the fallback function must
+be present and it should conform to the following rules:
 
-\begin{figure}[htb]
-\includegraphics[height=0.5\linewidth]{UncertMLDistributions.pdf}
-\caption{A selection of the distributions in \uncertml represented as a UML model.}
-\label{fig:ucmldistribs}
-\end{figure}
+\begin{itemize}
+\item Match the number of arguments in the external function
+  definition.
+\item Each argument should match the type of the equivalent argument
+  in the external function.
+\item Have the same return type as the external function.
+\end{itemize}
 
-Note \contraversial that to satisfy \uncertml the attributes of a given
-distribution class must be supplied with a value. These values act as
-a placeholder and must be of the correct type. Some \uncertml
-distributions may require an array or a matrix of values as an
-attribute.
-
-\subsection{Referencing the \distrib package}
-
-The distribution defined by a \Distribution instance is defined by the
-name of its owning \FunctionDefinition instance. Therefore other \SBML
-elements can reference a distribution as a function in the same way that they
-reference other instances of \FunctionDefinition. The arguments to the function
-should match those defined within the \Distribution instance.
-
-\paragraph{Scalar Assumption}
-
-It is assumed \contraversial that all the \uncertml classes will enable
-the retrieval of a scalar result of type \primtype{double}. Note that
-some \uncertml classes, for example
-\class{Range}\footnote{\url{http://www.uncertml.org/statistics/range}}
-currently return an array of values. This is an inconsistency that
-needs to be resolved.
-
-\paragraph{Type Consistency}
-
-When invoking a \FunctionDefinition that contains a \Distribution
-instance one must ensure that the value types are consistent. When the
-distribution is defined by a concrete sub-class of \unidistrib the
-paramaters used in the function call must match those defined in the
-\uncertml class specification. For example the
-\class{PoissonDistribution}\footnote{http://www.uncertml.org/distributions/poisson}
-can be instantiated with either a single rate value
-(\primtype{double}) or an array of rate values.
-
-\paragraph{Truncated Distributions}
-
-When invoking \FunctionDefinition that contains an instance of
-\Distribution with \token{truncated}=\val{true}, it is necessary to
-also define the range over which the distribution applies. In this
-\contraversial case the attributes \token{lowerBound} and
-\token{upperBound} of \Distribution must be assigned a value. These
-are always the last two values of the function call and come after all
-the other parameters required by the distribution function definition
-are satisfied. The convention used is that the parameters are appended
-in the following order: \token{lowerBound} then \token{upperBound}.
-See section \vref{sec: truncated-eg} for an example of this usage.
-
-\paragraph{Restrictions on Use}
-
-References to definitions cannot be used in all SMBL constructs. In
-particular the results should not be used in constructs that are being continually
-evaluated. For example rate laws.
-
-\paragraph{Invocation Semantics}
-
-The invocation semantics are currently undefined. This is discussed below
-(section \vref{item:refsemantics}).
+Clearly these rules can only be enforced when \distrib is supported.
 
 \section{Package dependencies}
 
-This package is not dependent on any other SBML Level 3 packages. It
-is however dependent on \mathml \cite{mathml2} to define distributions
-explicitly. It uses the the subset of \mathml set out in the SMBL
-Level 3 Core Specification \cite{l3v1c}. Distributions, samples and
-statistics are referenced from the \uncertml standard. Note
-\contraversial that it is undecided whether a subset of  \uncertml will
-be used and what that subset will be.
+This package is dependent on the \arrays package to provide array and
+matrix structures. It is also dependent on \mathml \cite{mathml2} to
+define distributions explicitly. It uses the the subset of \mathml set
+out in the SMBL Level 3 Core Specification
+\cite{l3v1c}.
 
 \section{Use-cases and examples}
 
-\subsubsection{PK/PD Model}
+\subsubsection{Sampling from a distribution: PK/PD Model}
 
-\begin{example}
-<?xml version="1.0" encoding="UTF-8"?>
-<sbml xmlns="http://www.sbml.org/sbml/level3/version1/core" level="3" version="1"
-    xmlns:distrib="http://www.sbml.org/sbml/level3/version1/distrib/version1" 
-    distrib:required="true">
-    <model id="PKModel" name="PKModel" substanceUnits="item"
-          timeUnits="second" volumeUnits="litre" extentUnits="item">
-        <listOfFunctionDefinitions>
-            <functionDefinition id="logNormalVc">
-                <distrib:distribution distrib:mandatoryEvalRuntime="false">
-                    <un:LogNormalDistribution xmlns:un="http://www.uncertml.org/2.0">
-                        <un:logScale>3.14</un:logScale>
-                        <un:shape>3.14</un:shape>
-                    </un:LogNormalDistribution>
-                </distrib:distribution>
-                <math xmlns="http://www.w3.org/1998/Math/MathML">
-                    <lambda>
-                        <bvar><ci>mu</ci></bvar>
-                        <bvar><ci>sigma</ci></bvar> 
-                        <ci>mu</ci>                         
-                    </lambda>
-                </math>
-            </functionDefinition>
-            <functionDefinition id="logNormalka">
-                <distrib:distribution distrib:mandatoryEvalRuntime="false">
-                    <un:LogNormalDistribution xmlns:un="http://www.uncertml.org/2.0">
-                        <un:logScale>3.14</un:logScale>
-                        <un:shape>3.14</un:shape>
-                    </un:LogNormalDistribution>
-                </distrib:distribution>
-                <math xmlns="http://www.w3.org/1998/Math/MathML">
-                    <lambda>
-                        <bvar><ci>mu</ci></bvar>
-                        <bvar><ci>sigma</ci></bvar> 
-                        <apply>
-                          <ci>mu</ci>
-                        </apply>
-                    </lambda>
-                </math>
-            </functionDefinition>      
-            <functionDefinition id="logNormalke">
-                <distrib:distribution distrib:mandatoryEvalRuntime="false">
-                    <un:LogNormalDistribution xmlns:un="http://www.uncertml.org/2.0">
-                        <un:logScale>3.14</un:logScale>
-                        <un:shape>3.14</un:shape>
-                    </un:LogNormalDistribution>
-                </distrib:distribution>
-                <math xmlns="http://www.w3.org/1998/Math/MathML">
-                    <lambda>
-                        <bvar><ci>mu</ci></bvar>
-                        <bvar><ci>sigma</ci></bvar> 
-                        <apply>
-                          <ci>mu</ci>
-                        </apply>
-                    </lambda>
-                </math>
-            </functionDefinition>
-            <functionDefinition id="NormalCc_obs">
-                <distrib:distribution distrib:mandatoryEvalRuntime="false">
-                    <un:NormalDistribution xmlns:un="http://www.uncertml.org/2.0">
-                        <un:mean>3.14</un:mean>
-                        <un:variance>3.14</un:variance>
-                    </un:NormalDistribution>
-                </distrib:distribution>
-                <math xmlns="http://www.w3.org/1998/Math/MathML">
-                    <lambda>
-                        <bvar><ci>mu</ci></bvar>
-                        <bvar><ci>sigma</ci></bvar> 
-                        <apply>
-                          <ci>mu</ci>
-                        </apply>
-                    </lambda>
-                </math>
-            </functionDefinition>
-        </listOfFunctionDefinitions>
-        <listOfCompartments>
-            <compartment id="central" name="central" size="0" constant="true"/>
-            <compartment id="gut" name="gut" size="0" constant="true"/>
-        </listOfCompartments>
-        <listOfSpecies>
-            <species id="Qc" compartment="central" initialAmount="1"
-               hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
-            <species id="Qg" compartment="gut" initialAmount="1"
-               hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
-        </listOfSpecies>
-        <listOfParameters>
-            <parameter id="ka" value="1" constant="true"/>
-            <parameter id="ke" value="1" constant="true"/>
-            <parameter id="Cc" value="1" constant="false"/>
-            <parameter id="Cc_obs" value="1" constant="false"/>
-        </listOfParameters>
-        <listOfInitialAssignments>
-            <initialAssignment symbol="central">
-                <math xmlns="http://www.w3.org/1998/Math/MathML"> 
-                    <apply>
-                        <ci>logNormalVc</ci>
-                        <cn>0.5</cn>
-                        <cn>0.1</cn>
-                    </apply>
-                </math>
-            </initialAssignment>
-            <initialAssignment symbol="ka">
-                <math xmlns="http://www.w3.org/1998/Math/MathML"> 
-                    <apply>
-                        <ci>logNormalka</ci>
-                        <cn>0.5</cn>
-                        <cn>0.1</cn>
-                    </apply>
-                </math>
-            </initialAssignment>
-            <initialAssignment symbol="ke">
-                <math xmlns="http://www.w3.org/1998/Math/MathML"> 
-                    <apply>
-                        <ci>logNormalke</ci>
-                        <cn>0.5</cn>
-                        <cn>0.1</cn>
-                    </apply>
-                </math>
-            </initialAssignment>
-        </listOfInitialAssignments>
-        <listOfRules>
-            <assignmentRule variable="Cc">
-                <math xmlns="http://www.w3.org/1998/Math/MathML">
-                    <apply>
-                        <divide/>
-                        <ci> Qc </ci>
-                        <ci> central </ci>
-                    </apply>
-                </math>
-            </assignmentRule>
-            <assignmentRule variable="Cc_obs">
-                <math xmlns="http://www.w3.org/1998/Math/MathML">
-                    <apply>
-                        <plus/>
-                        <ci> Cc </ci>
-                        <cn type="integer"> 1 </cn>
-                    </apply>
-                </math>
-            </assignmentRule>
-        </listOfRules>
-        <listOfReactions>
-            <reaction id="absorption" reversible="false" fast="false">
-                <listOfReactants>
-                    <speciesReference species="Qg" stoichiometry="1" constant="false"/>
-                </listOfReactants>
-                <listOfProducts>
-                    <speciesReference species="Qc" stoichiometry="1" constant="false"/>
-                </listOfProducts>
-                <kineticLaw>
-                    <math xmlns="http://www.w3.org/1998/Math/MathML">
-                        <apply>
-                            <times/>
-                            <ci> ka </ci>
-                            <ci> Qg </ci>
-                        </apply>
-                    </math>
-                </kineticLaw>
-            </reaction>
-            <reaction id="excretion" reversible="false" fast="false">
-                <listOfReactants>
-                    <speciesReference species="Qc" stoichiometry="1" constant="false"/>
-                </listOfReactants>
-                <kineticLaw>
-                    <math xmlns="http://www.w3.org/1998/Math/MathML">
-                        <apply>
-                            <divide/>
-                            <apply>
-                                <times/>
-                                <ci> ke </ci>
-                                <ci> Qc </ci>
-                            </apply>
-                            <ci> central </ci>
-                        </apply>
-                    </math>
-                </kineticLaw>
-            </reaction>
-        </listOfReactions>
-    </model>
-</sbml>\end{example}
+This is a very straightforward use of an externally defined
+distribution. The key point to note is that a value is sampled from
+the distribution and assigned to a variable when it is invoked. In the
+initialAssignments element in this example. Later use of the variable
+does not result in re-sampling from the distribution. This is
+consistent with current SBML semantics.
+
+\exampleFile{examples/pkpd.xml}
 
 \subsection{Truncated distribution}
 \label{sec: truncated-eg}
 
-\begin{example}
-<?xml version="1.0" encoding="UTF-8"?>
-<sbml xmlns="http://www.sbml.org/sbml/level3/version1/core" level="3" version="1"
-      xmlns:distrib="http://www.sbml.org/sbml/level3/version1/distrib/version1" 
-      distrib:required="true">
-    <model>
-        <listOfFunctionDefinitions>
-            <functionDefinition id="logNormalVc">
-                <distrib:distribution distrib:mandatoryEvalRuntime="false" distrib:truncated="true">
-                    <un:LogNormalDistribution xmlns:un="http://www.uncertml.org/2.0">
-                        <un:logScale>3.14</un:logScale>
-                        <un:shape>3.14</un:shape>
-                    </un:LogNormalDistribution>
-                </distrib:distribution>
-                <math xmlns="http://www.w3.org/1998/Math/MathML">
-                    <lambda>
-                        <bvar><ci>mu</ci></bvar>
-                        <bvar><ci>sigma</ci></bvar>
-                        <bvar><ci>lower</ci></bvar>
-                        <bvar><ci>upper</ci></bvar> 
-                        <ci>mu</ci>                         
-                    </lambda>
-                </math>
-            </functionDefinition>
-            </listOfFunctionDefinitions>
-    </model>
-</sbml>
-\end{example}
+To encode a truncated distribution we rely on external
+definitions. Clearly it would be cumbersome if every distribution and
+multivariate distribution required a truncated equivalent definition,
+but at present this is what is required\contraversial. Perhaps this
+problem could be solved if optional function arguments were permitted,
+but this cases problems with the fallback function (see section \ref{sec:hinxtonunresolved}).
 
-\subsection{Multivariate Distribution}
+\exampleFile{examples/truncated_distn.xml}
 
-No example has been prepared yet.
+\subsection{Multivariate distribution}
 
-\subsection{A Range}
+In this example two correlated parameters are sampled from a
+multivariate distribution. The correlation is defined using a
+covariance matrix and the sampled values are returned as a vector of 2
+values, which are then assigned to the individual parameters. This
+example relies heavily on the \arraysshort package, which will be a
+dependency of the \distribshort package.
 
-\begin{example}
-<?xml version="1.0" encoding="UTF-8"?>
-<sbml xmlns="http://www.sbml.org/sbml/level3/version1/core" level="3" version="1"
-      xmlns:distrib="http://www.sbml.org/sbml/level3/version1/distrib/version1" 
-      distrib:required="true">
-    <model>
-        <listOfFunctionDefinitions>
-            <functionDefinition id="Range">
-                <distrib:distribution distrib:mandatoryEvalRuntime="false"
-                       distrib:truncated="false">
-                    <un:Range xmlns:un="http://www.uncertml.org/2.0"/>
-                </distrib:distribution>
-                <math xmlns="http://www.w3.org/1998/Math/MathML">
-                    <lambda>
-                        <bvar><ci>lower</ci></bvar>
-                        <bvar><ci>upper</ci></bvar> 
-                        <apply>
-                            <divide/>
-                            <apply>
-                                <plus/>
-                                <ci> lower </ci>
-                                <ci> upper </ci>
-                            </apply>
-                            <cn> 2.0 </cn>
-                        </apply>
-                        <ci></ci>                         
-                    </lambda>
-                </math>
-            </functionDefinition>            </listOfFunctionDefinitions>
-    </model>
-</sbml>
-\end{example}
+\exampleFile{examples/mutivariate_example.xml}
 
-\subsection{Random Sample}
+\subsection{User-defined continuous distribution }
 
-This example was taken from day 3 of the 3 day Statistical Models
-Workshop \cite{hinxton0611}. The \token{distrib::listOfSymbols}
-\contraversial was probably dropped later in the workshop, but this
-needs to be clarified.
+In this example an additional construct is used to indicate:
+\begin{itemize}
+\item that the \mathml within the function definition defines a PDF and so is not a
+fallback.
+\item that when invoked a value should be sampled from this PDF.
+\end{itemize}
 
-\begin{example}
-<?xml version="1.0" encoding="UTF-8"?>
-<sbml xmlns="http://www.sbml.org/sbml/level3/version1/core" level="3" version="1"
-      xmlns:distrib="http://www.sbml.org/sbml/level3/version1/distrib/version1" 
-      distrib:required="true">
-    <model>
-        <listOfFunctionDefinitions>
-            <functionDefinition id="mySample">
-             <distrib:distribution distrib:mandatoryEvalRuntime="true"> 
-               <distrib:listOfSymbols>
-                 <distrib:symbol>k1</distrib:symbol>
-                 <distrib:symbol>P_1</distrib:symbol> 
-                 <distrib:symbol>P_2</distrib:symbol>
-               </distrib:listOfSymbols>
-               <distrib:annot realization="ID2" valueIndex="2" whatever="Thispublication" />
-             <un:RandomSample xmlns:un="http://www.uncertml.org/2.0">
-                  <un:samplingMethodDescription>
-                    Importance sampler with uniform proposal
-                    distribution
-                  </un:samplingMethodDescription>
-                  <un:Realisation id="ID1">
-                    <un:weight>0.5</un:weight>
-                    <un:values>3.14 6.28 9.42</un:values>
-                  </un:Realisation>
-                  <un:Realisation id="ID2">
-                    <un:weight>0.25</un:weight>
-                    <un:values> 3.14 6.28 9.42</un:values>
-                  </un:Realisation>
-                  <un:Realisation id="ID3">
-                    <un:weight>0.25</un:weight>
-                    <un:values>3.14 6.28 9.42</un:values>
-                  </un:Realisation>
-              </un:RandomSample>  
-             </distrib:distribution>
-                <math xmlns="http://www.w3.org/1998/Math/MathML">
-                  <lambda>
-                    <bvar><ci distrib:useValues="false">index</ci></bvar>
-                    <cn>0.0</cn>                         
-                  </lambda>
-                </math>
-            </functionDefinition>
-            <functionDefinition id="normRuntime">
-                <distrib:distribution distrib:runtime="true">
-                  <un:NormalDistribution xmlns:un="http://www.uncertml.org/2.0">
-                    <un:mean>mu</un:mean>
-                    <un:variance>sigma</un:variance>
-                  </un:NormalDistribution>
-                </distrib:distribution>
-                <math xmlns="http://www.w3.org/1998/Math/MathML">
-                  <lambda>
-                    <bvar><ci>mu</ci></bvar>
-                    <bvar><ci>sigma</ci></bvar> 
-                    <ci>mu</ci>                         
-                  </lambda>
-                </math>
-            </functionDefinition>
-        </listOfFunctionDefinitions>
-        <listOfInitialAssignments>
-            <initialAssignment symbol="x"> 
-                <math xmlns="http://www.w3.org/1998/Math/MathML"> 
-                    <apply>
-                        <ci>normStatic</ci>
-                        <cn>0.5</cn>
-                        <cn>0.1</cn>
-                    </apply>
-                </math>
-            </initialAssignment>
-            <initialAssignment symbol="P_1"> 
-                <math xmlns="http://www.w3.org/1998/Math/MathML"> 
-                    <apply>
-                        <ci>mySample</ci>
-                        <ci>P_1</ci>
-                    </apply>
-                </math>
-            </initialAssignment>
-        </listOfInitialAssignments>
-        <listOfParameters>
-            <parameter id="x" constant="true"/>
-            <parameter id="P_1" constant="true"/>
-            <parameter id="P_2" constant="true"/> 
-        </listOfParameters>
-    </model>
-</sbml>
-\end{example}
+\exampleFile{examples/user-defined.xml}
+
+
+\subsection{User-defined discrete distribution}
+\label{sec:userDefinedDiscrete}
+
+In this example we don't use any special distrib features, by invoke
+an externally defined function that constructs a PMF from a matrix of
+values and their associated probabilities. The example is not
+biologically meaningful, but illustrates that the matrix contains the
+values and probabilities possible when throwing two dice. These values
+are encoded in a matrix, which is passed as a parameter in a function,
+however, it may be that this information is defined using
+\numl\contraversial or by referring to an external file.
+
+There has been very little discussion\contraversial{} about how to treat user-defined
+PMFs so this example should be regarded as a starting point for
+discussion rather than a final proposal.
+
+\exampleFile{examples/user-defined-pmf.xml}
 
 \section{Prototype implementations}
 
@@ -829,103 +531,24 @@ None as yet.
 \section{Unresolved issues}
 \label{sec:hinxtonunresolved}
 
-\subsection*{From Hinxton workshop}
-
-At the Statistical Models Workshop \cite{hinxton0611} a number of
-issues were identified as remaining unresolved and requiring more work
-or more discussion\footnote{The original document containing this list
-  has been lost and so the list has been reconstructed from a audio
-  recording of the final session. It may be incomplete or contain
-  inaccuracies}. The are listed below:
-
 \begin{description}
-\item[Circular dependency] It is possible to create circular
-  dependency in which .... [\textbf{Complete!e]}.
-\item[Multivariate distributions] No examples were worked on for
-  Multivariate Distributions. The main issue to be resolved is to
-  identify how it can be parameterised as it requires a covariance matrix
-  and a list on mean values. These constructs are not currently
-  available in SBML Level 3 Core.
-\item[User defined distributions] No examples were produced that
-  illustrated how a distribution might be defined explicitly in
-  \mathml, i.e.\ without referencing \uncertml.
-\item[Defining a random quantity] No example was created illustrating
-  how to define a random quantity with a mean and a standard deviation
-  for a known distribution.
-\item[\uncertml coverage] It is still to be agreed whether the
-  complete \uncertml conceptual model will be used complete or just a
-  subset. In addition it is unclear whether a snapshot of the
-  \uncertml definitions will be taken and used as the reference
-  specification for this package. This snapshot \contraversial could be
-  maintained separately from the \uncertml core effort.
-\item[Usage semantics] We need to clarify the use of random numbers
-  in continually evaluating contexts.
-\item[SDE] It was agreed that SDEs are out of scope.
-\item[Invokation semantics] When a distribution is referenced we need
-  to clarify whether this implies a new invocation of the
-  distribution. In other words if I reference the same \Distribution
-  more than once within an SMBL model should the distribution be
-  recalculated each time it is reference or only the first time. The
-  latter case allows one to always return the same random value in
-  different parts of the model, but requires you to define separate
-  instances of \Distribution if you wish to generate separate random
-  values using an identically configured distribution.
-\label{item:refsemantics}
-\item[Grouped moments] There is no documentation surrounding this
-  issue and there was some discussion during the workshop on this
-  topic, particularly on the last day. At the end of the last session
-  it was agreed that to group a mean and a standard deviation a class
-  called \class{Moments} would be created within this package that
-  would reference the \class{Mean} and \class{StandardDeviation} from
-  \uncertml. Examples and more discussion is probably required about
-  this construct. In particular whether this would be better provided
-  by \uncertml.
-\item{Particle Representation} There was no discussion of this at the
-  Hinxton workshop, however it is a desired feature having been
-  discussed in at previous SBML gatherings. The objective is to have a
-  mechanism for describing a set of values that can then be selected
-  randomly when this ``distribution'' is invoked. The main issue here
-  is how to represent this set and to be clear on the semantics of its use.
-\end{description}
-
-\subsubsection*{While writing this proposal}
-
-During the writing of this specification the authors has come across
-some issues that need resolving:
-
-\begin{description}
-\item[Distribution function parameters] The mechanisms of defining the
-  parameters of a function are rather cumbersome and seem likely to
-  make implementation more difficult. In the XML examples this means
-  providing the \uncertml XML element with dummy values. Should we
-  have a convention for what these placeholder values should be. Can
-  we get rid of them?
-\item[\uncertml is a Controlled Vocabulary] \uncertml is essentially
-  being used as a controlled vocabulary to define distributions
-  etc. However, it is being referenced by incorporating is XML
-  elements into the distrib package, which is proving cumbersome and
-  will increase the complexity of software implementation. Could
-  another mechanism be used to refer to it. Perhaps using it in a
-  similar way to SBO in SMBL Core?
-\item The issue of defining arrays and matrixes has not really been
-  addressed so far. Candidate solutions are to use the arrays package\footnote{\url{http://sbml.org/Community/Wiki/SBML_Level_3_Proposals/Arrays_and_Sets}}
-  (this pending, but not under active development), NuML
-  \footnote{\url{http://code.google.com/p/numl/}} or \mathml.
-\item[\uncertml to snapshot or not] This is the key decision to make
-  in this specification. If a snapshot of \uncertml is taken the in
-  the authors' view this will effectively be the first step in
-  creating and maintaining a separate resource. In my view it would be
-  better to work with \uncertml to help them address any
-  issues/concerns that we have.
+\item[\uncertml to snapshot or not] A key decision is what form the
+  external definition of the distributions will take. In particular
+  should we use \uncertml or a definition based on a snapshot of it.
+\item[Optional function arguments] It would be useful to .
 \end{description}
 
 \section{Acknowledgements}
 
-Much of the concrete work leading to this proposal document
+Much of the initial concrete work leading to this proposal document
 was carried out at the Statistical Models Workshop in Hinxton this
 year (2011). A list of participants and recordings of the discussion
 is available from
 \url{http://sbml.org/Events/Other_Events/statistical_models_workshop_2011}.
+The authors would also like to thank the participants of the
+\distribshort sessions during HARMONY 2012 for their excellent
+contributions in helping revising this proposal into something a lot
+closer to the finished version.
 
 The authors would like to thank Sarah Keating and Maciej Swat for
 useful discussions; and Mike Hucka for \LaTeX{} advice and his

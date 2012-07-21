@@ -257,13 +257,13 @@ are derived from \SBase (more specifically, the extended \SBase class
 defined in \sect{extended-sbase-class}).  They inherit \SBase's
 attributes \token{metaid} and \token{sboTerm}, as well as the
 subcomponents for \Annotation and \Notes, but they do not add any
-especial attributes of their own.
+attributes of their own.
 
 If a model from an external SBML document is needed, it can be
 referenced with an \ExternalModelDefinition object
 (\sect{externalmodeldefinition-class}).  The
 \ListOfExternalModelDefinitions container gathers all such references.
-It is derived from \SBase but adds no especial attributes of its own.
+It is derived from \SBase but adds no attributes of its own.
 Like the other \textsf{\textbf{ListOf\rule{0.15in}{0.5pt}}} classes, it
 inherits the attributes \token{metaid} and \token{sboTerm}, as well as
 the subcomponents for \Annotation and \Notes, that most SBML components
@@ -312,13 +312,34 @@ attribute must be of type \primtype{anyURI} (see \sect{primtype-uri}).
 Since URIs may be either URLs, URNs, or relative or absolute file
 locations, this offers flexibility in referencing SBML documents.  In
 all cases, the \token{source} attribute value must refer specifically to
-an \sbmlthreecore document; prior Levels/Versions of SBML are
+an SBML Level~3 Version~1 document; prior Levels/Versions of SBML are
 not supported by this package.  The entire file at the given location is
 referenced.  The \token{source} attribute must have a value for every
 \ExternalModelDefinition instance.
 
-Here are some examples of different \token{source} attribute values for
-the different cases.  Suppose we have a model with the identifier
+\paragraph{The \fixttspace\token{modelRef} attribute}
+
+\ExternalModelDefinition's optional attribute \token{modelRef}, of type
+\primtype{SIdRef}, in is used to identify a \Model object within the
+SBML document located at \token{source}.  The object referenced may be
+the main model in the document, or a model definition contained in the
+SBML document's \token{listOfModelDefinitions} or
+token{listOfExternalModelDefinitions} lists.  No loops are allowed: it
+must be possible to follow a chain of \ExternalModelDefinition objects
+to its end in a \Model object.
+
+In core SBML, the \token{id} on \Model is an optional attribute, and
+therefore, it is possible that the \Model object in a given SBML
+document does \emph{not} have an identifier.  In that case, there is no
+value to give to the \token{modelRef} attribute in
+\ExternalModelDefinition.  If \token{modelRef} does \emph{not} have a
+value, then the main model (i.e., the \token{<model>} element within the
+\token{<sbml>} element) in the referenced file is interpreted as being
+the model referenced by this \ExternalModelDefinition instance.
+
+Here are some examples of different \token{source} and \token{modelRef} 
+attribute values for
+different cases.  Suppose we have a model with the identifier
 \val{glau} located in a file named \val{firefly.xml}.  The following
 fragment defines an external model definition and gives it the
 identifier \val{m1}, the latter being valid for use within the
@@ -348,37 +369,17 @@ that model, we can write the following:
 \end{example}
 
 Finally, we can imagine the situation where a model is made accessible
-from a location accessible on the Internet, say via the HTTP protocol.
+from a location accessible on the Internet, say via the HTTP protocol, but
+which has no defined \token{id} attribute for its \token{<model>} element.
 The following is a (fake) example:
 
 \begin{example}
 <comp:listOfExternalModelDefinitions>
-    <comp:externalModelDefinition comp:id="m3" comp:modelRef="the_model_id"
+    <comp:externalModelDefinition comp:id="m3"
                                   comp:source="http://www.cds.caltech.edu/~mhucka/sbmlmodel.xml"/>
 </comp:listOfExternalModelDefinitions>
 \end{example}
 
-
-
-\paragraph{The \fixttspace\token{modelRef} attribute}
-
-\ExternalModelDefinition's optional attribute \token{modelRef}, of type
-\primtype{SIdRef}, in is used to identify a \Model object within the
-SBML document located at \token{source}.  The object referenced may be
-the main model in the document, or a model definition contained in the
-SBML document's \token{listOfModelDefinitions} or
-token{listOfExternalModelDefinitions} lists.  No loops are allowed: it
-must be possible to follow a chain of \ExternalModelDefinition objects
-to its end in a \Model object.
-
-In core SBML, the \token{id} on \Model is an optional attribute, and
-therefore, it is possible that the \Model object in a given SBML
-document does \emph{not} have an identifier.  In that case, there is no
-value to give to the \token{modelRef} attribute in
-\ExternalModelDefinition.  If \token{modelRef} does \emph{not} have a
-value, then the main model (i.e., the \token{<model>} element within the
-\token{<sbml>} element) in the referenced file is interpreted as being
-the model referenced by this \ExternalModelDefinition instance.
 
 
 \paragraph{The \fixttspace\token{md5} attribute}
@@ -560,31 +561,11 @@ rules, but they are worth making explicit:
     model; that is, no two ports in a model may both refer to the same
     model component.
 
-  \item A port cannot refer to another port of the same model.
+  \item A port cannot refer to any another port of the same model (including
+    itself).
 
-  \item A port cannot refer to itself.
-
-  \item The referenced element may not also be referenced by a \ReplacedElement
-    object, nor by a \ReplacedBy object.
-    
 \end{enumerate}
   
-% \token{metaIdRef} attribute's value must refer to a meta identifier of
-% an object in the immediately-enclosing \Model object.  (For example, it
-% could refer to the \token{metaid} attribute value of a \Species object
-% defined elsewhere in the model.)  This is a further restriction to the
-% space of values than what is defined by \primtype{IDREF} alone.  The
-% reason is simply that it makes no sense to allow one \Model object to
-% define a port on a \emph{different} \Model object.  This does not imply
-% a restriction or modification of the \token{metaid} values of \SBase
-% objects in an SBML document, nor does it negate the other properties of
-% type \primtype{IDREF}; it merely reduces the set of valid values
-% that can be chosen for a given \token{metaIdRef} attribute on \Port
-% objects in an SBML document.
-%
-% --See the new paragraph at the end of the SBaseRef section--it says (briefly) what it says in the above commented-out paragraph, but applies to all SBaseRef objects.
-
-
 % -----------------------------------------------------------------------------
 \subsection{The \class{Submodel} class}
 \label{submodel-class}
@@ -612,7 +593,7 @@ capability, this SBML package provides two possible types of direct
 modifications: conversion factors, and deletions.  We describe these two
 mechanisms in more detail in the subsections below, but the following
 informal summary may serve as a useful guide to get a general sense for
-how it things work:
+how it works:
 
 \begin{itemize}
 
@@ -692,7 +673,9 @@ the main or top-level model in the document.  A possible use for this
 might be to define a common scenario in the main model, then create
 alternate scenarios with different initial conditions or parameter sets
 using the list of model definitions (\fig{hierarchical-sbml-uml}) in the
-\SBML object.  Because the model namespace is defined per document, this
+\SBML object.  
+
+Because the model namespace is defined per document, this
 means that it is possible to define and include a new model namespace by
 creating a new document, then importing one or more of those models
 using the \ExternalModelDefinition class.  (\sect{namespaces} discusses
@@ -710,8 +693,8 @@ parent \Model object.  The units of that \Parameter object, if present,
 should reduce to being dimensionless, and the \Parameter must be constant.
 
 The value of the time conversion factor should be defined such that a
-single unit of time in the parent model multiplied by the time
-conversion factor should equal a single unit of time in the \Submodel.
+single unit of time in the \Submodel  multiplied by the time
+conversion factor should equal a single unit of time in the parent model.
 All references to time in the \Submodel should be modified accordingly
 before being used mathematically in conjunction with the parent \Model.
 The entire list of such \sbmlthreecore conversions is listed in
@@ -732,8 +715,8 @@ parent \Model object.  The units of that \Parameter object, if present,
 should reduce to being dimensionless, and the \Parameter must be constant.
 
 The value of the extent conversion factor should be defined such that a
-single unit of extent in the parent model multiplied by the extent conversion
-factor should equal a single unit of extent in the \Submodel. 
+single unit of extent in the \Submodel multiplied by the extent conversion
+factor should equal a single unit of extent in the parent model. 
 In \sbmlthreecore, this only
 includes \KineticLaw elements, but would also apply to any mathematical 
 reference to extent in a package. See \sect{conversion-factors} for more details.
@@ -832,7 +815,7 @@ to \sect{best-practices-deletions}.
 
 The model definition, submodel and port constructs defined so far allow
 a modeler to identify and aggregate models, as well as to delete
-features from model definitions before the definitions are used create a
+features from model definitions before the definitions are used to create a
 final, composed model.  In this section, we turn to two final
 capabilities needed for effective model composition: linking and
 substituting components.  Both are implemented as \emph{replacements},
@@ -867,11 +850,17 @@ submodel \emph{Y}''.  In the final composed model, all references to
 \emph{X} in \emph{Y} are replaced with references to \emph{W}.  The same
 approach is used as the mechanism for linking or gluing entities from
 different models together.  Thus, to connect entity \emph{X} and some
-other entity \emph{Z} located in another submodel, a model could make
-\emph{W} define multiple replacements simultaneously: one for \emph{X}
-and another for \emph{Z}.  Entity \emph{W} will then act as an
-intermediary at the level of the containing model.
+other entity \emph{Z} located in another submodel, a model could create 
+and entity \emph{W} in the containing model, replacing both \emph{X}
+and \emph{Z}.  Entity \emph{W} will then act as an
+intermediary at the level of the containing model, and all references
+to both \emph{X} and \emph{Z} would now point to \emph{W}.  Alternatively, to
+designate \emph{X} as the replacement for \emph{Z}, entity \emph{W} could
+be created with a child \ReplacedElement element pointing to \emph{Z}, and
+a child \ReplacedBy element point to \emph{X}.  In this case, all
+references to \emph{W} and \emph{Z} would now point to \emph{X}.
 
+%Chris points out that this is confusing, and could use a figure.
 
 \subsubsection{The list of replaced elements}
 
@@ -887,7 +876,7 @@ at least one \ReplacedElement object (\sect{replacedelement-class}).
 \label{listofreplacedelements-class}
 
 A \ReplacedElement object is essentially a pointer to a submodel object
-that is should be considered ``replaced''.  The object \emph{holding}
+that should be considered ``replaced''.  The object \emph{holding}
 the \ReplacedElement instance is the one \emph{doing the replacing}; the
 object pointed to by the \ReplacedElement object is the object being
 replaced.  A replacement implies that dependencies involving the
@@ -932,7 +921,8 @@ For packages that extend \sbmlthreecore, similar rules apply:
  derive from the \primtype{SIdRef} or \primtype{IDREF} primitive data type which used to 
  point to the replaced element are now considered to point to the 
  replacement element. This includes, for example, attributes of type 
- \primtype{SpIdRef}, defined in the Spatial Processes package. 
+ \primtype{SpIdRef}, defined in the proposed Spatial Processes specification 
+ (April 2011). 
 \end{itemize}
 
 It is worth noting that Local Parameters pose an interesting edge case 
@@ -942,7 +932,10 @@ the local parameters of the Kinetic Law's parent Reaction object.
 Whether or not that \token{cn} element should be considered to point to 
 something new, then, depends on whether it pointed to the Local 
 Parameter and whether that Local Parameter was replaced, even if the 
-text of the element matched the SId of another element in the model. 
+text of the element matched the SId of another element in the model.  Do
+note that local parameters may only effectively be replaced by global
+parameters, since references to its \primtype{SId} are only valid from
+within the \Reaction element to which it belongs.
 
 If a ReplacedElement references an object from a namespace that is not
 understood by the interpreter, the replaced element must be ignored--the 
@@ -1041,8 +1034,8 @@ it is appropriate for the new contexts in which it appears.  The value
 of this attribute must be of type \primtype{SIdRef} and refer to a
 \Parameter object instance defined in the model.  The value of the
 conversion factor should be defined such that a
-single unit of the replacement element multiplied by the conversion
-factor should equal a single unit of the replaced element, and the units
+single unit of the replaced element multiplied by the conversion
+factor should equal a single unit of the replacement element, and the units
 of the conversion factor should be commensurate with that transformation.  
 The referenced \Parameter may be non-constant, however, particularly 
 if a \Species is replaced by a \Species with a different 
@@ -1054,10 +1047,10 @@ attribute and a \token{deletion} attribute at the same time:  if something
 is being deleted, there is no way to convert it, since references to it are
 no longer valid.
 
-It is likewise illegal to use a \token{conversionFactor} attribute on a 
-\ReplacedElement that points to an element with no mathematical meaning.  For
+It is likewise only legal to use a \token{conversionFactor} attribute on a 
+\ReplacedElement that points to an element with mathematical meaning.  For
 \sbmlthreecore, this means \Compartment, \Parameter, 
-\Reaction, \Species, or \SpeciesReference elements.
+\Reaction, \Species, and \SpeciesReference elements.
 Elements defined in other packages may or may not have mathematical meaning, depending
 on their specifications.
 
@@ -1155,7 +1148,7 @@ implications.  We focus on crucial ones below:
 
 \item \emph{Identifiers must be conserved}.  If a replaced element
   defines one or more attributes of type \token{SIdRef} or \token{IDREF}
-  (or their derivatives, such as UnitSIdRef or SpIdRef),
+  (or their derivatives, such as \token{UnitSIdRef} or the proposed \token{SpIdRef}),
   the replacement element must also define those attributes.  This is
   to ensure that any reference to the replaced element may be updated
   with a reference to the replacement element.
@@ -1187,20 +1180,6 @@ submodel.  The lack of a direct mechanism for horizontal replacements is
 not a true limitation; the same effect can be achieved by creating an
 intermediate object in the containing model and linking it to the other
 objects via replacements.
-
-Finally, apart from the above restrictions, there are no other
-requirements that replaced objects be of the
-same type as the replacing object.  The only restriction is that
-once all old references to the replaced object point instead to the
-replacing object, the normal rules of SBML validity apply, so the
-resulting model must still make sense and be valid SBML.  There is no
-requirement for like-kind replacements, however, because errors do not
-\emph{necessarily} result.  For example, replacing a \Species object
-that appeared in a \Reaction object would lead to an invalid SBML
-document if the replacement was a \Parameter object, but replacing a
-\Species object by a \Parameter could be valid if that \Species never
-appeared in any \Reaction object or if all the \Reaction objects from
-the submodel were deleted.
 
 Note that the only functional difference between an element being replaced
 vs. that element being deleted is that in the former case, references
@@ -1272,7 +1251,7 @@ variety of modeling scenarios can be supported.
 It is also worth noting that SBaseRef classes may point to elements
 from other SBML Level~3 packages.  One possibility is that the package
 will define a new \SBase-derived class, which will inherit the \token{metaId}
-attribute.  These metaIDs may be referenced by the \SBaseRef \token{metaIdRef}
+attribute.  These \token{metaId}s may be referenced by the \SBaseRef \token{metaIdRef}
 attribute.  Another possibility is that the package will define a class,
 and define an attribute for that class of the type SId or UnitSId.  Should
 it do so, those elements may be referenced with the \token{idRef} or \token{unitRef}
@@ -1338,7 +1317,9 @@ The optional attribute \token{metaIdRef} takes a value of type
 \primtype{IDREF}.  This attribute is used to refer to a \token{metaid}
 attribute value on some other object, in the case when the reference
 being constructed with the \SBaseRef is intended to refer to an object
-that does not have a port identifier.  Since meta identifiers are
+that does not have a port identifier.  The namespace of the \primtype{metaIdRef}
+value is the entire document in which the referenced model resides, but
+must refer to a subelement of the referenced model.  Since meta identifiers are
 optional attributes of \SBase, all SBML objects have the potential to
 have a meta identifier value.
 
@@ -1488,15 +1469,15 @@ case, when a MathML \token{<cn>} element references the replaced element's ident
 reference should be considered to be divided by the conversion factor.
 
 For example, if a species has an initial assignment of $4x + 3$, and has
-a conversion factor of $c$, the initial assignment formula becomes
-$c (4x+3)$.  Conversely, if the $x$ has
-been replaced and given a conversion factor of $c_x$, that initial
-assignment formula would become $4((x/c_x)+3)$.  This holds true for any
+been replaced and given a conversion factor of $c$, the initial assignment formula becomes
+$c (4x+3)$.  Conversely, if the $x$ itself has
+been replaced by $y$ and given a conversion factor of $c_x$, that initial
+assignment formula would become $4((y/c_x)+3)$.  This holds true for any
 mathematical equation in the model, including algebraic rules.  This
 also means that if a value appears on the right and left-hand sides of
 an equation, you must apply the conversion factor twice: if the rate
-rule of $x$ is $4x+3$, it becomes $c_x(4(x/c_x) + 3)$.  (This
-simplifies to $4x + 3c_x$, as you would expect---the $x$ is already in
+rule of $x$ is $4x+3$, the rate rule for $y$ becomes $c_x(4(y/c_x) + 3)$.  (This
+simplifies to $4y + 3c_x$, as you would expect---the $y$ is already in
 the correct scale; it is only the $3$ that must be converted.)
 
 

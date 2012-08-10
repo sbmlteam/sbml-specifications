@@ -4,8 +4,7 @@
 
 \section{Package syntax and semantics}
 
-In this section, we define the syntax and semantics of the Hierarchical
-Model Composition package for SBML Level~3 Version~1.  We expound on the
+In this section, we define the syntax and semantics of the Qualitative Models package for SBML Level~3 Version~1.  We expound on the
 various data types and constructs defined in this package, then in
 \sect{examples}, we provide complete examples of using the constructs in
 example SBML models.
@@ -67,7 +66,7 @@ The \primtype{transitionInputEffect} is an enumeration of values used to indicat
 
 \subsubsection{Type \fixttspace\primtypeNC{transitionOutputEffect}}
 \label{primtype-outputeffect}
-The \primtype{transitionOutputEffect} is an enumeration of values used to indicate the effect of an \Output \Transition within the system.  The possible values are \const{production}, and \const{assignmentLevel}.
+The \primtype{transitionOutputEffect} is an enumeration of values used to indicate the effect of an \Output \Transition within the system.  The possible values are \const{production} and \const{assignmentLevel}.
 
 % -----------------------------------------------------------------------------
 \subsection{Qualitative modelling}
@@ -75,11 +74,11 @@ The \primtype{transitionOutputEffect} is an enumeration of values used to indica
 
 Before describing the classes and their attributes that have been used by this Qualitative Models Specification it is worth clarifying the intended meaning of some of the terms used. 
 
-\subsubsection{Levels and symbols}
+\subsubsection{Levels}
 
-\TODO{need to address the issue of still allowing symbols in a simple form}
+%\TODO{need to address the issue of still allowing symbols in a simple form}
 
-The entities being modelled have a \emph{level} associated with them that indicate the current state of the entity. 
+The entities being modelled have a \emph{level} associated with them that indicates the current state of the entity. 
 
 A \emph{level} may be a boolean but may also represent more than two states and thus is considered to be an integer. In the case of the entity being a boolean its allowed levels would be \val{0} or \val{1}; but in other cases it may have any number of levels i.e. integer values up to and including a maximum. 
 
@@ -88,11 +87,11 @@ A \emph{level} may be a boolean but may also represent more than two states and 
 
 \subsubsection{Transitions}
 
-Qualitative Models consider \emph{transitions} between the levels/symbols of the entities involved in the model. This may involve the level of an entity being increased or decreased by a fixed amount; the level/symbol remaining unchanged; or the level/symbol being reassigned to an alternate value. Transitions occur when a set of conditions is met. These conditions may involve the levels/symbols falling above or below  a given \emph{threshold}. A simple example of this is the case where there are two entities A and B and the model states that when the level of A exceeds \val{1} (the threshold), the level of B is increased by \val{1}. 
+Qualitative Models consider \emph{transitions} that alter the levels of entities involved in the model, depending on the level of some other entities.  This may involve the level of an entity being increased or decreased by a fixed amount; the level remaining unchanged; or the level being reassigned to an alternate value. Transitions occur when a set of conditions is met. These conditions may involve the levels falling above or below  a given \emph{threshold}. A simple example of this is the case where there are two entities A and B and the model states that when the level of A exceeds \val{1} (the threshold), the level of B is increased by \val{1}. 
 
 \subsubsection{FunctionTerms}
 
-The resulting value of an entity following a transition may have several possibilities that are governed by a number of conditions. Each transition can have a list of conditional functions \emph{functionTerms}, each associated with a result that allow the user to specify sets of piecewise conditions. For example a model may wish to encode the following
+The resulting value of an entity affected by a transition may have several possibilities that are governed by a number of conditions. Each transition can have a list of conditional functions \emph{functionTerms}, each associated with a result that allow the user to specify sets of piecewise conditions. For example a model may wish to encode the following
 
 \begin{center}
 $B = \left\{ \begin{array}{cc}
@@ -135,8 +134,9 @@ the \Transition  class are defined in \sect{qualSpecies-class} and \sect{transit
 \label{qualSpecies-class}
 Similarly to the \sbml{Species} in SBML, the components of qualitative models refer to pools of entities that are considered indistinguishable and are each located in a specific \sbml{Compartment}. However, here components are characterised by their qualitative influences rather than by taking parts into reactions. Therefore, we define the \QualitativeSpecies element to represent such pools of entities.
 
-A \QualitativeSpecies describes a pool of indistinguishable entities in a \sbml{Compartment}. It is associated with either a \token{level} or a \token{symbolValue} from its \ListOfSymbolicValues. These objects classes are defined in \fig{qual-qualitative-species-uml}.
-\TODO{add listOfSymbols back}
+A \QualitativeSpecies describes a pool of indistinguishable entities in a \sbml{Compartment}. It is associated with  a \token{level} (an integer representing e.g. an activity state, or a functional level of concentration, etc)  %or a \token{symbolValue} from its \ListOfSymbolicValues.
+ These objects classes are defined in \fig{qual-qualitative-species-uml}.
+%\TODO{add listOfSymbols back}
 \begin{figure}
   \includegraphics{figs/qual-qualitative-species-uml.pdf}
   \caption{The definitions of the \QualitativeSpecies class. }
@@ -146,8 +146,8 @@ A \QualitativeSpecies describes a pool of indistinguishable entities in a \sbml{
 \paragraph{The \fixttspace\token{id} attribute}
 
 The \token{id} attribute takes a required value
-of type \primtype{SId}. The \token{id} is used as an identifier for the particluar \QualitativeSpecies. It can be used as a 
-<ci> element within MathML, in which case it it interpreted as the \emph{level} or \emph{symbol} of this \QualitativeSpecies.
+of type \primtype{SId}. The \token{id} is used as an identifier for the particular \QualitativeSpecies. It can be used as a 
+<ci> element within MathML, in which case it it interpreted as the \emph{level} of this \QualitativeSpecies.
 
 \paragraph{The \fixttspace\token{name} attribute}
 
@@ -164,7 +164,8 @@ The required attribute \token{compartment}, of type \primtype{SIdRef}, is used t
 \paragraph{The \token{constant} attribute}
 The required attribute \token{constant}, of type \primtype{boolean}, is used to indicate that the \token{level} of the qualitativeSpecies is fixed or can be varied. This attribute is comparable with the \token{constant} attribute on the \sbml{Species} element.
 
-\Q{If constant=true can the QS be an Input/Output or neither?}
+%\Q{If constant=true can the QS be an Input/Output or neither?}
+Typically, a qualitativeSpecies that only appears as Input in the model (thus is never modified by a transition, meaning that it receives no interaction) will have this attribute set to true.
 
 
 \paragraph{The \token{initialLevel}  attribute}
@@ -259,7 +260,7 @@ The required attribute \token{qualitativeSpecies}, of type \primtype{SIdRef}, is
 \paragraph{The \token{thresholdLevel}  attribute}
 The \token{thresholdLevel} is a \primtype{integer} that can be used to set the threshold level of the particular input.
 
-\TODO{ Example}
+%\TODO{ Example}
 
 \paragraph{The \token{transitionEffect} attribute}
 Each \Input has a required attribute \token{transitionEffect} of type \primtype{transitionInputEffect} which describes how the \QualitativeSpecies referenced by the \Input is affected by the \Transition. \tab{transition-input} shows the possible values with the interpretation of each value.
@@ -277,20 +278,21 @@ Each \Input has a required attribute \token{transitionEffect} of type \primtype{
   \label{transition-input}
 \end{table}
 
-The following example illustrate the interpretation of the transitionEffect attribute. In the case of qualitativeSpecies \val{A} the \token{level} is unaltered by the `
-\Transition. However the \token{level} of qualitativeSpecies \val{B} is reduced by \token{resultLevel} from the whichever \FunctionTerm is applicable (see Section|\ref{sec:function-term}
+The following example illustrates the interpretation of the transitionEffect attribute. In the case of qualitativeSpecies \val{A} the \token{level} is unaltered by the \Transition. However the \token{level} of qualitativeSpecies \val{B} is reduced by \token{resultLevel} from the whichever \FunctionTerm is applicable  (see Section|\ref{sec:function-term}). Similarly, the \token{level} of \val{C} is reduced by $2$ times \token{resultLevel} (see also Petri net example in Section \ref{sec:examples}). 
 
 \begin{example}
 <listOfInputs>
-    <input qualitativeSpecies="A" thresholdLevel="1" transitionEffect="none"/>
-    <input qualitativeSpecies="A" transitionEffect="consumption"/>
+    <input qualitativeSpecies="A"   thresholdLevel="2" transitionEffect="none"/>
+    <input qualitativeSpecies="B" transitionEffect="consumption"/>
+    <input qualitativeSpecies="C"   thresholdLevel="2" transitionEffect="consumption"/>
 </listOfInputs>
 \end{example}
 
-\TODO{An example of a resultLevel modified by a thresholdLevel}
+%\TODO{An example of a resultLevel modified by a thresholdLevel}
+
  
 \paragraph{The \token{sign} attribute}
-The \token{sign} of type \primtype{sign} can be used as an indication as to whether the contribution of this input is positive, negative, or both. The sign is usually used for visualization purposes only. This attribute is optional.
+The \token{sign} of type \primtype{sign} can be used as an indication as to whether the contribution of this input is positive, negative, both (dual) or unknown. The sign is usually used for visualization purposes only. This attribute is optional.
 
 
 \subsubsection{The \class{Output} class}
@@ -318,12 +320,23 @@ The \token{outputLevel} is an \primtype{integer} used along with the \token{tran
 \paragraph{The \token{transitionEffect} attribute}
 Each \Output has a required attribute \token{transitionEffect} of type \primtype{transitionOutputEffect} which describes how the \QualitativeSpecies referenced by the \Output is affected by the \Transition. \tab{transition-output} shows the possible values with the interpretation of each value.
 
+The following example illustrates the interpretation of the transitionEffect attribute. In the case of qualitativeSpecies \val{A} the \token{level} is assigned the \token{resultLevel} from the whichever \FunctionTerm is applicable, whereas the \token{level} of qualitativeSpecies \val{B} is increased by \token{resultLevel}. Similarly, the \token{level} of \val{C} is increased by $2$ times \token{resultLevel} (see also Petri net example in Section \ref{sec:examples}). 
+
+\begin{example}
+<listOfOutputs>
+    <output qualitativeSpecies="A"   transitionEffect="assignmentLevel"/>
+    <output qualitativeSpecies="B"   transitionEffect="production"/>
+    <output qualitativeSpecies="C"   outputLevel="2" transitionEffect="production"/>
+</listOfInputs>
+\end{example}
+
+
 \begin{table}[thb]
   \begin{edtable}{tabular}{p{1in}p{5in}}
     \toprule
-    \textbf{TransitionInputEffect} & \textbf{Interpretation} \\
+    \textbf{TransitionOutputEffect} & \textbf{Interpretation} \\
     \midrule
-    \const{production} & The level of the \token{qualitativeSpecies} is increased by the \token{resultLevel} of the selected term possibly modified by the \token{thresholdLevel} of the \Output.\\
+    \const{production} & The level of the \token{qualitativeSpecies} is increased by the \token{resultLevel} of the selected term possibly modified by the \token{outputLevel} of the \Output.\\
     \const{assignmentLevel} & The level of the \token{qualitativeSpecies} is set to the \token{resultLevel} of the selected term. \\
 %    \const{assignmentSymbol} & The symbol of the \token{qualitativeSpecies} is set to the \token{resultSymbol} of the selected term.\\
     \bottomrule
@@ -344,7 +357,7 @@ The default result is described by a \token{resultLevel}. This attribute is requ
 
 The \token{resultLevel} is an \primtype{integer} describing a level. 
 
-\Q{why is this not derived from SBase - since this means you cannot add an annotation to it}
+%\Q{why is this not derived from SBase - since this means you cannot add an annotation to it}
 
 \subsubsection{The \class{FunctionTerm} class}
 \label{sec:function-term}

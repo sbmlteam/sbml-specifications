@@ -70,21 +70,21 @@ attribute having type \primtype{FbcSIdRef} must match the value of a
 \label{listoffluxbounds-class}
 \label{listofobjectives-class}
 
-The \SBML \Model class is extended with the addition of two children, i.e. a \token{listOfFluxBounds} and a \token{listOfObjectives}. 
- 
+The \SBML \Model class is extended with the addition of two children, i.e. a \token{listOfFluxBounds} and a \token{listOfObjectives}.
+
 
 \subsubsection{The lists of objectives and flux bounds}
-As shown in \ref{fig:fbc_uml} the \ListOfFluxBounds and \ListOfObjectives are derived from \SBase and inherit \token{metaid} and \token{sboTerm}, as well as the subcomponents for \Annotation and \Notes. Both of these list are required to contain one or more elements when defined, however, the lists themselves are optional. Unlike most other \SBML \textsf{\textbf{ListOf\rule{0.15in}{0.5pt}}} classes, \ListOfObjectives introduces an additional required attribute \token{activeObjective}
+As shown in \ref{fig:fbc_uml} the \ListOfFluxBounds and \ListOfObjectives are derived from \SBase and inherit \token{metaid} and \token{sboTerm}, as well as the subcomponents for \Annotation and \Notes. Both of these list are required to contain one or more elements when defined, however, the lists themselves are optional. Unlike most other \SBML \textsf{\textbf{ListOf\rule{0.15in}{0.5pt}}} classes, \ListOfObjectives introduces an additional required attribute \token{activeObjective}.
 
 \paragraph{The \token{activeObjective} attribute}
 \label{activeObjective-attribute}
-This attribute contains a \val{value} of type \primtype{FbcSIdRef} that exclusively refers to an existing \token{objective}. This attribute exists so that in the case where multiple \Objective's are defined in a single model the model will always be complete, i.e. there is a single, primary optimization target.
+This attribute contains a \val{value} of type \primtype{FbcSIdRef} that can only refer to an existing \Objective \primtype(FbcSId). This required attribute exists so that when multiple \Objective's are included in a single model, the model will always be well described i.e. there is a single, primary objective function which closes the solution space.
 
 \subsection{The extended \class{Species} class}
 \label{sbml-species}
 \label{species-class}
 
-The `FBC' package extends the \SBML \Species class with the addition of two attributes:
+The \FBC package extends the \SBML \Species class with the addition of two attributes:
 \begin{itemize}
   \item an optional attribute \token{charge} which contains an \primtype{integer} referring the the \Species' charge (as defined in \SBML Level 2)
   \item an optional attribute \token{chemicalFormula} containing a \primtype{string} that represents the \Species' elemental composition.
@@ -94,43 +94,79 @@ The `FBC' package extends the \SBML \Species class with the addition of two attr
 \label{chemicalFormula-attribute}
 While there are many ways of referring to an elemental composition the purpose of the \token{chemicalFormula} attribute is to allow reaction balancing and validation which is particularly important in constraint based models. To this end it is recommended that the format of \token{chemicalFormula} should follow the Hill system (or notation). Here the number of carbon atoms in a molecule is indicated first, followed by the number of hydrogen atoms and then the number of all other chemical elements in alphabetical order. When the formula contains no carbon; all elements, including hydrogen, are listed alphabetically \cite{hillsystem, hillwikipedia}.
 
-\subsection{The \class{FluxBound} class}
+\subsection{The \FBC \class{FluxBound} class}
 \label{fluxbound-class}
 
-\FluxBound is a new FBC class derived from \SBML \SBase that inherits \token{metaid} and \token{sboTerm}, as well as the subcomponents for \Annotation and \Notes. The purpose of this class is to hold the a single (in)equality that provides the maximum or minimum value that a reaction flux can obtain at steady state. It is is relatively straight forward and implements four attributes.
+\FluxBound is a new \FBC class derived from \SBML \SBase that inherits \token{metaid} and \token{sboTerm}, as well as the subcomponents for \Annotation and \Notes. The purpose of this class is to hold a single (in)equality that provides the maximum or minimum value that a reaction flux can obtain at steady state. It is is relatively straight forward and implements four attributes.
 
 \begin{itemize}
-  \item \token{id} an attribute that can take exclusively contain an \primtype{FbcSId}
-  \item \token{reaction} an attribute that takes an \primtype{SIdRef} which refers only to an \SBML \Reaction
-  \item \token{operation} an \primtype{enum} that can take a limited set of boolean operators (see text for details on the enumerated allowed types)
-  \item \token{value} an attribute that takes a \primtype{double} value representing the bound. This may include $\pm\infty$ 
+  \item An \token{id} attribute that contains an \primtype{FbcSId},
+  \item a \token{reaction} attribute that takes an \primtype{SIdRef} and can take \SBML \Reaction \primtype{SId} as a value,
+  \item an \token{operation} attribute of type \primtype{enum} that can take a limited set of boolean operators (see text below for details),
+  \item \token{value} an attribute that takes a \primtype{double} value representing the bound. This may include $\pm\infty$.
 \end{itemize}
 
 \paragraph{The \token{operation} attribute}
-The \token{operation} attribute represents the (in)equality in the expression \token{reaction}, \token{operator} \token{value} an enumerated type that can have the following values:
-\begin{itemize}
-  \item \val{lessEqual} representing $<=$ 
-  \item \val{greaterEqual} representing $>=$ 
-  \item \val{less} representing $<$
-  \item \val{greater} representing $>$ 
-  \item \val{equal} representing $=$
-  \item \val{unknown} representing an undefined symbol
-\end{itemize}
+The \token{operation} attribute represents a mathematical (in)equality of the form <\token{reaction}> <\token{operator}> <\token{value}> e.g.
+ \begin{quote}\center
+ R$_{5}$ >= 0\newline 
+ R$_{5}$ <~ $\infty$\newline 
+ R$_{7}$ = 1.0\newline
+\end{quote} 
+An enumerated type that can take one of the following values:
+\begin{eqnarray*}
+% I'm using \mapsto until I can find the proper symbol - bgoli
+\label{fb-operation-enum}
+ \nonumber
+  <= & \mapsto & \val{lessEqual}\\
+  >= & \mapsto & \val{greaterEqual}\\
+  < & \mapsto & \val{less}\\
+  > & \mapsto & \val{greater}\\
+  = & \mapsto & \val{equal}\\
+  \textrm{undefined} & \mapsto & \val{unknown}
+\end{eqnarray*}
+%\begin{itemize}
+%  \item \val{lessEqual}, equivalent to $<=$
+%  \item \val{greaterEqual}, equivalent to $>=$
+%  \item \val{less}, equivalent to $<$
+%  \item \val{greater}, equivalent to $>$
+%  \item \val{equal}, equivalent to $=$
+%  \item \val{unknown} representing an undefined operator
+%\end{itemize}
 
 
-
-
-
-
-
-
-
-\subsection{The \class{Objective} class}
+\subsection{The \FBC \class{Objective} class}
 \label{objective-class}
 \label{listoffluxobjectives-class}
 
+As shown in \ref{fig:fbc_uml} the \FBC \Objective class is derived from \SBML \SBase and inherits \token{metaid} and \token{sboTerm}, as well as the subcomponents for \Annotation and \Notes. An integral component in a complete description of a steady-state model is the so-called `objective function' which generally consist of a linear combination of model variables (fluxes) and a sense (direction). In the \FBC package this concept is succinctly captured in the \Objective class containing three required attributes:
+\begin{itemize}
+  \item \token{id} an attribute that can only contain an \primtype{FbcSId},
+  \item \token{type} an \primtype{enum} (see below),
+  \item \token{listOfFluxes} which contains a \ListOfFluxObjectives.
+\end{itemize}
 
-\subsection{The \class{FluxObjective} class}
+\paragraph{The \token{type} attribute}
+The \token{type} attribute contains an \primtype{enum} which represents the sense of the optimality constraint and can take one of three values:
+\begin{eqnarray*}
+% I'm using \mapsto until I can find the proper symbol - bgoli
+\label{obj-type-enum}
+ \nonumber
+  maximize & \mapsto & \val{maximize}\\
+  minimize & \mapsto & \val{minimize}\\
+ \textrm{undefined} & \mapsto & \val{unknown}
+\end{eqnarray*}
+
+\paragraph{The \token{listOfFluxes} attribute}
+The \ListOfFluxObjectives is derived from and functions like a typical \SBML \textsf{\textbf{ListOf\rule{0.15in}{0.5pt}}} class with the proviso that it cannot be empty and must contain one or more \token{fluxObjective} attributes of type \FluxObjective (see \ref{fluxobjective-class}).
+
+\subsection{The \FBC \class{FluxObjective} class}
 \label{fluxobjective-class}
 
+As shown in \ref{fig:fbc_uml} the \FBC \FluxObjective class is derived from \SBML \SBase and inherits \token{metaid} and \token{sboTerm}, as well as the subcomponents for \Annotation and \Notes.
 
+The \FluxObjective class is a relatively simple container for a model variable weighted by a signed coefficient:
+\begin{itemize}
+  \item \token{id} an attribute that contains an \primtype{SId} that is restricted to refer only to an \SBML \Reaction,
+  \item \token{coefficient} a \primtype{double}.
+\end{itemize}

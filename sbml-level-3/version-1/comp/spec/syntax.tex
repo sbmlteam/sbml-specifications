@@ -285,9 +285,7 @@ can use them in \Submodel objects.
 
 \ExternalModelDefinition contains two required attributes
 (\token{source} and \token{id}) and three optional attributes
-(\token{modelRef}
-%, \token{md5} 
-and \token{name}).  These attributes are
+(\token{modelRef}, \token{md5} and \token{name}).  These attributes are
 explained below.
 
 
@@ -384,61 +382,59 @@ The following is a (fake) example:
 \end{example}
 
 
+\paragraph{The \fixttspace\token{md5} attribute}
 
-%\paragraph{The \fixttspace\token{md5} attribute}
+The optional \token{md5} attribute takes a \primtype{string} value.  If
+set, it must be an MD5 checksum value computed over the document
+referenced by \token{source}.  This checksum can serve as a data
+integrity check over the contents of the \token{source}.  Applications
+may use this to verify that the contents have not changed since the time
+that the \ExternalModelDefinition reference was constructed.  The
+procedure for using the \token{md5} attribute is described in
+\tab{md5-procedures}.
 
-%The optional \token{md5} attribute takes a \primtype{string} value.  If
-%set, it must be an MD5 checksum value computed over the document
-%referenced by \token{source}.  This checksum can be used as a data integrity
-%check over the contents of the \token{source}.  Applications may use
-%this to verify that the contents have not changed since the time that
-%the \ExternalModelDefinition reference was constructed.  The procedure
-%for using the \token{md5} attribute is described in
-%\tab{md5-procedures}.
+\begin{table}[thb]
+ \begin{edtable}{tabular}{p{1in}l@{\hspace{0.75ex}}p{5in}}
+   \toprule
+   \textbf{Case} & \multicolumn{2}{l}{\textbf{Procedure}} \\
+   \midrule
+   Creating and writing & 1.& Compute the MD5 hash for the document located at \token{source}.\\
+   an SBML document     & 2.& Store the hash value as the value of the \token{md5} attribute. \\
+   \midrule
+   Reading an SBML      & 1.& Read the value of the \token{md5} attribute.\\
+   document             & 2.& Read the document at the location indicated by the
+                               \token{source} attribute value.\\
+                        & 3.& Compute the MD5 hash for the document.\\
+                        & 4.& Compare the computed MD5 value to the value in the \token{md5} attribute.  
+                        If they are identical, assume the document has not changed since the
+                        time the \ExternalModelDefinition object was defined; if the values
+                        are different, assume that the document indicated by \token{source}
+                        has changed. \\
+   \bottomrule
+ \end{edtable}
+ \caption{Procedures for using the \token{md5} attribute on
+   \ExternalModelDefinition.} 
+ \label{md5-procedures}
+\end{table}
 
-%\begin{table}[thb]
-%  \begin{edtable}{tabular}{p{1in}l@{\hspace{0.75ex}}p{5in}}
-%    \toprule
-%    \textbf{Case} & \multicolumn{2}{l}{\textbf{Procedure}} \\
-%    \midrule
-%    Creating and writing & 1.& Compute the MD5 hash for the document located at \token{source}.\\
-%    an SBML document     & 2.& Store the hash value as the value of the \token{md5} attribute. \\
-%    \midrule
-%    Reading an SBML      & 1.& Read the value of the \token{md5} attribute.\\
-%    document             & 2.& Read the document at the location indicated by the
-%                                \token{source} attribute value.\\
-%                         & 3.& Compute the MD5 hash for the document.\\
-%                         & 4.& Compare the computed MD5 value to the value in the \token{md5} attribute.  
-%                         If they are identical, assume the document has not changed since the
-%                         time the \ExternalModelDefinition object was defined; if the values
-%                         are different, assume that the document indicated by \token{source}
-%                         has changed. \\
-%    \bottomrule
-%  \end{edtable}
-%  \caption{Procedures for using the \token{md5} attribute on
-%    \ExternalModelDefinition.} 
-%  \label{md5-procedures}
-%\end{table}
+Software tools encountering a difference in the MD5 checksums should
+warn their users that a discrepancy exists, because a difference in the
+documents may imply a difference in the mathematical interpretation of
+the models.
 
-%Software tools encountering a difference in the MD5 checksums should
-%warn their users that a discrepancy exists, because a difference in the
-%documents may imply a difference in the mathematical interpretation of
-%the models.
-
-%Note that the MD5 approach is not without limitations.  An MD5 hash is
-%typically expressed as a 32-digit hexadecimal number.  If a difference
-%arises in the checksum values, there is no way to determine the cause of
-%the difference without an component-by-component comparison of the
-%models.  (Even a difference in annotations, which cannot affect a models' mathematical
-%interpretations, will result in a difference in the MD5 checksum
-%values.)  On the other hand, it is also not impossible that two
-%different documents yield the \emph{same} MD5 hash value, although it is
-%extremely unlikely in practice.  In any event, the MD5 approach is
-%intended as an optional, simple and fast data integrity check, and not a
-%final answer.
+Note that the MD5 approach is not without limitations.  An MD5 hash is
+typically expressed as a 32-digit hexadecimal number.  If a difference
+arises in the checksum values, there is no way to determine the cause of
+the difference without an component-by-component comparison of the
+models.  (Even a difference in annotations, which cannot affect a
+models' mathematical interpretations, will result in a difference in the
+MD5 checksum values.)  On the other hand, it is also not impossible that
+two different documents yield the \emph{same} MD5 hash value (due to
+hash collision), although it is extremely unlikely in practice.  In any
+event, the MD5 approach is intended as an optional, simple and fast data
+integrity check, and not a final answer.
 
 
-% -----------------------------------------------------------------------------
 \subsection{The extended \class{Model} class}
 \label{model-class}
 \label{listofsubmodels-class}
@@ -453,7 +449,6 @@ diagram.  The rest of this section defines the extended \Model class and
 the \Port class; the class \Submodel is defined in \sec{submodel-class}.
 
 \begin{figure}[hbt]
-  \vspace*{1em}                         % Hack to improve the page break
   \begin{overpic}{figs/extended-model-uml}
     \put(70.5,36.9){\emph{\sec*{submodel-class}}}
     \put(88.25,23.75){\emph{\sec*{sbaseref-class}}}
@@ -685,11 +680,10 @@ list of model definitions (\fig{hierarchical-sbml-uml}) in the \SBML
 object.
 
 Because the model namespace is defined per SBML document, it is possible
-to define and include a new model namespace by creating a new document,
-then importing one or more of those models using the
+to define and include a new model namespace by creating a new document
+and then importing one or more of those models using the
 \ExternalModelDefinition class.  \sec{namespaces} discusses the
-important topic of identifier scoping in the Hierarchical Model
-Composition package.
+important topic of identifier scoping.
 
 
 \paragraph{The \fixttspace\token{timeConversionFactor} attribute}
@@ -852,18 +846,19 @@ replaced by another.  These two possibilities are captured by the
 shown in \fig*{extended-sbase-uml}.
 
 \begin{figure}[hbt]
+  \vspace*{-1ex}
   \begin{overpic}{figs/extended-sbase-uml}
     \put(88.5,40.25){\emph{\sec*{sbaseref-class}}}
   \end{overpic}
-  \vspace*{-2ex}
+  \vspace*{-3ex}
   \caption{The extension of \SBase and the definition of the
     \ListOfReplacedElements and \ReplacedElement classes.  The \SBaseRef
   class is defined in \sec{sbaseref-class}.}
   \label{extended-sbase-uml}
 \end{figure}
 
-Since \SBase in SBML is the abstract base class of all other SBML object
-classes, the extension of \SBase means all SBML objects gain the ability
+\SBase in SBML is the abstract base class of all other SBML object
+classes; consequently, the extension of \SBase means all SBML objects gain the ability
 to define how they replace (or are replaced by) components in submodels.
 Replacements are a general mechanism that serve multiple purposes.  At
 their most basic, they allow a model builder to make a statement of the
@@ -1088,11 +1083,10 @@ two \token{conversionFactor} elements multiplied together.
 
 \subsubsection{The \fixttspace\tokenNC{replacedBy} subcomponent}
 
-As mentioned above, the extension of \SBase defined in
-\fig{extended-sbase-uml} introduces a new optional subcomponent,
-\token{replacedBy}.  Its value, if present on a given \SBase-derived
-object, must be a single object of the \ReplacedBy class, described
-below.
+The extension of \SBase defined in \fig{extended-sbase-uml} introduces a
+new optional subcomponent, \token{replacedBy}.  Its value, if present on
+a given \SBase-derived object, must be a single object of the
+\ReplacedBy class, described below.
 
 
 \subsubsection{The \ReplacedBy class}

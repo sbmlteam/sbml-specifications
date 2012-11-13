@@ -43,7 +43,8 @@ Constraints package:
   \centering
   % Requires \usepackage{graphicx}
   \includegraphics[width=\textwidth]{images/fbc_uml.pdf}\\
-  \caption{A UML representation of the Flux Balance Constraints package classes. See \ref{conventions}} for conventions related to this figure. \label{fig:fbc_uml}
+  \caption{A UML representation of the \FBCPackage classes. See \ref{conventions} for conventions related to this figure. The individual classes are further discussed in the text.} 
+  \label{fig:fbc_uml}
 \end{figure}
 
 \subsection{Primitive data types}
@@ -72,11 +73,11 @@ attribute having type \primtype{FbcSIdRef} must match the value of a
 \label{listoffluxbounds-class}
 \label{listofobjectives-class}
 
-The \SBML \Model class is extended with the addition of two children, i.e. a \token{listOfFluxBounds} and a \token{listOfObjectives}. The \Model may contain at most one of these lists. 
+The \SBML \Model class is extended with the addition of two children, i.e. a \token{listOfFluxBounds} and a \token{listOfObjectives}. The \Model may contain at most one of these lists.
 
 
 \subsubsection{The \FBC \class{listOfFluxBounds}}
-As shown in \ref{fig:fbc_uml} the \ListOfFluxBounds is derived from \SBase and inherits the attributes \token{metaid} and \token{sboTerm}, as well as the subcomponents for \Annotation and \Notes. \ListOfFluxBounds must contain at least one \FluxBound (defined in \ref{fluxbound-class}). 
+As shown in \ref{fig:fbc_uml} the \ListOfFluxBounds is derived from \SBase and inherits the attributes \token{metaid} and \token{sboTerm}, as well as the subcomponents for \Annotation and \Notes. \ListOfFluxBounds must contain at least one \FluxBound (defined in \ref{fluxbound-class}).
 
 \subsubsection{The \FBC \class{listOfObjectives}}
 As shown in \ref{fig:fbc_uml} the \ListOfObjectives is derived from \SBase and inherits the attributes \token{metaid} and \token{sboTerm}, as well as the subcomponents for \Annotation and \Notes. Unlike most other \SBML \textsf{\textbf{ListOf\rule{0.15in}{0.5pt}}} classes, \ListOfObjectives introduces an additional required attribute \token{activeObjective}. The \ListOfObjectives must contain at least one \Objective (defined in \ref{objective-class}).
@@ -89,42 +90,43 @@ This attribute contains a \val{value} of type \primtype{FbcSIdRef} that can only
 \label{sbml-species}
 \label{species-class}
 
-The \FBC package extends the \SBML \Species class with the addition of two attributes:
-\begin{itemize}
-  \item an optional attribute \token{charge} which contains an \primtype{integer} referring to the \Species objects charge (as defined in \SBML Level 2)
-  \item an optional attribute \token{chemicalFormula} containing a \primtype{string} that represents the \Species objects elemental composition.
-\end{itemize}
+The \FBCPackage extends the \sbmlthreecore \Species class with the addition of two attributes:
+
+\paragraph{The \token{charge} attribute}
+The optional attribute \token{charge} which contains a signed \primtype{integer} referring to the \Species object's charge (as defined in the \SBML Level 2 Version 1 specification)
 
 \paragraph{The \token{chemicalFormula} attribute}
 \label{chemicalFormula-attribute}
-While there are many ways of referring to an elemental composition the purpose of the \token{chemicalFormula} attribute is to allow reaction balancing and validation which is particularly important in constraint based models. To this end it is recommended that the format of \token{chemicalFormula} should follow the Hill system (or notation). Here the number of carbon atoms in a molecule is indicated first, followed by the number of hydrogen atoms and then the number of all other chemical elements in alphabetical order. When the formula contains no carbon; all elements, including hydrogen, are listed alphabetically \cite{hillsystem, hillwikipedia}.
-
-
-\paragraph{The extended \Species}
-The \FBC package extend the \SBML \Species of \sbmlthreecore by providing attributes for storing \token{charge} and \token{chemicalFormula}
+The optional attribute \token{chemicalFormula} containing a \primtype{string} that represents the \Species objects elemental composition.
 %
 \exampleFile{examples/ex_spec_l3.txt}
+%
+While there are many ways of referring to an elemental composition the purpose of the \token{chemicalFormula} attribute is to allow reaction balancing and validation which is particularly important in constraint based models. To this end it is recommended that the format of \token{chemicalFormula} should follow the Hill system (or notation). Here the number of carbon atoms in a molecule is indicated first, followed by the number of hydrogen atoms and then the number of all other chemical elements in alphabetical order. When the formula contains no carbon; all elements, including hydrogen, are listed alphabetically \cite{hillsystem, hillwikipedia}.
+%
+\begin{figure}[h]
+  \centering
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=6cm]{images/fbc_uml_species.pdf}\\
+  \caption{A UML representation of the extended \SBML \Species class used in the \FBCPackage. See \ref{conventions} for conventions related to this figure.}
+  \label{fig:fbc_uml_species}
+\end{figure}
+
+
 
 \subsection{The \FBC \class{FluxBound} class}
 \label{fluxbound-class}
 
 \FluxBound is a new \FBC class derived from \SBML \SBase that inherits \token{metaid} and \token{sboTerm}, as well as the subcomponents for \Annotation and \Notes. The purpose of this class is to hold a single (in)equality that provides the maximum or minimum value that a reaction flux can obtain at steady state. It is is relatively straight forward and implements four attributes.
 
-\begin{itemize}
-  \item An \token{id} attribute that contains an \primtype{FbcSId},
-  \item a \token{reaction} attribute that takes an \primtype{SIdRef} and can take \SBML \Reaction \primtype{SId} as a value,
-  \item an \token{operation} attribute of type \primtype{enum} that can take a limited set of boolean operators (see text for details),
-  \item \token{value} an attribute that takes a \primtype{double} value representing the bound. This may include $\pm\infty$ encoded as the value \val{INF}
-\end{itemize}
+\paragraph{The \token{id} and token \token{name} attributes}
+A \FluxBound has two optional attributes: \token{id} an attribute that holds an \primtype{FbcSId} and \token{name} that contains a \primtype{string}.
+
+\paragraph{The \token{reaction} attribute}
+The required \token{reaction} attribute that takes only an \SBML \Reaction \primtype{SId} as a value.
 
 \paragraph{The \token{operation} attribute}
-The \token{operation} attribute represents a mathematical (in)equality of the form <\token{reaction}> <\token{operator}> <\token{value}> e.g.
- \begin{quote}\center
- R$_{5}$ >= 0\newline
- R$_{5}$ <~ $\infty$\newline
- R$_{7}$ = 1.0\newline
-\end{quote}
-An enumerated type that can take one of the following values:
+The \token{operation} attribute contains a value of type \primtype{enum} that can take a limited set of boolean operators. The \token{operation} attribute represents a mathematical (in)equality of the form <\token{reaction}> <\token{operator}> <\token{value}> e.g.
+R$_{5}$ >= 0, R$_{5}$ <~ $\infty$ and R$_{7}$ = 1.0. As an enumerated type it can take one of the following values:
 \begin{eqnarray*}
 % I'm using \mapsto until I can find the proper symbol - bgoli
 \label{fb-operation-enum}
@@ -135,15 +137,9 @@ An enumerated type that can take one of the following values:
   > & \mapsto & \val{greater}\\
   = & \mapsto & \val{equal}
 \end{eqnarray*}
-%\begin{itemize}
-%  \item \val{lessEqual}, equivalent to $<=$
-%  \item \val{greaterEqual}, equivalent to $>=$
-%  \item \val{less}, equivalent to $<$
-%  \item \val{greater}, equivalent to $>$
-%  \item \val{equal}, equivalent to $=$
-%  \item \val{unknown} representing an undefined operator
-%\end{itemize}
 
+\paragraph{The \token{value} attribute}
+The \token{value} attribute holds a \primtype{double} value representing the numerical value of the flux bound. This may include an explicitly defined $\pm\infty$ encoded as a value, e.g. \val{INF}.
 
 \paragraph{Encoding the \FluxBound}
 As described in \ref{fluxbound-class} the flux bound represents a mathematical (in)equality of the form <\token{reaction}> <\token{operator}> <\token{value}>. In SBML Level~3 Version~1 with \FBC this is encoded as:
@@ -152,23 +148,27 @@ As described in \ref{fluxbound-class} the flux bound represents a mathematical (
 %
 This example illustrates two things: the encoding of $\infty$ and that care should be used when selecting inequalities such as \val{less} or \val{greater}. While mathematically there is a difference, this difference is only practically relevant when working with rational arithmetic (solvers).
 
+\begin{figure}[h]
+  \centering
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=5cm]{images/fbc_uml_fbnd.pdf}\\
+  \caption{A UML representation of the \FBCPackage \FluxBound class. See \ref{conventions} for conventions related to this figure.}
+  \label{fig:fbc_uml_fbnd}
+\end{figure}
+
 
 \subsection{The \FBC \class{Objective} class}
 \label{objective-class}
 \label{listoffluxobjectives-class}
 
-As shown in \ref{fig:fbc_uml} the \FBC \Objective class is derived from \SBML \SBase and inherits \token{metaid} and \token{sboTerm}, as well as the subcomponents for \Annotation and \Notes. An integral component in a complete description of a steady-state model is the so-called `objective function' which generally consist of a linear combination of model variables (fluxes) and a sense (direction). In the \FBC package this concept is succinctly captured in the \Objective class containing two required attributes:
 
-\begin{itemize}
-  \item \token{id} an attribute that can only contain an \primtype{FbcSId},
-  \item \token{type} an \primtype{enum} (see below),
-\end{itemize}
+The \FBC \Objective class is derived from \SBML \SBase and inherits \token{metaid} and \token{sboTerm}, as well as the subcomponents for \Annotation and \Notes. An integral component in a complete description of a steady-state model is the so-called `objective function' which generally consist of a linear combination of model variables (fluxes) and a sense (direction). In the \FBC package this concept is succinctly captured in the \Objective class.
 
-and one required element \token{listOfFluxObjectives} which contains a \ListOfFluxObjectives.
-
+\paragraph{The \token{id} and token \token{name} attributes}
+An \Objective has a required attribute \token{id} that holds an \primtype{FbcSId} and and optional attribute \token{name} that contains a \primtype{string}.
 
 \paragraph{The \token{type} attribute}
-The \token{type} attribute contains an \primtype{enum} which represents the sense of the optimality constraint and can take one of three values:
+The required \token{type} attribute contains an \primtype{enum} type which represents the sense of the optimality constraint and can take one of two values:
 \begin{eqnarray*}
 % I'm using \mapsto until I can find the proper symbol - bgoli
 \label{obj-type-enum}
@@ -178,23 +178,42 @@ The \token{type} attribute contains an \primtype{enum} which represents the sens
 \end{eqnarray*}
 
 \paragraph{The \token{listOfFluxObjectives} element}
-The \ListOfFluxObjectives is derived from and functions like a typical \SBML \textsf{\textbf{ListOf\rule{0.15in}{0.5pt}}} class with the proviso that it cannot be empty and must contain one or more \token{fluxObjective} elements of type \FluxObjective (see \ref{fluxobjective-class}).
+The attribute \token{listOfFluxObjectives} which contains a \ListOfFluxObjectives is derived from and functions like a typical \SBML \textsf{\textbf{ListOf\rule{0.15in}{0.5pt}}} class with the restriction that it cannot be empty and therefore must contain one or more elements of type \FluxObjective (see \ref{fluxobjective-class}).
+
+\begin{figure}[h]
+  \centering
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=5cm]{images/fbc_uml_obj.pdf}\\
+  \caption{A UML representation of the \FBCPackage \Objective class. See \ref{conventions} for conventions related to this figure.}
+  \label{fig:fbc_uml_obj}
+\end{figure}
+
+\paragraph{Encoding the \Objective}
+The \FBCPackage allows for the definition of multiple model objectives with one being designated as active (see \ref{objective-class}) as illustrated in this example:
+%
+\exampleFile{examples/ex_objf_fbc.txt}
+%
+Note how both \Objective instances differ in \token{type} and each contains different set of \class{FluxObjectives} (see \ref{fluxobjective-class}).
 
 \subsection{The \FBC \class{FluxObjective} class}
 \label{fluxobjective-class}
 
-As shown in \ref{fig:fbc_uml} the \FBC \FluxObjective class is derived from \SBML \SBase and inherits \token{metaid} and \token{sboTerm}, as well as the subcomponents for \Annotation and \Notes.
+The \FBC \FluxObjective class is derived from \SBML \SBase and inherits \token{metaid} and \token{sboTerm}, as well as the subcomponents for \Annotation and \Notes.
 
-The \FluxObjective class is a relatively simple container for a model variable weighted by a signed linear coefficient:
-\begin{itemize}
-  \item \token{reaction} an attribute that contains an \primtype{SId} that is restricted to refer only to an \SBML \Reaction,
-  \item \token{coefficient} a \primtype{double}.
-\end{itemize}
+The \FluxObjective class is a relatively simple container for a model variable weighted by a signed linear coefficient.
+
+\paragraph{The \token{id} and \token{name} attributes}
+A \FluxObjective has two optional attributes: \token{id} an attribute that holds an \primtype{FbcSId} and \token{name} that contains a \primtype{string}.
+
+\paragraph{The \token{reaction} and \token{coefficient} attributes}
+The required \token{reaction} attribute contains an \primtype{SId} that is restricted to refer only to an \SBML \Reaction while the \token{coefficient} attribute holds a \primtype{double} referring to this variables objective coefficient.
+
+\begin{figure}[h]
+  \centering
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=5cm]{images/fbc_uml_fobj.pdf}\\
+  \caption{A UML representation of the \FBCPackage \FluxObjective class. See \ref{conventions} for conventions related to this figure.}
+  \label{fig:fbc_uml_fobj}
+\end{figure}
 
 
-\paragraph{Encoding the \Objective}
-The \FBC allows for the definition of multiple `objective functions' with one being designated as active (see \ref{objective-class}) the following example illustrates this:
-%
-\exampleFile{examples/ex_objf_fbc.txt}
-%
-Note how both \Objective instances differ in \token{type} and each contains different set of \class{FluxObjectives}.

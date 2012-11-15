@@ -152,7 +152,7 @@ they disagree with what is proposed. Similarly there will be points
 --- especially as the proposal is consolidated --- which are agreed,
 but which the reader should take note of and perhaps read again. These
 points \watchout are emphasised by the hand pointer in the left margin
-(illustrated),
+(illustrated.
 
 \section{Background}
 
@@ -326,6 +326,9 @@ very helpful in solving the problem of multivariate distributions in
   of SBML L3 core.
 \end{itemize}
 
+\subsubsection{COMBINE 2012: Toronto}
+
+
 \section{Proposed syntax and semantics}
 
 \subsection{Colour Conventions}
@@ -348,10 +351,8 @@ MathML~\cite{mathml2}.
 SBML Core is extended at the \FunctionDefinition class as can be seen
 in the UML representation in figure \vref{fig:umlmodel}. The extended
 \FunctionDefinition can optionally contain a single instance of a new
-class \class{Distribution} that is part of the distrib package. The \class{Distribution} class can
-then either refer to an element in UncertML using or alternatively a
-\class{Distribution} can contain a \mmath class that is used to define the
-distribution explicitly.
+class \class{externalDefinition} or \class{explicitPDF} or
+\class{explicitPMF}.
 
 \begin{figure}[htb]
 \includegraphics[width=1.0\linewidth]{DistribUMLModel.pdf}
@@ -369,33 +370,65 @@ that an SBML model that uses that extension will not be correctly
 defined unless the features of the extension are used and interpreted
 correctly by supporting software.
 
-\subsection{FunctionDefinition Extension}
+\subsection{\FunctionDefinition Extension}
 
-As outlined above the \FunctionDefinition is extended to include the attributes defined below.
+As outlined above the \FunctionDefinition is extended to contain the
+following classes from \distribshort.
 
-\paragraph{\token{function}}
+\begin{itemize}
+  \item \class{externalDefinition}
+  \item \class{explicitPDF}
+  \item \class{explicitPMF}
+\end{itemize}
+
+\subsection{externalDefinition}
+\label{sec:extlDefnDistn}
+
+This declares a statistical distribution by referring to an external
+normative definition. \uncertml is the recommended source of such
+definitions. The attributes of the class are defined below.
+
+\paragraph{\token{uri}}
 
 This provides the external definition of the distribution to be
 invoked. The value of the attribute should be a URI that
 uniquely identifies a definition from an external resource. The exact
 nature of this URI and the external resource to use is discussed below
-(section \ref{sec:extlDefnDistn}). The attribute is optional.
+(section \ref{sec:extlDefnDistn}). The attribute is mandatory.
 
-\paragraph{\token{explicit}}
+\paragraph{\token{truncated}}
+\label{sec:truncatt}
 
-This attribute indicates that a user-defined (or explicit) continuous
-distribution will be defined. If it has a value of \texttt{true} then
-the \mathml expression in the body of the function definition should
-define a probability definition function. In this case this also
-serves as the fallback function. Note that a user define discrete
-distribution is defined in a different way (see section
-\ref{sec:userDefinedDiscrete}).
+This attribute indicates that a distribution is to be truncated, if
+true or not if false. How this truncation is to be implemented is tool
+specific. When set to true an additional two arguments are implied
+when invoking the distribution. These arguments are appended to
+those already required by the distribution and are invoked in the
+order they are described below.
 
-\subsubsection{Usage Rules}
+\begin{description}
+\item[lower limit] The lower boundary of the truncation.
+\item[upper limit] The upper boundary of the truncation.
+\end{description}
 
-The \token{function} cannot have a value (i.e.\xspace it must be
-\texttt{null}) when the \token{explicit} attribute has a value of
-\texttt{true}.
+\subsection{explicitPDF}
+
+This class defines a probability density function (PDF) explicitly and
+so provides a continuous probability distribution that can be
+sampled. The PDF is defined as a mathematical function using
+\mathml. The distribution can be truncated.
+
+\paragraph{truncated}
+
+See the truncated attribute in section \ref{sec:truncatt}.
+
+\subsection{explicitPMF}
+
+This class defines a discrete probability distribution described by a
+user-defined probability mass function (PMF). Here the PMF is defined
+as a category and its associated probability.
+
+
 
 \subsection{Using the \distribshort package}
 
@@ -433,7 +466,6 @@ following:
 
 \begin{itemize}
 \item A globally unique URI by which to refer to it.
-\item A meaningful name
 \item The parameter arguments used by the function, including for each
  argument: its name and type (scalar or non-scalar). Note that all
  arguments are mandatory.
@@ -442,29 +474,32 @@ following:
   sampled from.
 \end{itemize}
 
-The exact specification of the URI is undefined at the moment and will
-be finalised once the source of the external definition has been
-agreed. See unresolved issues below (section
-\ref{sec:unresolved}).
-
+The recommended external definition for distributions is \uncertml. We
+have been liaising with the \uncertml team to ensure that they meet
+the above criteria.
 
 \subsection{Equivalence with Fallback Function}
 
-The \mathml definition contained in the function definition is not
-used if \distribshort is supported and the \token{explicit} attribute
-is \texttt{false}. However, in order to ensure the SBML model is still
-valid when \distribshort is not supported the fallback function must
-be present and it should conform to the following rules:
+The \mathml definition directly contained by the
+\class{functionDefinition} is not used and is provided solely to
+satisfy the \emph{validity upon reduction} rule for packages. This
+rules states that the SBML document must be syntactically valid if all
+package specific elements are removed from it. To ensure that this is
+the case the fallback function used in relation to \distribshort must
+satisfy the following rules:
 
 \begin{itemize}
-\item Match the number of arguments in the external function
-  definition.
+\item the lambda function should have the same number of arguments as
+  its equivalent distribution (defined by \distribshort).
 \item Each argument should match the type of the equivalent argument
   in the external function.
-\item Have the same return type as the external function.
+\item The lambda function should have the same return type as the
+  \emph{sampled} distribution. For example an explicit PDF when
+  sampled will return a scalar value, in which case the dummy function
+  should also do so.
 \end{itemize}
 
-Clearly these rules can only be enforced when \distrib is supported.
+Clearly these rules can only be enforced by a \distribshort aware validator.
 
 \section{Package dependencies}
 

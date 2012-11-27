@@ -97,59 +97,65 @@ model.
   \renewcommand{\arraystretch}{0.85}
   \newcounter{rownum}
   \setcounter{rownum}{0}
-  \begin{edtable}{tabular}{>{\stepcounter{rownum}\therownum.}rp{5.9in}}
+  \setlength{\tabcolsep}{4pt}
+  \begin{edtable}{tabular}{>{\stepcounter{rownum}\therownum.}rp{6.05in}}
     \toprule
     \multicolumn{1}{r}{\textbf{Step}} & \textbf{Procedure} \\
     \midrule
-    & Examine the submodels of the model being validated.  If any
-    submodel itself contains submodels, perform this algorithm in its
-    entirety on each submodel before proceeding to the next step on the
-    model.
-    \\[2pt]
-    & For every submodel identifier ``\emph{M}'', verify that no
-    object identifier or meta identifier (i.e., the \token{id} or
-    \token{meta\-id} attribute values of the object) begin with the
-    character sequence ``\emph{M\_\_}''.  For example, if a submodel has
-    identifier \val{foo}, change it (for the purposes of this algorithm)
-    to \val{foo\_\_}.  If an object has identifier \val{foo\_\_}
-    already, add another underscore.
-    \\[2pt]
-    & Remove any submodel object that has been replaced or deleted.
-    \\[2pt]
-    & Transform the remaining submodel object such that:
-    \begin{enumerate}[label={\alph*})]
 
-    \item Every identifier (\token{id} attribute) is changed to a value of
-      the form ``\emph{M\_\_id}'', where ``\emph{id}'' is the original
-      \token{id} value and ``\emph{M}'' is the submodel identifier.
+    & Examine all submodels of the model being validated.  For any
+    submodel that itself contains submodels, perform this algorithm in
+    its entirety on each of those inner submodels before proceeding to
+    the next step.
+    \\[5pt]
 
-    \item Every meta identifier (\token{meta\-id} attribute) is changed to a
-      value of the form ``\emph{M\_\_metaid}'', where ``\emph{metaid}'' is
-      the original \token{meta\-id} value and ``\emph{M}'' is the submodel
+    & Let ``\emph{M}'' be the identifier of a given submodel.  Verify
+    that no object identifier or meta identifier of objects in that
+    submodel (i.e., the \token{id} or \token{metaid} attribute values)
+    begin with the character sequence ``\emph{M\_\_}''; if there
+    \emph{is} an existing identifier or meta identifier beginning with
+    ``\emph{M\_\_}'', add an underscore to ``\emph{M\_\_}'' (i.e., to
+    produce ``\emph{M\_\_\_}'') and again check that the sequence is
+    unique.  Continue adding underscores until you find a unique prefix.
+    Let ``\emph{P}'' stand for this final prefix.
+    \\[5pt]
+
+    & Remove all objects that have been replaced or deleted in the
+    submodel.
+    \\[5pt]
+
+    & Transform the remaining submodel objects as follows:
+    \begin{enumerate}[leftmargin=3ex,label={\alph*})]
+
+    \item Change every identifier (\token{id} attribute) to a new value
+      obtained by prepending ``\emph{P}'' to the original identifier.
+
+    \item Change every meta identifier (\token{metaid} attribute) to a
+      new value obtained by prepending ``\emph{P}'' to the original
       identifier.
 
     \vspace*{-1em}
     \end{enumerate}
-    \\[2pt]
-    & For every object that has not been removed in the submodel,
-    adjust every reference to the identifiers that were transformed in
-    the previous step as follows.  Change every \primtype{SId\-Ref} value
-    to the form form ``\emph{M\_\_id}'', where ``\emph{id}'' is the
-    original \primtype{SId\-Ref} value and ``\emph{M}'' is the submodel
-    identifier, and change every XML \primtype{IDREF} value to the form
-    ``\emph{M\_\_metaid}'', where ``\emph{metaid}'' is the original
-    \primtype{IDREF} value.  \emph{However}, if the submodel has been
-    replaced as a consequence of applying either a \ReplacedElement or
-    \ReplacedBy construct, the \primtype{SId\-Ref} and \primtype{IDREF}
-    values that pointed to the submodel need to be changed to the
+    \\[5pt]
+
+    & For every object that has not been removed in submodel
+    ``\emph{M}'', adjust every reference to the identifiers that were
+    transformed in the previous step as follows.  Change every
+    \primtype{SIdRef} value by prepending ``\emph{P}'' to the original
+    value, and change every XML \primtype{IDREF} value by prepending
+    ``\emph{P}'' to the original value.  \emph{However}, if the submodel
+    has been replaced by the application of either a \ReplacedElement or
+    \ReplacedBy construct, change each \primtype{SIdRef} and
+    \primtype{IDREF} value that pointed into the submodel to be the
     \primtype{SId} or \primtype{ID} value, respectively, of the object
-    replacing it.
-    \\[2pt]
-    & After performing the tasks above for all remaining objects,
-    merge the objects of the remaining submodels into a single model.
-    The various lists (list of species, list of compartments, etc.) are
-    merged in this step.  Annotations must be preserved, as should
-    constructs from other SBML Level~3 packages.
+    \emph{replacing} it.
+    \\[5pt]
+
+    & After performing the tasks above for all remaining objects, merge
+    the objects of the remaining submodels into a single model.  Merge
+    the various lists (list of species, list of compartments, etc.)  in
+    this step, and preserve notes and annotations as well as constructs
+    from other SBML Level~3 packages.
     \\
     \bottomrule
   \end{edtable}
@@ -161,8 +167,8 @@ model.
 
 \subsubsection{Additional remarks about the validation procedure}
 
-When \notice instantiating a model, one does not have to first test the
-validity of that model.  If it is in the same file as the containing
+When \notice instantiating a model, it is not necessary to first test
+the validity of that model.  If it is in the same file as the containing
 model, it will be tested anyway when the result of the ``flattening''
 algorithm is checked for validity in the second phase.  If it is in a
 different file, that file's validity (or lack thereof) should not affect
@@ -196,19 +202,19 @@ following three symbols next to the rule numbers:
 
 \item[\hspace*{6.5pt}\cSymbol\csp] A \cSymbolName indicates a
   \emph{recommendation} for model consistency.  If a model does not
-  follow this rule, it is not considered strictly invalid as far as
-  the Hierarchical Model Composition specification is concerned;
-  however, it indicates that the model contains a physical or
-  conceptual inconsistency.  (Mnemonic intention behind the choice of
-  symbol: ``This is a cause for warning.'')
+  follow this rule, it is not considered strictly invalid as far as the
+  Hierarchical Model Composition specification is concerned; however, it
+  indicates that the model contains a physical or conceptual
+  inconsistency.  (Mnemonic intention behind the choice of symbol:
+  ``This is a cause for warning.'')
 
 \item[\hspace*{6.5pt}\mSymbol\msp] A \mSymbolName indicates a strong
-  recommendation for good modeling practice.  This rule is not
-  strictly a matter of SBML encoding, but the recommendation comes
-  from logical reasoning.  As in the previous case, if a model does
-  not follow this rule, it is not strictly considered an invalid SBML
-  encoding.  (Mnemonic intention behind the choice of symbol: ``You're
-  a star if you heed this.'')
+  recommendation for good modeling practice.  This rule is not strictly
+  a matter of SBML encoding, but the recommendation comes from logical
+  reasoning.  As in the previous case, if a model does not follow this
+  rule, it is not considered an invalid SBML encoding.  (Mnemonic
+  intention behind the choice of symbol: ``You're a star if you heed
+  this.'')
 
 \end{description}
 
@@ -219,20 +225,20 @@ validation rules concern objects and attributes specifically defined in
 the Hierarchical Model Composition package.
 
 For \notice convenience and brievity, we use the shorthand
-``\token{comp:\-x}'' to stand for an attribute or element name \token{x}
+``\token{comp:x}'' to stand for an attribute or element name \token{x}
 in the namespace for the Hierarchical Model Composition package, using
 the namespace prefix \token{comp}.  In reality, the prefix string may be
 different from the literal ``\token{comp}'' used here (and indeed, it
 can be any valid XML namespace prefix that the modeler or software
-chooses).  We use ``\token{comp:\-x}'' because it is shorter than to
+chooses).  We use ``\token{comp:x}'' because it is shorter than to
 write a full explanation everywhere we refer to an attribute or element
 in the Hierarchical Model Composition package namespace.
 
 
 \subsubsection*{General rules about this package}
 
-\validRule{comp-10101}{To conform to the Hierarchical Model
-  Composition package specification for SBML Level~3 Version~1, an
+\validRule{comp-10101}{To conform to Version 1 of the Hierarchical Model
+  Composition package specification for SBML Level~3, an
   SBML document must declare the use of the following XML Namespace:\\
   \textls[-25]{\uri{http://www.sbml.org/sbml/level3/version1/comp/version1}}.
   (References: SBML Level~3 Package Specification for Hierarchical Model
@@ -252,9 +258,9 @@ in the Hierarchical Model Composition package namespace.
 \validRule{comp-10301}{(Extends validation rule \#10301 in the SBML
   Level~3 Version~1 Core specification.) Within a \Model or
   \ExternalModelDefinition object, the values of the attributes
-  \token{id} and \token{comp:\-id} on every instance of the following
+  \token{id} and \token{comp:id} on every instance of the following
   classes of objects must be unique across the set of all \token{id} and
-  \token{comp:\-id} attribute values of all such objects in a model: the
+  \token{comp:id} attribute values of all such objects in a model: the
   \Model itself, plus all contained \FunctionDefinition, \Compartment,
   \Species, \Reaction, \SpeciesReference, \ModifierSpeciesReference,
   \Event, and \Parameter objects, plus the \Submodel and \Deletion
@@ -263,31 +269,31 @@ in the Hierarchical Model Composition package namespace.
   Composition, Version~1, \sec{namespaces}.) }
 
 \validRule{comp-10302}{The values of the attributes \token{id} and
-  \token{comp:\-id} on every instance of all \Model and
+  \token{comp:id} on every instance of all \Model and
   \ExternalModelDefinition objects must be unique across the set of all
-  \token{id} and \token{comp:\-id} attribute values of such identifiers
+  \token{id} and \token{comp:id} attribute values of such objects
   in the SBML document to which they belong.  (References: SBML Level~3
   Package Specification for Hierarchical Model Composition, Version~1,
   \sec{namespaces}.)}
 
 \validRule{comp-10303}{Within a \Model or \ExternalModelDefinition
   object inside an SBML document, the value of the attribute
-  \token{comp:\-id} on every instance of a \Port object must be unique
-  across the set of all \token{comp:\-id} attribute values of all such
+  \token{comp:id} on every instance of a \Port object must be unique
+  across the set of all \token{comp:id} attribute values of all such
   objects in the model.  (References: SBML Level~3 Package Specification
   for Hierarchical Model Composition, Version~1, \sec{namespaces}.) }
 
-\validRule{comp-10304}{The value of a \token{comp:\-id} attribute must
+\validRule{comp-10304}{The value of a \token{comp:id} attribute must
   always conform to the syntax of the SBML data type \primtype{SId}.
   (References: SBML Level~3 Version~1 Core, Section~3.1.7.)}
 
-\validRule{comp-10308}{The value of a \token{comp:\-submodel\-Ref}
+\validRule{comp-10308}{The value of a \token{comp:submodelRef}
   attribute on a \ReplacedElement object must always conform to the
   syntax of the SBML data type \primtype{SId}.  (References: SBML
   Level~3 Package Specification for Hierarchical Model Composition,
   Version~1, \sec{replacedelement-submodelref}.) }
  
-\validRule{comp-10309}{The value of a \token{comp:\-deletion} attribute
+\validRule{comp-10309}{The value of a \token{comp:deletion} attribute
   on a \ReplacedElement object must always conform to the syntax of the
   SBML data type \primtype{SId}.  (References: SBML Level~3 Package
   Specification for Hierarchical Model Composition, Version~1,
@@ -296,7 +302,7 @@ in the Hierarchical Model Composition package namespace.
 \clearpage
 
 \validRule{comp-10310}{The value of a
-  \token{comp:\-con\-version\-Factor} attribute on a \ReplacedElement
+  \token{comp:conversionFactor} attribute on a \ReplacedElement
   object must always conform to the syntax of the SBML data type
   \primtype{SId}.  (References: SBML Level~3 Package Specification for
   Hierarchical Model Composition, Version~1,
@@ -306,7 +312,7 @@ in the Hierarchical Model Composition package namespace.
 \subsubsection*{Rules for the extended \class{SBase} abstract class} 
 
 \validRule{comp-20101}{Any object derived from the extended \SBase class
-  (as defined in the Hierarchical Model Composition package) may contain
+  (defined in the Hierarchical Model Composition package) may contain
   at most one instance of a \ListOfReplacedElements subobject.
   (References: SBML Level~3 Package Specification for Hierarchical Model
   Composition, Version~1, \sec{extended-sbase-class}.) }
@@ -318,7 +324,7 @@ in the Hierarchical Model Composition package namespace.
   Composition, Version~1, \sec{extended-sbase-class}.) }
 
 \validRule{comp-20103}{A \ListOfReplacedElements object may have the
-  optional attributes \token{meta\-id} and \token{sboTerm} defined by
+  optional attributes \token{metaid} and \token{sboTerm} defined by
   SBML Level~3 Core.  No other attributes from the SBML Level~3 Core
   namespace or the Hierarchical Model Composition namespace are
   permitted on a \ListOfReplacedElements object.  (References: SBML
@@ -326,7 +332,7 @@ in the Hierarchical Model Composition package namespace.
   Version~1, \sec{extended-sbase-class}.) }
 
 \validRule{comp-20104}{The \ListOfReplacedElements in an \SBase object
-  is optional, but if present, must not be emp\-ty.  (References: SBML
+  is optional, but if present, must not be empty.  (References: SBML
   Level~3 Package Specification for Hierarchical Model Composition,
   Version~1, \sec{extended-sbase-class}.) }
 
@@ -335,15 +341,15 @@ in the Hierarchical Model Composition package namespace.
 
 \validRule{comp-20201}{In all SBML documents using the Hierarchical
   Model Composition package, the \SBML object must include a value for
-  the attribute \token{comp:\-required} attribute.  (References: SBML
+  the attribute \token{comp:required} attribute.  (References: SBML
   Level~3 Package Specification for Hierarchical Model Composition,
   Version~1, Section~4.1.2.) }
   
-\validRule{comp-20202}{The value of attribute \token{comp:\-required} on
+\validRule{comp-20202}{The value of attribute \token{comp:required} on
   the \SBML object must be of the data type \token{boolean}.
   (References: SBML Level~3 Version~1 Core, Section~4.1.2.) }
   
-\validRule{comp-20203}{The value of attribute \token{comp:\-required} on
+\validRule{comp-20203}{The value of attribute \token{comp:required} on
   the \SBML object must be set to \val{true} if the \Model object within
   the \SBML object contains any \Submodel with \Species, \Parameter,
   \Compartment, \Reaction, or \Event objects that have not been either
@@ -351,7 +357,7 @@ in the Hierarchical Model Composition package namespace.
   Specification for Hierarchical Model Composition, Version~1,
   \sec{xml-namespace}.) }
 
-\validRule{comp-20204}{The value of attribute \token{comp:\-required} on
+\validRule{comp-20204}{The value of attribute \token{comp:required} on
   the \SBML object must be set to \val{false} if the \Model object
   within the \SBML object contains no \Submodel objects, or if all
   \Submodel objects that are present contain no \Species, \Parameter,
@@ -361,10 +367,10 @@ in the Hierarchical Model Composition package namespace.
   \sec{xml-namespace}.) }
 
 \validRule{comp-20211}{There may be at most one instance of the
-  \ListOfModelDefinitions within an \SBML object that uses the
-  Hierarchical Model Composition package.  (References: SBML Level~3
-  Package Specification for Hierarchical Model Composition, Version~1,
-  \sec{sbml-class}.) }
+  \ListOfModelDefinitions within an \SBML object that uses the SBML
+  Level~3 Hierarchical Model Composition package.  (References: SBML
+  Level~3 Package Specification for Hierarchical Model Composition,
+  Version~1, \sec{sbml-class}.) }
 
 \validRule{comp-20206}{The various
   \textsf{\textbf{ListOf\rule{0.15in}{0.5pt}}} subobjects within an
@@ -389,7 +395,7 @@ in the Hierarchical Model Composition package namespace.
   \sec{listofexternalmodeldefinitions-class}.) }
   
 \validRule{comp-20209}{A \ListOfModelDefinitions object may have the
-  optional attributes \token{meta\-id} and \token{sboTerm}.  No other
+  optional attributes \token{metaid} and \token{sboTerm}.  No other
   attributes from the SBML Level~3 Core namespace or the Hierarchical
   Model Composition namespace are permitted on a \ListOfModelDefinitions
   object.  (References: SBML Level~3 Package Specification for
@@ -397,7 +403,7 @@ in the Hierarchical Model Composition package namespace.
   \sec{listofmodeldefinitions-class}.) }
 
 \validRule{comp-20210}{A \ListOfExternalModelDefinitions object may have
-  the optional SBML core attributes \token{meta\-id} and
+  the optional SBML core attributes \token{metaid} and
   \token{sboTerm}.  No other attributes from the SBML Level~3 Core
   namespace or the comp namespace are permitted on a
   \ListOfExternalModelDefinitions object.  (References: SBML Level~3
@@ -414,59 +420,59 @@ in the Hierarchical Model Composition package namespace.
 \subsubsection*{Rules for \class{ExternalModelDefinition} objects} 
 
 \validRule{comp-20301}{An \ExternalModelDefinition object may have the
-  optional SBML Level~3 Core attributes \token{meta\-id} and
+  optional SBML Level~3 Core attributes \token{metaid} and
   \token{sboTerm}.  No other attributes from the SBML Level~3 Core
   namespace are permitted on an \ExternalModelDefinition.  (References:
   SBML Level~3 Version~1 Core, Section~3.2.)}
 
-\validRule{comp-20302}{An \ExternalModelDefinition object may the
+\validRule{comp-20302}{An \ExternalModelDefinition object may have the
   optional SBML Level~3 Core subobjects for notes and annotation.  No
   other subobjects from the SBML Level~3 Core namespace are permitted in
   an \ExternalModelDefinition.  (References: SBML Level~3 Version~1
   Core, Section~3.2.)  }
    
-\validRule{comp-20303}{An ExternalModelDefinition object must have the
-  required attributes \token{comp:\-id} and \token{comp:\-\-source}, and
-  may have the optional attribute \token{comp:\-model\-Ref}.  
-  No other attributes from the Hierarchical Model
-  Composition namespace are permitted on an \ExternalModelDefinition
-  object.  (References: SBML Level~3 Package Specification for
-  Hierarchical Model Composition, Version~1,
+\validRule{comp-20303}{An \ExternalModelDefinition object must have the
+  attributes \mbox{\token{comp:id}} and \token{comp:source} because
+  they are required, and may the optional attribute
+  \token{comp:modelRef}.  No other attributes from the Hierarchical
+  Model Composition namespace are permitted on an
+  \ExternalModelDefinition object.  (References: SBML Level~3 Package
+  Specification for Hierarchical Model Composition, Version~1,
   \sec{externalmodeldefinition-class}.) }
 
-\validRule{comp-20304}{The value of the \token{comp:\-\-source}
+\validRule{comp-20304}{The value of the \token{comp:source}
   attribute on an \ExternalModelDefinition object must reference an SBML
   Level~3 document.  (References: SBML Level~3 Package Specification for
   Hierarchical Model Composition, Version~1,
   \sec{externalmodeldefinition-class}.) }
 
-\validRule{comp-20305}{The value of the \token{comp:\-model\-Ref}
+\validRule{comp-20305}{The value of the \token{comp:modelRef}
   attribute on an \ExternalModelDefinition object must be the value of
   an \token{id} attribute on a \Model object in the SBML document
-  referenced by the \token{comp:\-\-source} attribute.  (References:
+  referenced by the \token{comp:source} attribute.  (References:
   SBML Level~3 Package Specification for Hierarchical Model Composition,
   Version~1, \sec{externalmodeldefinition-class}.) }
 
-\consistencyRule{comp-20306}{The value of the \token{comp:\-md5}
+\consistencyRule{comp-20306}{The value of the \token{comp:md5}
   attribute, if present on an \ExternalModelDefinition object, should
   match the calculated MD5 checksum of the SBML document referenced by
-  the \token{comp:\-\-source} attribute.  (References: SBML Level~3
+  the \token{comp:source} attribute.  (References: SBML Level~3
   Package Specification for Hierarchical Model Composition, Version~1,
   \sec{externalmodeldefinition-class}.) }
 
-\validRule{comp-20307}{The value of a \token{comp:\-\-source} attribute
+\validRule{comp-20307}{The value of a \token{comp:source} attribute
   on an \ExternalModelDefinition object must always conform to the
   syntax of the XML Schema~1.0 data type \primtype{anyURI}.
   (References: SBML Level~3 Package Specification for Hierarchical Model
   Composition, Version~1, \sec{externalmodeldefinition-class}.) }
 
-\validRule{comp-20308}{The value of a \token{comp:\-model\-Ref}
+\validRule{comp-20308}{The value of a \token{comp:modelRef}
   attribute on an \ExternalModelDefinition object must always conform to
   the syntax of the SBML data type \primtype{SId}.  (References: SBML
   Level~3 Package Specification for Hierarchical Model Composition,
   Version~1, \sec{externalmodeldefinition-class}.) }
 
-\validRule{comp-20309}{The value of a \token{comp:\-md5} attribute on an
+\validRule{comp-20309}{The value of a \token{comp:md5} attribute on an
   \ExternalModelDefinition object must always conform to the syntax of
   type \primtype{string}.  (References: SBML Level~3 Package
   Specification for Hierarchical Model Composition Package Version~1
@@ -520,15 +526,15 @@ in the Hierarchical Model Composition package namespace.
   \sec{model-class}.) }
   
 \validRule{comp-20505}{A \ListOfSubmodels object may have the optional
-  \token{meta\-id} and \token{sboTerm} defined by SBML Level~3 Core.  No
-  other attributes from the SBML Level~3 Core namespace or the
+  attributes \token{metaid} and \token{sboTerm} defined by SBML Level~3
+  Core.  No other attributes from the SBML Level~3 Core namespace or the
   Hierarchical Model Composition namespace are permitted on a
   \ListOfSubmodels object.  (References: SBML Level~3 Package
   Specification for Hierarchical Model Composition, Version~1,
   \sec{model-class}.) }
 
 \validRule{comp-20506}{A \ListOfPorts object may have the optional
-  attributes \token{meta\-id} and \token{sboTerm} defined by SBML
+  attributes \token{metaid} and \token{sboTerm} defined by SBML
   Level~3 Core.  No other attributes from the SBML Level~3 Core
   namespace or the Hierarchical Model Composition namespace are
   permitted on a \ListOfPorts object.  (References: SBML Level~3 Package
@@ -539,7 +545,7 @@ in the Hierarchical Model Composition package namespace.
 \subsubsection*{Rules for \class{Submodel} objects} 
 
 \validRule{comp-20601}{A \Submodel object may have the optional SBML
-  Level~3 Core attributes \token{meta\-id} and \token{sboTerm}.  No
+  Level~3 Core attributes \token{metaid} and \token{sboTerm}.  No
   other attributes from the SBML Level~3 Core namespace are permitted on
   an \Submodel object.  (References: SBML Level~3 Version~1 Core,
   Section~3.2.) }
@@ -566,42 +572,42 @@ in the Hierarchical Model Composition package namespace.
   \sec{listofdeletions-class}.) }
 
 \validRule{comp-20606}{A \ListOfDeletions object may have the optional
-  SBML core attributes \token{meta\-id} and \token{sboTerm}.  No other
+  SBML core attributes \token{metaid} and \token{sboTerm}.  No other
   attributes from the SBML Level~3 Core namespace or the comp namespace
   are permitted on a \ListOfDeletions object.  (References: SBML Level~3
   Package Specification for Hierarchical Model Composition, Version~1,
   \sec{listofdeletions-class}.) }
 
-\validRule{comp-20607}{A \Submodel object must have the required
-  attributes \token{comp:\-id} and \token{comp:\-model\-Ref}, and may
-  also have any or all of the optional attributes
-  \token{comp:\-time\-Conversion\-Factor} or
-  \token{comp:\-ex\-tent\-Conversion\-Factor}.  No other attributes from
-  the Hierarchical Model Composition name\-space are permitted on a
-  \Submodel object.  (References: SBML Level~3 Package Specification for
+\validRule{comp-20607}{A \Submodel object must have the attributes
+  \token{comp:id} and \token{comp:modelRef} because they are required,
+  and may also have the optional attributes
+  \token{comp:timeConversionFactor} and/or
+  \token{comp:extentConversionFactor}.  No other attributes from the
+  Hierarchical Model Composition namespace are permitted on a \Submodel
+  object.  (References: SBML Level~3 Package Specification for
   Hierarchical Model Composition, Version~1, \sec{submodel-class}.)  }
 
-\validRule{comp-20608}{The value of a \token{comp:\-model\-Ref}
+\validRule{comp-20608}{The value of a \token{comp:modelRef}
   attribute on a \Submodel object must always conform to the syntax of
   the SBML data type \primtype{SId}.  (References: SBML Level~3 Package
   Specification for Hierarchical Model Composition, Version~1,
   \sec{submodel-modelref}.) }
 
 \validRule{comp-20613}{The value of a
-  \token{comp:\-timeConversionFactor} attribute on a \Submodel object
+  \token{comp:timeConversionFactor} attribute on a \Submodel object
   must always conform to the syntax of the SBML data type
   \primtype{SId}.  (References: SBML Level~3 Package Specification for
   Hierarchical Model Composition, Version~1,
   \sec{submodel-timeconversionfactor}.) }
 
 \validRule{comp-20614}{The value of a
-  \token{comp:\-extentConversionFactor} attribute on a \Submodel object
+  \token{comp:extentConversionFactor} attribute on a \Submodel object
   must always conform to the syntax of the SBML data type
   \primtype{SId}.  (References: SBML Level~3 Package Specification for
   Hierarchical Model Composition, Version~1,
   \sec{submodel-extentconversionfactor}.) }
 
-\validRule{comp-20615}{The value of a \token{comp:\-model\-Ref}
+\validRule{comp-20615}{The value of a \token{comp:modelRef}
   attribute on a \Submodel must be the identifier of a \Model or
   \ExternalModelDefinition object in the same \SBML object as the
   \Submodel.  (References: SBML Level~3 Package Specification for
@@ -610,43 +616,44 @@ in the Hierarchical Model Composition package namespace.
 
 \validRule{comp-20616}{A \Model object must not contain a \Submodel
   which references that \Model object itself.  That is, the value of a
-  \token{comp:\-model\-Ref} attribute on a \Submodel must not be the
+  \token{comp:modelRef} attribute on a \Submodel must not be the
   value of the parent \Model object's \token{id} attribute.
   (References: SBML Level~3 Package Specification for Hierarchical Model
   Composition, Version~1, \sec{submodel-modelref}.)}
 
 \validRule{comp-20617}{A \Model object must not contain a \Submodel
   which references that \Model indirectly.  That is, the
-  \token{comp:\-model\-Ref} attribute of a \Submodel may not point to
+  \token{comp:modelRef} attribute of a \Submodel may not point to
   the \token{id} of a \Model containing a \Submodel object that
   references the original \Model directly or indirectly through a chain
   of \Model/\Submodel pairs.  (References: SBML Level~3 Package
   Specification for Hierarchical Model Composition, Version~1,
   \sec{submodel-modelref}.) }
 
-\validRule{comp-20622}{The \token{comp:\-timeConversionFactor} attribute
-  on a given \Submodel object must be the identifier of a \Parameter
-  object defined in the same \Model containing the \Submodel.
-  (References: SBML Level~3 Package Specification for Hierarchical Model
-  Composition, Version~1, \sec{submodel-timeconversionfactor}.) }
-
-\validRule{comp-20623}{The \token{comp:\-extentConversionFactor}
+\validRule{comp-20622}{The value of a \token{comp:timeConversionFactor}
   attribute on a given \Submodel object must be the identifier of
   a \Parameter object defined in the same \Model containing the
   \Submodel.  (References: SBML Level~3 Package Specification for
   Hierarchical Model Composition, Version~1,
+  \sec{submodel-timeconversionfactor}.) }
+
+\validRule{comp-20623}{The value of a
+  \token{comp:extentConversionFactor} attribute on a given \Submodel
+  object must be the identifier of a \Parameter object defined in the
+  same \Model containing the \Submodel.  (References: SBML Level~3
+  Package Specification for Hierarchical Model Composition, Version~1,
   \sec{submodel-extentconversionfactor}.) }
 
 
-\subsubsection*{Rules for the \class{SBase\-Ref} abstract object} 
+\subsubsection*{Rules for the \class{SBaseRef} abstract object} 
 
-\validRule{comp-20701}{The value of a \token{comp:\-port\-Ref} attribute
+\validRule{comp-20701}{The value of a \token{comp:portRef} attribute
   on an \SBaseRef object must be the identifier of a \Port object in the
   \Model referenced by that \SBaseRef.  (References: SBML Level~3
   Package Specification for Hierarchical Model Composition, Version~1,
   \sec{sbaseref-portref}.) }
 
-\validRule{comp-20702}{The value of a \token{comp:\-id\-Ref} attribute
+\validRule{comp-20702}{The value of a \token{comp:idRef} attribute
   on an \SBaseRef object must be the identifier of an object contained
   in (that is, within the \primtype{SId} namespace of) the \Model
   referenced by that \SBaseRef.  This includes objects with \token{id}
@@ -655,17 +662,17 @@ in the Hierarchical Model Composition package namespace.
   Package Specification for Hierarchical Model Composition, Version~1,
   \sec{sbaseref-idref}.)  }
 
-\validRule{comp-20703}{The value of a \token{comp:\-unit\-Ref} attribute
+\validRule{comp-20703}{The value of a \token{comp:unitRef} attribute
   on an \SBaseRef object must be the identifier of a \UnitDefinition
   object contained in the \Model referenced by that \SBaseRef.
   (References: SBML Level~3 Package Specification for Hierarchical Model
   Composition, Version~1, \sec{sbaseref-unitref}.) }
 
-\validRule{comp-20704}{The value of a \token{comp:\-metaId\-Ref}
+\validRule{comp-20704}{The value of a \token{comp:metaIdRef}
   attribute on an \SBaseRef object must be the value of a
-  \token{comp:\-metaid} attribute on an element contained in the \Model
+  \token{comp:metaid} attribute on an element contained in the \Model
   referenced by that \SBaseRef.  This includes elements with
-  \token{meta\-id} attributes defined in packages other than SBML
+  \token{metaid} attributes defined in packages other than SBML
   Level~3 Core or the Hierarchical Model Composition package.
   (References: SBML Level~3 Package Specification for Hierarchical Model
   Composition, Version~1, \sec{sbaseref-metaidref}.)}
@@ -675,25 +682,25 @@ in the Hierarchical Model Composition package namespace.
   (References: SBML Level~3 Package Specification for Hierarchical Model
   Composition, Version~1, \sec{sbaseref-recursive-sbaseref}.) }
 
-\validRule{comp-20706}{The value of a \token{comp:\-port\-Ref} attribute
+\validRule{comp-20706}{The value of a \token{comp:portRef} attribute
   on an \SBaseRef object must always conform to the syntax of the SBML
   data type \primtype{SId}.  (References: SBML Level~3 Package
   Specification for Hierarchical Model Composition, Version~1,
   \sec{sbaseref-portref}.) }
 
-\validRule{comp-20707}{The value of a \token{comp:\-id\-Ref} attribute
+\validRule{comp-20707}{The value of a \token{comp:idRef} attribute
   on an \SBaseRef object must always conform to the syntax of the SBML
   data type \primtype{SId}.  (References: SBML Level~3 Package
   Specification for Hierarchical Model Composition, Version~1,
   \sec{sbaseref-idref}.) }
 
-\validRule{comp-20708}{The value of a \token{comp:\-unit\-Ref} attribute
+\validRule{comp-20708}{The value of a \token{comp:unitRef} attribute
   on an \SBaseRef object must always conform to the syntax of the SBML
   data type \primtype{UnitSId}.  (References: SBML Level~3 Package
   Specification for Hierarchical Model Composition, Version~1,
   \sec{sbaseref-unitref}.) }
 
-\validRule{comp-20709}{The value of a \token{comp:\-metaId\-Ref}
+\validRule{comp-20709}{The value of a \token{comp:metaIdRef}
   attribute on an \SBaseRef object must always conform to the syntax of
   the XML data type \primtype{ID}.  (References: SBML Level~3 Package
   Specification for Hierarchical Model Composition, Version~1,
@@ -704,22 +711,22 @@ in the Hierarchical Model Composition package namespace.
 
 \validRule{comp-20801}{A \Port object must point to another object; that
   is, a \Port object must always have a value for one of the attributes
-  \token{comp:\-id\-Ref}, \token{comp:\-unit\-Ref}, or
-  \token{comp:\-metaId\-Ref}.  (References: SBML Level~3 Package
+  \token{comp:idRef}, \token{comp:unitRef}, or
+  \token{comp:metaIdRef}.  (References: SBML Level~3 Package
   Specification for Hierarchical Model Composition, Version~1,
   \sec{port-class}.) }
 
 \validRule{comp-20802}{A \Port object can only point to \emph{one} other
   object; that is, a given \Port object can only have a value for one of
-  the attributes \token{comp:\-id\-Ref}, \token{comp:\-unit\-Ref}, or
-  \token{comp:\-metaId\-Ref}.  (References: SBML Level~3 Package
+  the attributes \token{comp:idRef}, \token{comp:unitRef}, or
+  \token{comp:metaIdRef}.  (References: SBML Level~3 Package
   Specification for Hierarchical Model Composition, Version~1,
   \sec{port-class}.) }
 
 \validRule{comp-20803}{A \Port object must have a value for the required
-  attribute \token{comp:\-id}, and one, and only one, of the
-  attri\-butes \token{comp:\-id\-Ref}, \token{comp:\-unit\-Ref}, or
-  \token{comp:\-metaId\-Ref}.  No other attributes from the Hierarchical
+  attribute \token{comp:id}, and one, and only one, of the
+  attributes \token{comp:idRef}, \token{comp:unitRef}, or
+  \token{comp:metaIdRef}.  No other attributes from the Hierarchical
   Model Composition namespace are permitted on a \Port object.
   (References: SBML Level~3 Package Specification for Hierarchical Model
   Composition, Version~1, \sec{port-class}.) }
@@ -734,23 +741,23 @@ in the Hierarchical Model Composition package namespace.
 
 \validRule{comp-20901}{A \Deletion object must point to another object;
   that is, a \Deletion object must have a value for one of the
-  attributes \token{comp:\-port\-Ref}, \token{comp:\-id\-Ref},
-  \token{comp:\-unit\-Ref}, or \token{comp:\-metaId\-Ref}.  (References:
+  attributes \token{comp:portRef}, \token{comp:idRef},
+  \token{comp:unitRef}, or \token{comp:metaIdRef}.  (References:
   SBML Level~3 Package Specification for Hierarchical Model Composition,
   Version~1, \sec{deletion-class}.) }
 
 \validRule{comp-20902}{A \Deletion object can only point to \emph{one}
   other object; that is, a given \Deletion object can only have a value
-  for one of the attributes \token{comp:\-port\-Ref},
-  \token{comp:\-id\-Ref}, \token{comp:\-unit\-Ref}, or
-  \token{comp:\-metaId\-Ref}.  (References: SBML Level~3 Package
+  for one of the attributes \token{comp:portRef},
+  \token{comp:idRef}, \token{comp:unitRef}, or
+  \token{comp:metaIdRef}.  (References: SBML Level~3 Package
   Specification for Hierarchical Model Composition, Version~1,
   \sec{deletion-class}.) }
 
 \validRule{comp-20903}{A \Deletion object must have a value for the
-  required attribute \token{comp:\-id}, and one, and only one, of the
-  attributes \token{comp:\-port\-Ref}, \token{comp:\-id\-Ref},
-  \token{comp:\-unit\-Ref}, or \token{comp:\-metaId\-Ref}.  No other
+  required attribute \token{comp:id}, and one, and only one, of the
+  attributes \token{comp:portRef}, \token{comp:idRef},
+  \token{comp:unitRef}, or \token{comp:metaIdRef}.  No other
   attributes from the Hierarchical Model Composition namespace are
   permitted on a \Deletion object.  (References: SBML Level~3 Package
   Specification for Hierarchical Model Composition, Version~1,
@@ -761,65 +768,64 @@ in the Hierarchical Model Composition package namespace.
 
 \validRule{comp-21001}{A \ReplacedElement object must point to another
   object; that is, a given \ReplacedElement object must have a value for
-  one of the following attributes: \token{comp:\-port\-Ref},
-  \token{comp:\-id\-Ref}, \token{comp:\-unit\-Ref},
-  \token{comp:\-metaId\-Ref}, or \token{comp:\-deletion}.  (References:
+  one of the following attributes: \token{comp:portRef},
+  \token{comp:idRef}, \token{comp:unitRef},
+  \token{comp:metaIdRef}, or \token{comp:deletion}.  (References:
   SBML Level~3 Package Specification for Hierarchical Model Composition,
   Version~1, \sec{replacedelement-class}.) }
 
 \validRule{comp-21002}{A \ReplacedElement object can only point to
   \emph{one} target object; that is, a given \ReplacedElement can only
   have a value for one of the following attributes:
-  \token{comp:\-port\-Ref}, \token{comp:\-id\-Ref},
-  \token{comp:\-unit\-Ref}, \token{comp:\-metaId\-Ref}, or
-  \token{comp:\-deletion}.  (References: SBML Level~3 Package
+  \token{comp:portRef}, \token{comp:idRef},
+  \token{comp:unitRef}, \token{comp:metaIdRef}, or
+  \token{comp:deletion}.  (References: SBML Level~3 Package
   Specification for Hierarchical Model Composition, Version~1,
   \sec{replacedelement-class}.) }
 
 \validRule{comp-21003}{A \ReplacedElement object must have a value for
-  the required attribute \token{comp:\-submodel\-Ref}, and one, and only
-  one, of the following attributes: \token{comp:\-port\-Ref},
-  \token{comp:\-id\-Ref}, \token{comp:\-unit\-Ref},
-  \token{comp:\-metaId\-Ref}, or \token{comp:\-deletion}.  It may also
-  have a value for the optional attribute
-  \token{comp:\-con\-version\-Factor}.  No other attributes from the
+  the required attribute \token{comp:submodelRef}, and a value for one,
+  and only one, of the following attributes: \token{comp:portRef},
+  \token{comp:idRef}, \token{comp:unitRef}, \token{comp:metaIdRef}, or
+  \token{comp:deletion}.  It may also have a value for the optional
+  attribute \token{comp:conversionFactor}.  No other attributes from the
   Hierarchical Model Composition namespace are permitted on a
   \ReplacedElement object.  (References: SBML Level~3 Package
   Specification for Hierarchical Model Composition, Version~1,
   \sec{replacedelement-class}.) }
 
-\validRule{comp-21004}{The value of a \token{comp:\-submodel\-Ref}
+\validRule{comp-21004}{The value of a \token{comp:submodelRef}
   attribute on a \ReplacedElement object must be the identifier of a
   \Submodel present in \ReplacedElement object's parent \Model.
   (References: SBML Level~3 Package Specification for Hierarchical Model
   Composition, Version~1, \sec{replacedelement-submodelref}.) }
 
-\validRule{comp-21005}{The value of a \token{comp:\-deletion} attribute
+\validRule{comp-21005}{The value of a \token{comp:deletion} attribute
   on a \ReplacedElement object must be the identifier of a \Deletion
   present in the \ReplacedElement object's parent \Model.  (References:
   SBML Level~3 Package Specification for Hierarchical Model Composition,
   Version~1, \sec{replacedelement-deletion}.) }
 
-\validRule{comp-21006}{The value of a \token{con\-version\-Factor}
+\validRule{comp-21006}{The value of a \token{conversionFactor}
   attribute on a \ReplacedElement object must be the identifier of
   a \Parameter present in the \ReplacedElement object's parent \Model.
   (References: SBML Level~3 Package Specification for Hierarchical Model
   Composition, Version~1, \sec{replacedelement-conversionfactor}.) }
 
-\validRule{comp-21007}{The value of a \token{comp:\-submodel\-Ref}
+\validRule{comp-21007}{The value of a \token{comp:submodelRef}
   attribute on a \ReplacedElement object must always conform to the
   syntax of the SBML data type \primtype{SId}.  (References: SBML
   Level~3 Package Specification for Hierarchical Model Composition,
   Version~1, \sec{replacedelement-submodelref}.) }
 
-\validRule{comp-21008}{The value of a \token{comp:\-deletion} attribute
+\validRule{comp-21008}{The value of a \token{comp:deletion} attribute
   on a \ReplacedElement object must always conform to the syntax of the
   SBML data type \primtype{SId}.  (References: SBML Level~3 Package
   Specification for Hierarchical Model Composition, Version~1,
   \sec{replacedelement-deletion}.) }
   
 \validRule{comp-21009}{The value of a
-  \token{comp:\-con\-version\-Factor} attribute on a \ReplacedElement
+  \token{comp:conversionFactor} attribute on a \ReplacedElement
   object must always conform to the syntax of the SBML data type
   \primtype{SId}.  (References: SBML Level~3 Package Specification for
   Hierarchical Model Composition, Version~1,

@@ -321,10 +321,11 @@ referenced.  The \token{source} attribute must have a value for every
 \paragraph{The \fixttspace\token{modelRef} attribute}
 
 \ExternalModelDefinition's optional attribute \token{modelRef}, of type
-\primtype{SIdRef}, in is used to identify a \Model object within the
-SBML document located at \token{source}.  The object referenced may be
-the main model in the document, or a model definition contained in the
-SBML document's \token{listOfModelDefinitions} or
+\primtype{SIdRef}, is used to identify a \Model or
+\ExternalModelDefinition object within the SBML document located at
+\token{source}.  The object referenced may be the main model in the
+document, or it may be a model definition contained in the SBML
+document's \token{listOfModelDefinitions} or
 \token{listOfExternalModelDefinitions} lists.  Loops are not allowed: it
 must be possible to follow a chain of \ExternalModelDefinition objects
 to its end in a \Model object.
@@ -870,13 +871,13 @@ submodel \emph{Y}''.  In the final composed model, all references to
 approach is used as the mechanism for linking or gluing entities from
 different models together.  Thus, to connect entity \emph{X} and some
 other entity \emph{Z} located in another submodel, a model could create 
-and entity \emph{W} in the containing model, replacing both \emph{X}
+an entity \emph{W} in the containing model, replacing both \emph{X}
 and \emph{Z}.  Entity \emph{W} will then act as an
 intermediary at the level of the containing model, and all references
 to both \emph{X} and \emph{Z} would now point to \emph{W}.  Alternatively, to
 designate \emph{X} as the replacement for \emph{Z}, entity \emph{W} could
 be created with a child \ReplacedElement element pointing to \emph{Z}, and
-a child \ReplacedBy element point to \emph{X}.  In this case, all
+a child \ReplacedBy element pointing to \emph{X}.  In this case, all
 references to \emph{W} and \emph{Z} would now point to \emph{X}.
 
 %Chris points out that this is confusing, and could use a figure.
@@ -913,10 +914,11 @@ attribute or the relevant submodel's conversion factors---see
 replaced species' \token{metaid} value must be made to refer to the
 replacement species' \token{metaid} value instead; and anything else
 that referred either to an object identifier (i.e., attributes such as
-the \token{id} attribute whose types inherit from the SID primitive data
-type) or the meta identifier (i.e., the \token{metaid} attribute or any
-other attribute that inherits from the ID primitive data type) must be
-made to refer to the replacement species object instead.
+the \token{id} attribute whose types inherit from the \primtype{SId}
+primitive data type) or the meta identifier (i.e., the \token{metaid}
+attribute or any other attribute that inherits from the ID primitive
+data type) must be made to refer to the replacement species object
+instead.
 
 In summary, in a \sbmlthreecore model making use of Hierarchical Model
 Composition, defining a \ReplacedElement object has the following
@@ -1101,9 +1103,9 @@ present object is to replaced by another object.  As is the case with
 \ReplacedElement, the \ReplacedBy class inherits from \SBaseRef.  It
 adds one required attribute (\token{submodelRef}).
 
-The \ReplacedBy class is the single class derived from \SBaseRef. It has
-a restriction on references to elements from other namespaces, because
-the referenced element must be discoverable by an interpreter that only
+The \ReplacedBy class is the only \SBaseRef-derived class with a
+restriction on references to elements from other namespaces, because the
+referenced element must be discoverable by an interpreter that only
 knows enough about packages to read this element.  This means that a
 core element may not have a \ReplacedBy child that points to an element
 in a package namespace, because an interpreter might not understand that
@@ -1171,8 +1173,8 @@ implications.  We list some crucial ones below:
   class, and whether the reverse is legal.
 
 \item \emph{Identifiers must be conserved}.  If a replaced element
-  defines one or more attributes of type \token{SIdRef} or \token{IDREF}
-  (or their derivatives, such as \token{UnitSIdRef}), the replacement
+  defines one or more attributes of type \token{SId} or XML \token{ID}
+  (or their derivatives, such as \token{UnitSId}), the replacement
   element must also define those attributes.  This is to ensure that any
   reference to the replaced element may be updated with a reference to
   the replacement element.
@@ -1187,9 +1189,10 @@ implications.  We list some crucial ones below:
 
 \item \emph{Units should stay the same}.  Any element with defined units
   should only be replaced by elements with the same defined units if no
-  \token{conversionFactor} is defined.  If a \token{ConversionFactor} is
-  defined, the units of the replacement element times the units of the
-  conversion factor should equal the units of the replaced element.
+  \token{conversionFactor} is defined.  If a \token{conversionFactor} is
+  defined, a single unit of the replaced element multiplied by the
+  conversion factor should equal a single unit of the replacement
+  element.
   
 \item \emph{Subcomponents of replaced and deleted objects become
     inaccessible}.  An important and far-reaching consequence of
@@ -1421,33 +1424,34 @@ The following example illustrates this:
 
 \begin{example}
 <listOfModelDefinitions> 
-  <modelDefinition id="m1"> 
-    <listOfParameters> 
-      <parameter id="p1" value="3"/> 
-    </listOfParameters> 
-  </modelDefinition> 
-  <modelDefinition id="m2"> 
-    <listOfSubmodels> 
-      <submodel id="sub_m1" modelRef="m1"/> 
-    </listOfSubmodels>     
-  </modelDefinition> 
-  <modelDefinition id="m3"> 
-    <listOfSubmodels> 
-      <submodel id="sub_m2" modelRef="m2"/> 
-    </listOfSubmodels>     
-  </modelDefinition> 
-  <modelDefinition id="m3"> 
-    <listOfSubmodels> 
-      <submodel id="sub_m3" modelRef="m3"> 
-        <listOfDeletions> 
-          <deletion idRef="sub_m2"> 
-            <sBaseRef idRef="sub_m1"> 
-              <sBaseRef idRef="p1" />
-            </sBaseRef> 
-          </deletion> 
-        </listOfDeletions> 
-      </submodel> 
-    </listOfSubmodels>     
+  <modelDefinition id="m1" name="m1">
+    <listOfParameters>
+      <parameter id="p1" value="3" constant="true"/>
+    </listOfParameters>
+  </modelDefinition>
+  <modelDefinition id="m2" name="m2">
+    <listOfSubmodels>
+      <submodel id="sub_m1" modelRef="m1"/>
+    </listOfSubmodels>
+  </modelDefinition>
+  <modelDefinition id="m3" name="m3">
+    <listOfSubmodels>
+      <submodel id="sub_m2" modelRef="m2"/>
+    </listOfSubmodels>
+  </modelDefinition>
+  <modelDefinition id="m4" name="m4">
+    <listOfSubmodels>
+      <submodel id="sub_m3" modelRef="m3">
+        <listOfDeletions>
+          <deletion idRef="sub_m2">
+            <sBaseRef idRef="sub_m1">
+              <sBaseRef idRef="p1"/>
+            </sBaseRef>
+          </deletion>
+        </listOfDeletions>
+      </submodel>
+    </listOfSubmodels>
+  </modelDefinition>
 </listOfModelDefinitions> 
 \end{example}
 

@@ -3,37 +3,31 @@
 <grammar xmlns="http://relaxng.org/ns/structure/1.0"
   ns="http://www.sbml.org/sbml/level3/version1/spatial/version1"
   datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes">
-  
-  <!-- additional simple types -->
+
+  <!-- additional simple types for spatial -->
   <define name="SpId.simpleType">
     <data type="string">
       <param name="pattern">(_|[a-z]|[A-Z])(_|[a-z]|[A-Z]|[0-9])*</param>
     </data>
   </define>
-  
+
   <define name="SpIdRef.simpleType">
     <ref name="SpId.simpleType"/>
   </define>
-  
-  
+
+
   <!-- The following is the type definition for the top-level element in an SBML document.-->
-  
+
   <define name="sbml.datatype" combine="interleave">
     <!-- MUST PUT ns -->
     <attribute name="required" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
-        <data type="boolean"/>
-      </attribute>
+      <data type="boolean"/>
+    </attribute>
   </define>
-  
-  
-  
-  <define name="compartment.datatype" combine="interleave">
-    <interleave>
-      <element name="compartmentMapping">
-        <ref name="compartmentMapping.datatype"/>
-      </element>
-    </interleave>
-  </define>
+
+  <!-- new elements introduced by spatial -->
+
+  <!-- extending compartment -->
 
   <define name="compartmentMapping.datatype" combine="interleave">
     <interleave>
@@ -50,11 +44,769 @@
     </attribute>
     <attribute name="unitSize" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
       <data type="double"/>
-    </attribute>  
+    </attribute>
   </define>
 
+
+  <!-- extending parameter -->
+
+  <define name="spatialSymbolReference.datatype" combine="interleave">
+    <interleave>
+      <ref name="SBase.datatype"/>
+      <attribute name="spatialId" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <ref name="SpIdRef.simpleType"/>
+      </attribute>
+      <attribute name="type" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <data type="string"/>
+      </attribute>
+    </interleave>
+  </define>
+
+  <define name="diffusionCoefficient.datatype" combine="interleave">
+    <interleave>
+      <ref name="SBase.datatype"/>
+      <attribute name="variable" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <ref name="SpIdRef.simpleType"/>
+      </attribute>
+      <optional>
+        <attribute name="coordinateIndex"
+          ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+          <data type="nonNegativeInteger"/>
+        </attribute>
+      </optional>
+    </interleave>
+  </define>
+
+  <define name="advectionCoefficient.datatype" combine="interleave">
+    <interleave>
+      <ref name="SBase.datatype"/>
+      <attribute name="variable" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <ref name="SpIdRef.simpleType"/>
+      </attribute>
+      <optional>
+        <attribute name="coordinateIndex"
+          ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+          <data type="nonNegativeInteger"/>
+        </attribute>
+      </optional>
+    </interleave>
+  </define>
+
+  <define name="boundaryCondition.datatype" combine="interleave">
+    <interleave>
+      <ref name="SBase.datatype"/>
+      <attribute name="variable" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <ref name="SpIdRef.simpleType"/>
+      </attribute>
+      <attribute name="coordinateBoundary"
+        ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <ref name="SpIdRef.simpleType"/>
+      </attribute>
+      <attribute name="type" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <data type="string"/>
+      </attribute>
+      <optional>
+        <attribute name="boundatDomainType"
+          ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+          <ref name="SpIdRef.simpleType"/>
+        </attribute>
+      </optional>
+    </interleave>
+  </define>
+
+  <!-- extending model -->
+
+  <define name="geometry.datatype" combine="interleave">
+    <interleave>
+      <ref name="SBase.datatype"/>
+      <attribute name="coordinateSystem"
+        ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <ref name="SpIdRef.simpleType"/>
+      </attribute>
+      <optional>
+        <element name="listOfCoordinateComponents">
+          <ref name="listOfCoordinateComponents.datatype"/>
+        </element>
+      </optional>
+      <optional>
+        <element name="listOfDomainTypes">
+          <ref name="listOfDomainTypes.datatype"/>
+        </element>
+      </optional>
+      <optional>
+        <element name="listOfDomains">
+          <ref name="listOfDomains.datatype"/>
+        </element>
+      </optional>
+      <optional>
+        <element name="listOfAdjacentDomains">
+          <ref name="listOfAdjacentDomains.datatype"/>
+        </element>
+      </optional>
+      <optional>
+        <element name="listOfGeometryDefinitions">
+          <ref name="listOfGeometryDefinitions.datatype"/>
+        </element>
+      </optional>
+    </interleave>
+  </define>
+
+  <!-- child elements of the geometry element -->
+
+  <define name="listOfCoordinateComponents.datatype" combine="interleave">
+    <interleave>
+      <ref name="SBase.datatype"/>
+      <oneOrMore>
+        <element name="coordinateComponent">
+          <ref name="coordinateComponent.datatype"/>
+        </element>
+      </oneOrMore>
+    </interleave>
+  </define>
+  <define name="listOfDomainTypes.datatype" combine="interleave">
+    <interleave>
+      <ref name="SBase.datatype"/>
+      <oneOrMore>
+        <element name="domainType">
+          <ref name="domainType.datatype"/>
+        </element>
+      </oneOrMore>
+    </interleave>
+  </define>
+  <define name="listOfDomains.datatype" combine="interleave">
+    <interleave>
+      <ref name="SBase.datatype"/>
+      <oneOrMore>
+        <element name="domain">
+          <ref name="domain.datatype"/>
+        </element>
+      </oneOrMore>
+    </interleave>
+  </define>
+  <define name="listOfAdjacentDomains.datatype" combine="interleave">
+    <interleave>
+      <ref name="SBase.datatype"/>
+      <oneOrMore>
+        <element name="adjacentDomains">
+          <ref name="adjacentDomain.datatype"/>
+        </element>
+      </oneOrMore>
+    </interleave>
+  </define>
+  <define name="listOfGeometryDefinitions.datatype" combine="interleave">
+    <interleave>
+      <ref name="SBase.datatype"/>
+      <oneOrMore>
+        <choice>
+          <element name="analyticGeometry">
+            <ref name="analyticGeometry.datatype"/>
+          </element>
+          <element name="sampledFieldGeometry">
+            <ref name="sampledFieldGeometry.datatype"/>
+          </element>
+          <!--          <element name="csGeometry">
+            <ref name="geometryDefinition.datatype"/>
+          </element>
+          <element name="parametricGeometry">
+            <ref name="geometryDefinition.datatype"/>
+          </element>
+-->
+        </choice>
+      </oneOrMore>
+    </interleave>
+  </define>
+
+  <!-- coordinateComponent -->
+
+  <define name="coordinateComponent.datatype" combine="interleave">
+    <interleave>
+      <ref name="SBase.datatype"/>
+      <attribute name="spatialId" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <ref name="SpId.simpleType"/>
+      </attribute>
+      <attribute name="index" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <data type="nonNegativeInteger"/>
+      </attribute>
+      <attribute name="componentType" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <data type="string"/>
+      </attribute>
+      <attribute name="sbmlUnit" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <ref name="UnitSIdRef.simpleType"/>
+      </attribute>
+      <optional>
+        <element name="boundaryMin">
+          <ref name="boundary.datatype"/>
+        </element>
+      </optional>
+      <optional>
+        <element name="boundaryMax">
+          <ref name="boundary.datatype"/>
+        </element>
+      </optional>
+    </interleave>
+  </define>
+
+  <define name="boundary.datatype" combine="interleave">
+    <interleave>
+      <ref name="SBase.datatype"/>
+      <attribute name="spatialId" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <ref name="SpId.simpleType"/>
+      </attribute>
+      <attribute name="value" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <data type="double"/>
+      </attribute>
+    </interleave>
+  </define>
+
+
+  <!-- domainType -->
+
+  <define name="domainType.datatype" combine="interleave">
+    <interleave>
+      <ref name="SBase.datatype"/>
+      <attribute name="spatialId" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <ref name="SpId.simpleType"/>
+      </attribute>
+      <attribute name="spatialDimensions"
+        ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <data type="nonNegativeInteger"/>
+      </attribute>
+    </interleave>
+  </define>
+
+  <!-- domain -->
+
+  <define name="domain.datatype" combine="interleave">
+    <interleave>
+      <ref name="SBase.datatype"/>
+      <attribute name="spatialId" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <ref name="SpId.simpleType"/>
+      </attribute>
+      <attribute name="domainType" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <ref name="SpIdRef.simpleType"/>
+      </attribute>
+      <attribute name="implicit" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <data type="boolean"/>
+      </attribute>
+      <optional>
+        <element name="listOfInteriorPoints">
+          <ref name="listOfInteriorPoints.datatype"/>
+        </element>
+      </optional>
+    </interleave>
+  </define>
+
+  <define name="listOfInteriorPoints.datatype" combine="interleave">
+    <interleave>
+      <ref name="SBase.datatype"/>
+      <oneOrMore>
+        <element name="interiorPoint">
+          <ref name="interiorPoint.datatype"/>
+        </element>
+      </oneOrMore>
+    </interleave>
+  </define>
+
+  <define name="interiorPoint.datatype" combine="interleave">
+    <interleave>
+      <ref name="SBase.datatype"/>
+      <attribute name="coord1" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <data type="double"/>
+      </attribute>
+      <attribute name="coord2" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <data type="double"/>
+      </attribute>
+      <attribute name="coord3" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <data type="double"/>
+      </attribute>
+    </interleave>
+  </define>
+
+  <!-- adjacent domain -->
+
+  <define name="adjacentDomain.datatype" combine="interleave">
+    <interleave>
+      <ref name="SBase.datatype"/>
+      <attribute name="spatialId" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <ref name="SpId.simpleType"/>
+      </attribute>
+      <attribute name="domain1" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <ref name="SpIdRef.simpleType"/>
+      </attribute>
+      <attribute name="domain2" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <ref name="SpIdRef.simpleType"/>
+      </attribute>
+    </interleave>
+  </define>
+
+  <!-- geometryDefinition -->
+
+  <define name="geometryDefinition.datatype" combine="interleave">
+    <interleave>
+      <ref name="SBase.datatype"/>
+      <attribute name="spatialId" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <ref name="SpId.simpleType"/>
+      </attribute>
+    </interleave>
+  </define>
+
+  <!-- child elements of geometryDefinition -->
+
+  <define name="analyticGeometry.datatype" combine="interleave">
+    <interleave>
+      <ref name="geometryDefinition.datatype"/>
+      <optional>
+        <element name="listOfAnalyticVolumes">
+          <ref name="listOfAnalyticVolumes.datatype"/>
+        </element>
+      </optional>
+    </interleave>
+  </define>
+
+  <define name="sampledFieldGeometry.datatype" combine="interleave">
+    <interleave>
+      <ref name="geometryDefinition.datatype"/>
+      <optional>
+        <element name="listOfSampledVolumes">
+          <ref name="listOfSampledVolumes.datatype"/>
+        </element>
+      </optional>
+      <optional>
+        <element name="sampledField">
+          <ref name="sampledField.datatype"/>
+        </element>
+      </optional>
+    </interleave>
+  </define>
+  <define name="csGeometry.datatype" combine="interleave">
+    <interleave>
+      <ref name="geometryDefinition.datatype"/>
+      <element name="listOfCSGObjects">
+        <ref name="listOfCSGObjects.datatype"/>
+      </element>
+    </interleave>
+  </define>
+
+  <define name="parametricGeometry.datatype" combine="interleave">
+    <interleave>
+      <ref name="geometryDefinition.datatype"/>
+      <optional>
+        <element name="listOfSpatialPoints">
+          <ref name="listOfSpatialPoints.datatype"/>
+        </element>
+      </optional>
+      <optional>
+        <element name="listOfParametricObjects">
+          <ref name="listOfParametricObjects.datatype"/>
+        </element>
+      </optional>
+    </interleave>
+  </define>
+
+
+  <!-- child elements of analyticGeometry -->
+
+  <define name="listOfAnalyticVolumes.datatype" combine="interleave">
+    <interleave>
+      <ref name="SBase.datatype"/>
+      <oneOrMore>
+        <element name="analyticVolume">
+          <ref name="analyticVolume.datatype"/>
+        </element>
+      </oneOrMore>
+    </interleave>
+  </define>
+
+  <define name="analyticVolume.datatype" combine="interleave">
+    <interleave>
+      <ref name="SBase.datatype"/>
+      <ref name="math.datatype"/>
+      <attribute name="spatialId" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <ref name="SpId.simpleType"/>
+      </attribute>
+      <attribute name="domainType" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <ref name="SpIdRef.simpleType"/>
+      </attribute>
+      <attribute name="functionType" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <data type="string"/>
+      </attribute>
+      <optional>
+        <attribute name="ordinal" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+          <data type="nonNegativeInteger"/>
+        </attribute>
+      </optional>
+    </interleave>
+  </define>
+
+  <!-- child elements of sampledFieldGeometry -->
+
+  <define name="listOfSampledVolumes.datatype" combine="interleave">
+    <interleave>
+      <ref name="SBase.datatype"/>
+      <oneOrMore>
+        <element name="sampledVolume">
+          <ref name="sampledVolume.datatype"/>
+        </element>
+      </oneOrMore>
+    </interleave>
+  </define>
+
+  <define name="sampledVolume.datatype" combine="interleave">
+    <interleave>
+      <ref name="SBase.datatype"/>
+      <attribute name="spatialId" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <ref name="SpId.simpleType"/>
+      </attribute>
+      <attribute name="domainType" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <ref name="SpIdRef.simpleType"/>
+      </attribute>
+      <attribute name="sampledValue" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <data type="double"/>
+      </attribute>
+      <attribute name="minValue" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <data type="double"/>
+      </attribute>
+      <attribute name="maxValue" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <data type="double"/>
+      </attribute>
+    </interleave>
+  </define>
+
+  <define name="sampledField.datatype" combine="interleave">
+    <interleave>
+      <ref name="SBase.datatype"/>
+      <attribute name="spatialId" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <ref name="SpId.simpleType"/>
+      </attribute>
+      <attribute name="dataType" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <data type="string"/>
+      </attribute>
+      <attribute name="interpolationType"
+        ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <data type="string"/>
+      </attribute>
+      <attribute name="encoding" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <data type="string"/>
+      </attribute>
+      <attribute name="numSamples1" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <data type="long"/>
+      </attribute>
+      <attribute name="numSamples2" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <data type="long"/>
+      </attribute>
+      <attribute name="numSamples3" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <data type="long"/>
+      </attribute>
+      <optional>
+        <element name="imageData">
+          <ref name="imageData.datatype"/>
+        </element>
+      </optional>
+    </interleave>
+  </define>
+
+  <define name="imageData.datatype" combine="interleave">
+    <interleave>
+      <ref name="SBase.datatype"/>
+      <attribute name="samples" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <text/>
+      </attribute>
+      <attribute name="samplesLength" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <data type="nonNegativeInteger"/>
+      </attribute>
+      <attribute name="dataType" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <data type="string"/>
+      </attribute>
+    </interleave>
+  </define>
+
+  <!-- child elements of csGeometry -->
+
+  <define name="listOfCSGObjects.datatype" combine="interleave">
+    <interleave>
+      <ref name="SBase.datatype"/>
+      <oneOrMore>
+        <element name="csgObject">
+          <ref name="CSGObject.datatype"/>
+        </element>
+      </oneOrMore>
+    </interleave>
+  </define>
+
+  <define name="CSGObject.datatype" combine="interleave">
+    <interleave>
+      <ref name="SBase.datatype"/>
+      <attribute name="spatialId" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <ref name="SpId.simpleType"/>
+      </attribute>
+      <attribute name="domainType" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <ref name="SpIdRef.simpleType"/>
+      </attribute>
+      <optional>
+        <attribute name="ordinal" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+          <data type="nonNegativeInteger"/>
+        </attribute>
+      </optional>
+      <oneOrMore>
+        <element name="listOfCSGNodes">
+          <ref name="listOfCSGNodes.datatype"/>
+        </element>
+      </oneOrMore>
+    </interleave>
+  </define>
+
+  <define name="CSGNode.datatype" combine="interleave">
+    <interleave>
+      <ref name="SBase.datatype"/>
+      <attribute name="spatialId" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <ref name="SpId.simpleType"/>
+      </attribute>
+    </interleave>
+  </define>
+  
+  <define name="listOfCSGNodes.datatype" combine="interleave">
+    <interleave>
+      <ref name="SBase.datatype"/>
+      <oneOrMore>
+        <choice>
+          <ref name="CSGTransformation.datatype"/>
+          <element name="csgPrimitive">
+            <ref name="CSGPrimitive.datatype"/>
+          </element>
+          <element name="csgPseudoPrimitive">
+            <ref name="CSGPseudoPrimitive.datatype"/>
+          </element>
+          <element name="csgSetOperator">
+            <ref name="CSGSetOperator.datatype"/>
+          </element>
+        </choice>
+      </oneOrMore>
+    </interleave>
+  </define>
+
+  <define name="CSGTransformation.datatype" combine="interleave">
+    <interleave>
+      <ref name="CSGNode.datatype"/>
+      <attribute name="transformationType" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <!-- this should refer to an enum of possible types -->
+        <ref name="SpId.simpleType"/>
+      </attribute>
+      <choice>
+        <element name="csgTranslation">
+          <ref name="CSGTranslation.datatype"/>
+        </element>
+        <element name="csgRotation">
+          <ref name="CSGRotation.datatype"/>
+        </element>
+        <element name="csgScale">
+          <ref name="CSGScale.datatype"/>
+        </element>
+        <element name="csgSetOperator">
+          <ref name="CSGSetOperator.datatype"/>
+        </element>
+        <element name="csgHomogeneousTransformation">
+          <ref name="CSGHomogeneousTransformation.datatype"/>
+        </element>
+      </choice>
+    </interleave>
+  </define>
+  
+  <define name="CSGPrimitive.datatype" combine="interleave">
+    <interleave>
+      <ref name="CSGNode.datatype"/>
+      <attribute name="primitiveType" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <!-- this should refer to an enum of possible types -->
+        <ref name="SpId.simpleType"/>
+      </attribute>
+    </interleave>
+  </define>
+  
+  <define name="CSGPseudoPrimitive.datatype" combine="interleave">
+    <interleave>
+      <ref name="CSGNode.datatype"/>
+      <attribute name="csgObjectRef" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <ref name="SpIdRef.simpleType"/>
+      </attribute>
+    </interleave>
+  </define>
+  
+  <define name="CSGSetOperator.datatype" combine="interleave">
+    <interleave>
+      <ref name="CSGNode.datatype"/>
+      <attribute name="operationType" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <!-- this should refer to an enum of possible types -->
+        <ref name="SpIdRef.simpleType"/>
+      </attribute>
+      <element name="listOfCSGNodes">
+        <ref name="listOfCSGNodes.datatype"/>
+      </element>
+    </interleave>
+  </define>
+  
+  <define name="CSGTranslation.datatype" combine="interleave">
+    <interleave>
+      <ref name="CSGTransformation.datatype"/>
+      <attribute name="translateX" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <data type="double"/>
+      </attribute>
+      <attribute name="translateY" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <data type="double"/>
+      </attribute>
+      <attribute name="translateZ" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <data type="double"/>
+      </attribute>
+     </interleave>
+  </define>
+  
+  <define name="CSGRotation.datatype" combine="interleave">
+    <interleave>
+      <ref name="CSGTransformation.datatype"/>
+      <attribute name="rotateX" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <data type="double"/>
+      </attribute>
+      <attribute name="rotateY" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <data type="double"/>
+      </attribute>
+      <attribute name="rotateZ" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <data type="double"/>
+      </attribute>
+      <attribute name="rotateAngleInRadians" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <data type="double"/>
+      </attribute>
+    </interleave>
+  </define>
+
+  <define name="CSGScale.datatype" combine="interleave">
+    <interleave>
+      <ref name="CSGTransformation.datatype"/>
+      <attribute name="scaleX" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <data type="double"/>
+      </attribute>
+      <attribute name="scaleY" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <data type="double"/>
+      </attribute>
+      <attribute name="scaleZ" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <data type="double"/>
+      </attribute>
+    </interleave>
+  </define>
+ 
+  <define name="CSGHomogeneousTransformation.datatype" combine="interleave">
+    <interleave>
+      <ref name="CSGTransformation.datatype"/>
+      <element name="forwardTransformation">
+        <ref name="TransformationComponent.datatype"/>
+      </element>
+      <element name="reverseTransformation">
+        <ref name="TransformationComponent.datatype"/>
+      </element>
+      </interleave>
+  </define>
+  
+  <define name="TransformationComponent.datatype" combine="interleave">
+    <interleave>
+      <ref name="CSGTransformation.datatype"/>
+      <attribute name="components" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <text/>
+      </attribute>
+      <attribute name="componentslength" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <data type="nonNegativeInteger"/>
+      </attribute>
+     </interleave>
+  </define>
+  
+  <!-- child elements of parametricGeometry -->
+
+  <define name="listOfSpatialPoints.datatype" combine="interleave">
+    <interleave>
+      <ref name="SBase.datatype"/>
+      <oneOrMore>
+        <element name="spatialPoint">
+          <ref name="spatialPoint.datatype"/>
+        </element>
+      </oneOrMore>
+    </interleave>
+  </define>
+
+  <define name="spatialPoint.datatype" combine="interleave">
+    <interleave>
+      <ref name="SBase.datatype"/>
+      <attribute name="spatialId" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <ref name="SpId.simpleType"/>
+      </attribute>
+      <attribute name="domain" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <ref name="SpIdRef.simpleType"/>
+      </attribute>
+      <attribute name="coord1" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <data type="double"/>
+      </attribute>
+      <optional>
+        <attribute name="coord2" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+          <data type="double"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute name="coord3" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+          <data type="double"/>
+        </attribute>
+
+      </optional>
+    </interleave>
+  </define>
+
+
+  <define name="listOfParametricObjects.datatype" combine="interleave">
+    <interleave>
+      <ref name="SBase.datatype"/>
+      <oneOrMore>
+        <element name="parametricObject">
+          <ref name="parametricObject.datatype"/>
+        </element>
+      </oneOrMore>
+    </interleave>
+  </define>
+
+  <define name="parametricObject.datatype" combine="interleave">
+    <interleave>
+      <ref name="SBase.datatype"/>
+      <attribute name="spatialId" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <ref name="SpId.simpleType"/>
+      </attribute>
+      <attribute name="domain" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <ref name="SpIdRef.simpleType"/>
+      </attribute>
+      <attribute name="polygonType" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <data type="string"/>
+      </attribute>
+      <element name="polygonObject">
+        <ref name="polygonObject.datatype"/>
+      </element>
+    </interleave>
+  </define>
+
+  <define name="polygonObject.datatype" combine="interleave">
+    <interleave>
+      <ref name="SBase.datatype"/>
+      <attribute name="pointIndex" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+        <text/>
+      </attribute>
+    </interleave>
+  </define>
+
+  <!-- core elements extended by spatial -->
+
+  <define name="compartment.datatype" combine="interleave">
+    <interleave>
+      <element name="compartmentMapping">
+        <ref name="compartmentMapping.datatype"/>
+      </element>
+    </interleave>
+  </define>
+
+
+
   <define name="species.datatype" combine="interleave">
-    <attribute name="isSpatial"  ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+    <attribute name="isSpatial" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
       <data type="boolean"/>
     </attribute>
   </define>
@@ -83,69 +835,9 @@
       </optional>
     </interleave>
   </define>
-  
-  <define name="spatialSymbolReference.datatype" combine="interleave">
-    <interleave>
-    <ref name="SBase.datatype"/>
-      <attribute name="spatialId"  ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
-        <ref name="SpIdRef.simpleType"/>
-      </attribute>    
-      <attribute name="type"  ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
-        <data type="string"/>
-      </attribute>    
-    </interleave>
-  </define>
-  
-  <define name="diffusionCoefficient.datatype" combine="interleave">
-    <interleave>
-      <ref name="SBase.datatype"/>
-      <attribute name="variable"  ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
-        <ref name="SpIdRef.simpleType"/>
-      </attribute>    
-      <optional>
-      <attribute name="coordinateIndex"  ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
-        <data type="nonNegativeInteger"/>
-      </attribute>
-      </optional>
-    </interleave>
-  </define>
-  
-  <define name="advectionCoefficient.datatype" combine="interleave">
-    <interleave>
-      <ref name="SBase.datatype"/>
-      <attribute name="variable"  ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
-        <ref name="SpIdRef.simpleType"/>
-      </attribute>    
-      <optional>
-        <attribute name="coordinateIndex"  ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
-          <data type="nonNegativeInteger"/>
-        </attribute>
-      </optional>
-    </interleave>
-  </define>
-  
-  <define name="boundaryCondition.datatype" combine="interleave">
-    <interleave>
-      <ref name="SBase.datatype"/>
-      <attribute name="variable"  ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
-        <ref name="SpIdRef.simpleType"/>
-      </attribute>    
-      <attribute name="coordinateBoundary"  ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
-        <ref name="SpIdRef.simpleType"/>
-      </attribute>    
-      <attribute name="type"  ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
-        <data type="string"/>
-      </attribute>  
-      <optional>
-        <attribute name="boundatDomainType"  ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
-          <ref name="SpIdRef.simpleType"/>
-        </attribute>  
-      </optional>
-    </interleave>
-  </define>
 
   <define name="reaction.datatype" combine="interleave">
-    <attribute name="isLocal"  ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
+    <attribute name="isLocal" ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
       <data type="boolean"/>
     </attribute>
   </define>
@@ -158,447 +850,5 @@
     </interleave>
   </define>
 
-  <define name="geometry.datatype" combine="interleave">
-    <interleave>
-      <ref name="SBase.datatype"/>
-      <attribute name="coordinateSystem"  ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
-        <ref name="SpIdRef.simpleType"/>
-      </attribute>
-      <optional>
-        <element name="listOfCoordinateComponents">
-          <ref name="listOfCoordinateComponents.datatype"/>
-        </element>
-      </optional>
-      <optional>
-        <element name="listOfDomainTypes">
-          <ref name="listOfDomainTypes.datatype"/>
-        </element>
-      </optional>
-      <optional>
-        <element name="listOfDomains">
-          <ref name="listOfDomains.datatype"/>
-        </element>
-      </optional>
-      <optional>
-        <element name="listOfAdjacentDomains">
-          <ref name="listOfAdjacentDomains.datatype"/>
-        </element>
-      </optional>
-      <optional>
-        <element name="listOfGeometryDefinitions">
-          <ref name="listOfGeometryDefinitions.datatype"/>
-        </element>
-      </optional>
-      </interleave>
-  </define> 
-  
-  <define name="listOfCoordinateComponents.datatype" combine="interleave">
-    <interleave>
-      <ref name="SBase.datatype"/>
-      <oneOrMore>
-        <element name="coordinateComponent">
-          <ref name="coordinateComponent.datatype"/>
-        </element>
-      </oneOrMore>
-    </interleave>
-  </define>
-  
-  <define name="coordinateComponent.datatype" combine="interleave">
-    <interleave>
-      <ref name="SBase.datatype"/>
-      <attribute name="spatialId"  ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
-        <ref name="SpIdRef.simpleType"/>
-      </attribute>    
-        <attribute name="index"  ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
-          <data type="nonNegativeInteger"/>
-        </attribute>
-      <attribute name="componentType"  ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
-        <data type="string"/>
-      </attribute>    
-      <attribute name="sbmlUnit"  ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
-        <ref name="UnitSIdRef.simpleType"/>
-      </attribute>   
-      <optional>
-        <element name="boundaryMin">
-          <ref name="boundaryMin.datatype"/>
-        </element>
-      </optional>
-      <optional>
-        <element name="boundaryMax">
-          <ref name="boundaryMax.datatype"/>
-        </element>
-      </optional>
-    </interleave>
-  </define>
-  
-  <define name="boundaryMin.datatype" combine="interleave">
-    <interleave>
-      <ref name="SBase.datatype"/>
-      <attribute name="spatialId"  ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
-        <ref name="SpIdRef.simpleType"/>
-      </attribute>    
-      <attribute name="value"  ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
-        <data type="double"/>
-      </attribute>
-    </interleave>
-  </define>
-
-  <define name="boundaryMax.datatype" combine="interleave">
-    <interleave>
-      <ref name="SBase.datatype"/>
-      <attribute name="spatialId"  ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
-        <ref name="SpIdRef.simpleType"/>
-      </attribute>    
-      <attribute name="value"  ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
-        <data type="double"/>
-      </attribute>
-    </interleave>
-  </define>
-  
-  <define name="listOfDomainTypes.datatype" combine="interleave">
-    <interleave>
-      <ref name="SBase.datatype"/>
-      <oneOrMore>
-        <element name="domainType">
-          <ref name="domainType.datatype"/>
-        </element>
-      </oneOrMore>
-    </interleave>
-  </define>
-  
-  <define name="domainType.datatype" combine="interleave">
-    <interleave>
-      <ref name="SBase.datatype"/>
-      <attribute name="spatialId"  ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
-        <ref name="SpIdRef.simpleType"/>
-      </attribute>    
-      <attribute name="spatialDimensions"  ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
-        <data type="nonNegativeInteger"/>
-      </attribute>
-    </interleave>
-  </define>
-
-  <define name="listOfDomains.datatype" combine="interleave">
-    <interleave>
-      <ref name="SBase.datatype"/>
-      <oneOrMore>
-        <element name="domain">
-          <ref name="domain.datatype"/>
-        </element>
-      </oneOrMore>
-    </interleave>
-  </define>
-  
-  <define name="domain.datatype" combine="interleave">
-    <interleave>
-      <ref name="SBase.datatype"/>
-      <attribute name="spatialId"  ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
-        <ref name="SpIdRef.simpleType"/>
-      </attribute>    
-      <attribute name="domainType"  ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
-        <ref name="SpIdRef.simpleType"/>
-      </attribute>    
-      <attribute name="shapeId"  ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
-        <data type="string"/>
-      </attribute>
-      <attribute name="implicit"  ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
-        <data type="boolean"/>
-      </attribute>
-      <optional>
-        <element name="listOfInteriorPoints">
-          <ref name="listOfInteriorPoints.datatype"/>
-        </element>
-      </optional>
-    </interleave>
-  </define>
-
-  <define name="listOfInteriorPoints.datatype" combine="interleave">
-    <interleave>
-      <ref name="SBase.datatype"/>
-      <oneOrMore>
-        <element name="interiorPoint">
-          <ref name="interiorPoint.datatype"/>
-        </element>
-      </oneOrMore>
-    </interleave>
-  </define>
-
-  <define name="interiorPoint.datatype" combine="interleave">
-    <interleave>
-      <ref name="SBase.datatype"/>
-      <attribute name="coord1"  ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
-        <data type="double"/>
-      </attribute>    
-      <attribute name="coord2"  ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
-        <data type="double"/>
-      </attribute>
-      <attribute name="coord3"  ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
-        <data type="double"/>
-      </attribute>
-    </interleave>
-  </define>
-
-  <define name="listOfAdjacentDomains.datatype" combine="interleave">
-    <interleave>
-      <ref name="SBase.datatype"/>
-      <oneOrMore>
-        <element name="adjacentDomains">
-          <ref name="adjacentDomain.datatype"/>
-        </element>
-      </oneOrMore>
-    </interleave>
-  </define>
-  
-  <define name="adjacentDomain.datatype" combine="interleave">
-    <interleave>
-      <ref name="SBase.datatype"/>
-      <attribute name="spatialId"  ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
-        <ref name="SpId.simpleType"/>
-      </attribute>    
-      <attribute name="domain1"  ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
-        <ref name="SpIdRef.simpleType"/>
-      </attribute>    
-      <attribute name="domain2"  ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
-        <ref name="SpIdRef.simpleType"/>
-      </attribute>
-    </interleave>
-  </define>
-
-  <define name="listOfGeometryDefinitions.datatype" combine="interleave">
-    <interleave>
-      <ref name="SBase.datatype"/>
-      <oneOrMore>
-        <choice>
-          <element name="analyticGeometry">
-            <ref name="analyticGeometry.datatype"/>
-          </element>
-          <element name="sampledFieldGeometry">
-            <ref name="sampledFieldGeometry.datatype"/>
-          </element>
-<!--          <element name="csGeometry">
-            <ref name="geometryDefinition.datatype"/>
-          </element>
-          <element name="parametricGeometry">
-            <ref name="geometryDefinition.datatype"/>
-          </element>
--->        </choice>
-      </oneOrMore>
-    </interleave>
-  </define>
- 
-  <define name="geometryDefinition.datatype" combine="interleave">
-    <interleave>
-      <ref name="SBase.datatype"/>
-      <attribute name="spatialId"  ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
-        <ref name="SpId.simpleType"/>
-      </attribute>    
-    </interleave>
-  </define>
-  
-  <define name="analyticGeometry.datatype" combine="interleave">
-    <interleave>
-      <ref name="geometryDefinition.datatype"/>
-      <optional>
-        <element name="listOfAnalyticVolumes">
-          <ref name="listOfAnalyticVolumes.datatype"/>
-        </element>
-      </optional>
-    </interleave>
-  </define>
-  
-  <define name="listOfAnalyticVolumes.datatype" combine="interleave">
-    <interleave>
-      <ref name="SBase.datatype"/>
-      <oneOrMore>
-        <element name="analyticVolume">
-          <ref name="analyticVolume.datatype"/>
-        </element>
-      </oneOrMore>
-    </interleave>
-  </define>    
-
-  <define name="analyticVolume.datatype" combine="interleave">
-    <interleave>
-      <ref name="SBase.datatype"/>
-      <ref name="math.datatype"/>
-      <attribute name="spatialId"  ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
-        <ref name="SpId.simpleType"/>
-      </attribute>    
-      <attribute name="domainType"  ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
-        <ref name="SpIdRef.simpleType"/>
-      </attribute>    
-      <attribute name="functionType"  ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
-        <data type="string"/>
-      </attribute>    
-      <attribute name="shapeId"  ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
-        <data type="string"/>
-      </attribute>
-      <optional>
-      <attribute name="ordinal"  ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
-        <data type="nonNegativeInteger"/>
-      </attribute>
-        </optional>
-    </interleave>
-  </define>
-  
-  <define name="sampledFieldGeometry.datatype" combine="interleave">
-    <interleave>
-      <ref name="geometryDefinition.datatype"/>
-      <optional>
-        <element name="listOfSampledVolumes">
-          <ref name="listOfSampledVolumes.datatype"/>
-        </element>
-      </optional>
-      <optional>
-        <element name="sampledField">
-          <ref name="sampledField.datatype"/>
-        </element>
-      </optional>
-    </interleave>
-  </define>
-
-  <define name="listOfSampledVolumes.datatype" combine="interleave">
-    <interleave>
-      <ref name="SBase.datatype"/>
-      <oneOrMore>
-        <element name="sampledVolume">
-          <ref name="sampledVolume.datatype"/>
-        </element>
-      </oneOrMore>
-    </interleave>
-  </define>    
-  
-  <define name="sampledVolume.datatype" combine="interleave">
-    <interleave>
-      <ref name="SBase.datatype"/>
-      <attribute name="spatialId"  ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
-        <ref name="SpId.simpleType"/>
-      </attribute>    
-      <attribute name="domainType"  ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
-        <ref name="SpIdRef.simpleType"/>
-      </attribute>    
-      <attribute name="sampledValue"  ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
-        <data type="double"/>
-      </attribute>    
-      <attribute name="minValue"  ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
-        <data type="double"/>
-      </attribute>    
-      <attribute name="maxValue"  ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
-        <data type="double"/>
-      </attribute>    
-    </interleave>
-  </define>
-  
-  <define name="sampledField.datatype" combine="interleave">
-    <interleave>
-      <ref name="SBase.datatype"/>
-      <attribute name="spatialId"  ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
-        <ref name="SpId.simpleType"/>
-      </attribute>    
-      <attribute name="dataType"  ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
-        <data type="string"/>
-      </attribute>    
-      <attribute name="interpolationType"  ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
-        <data type="string"/>
-      </attribute>    
-      <attribute name="encoding"  ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
-        <data type="string"/>
-      </attribute>    
-      <attribute name="numSamples1"  ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
-        <data type="nonNegativeInteger"/>
-      </attribute>    
-      <attribute name="numSamples2"  ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
-        <data type="nonNegativeInteger"/>
-      </attribute>    
-      <attribute name="numSamples3"  ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
-        <data type="nonNegativeInteger"/>
-      </attribute>    
-      <optional>
-        <element name="imageData">
-          <text/>
-        </element>
-      </optional>
-    </interleave>
-  </define>
- 
-  <define name="parametricGeometry.datatype" combine="interleave">
-    <interleave>
-      <ref name="geometryDefinition.datatype"/>
-      <optional>
-        <element name="listOfSpatialPoints">
-          <ref name="listOfSpatialPoints.datatype"/>
-        </element>
-      </optional>
-      <optional>
-        <element name="listOfObjects">
-          <ref name="listOfObjects.datatype"/>
-        </element>
-      </optional>
-    </interleave>
-  </define>
-
-  <define name="listOfSpatialPoints.datatype" combine="interleave">
-    <interleave>
-      <ref name="SBase.datatype"/>
-      <oneOrMore>
-        <element name="spatialPoint">
-          <ref name="spatialPoint.datatype"/>
-        </element>
-      </oneOrMore>
-    </interleave>
-  </define>    
-  
-  <define name="spatialPoint.datatype" combine="interleave">
-    <interleave>
-      <ref name="SBase.datatype"/>
-      <attribute name="spatialId"  ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
-        <ref name="SpId.simpleType"/>
-      </attribute>    
-      <attribute name="domain"  ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
-        <ref name="SpIdRef.simpleType"/>
-      </attribute>    
-      <attribute name="coord1"  ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
-        <data type="double"/>
-      </attribute>    
-      <attribute name="coord2"  ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
-        <data type="double"/>
-      </attribute>
-      <attribute name="coord3"  ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
-        <data type="double"/>
-      </attribute>
-    </interleave>
-  </define>
-  
-  
-  <define name="listOfObjects.datatype" combine="interleave">
-    <interleave>
-      <ref name="SBase.datatype"/>
-      <oneOrMore>
-        <element name="parametricObject">
-          <ref name="parametricObject.datatype"/>
-        </element>
-      </oneOrMore>
-    </interleave>
-  </define>    
-  
-  <define name="parametricObject.datatype" combine="interleave">
-    <interleave>
-      <ref name="SBase.datatype"/>
-      <attribute name="spatialId"  ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
-        <ref name="SpId.simpleType"/>
-      </attribute>    
-      <attribute name="domain"  ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
-        <ref name="SpIdRef.simpleType"/>
-      </attribute>    
-      <attribute name="polygonType"  ns="http://www.sbml.org/sbml/level3/version1/spatial/version1">
-        <data type="string"/>
-      </attribute>    
-      <optional>
-        <element name="polygonObject">
-          <text/>
-        </element>
-      </optional>
-    </interleave>
-  </define>
 
 </grammar>

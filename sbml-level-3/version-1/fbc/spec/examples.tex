@@ -3,15 +3,11 @@
 \section{Examples}
 \label{examples}
 
-This section contains a variety of examples of SBML Level~3 Version~1
-documents employing the Flux Balance Constraints package.
+This section contains a worked example showing the encoding of a model suitable for Flux Balance Analysis using the \FBCPackage.
 
-\subsection{\FBC syntax examples}
+\subsection{Example of the \FBC syntax}
 
-These examples are provided to highlight the \FBCPackage syntax.
-
-\subsubsection{Example One}
-
+\subsubsection{Kinetic model description}
 \begin{figure}[h]
   \centering
   % Requires \usepackage{graphicx}
@@ -23,10 +19,12 @@ These examples are provided to highlight the \FBCPackage syntax.
   \label{fig:example1}
 \end{figure}
 
-As shown in \ref{fig:example1} the first example is a simple four reaction
-pathway that transforms metabolite \textit{IN} to \textit{OUT}. To begin
-with it is possible to compactly describe this network in terms of its
-reaction stoichiometry as shown in \ref{tble:ex1nmat}.
+As shown in \ref{fig:example1} this example is a simple four reaction
+pathway that transforms metabolite \textit{IN} to \textit{OUT}. The model was created and analysed using the \textsf{SBW Flux Balance} \FBC implementation \cite{sbw} In \SBML each reaction is represented as a chemical process transforming reactants to products, e.g. reaction \textit{R1} is encoded in XML as (see also the complete example provided at the end of this section):
+%
+\exampleFile{examples/spec-example1-reaction.txt}
+%
+Using the reagent identity and stoichiometry it is possible to compactly describe this network in terms of its reaction stoichiometry as shown in \ref{tble:ex1nmat} where each reaction is represented as a column.
 \begin{table}[h]
   \centering
     \begin{tabular}{c|cccc}
@@ -38,56 +36,47 @@ reaction stoichiometry as shown in \ref{tble:ex1nmat}.
   \label{tble:ex1nmat}
 \end{table}
 %
-While the stoichiometry contains the structural properties of the reaction
-network the full description of a biological model can be described as a set
-of ordinary differential equations (ODE's). While other formalisms may exist
-here we will concentrate exclusively on kinetic models where the change in
-concentration of each variable component in the system ($\frac{ds}{dt}$) is
-a non-linear function of the rates of the reactions which either create or
-consume it (the product of the stoichiometric matrix, \Nmat\ and the vector
-of reaction rates, \vvec).
+While the stoichiometry contains the structural properties of the reaction network the full description of a biological model can be described as a set of ordinary differential equations (ODE's). Of course other formalisms do exist, but here we will concentrate exclusively on kinetic models where the change in concentration of each variable component in the system ($\frac{ds}{dt}$) is a non-linear function of the rates of the reactions which either create or consume it (the product of the stoichiometric matrix, \Nmat\ and the vector of reaction rates, \vvec).
 %
 \begin{equation}\label{eqn:kinmod}
   \frac{ds}{dt} = \textbf{Nv}
 \end{equation}
 %
 The formulation of the kinetic model, as shown in Equation~\ref{eqn:kinmod}
-is typical of the kind that can already be described using `traditional'
-\SBML where the vector \vvec\ would contain rate equations as a function of
-parameters and concentrations. In the XML representation of this model
-provided below the reaction stoichiometry is captured in the \Species and
-\Reaction definitions. In a constraint based model these rate laws are
-considered unknowns and the system is assumed to be in steady state (see
-Equation~\ref{eqn:kinmodsteady}):
+is typical of the kind that can already be described using \sbmlthreecore
+where the vector \vvec\ would contain rate equations as a function of
+parameters and variable species. In a constraint based model these rate laws are considered unknowns and the system is assumed to be in steady state (shown in Equation~\ref{eqn:kinmodsteady}):
 %
 \begin{equation}\label{eqn:kinmodsteady}
   \textbf{NJ} = 0
 \end{equation}
 %
-Note how the rate vector \vvec\ is now represented as the flux vector \Jvec.
-To perform a typical steady-state analysis such as flux balance analysis
-(FBA) we need to include to more pieces of information into our model
-description:
+Note now that the rate vector \vvec\ is now represented as the steady-state flux vector \Jvec. However, in order to perform a typical steady-state analysis such as flux balance analysis (FBA) we need to include to more  information into our model description. However, \sbmlthreecore does not have an unambiguous way of encoding either a capacity constraint or an objective target and for this we now need to use the additional constructs provided by the \FBCPackage. In the following sections the same model data is shown encoded as both XML and in the LP format (as used by IBM CPLEX).
+
+\subsubsection{Capacity constraints}
+A capacity constraint: in this example the maximum limit (upper bound) of the flux through reaction \textit{R1} is set to be one (with an arbitrary unit of flux). In LP format this can be written as:
 %
-\begin{enumerate}
-  \item A capacity constraint: the maximum limit (upper bound) of the flux
-      through reaction \textit{R1} is 1 (with an arbitrary unit of flux).
-  \item An objective target which can be maximized or minimized: in this
-      example the  flux through reaction \textit{R2} will be
-      \textit{maximized}.
-\end{enumerate}
+\exampleFile{examples/spec-example1-bnd.lp}
 %
-However, \sbmlthreecore does not have an unambiguous way of encoding either
-a capacity constraint or an objective target and for this we now need to use
-the additional constructs provided by the \FBCPackage. In the example XML
-shown below, this additional information is encoded from Line~83--92.
-Encoded in this way the constraint based model can now be formulated as a
-Linear Program and analyzed using FBA (here shown in LP format as used by
-IBM CPLEX):
+the same information encoded as XML:
+%
+\exampleFile{examples/spec-example1-bnd.txt}
+
+\subsubsection{Objective function}      
+This described a target which can be maximized or minimized: in this example the flux through reaction \textit{R2} will be \textit{maximized}.
+%
+\exampleFile{examples/spec-example1-obj.lp}
+%
+the same information encoded as XML:
+%
+\exampleFile{examples/spec-example1-obj.txt}
+
+\subsubsection{Complete worked example}
+To conclude we show how the complete model described in \ref{fig:example1} encoded as both an LP and as XML. Formulated as an LP the problem can be written as:
 %
 \exampleFile{examples/spec-example1.lp}
 %
-Solving this problem we find that maximization of flux through \textit{R2}
+Solving this we find that maximization of flux through \textit{R2}
 gives an optimal solution of \textit{one} shown with one possible solution
 for \Jvec\ (see Equation~\ref{egn:ex1sol1}).
 \begin{equation}\label{egn:ex1sol1}
@@ -108,7 +97,6 @@ for \Jvec\ (see Equation~\ref{egn:ex1sol1}).
   = \textbf{0}
 \end{equation}
 
-The following code block is the XML that represents the model described as
-Example~One in the preceding text.
+Finally we provide the complete model, described above, encoded using the \FBCPackage:
 %
 \exampleFile{examples/spec-example1.txt}

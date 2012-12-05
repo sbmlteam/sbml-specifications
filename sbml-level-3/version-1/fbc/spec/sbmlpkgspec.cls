@@ -4,7 +4,7 @@
 %% Author(s):    Michael Hucka <mhucka@caltech.edu>
 %% Organization: California Institute of Technology
 %% Date created: 2011-08-11
-%% Home page:    http://sbml.org/Documents/Specifications/LaTeX
+%% https://sbml.svn.sourceforge.net/svnroot/sbml/trunk/project/tex/sbmlpkgspec
 %%
 %% Copyright 2007-2012 California Institute of Technology, Pasadena, CA, USA.
 %% 
@@ -31,9 +31,10 @@
 %% Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.
 %% ============================================================================
 
-\def\filedate{2012/07/23}
+\def\filedate{2012/11/30}
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesClass{sbmlpkgspec}[\filedate\space SBML Level 3 Package Specification Style]
+\ProvidesClass{sbmlpkgspec}[\filedate\space SBML Level 3
+Package Specification Style]
 
 %% ----------------------------------------------------------------------------
 %% Package references and options.
@@ -85,6 +86,7 @@
 \RequirePackage{accsupp}
 \RequirePackage[T1]{fontenc}
 \RequirePackage{suffix}
+\RequirePackage{varwidth}
 
 % We use the "optional" package to indicate whether to generate a grayscale
 % vs a color version of the document without having to alter the .tex file
@@ -520,7 +522,7 @@
   \ifx\@frontNotice\undefined
   \relax
   \else
-    {\cornersize{0.25}\color{DarkRed}\ovalbox{\begin{minipage}{5.45in}\@frontNotice\end{minipage}}}%
+    {\cornersize{0.25}\color{DarkRed}\ovalbox{\begin{varwidth}{0.9\textwidth}\centering\@frontNotice\end{varwidth}}}%
   \fi
   \vfill
   \ifx\@packageGeneralURL\undefined
@@ -562,9 +564,9 @@
       \@putauthorinfo
       }%
     \vskip 2em%
-    {\large\@packageVersionDate}%
-    \vskip 1.5em%
     {\large\fbox{\@packageVersion}}%
+    \vskip 1.5em%
+    {\large\@packageVersionDate}%
   \end{center}%
   \par%
   \vskip 1.5em%
@@ -598,7 +600,12 @@
 % document is located (but obviously, it only works for certain path
 % combinations -- it's a total hack).
 
-\graphicspath{{./logos/}{../tex/logos/}{../project/tex/logos/}{../../project/tex/logos/}{../../../project/tex/logos/}{../../../../project/tex/logos/}}
+\graphicspath{{./logos/}
+  {../tex/logos/}
+  {../project/tex/logos/}
+  {../../project/tex/logos/}
+  {../../../project/tex/logos/}
+  {../../../../project/tex/logos/}}
 
 
 % Set the page footers.
@@ -661,7 +668,8 @@
 
 \renewcommand{\section}{\@startsection%
   {section}{1}{0pt \@plus 1ex}{-3.5ex \@plus -2ex \@minus -.2ex}%
-  {1.2ex}{\clearpage\thispagestyle{footeronly}\hspace*{-24.25pt}\color{sbmlgray}{\rule[1.8em]{6.84in}{0.6em}}\color{normaltextcolor}%
+  {1.2ex}{\clearpage\thispagestyle{footeronly}%
+    \hspace*{-24.25pt}\color{sbmlgray}{\rule[1.8em]{6.84in}{0.6em}}\color{normaltextcolor}%
     \hspace*{-6.84in}\color{sbmlgray}{\rule[-0.8em]{6.84in}{0.1em}}\color{normaltextcolor}%
     \noindent\normalfont\LARGE\bfseries\sffamily\hspace*{-6.84in}}}
 
@@ -742,10 +750,11 @@
      \@tempdima #3\relax
      \advance\leftskip \@tempdima \null\nobreak\hskip -\leftskip
      {\sffamily #4}\nobreak
+     {\color{mediumgray}
      \leaders\hbox{$\m@th
         \mkern \@dotsep mu\hbox{.}\mkern \@dotsep
         mu$}\hfill
-     \nobreak
+     }\nobreak
      \hb@xt@\@pnumwidth{\hfil\normalfont\sffamily #5}%
      \par}%
   \fi}
@@ -918,7 +927,7 @@
   {\lstset{#1}\examplespacing \csname lst@SetFirstLabel\endcsname}
   {\regularspacing \csname lst@SaveFirstLabel\endcsname}
 
-\newcommand{\exampleFile}[2][numbers=left,style=XML]{%
+\newcommand{\exampleFile}[2][style=XML]{%
   \lstset{#1}\examplespacing\lstinputlisting{#2}\regularspacing}
 
 

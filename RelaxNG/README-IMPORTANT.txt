@@ -33,7 +33,7 @@ http://sbml.svn.sourceforge.net/viewvc/sbml/trunk/specifications/RelaxNG
 Please consult the following web page for information about how to
 use these RELAX NG schemas:
 
-  http://sbml.org/Documents/Specifications/RELAX NG schemas
+  http://sbml.org/Documents/Specifications/RELAX_NG_schemas
 
 
 3. REPORTING BUGS AND OTHER PROBLEMS

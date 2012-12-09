@@ -43,7 +43,7 @@ We invite you to report bugs and other problems using the issue
 tracker on SourceForge.  The following URL will take you there
 directly:
 
-  ???????
+  http://sourceforge.net/tracker/?group_id=71971&atid=894711
 
 You can also ask questions on the 'sbml-interoperability' mailing
 list, either over email or using the web forum interface (see below).

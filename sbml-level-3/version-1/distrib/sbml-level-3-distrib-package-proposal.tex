@@ -1,11 +1,13 @@
 \documentclass[draftspec]{sbmlpkgspec}
 \usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{booktabs}
 
 \begin{document}
 
 \packageTitle{The Distributions Package\\for SBML Level 3}
-\packageVersion{Version 0.7 (Draft)}
-\packageVersionDate{6 August, 2012}
+\packageVersion{Version 0.8 (Draft)}
+\packageVersionDate{21 December, 2012}
 %\packageGeneralURL{http://sbml.org/Community/Wiki/SBML_Level_3_Proposals/Distributions_and_Ranges}
 %\packageThisVersionURL{}
 
@@ -47,7 +49,8 @@
 \newcommand\mlambda{\class{Lambda}\xspace}
 \newcommand\mmath{\class{Math}\xspace}
 \newcommand\Distribution{\defRef{Distribution}{sec:distribution}}
-\newcommand{\mathml}{MathML\xspace}
+\newcommand\mathml{MathML\xspace}
+\newcommand\sbmll3v1{SBML Level 3 Version 1\xspace}
 
 \reversemarginpar  % Want "\watchout" to be put on the left, not the right.
 \newcommand{\watchout}{\marginpar{\hspace*{34pt}\raisebox{-0.5ex}{\Large\ding{43}}}}
@@ -70,6 +73,8 @@ comments on aim of package from NlN.\\ \midrule
 discussed and agreed at HARMONY 2012.\\ 
 0.7 (Draft) & 6 Aug 2012 & Stuart Moodie & Incorporated review
 comments from Maciej Swat and Sarah Keating.\\ 
+0.8 (Draft) & 21 Dec 2012 & Stuart Moodie & Incorporated changes
+suggested at combine and subsequently through list discussions.\\
 \bottomrule
 \end{edtable}
 
@@ -100,7 +105,7 @@ in scope:
 \item Sampling from a continuous distribution.
 \item Sampling from a discrete distribution.
 \item Sampling from user-defined probability density function.
-\item Sampling from user-defined discrete probability density.
+\item Sampling from user-defined discrete probability density function.
 \end{itemize}
 
 At one point the following were considered for inclusion in this
@@ -129,7 +134,7 @@ package in SBML Level 3. After this two implementations based on this
 proposal are required and then a vote on its adoption by the SBML
 community. The proposal will then provide the basis for a future
 package specification document. More details of the SBML package
-adoption process can be found at:
+adoption process can be found at: 
 \url{http://sbml.org/Documents/SBML_Development_Process}.
 
 Please also note that in this draft of the proposal a list of the
@@ -139,28 +144,30 @@ included. This is because at present it is envisaged that
 distributions (see sections \ref{sec:externaldistdef} and
 \ref{sec:unresolved}).
 
-\subsection{Conventions used in this document}
+% \subsection{Conventions used in this document}
 
-As we are early in the package proposal process there will be some
-parts of this proposal where there is no clear consensus on the
-correct solution or only recent agreement or agreement by a group
-which may not be representative of the SBML community as a
-whole. These cases are indicated by the \contraversial question mark
-in the left margin (illustrated). The reader should pay particular
-attention to these points and ideally provide feedback, especially if
-they disagree with what is proposed. Similarly there will be points
---- especially as the proposal is consolidated --- which are agreed,
-but which the reader should take note of and perhaps read again. These
-points \watchout are emphasised by the hand pointer in the left margin
-(illustrated.
+% As we are early in the package proposal process there will be some
+% parts of this proposal where there is no clear consensus on the
+% correct solution or only recent agreement or agreement by a group
+% which may not be representative of the SBML community as a
+% whole. These cases are indicated by the \contraversial question mark
+% in the left margin (illustrated). The reader should pay particular
+% attention to these points and ideally provide feedback, especially if
+% they disagree with what is proposed. Similarly there will be points
+% --- especially as the proposal is consolidated --- which are agreed,
+% but which the reader should take note of and perhaps read again. These
+% points \watchout are emphasised by the hand pointer in the left margin
+% (illustrated.
 
 \section{Background}
 
 \subsection{Problems with current SBML approaches}
 
 SBML Level 3 Core has no direct support for providing random values
-within a model. Currently there is no workaround and this makes it
-impossible to describe models that use probability distributions.
+within a model. Currently there is no workaround within the core
+language itself, although it is possible to define such information
+using annotations within SBML itself. Frank Bergmann had proposed such
+an semi-formalised extension for use with SBML L2 [REF?].
 
 \subsection{Past work on this problem or similar topics}
 
@@ -328,52 +335,117 @@ very helpful in solving the problem of multivariate distributions in
 
 \subsubsection{COMBINE 2012: Toronto}
 
+The August proposal was reviewed and an improvements were agreed to
+the user-defined PMF part of the proposal. In particular is was agreed
+that the categories should be defined by \distribshort classes rather
+than by passing in the information as an array. Questions were also raised
+about whether \uncertml was suitable well defined to be used as an
+external definition for probability distributions. This was resolved
+subsequent to the meeting with a teleconference to Dan Cornford and
+colleagues. These changes are incorporated here. Finally, there was
+considerable debate about whether to keep the dependence of
+\distribshort on the Arrays package in order to support multi-variate
+distributions. The outcome was an agreement that we would review this
+at the end of 2012, based on the results of a feasibility study on
+feasible it would be to implement \arrays as a package.
 
 \section{Proposed syntax and semantics}
 
-\subsection{Colour Conventions}
+\subsection{Overview}
+
+This section describes the new elements that are provided by the class
+to SBML and existing SBML elements that are modified in some way by
+the package. Although \distribshort, like SBML is implemented in XML,
+we follow the convention of the SBML specification and describe the
+package in terms of UML classes and attributes.
 
 Throughout this document, in all UML diagrams, classes that exists in
-SBML Level 3 core or another existing standard are displayed in
+\sbmll3v1 or another existing standard are displayed in
 black. If those elements are extended in this proposal, those
 extensions are displayed in green. Classes that are new to this
 proposal are shown in blue.
 
 \subsection{Defining Distributions}
 
-The \distrib package has a very simple purpose. It defines a
-statistical distribution, range or statistic from which you can obtain
-a value that is used in other parts of an SBML model. The distribution
-is defined using \uncertml, which is a resource that defines
-probabilistic uncertainties~\cite{uncertml}, or explicitly using
-MathML~\cite{mathml2}.
+\subsubsection{The appoach}
 
-SBML Core is extended at the \FunctionDefinition class as can be seen
-in the UML representation in figure \vref{fig:umlmodel}. The extended
-\FunctionDefinition can optionally contain a single instance of a new
-class \class{externalDefinition} or \class{explicitPDF} or
-\class{explicitPMF}.
+The \distrib package has a very simple purpose. It provides a
+mechanism for sampling a random value from a probability
+distribution. This implies that it must achieve two tasks. It must
+first define the probability distribution and next it must sample a
+random value from the distribution.
+
+There are three ways to define a probability distribution in
+\distribshort. The first is to reuse an existing definition. This
+definition is external to the \distribshort specification, and in
+theory any definition that can be specified by a URI is permitted. However, to
+promote inter-operability it is recommended that \uncertml is used as
+the source of external definitions and this proposal document assumes
+its use.
+
+If not using a pre-defined definition then one must explicitly define
+the probability distribution, either as a probability density function (PDF)
+for a continuous distribution or a probability mass function (PMF) for
+a discrete one. The \distrib package provides a mechanism to do this
+by 
+
+Strictly all we need are the explicit PDF and PMF
+definitions. However, the advantage of using a pre-defined
+distribution is that software can easily recognise the distribution
+and use an optimised built-in implementation rather than interpreting
+the distribution from the PDF and PMF definitions. For some
+applications such optimisations make important performance
+differences.
+
+As mentioned above the distribution must be sampled. In \distribshort
+the distributions are sampled when they are invoked. To reuse a
+sampled value the value must be assigned to a paramater first. The
+implementation algorithm used is not specified. The package permits
+the definition of truncated distributions when using externally
+defined distributions and again how this is implemented is left to the
+implementor.
+
+\subsubsection{Design Overview}
+
+SBML Core is extended by redefining the \FunctionDefinition class as
+can be seen in the UML representation in figure
+\vref{fig:umlmodel}. The redefined \FunctionDefinition can optionally
+contain a single instance of either \class{externalDefinition},
+\class{explicitPDF} or \class{explicitPMF}. These classes describe the
+externally defined probability distribution, the explicitly defined
+PDF or the explicitly defined PMF respectively.
+
+Slightly anomalously the \FunctionDefinition class also contains a
+\mathml block containing a standard SBML function definition. This is
+required to comply with the \emph{Validty after Reduction} rule in the
+package design guidelines \cite{sbmll3v1packrule} and ensures a degree
+of backwards compatibility for SBML readers and validators that do not
+understand the \distribshort package.
 
 \begin{figure}[htb]
-\includegraphics[width=1.0\linewidth]{DistribUMLModel.pdf}
-\caption{UML class diagram for the \distrib package. This diagram describes the
-  classes involved and not instances of those classes. Note the UML packages
-  indicate that the classes belong to different namespaces. The
-  namespace of the SBML Core is not shown.}
+\includegraphics[width=0.75\linewidth]{DistribUMLModel.pdf}
+\caption{UML class diagram for the \distrib package. This diagram
+  describes the classes involved and not instances of those
+  classes. The namespace of the SBML Core is not shown.}
 \label{fig:umlmodel}
 \end{figure}
 
-\subsection{Extension Handling}
+\subsection{Package Usage}
 
-The \distrib package is defined as a required package, which means
-that an SBML model that uses that extension will not be correctly
-defined unless the features of the extension are used and interpreted
-correctly by supporting software.
+The \distrib package is defined as a \textbf{required} package. This
+means that unless the software reading the SBML document 'understands'
+\distribshort the model cannot be guaranteed to be correct. The
+package is targetting \sbmll3v1 and so complies with the package
+design guidelines for that version \cite{sbmll3v1packrule}.
 
 \subsection{\FunctionDefinition Extension}
 
-As outlined above the \FunctionDefinition is extended to contain the
-following classes from \distribshort.
+As outlined above the \FunctionDefinition is redefined to contain the
+following classes from \distribshort. It maintains it existing
+associations and so must also contain a \mathml block defining a
+lambda function. In normal usage it is ignored, but it has the
+potential to be invoked by software that does not support \distribshort
+so it should be semantically correct (see section \ref{sec:fallbackfunc}).
 
 \begin{itemize}
   \item \class{externalDefinition}
@@ -384,9 +456,27 @@ following classes from \distribshort.
 \subsection{externalDefinition}
 \label{sec:extlDefnDistn}
 
-This declares a statistical distribution by referring to an external
-normative definition. \uncertml is the recommended source of such
-definitions. The attributes of the class are defined below.
+Defining the external definition requires the specification of a URI
+that defines a probability distribution. A truncated version of the
+distribution may be used, in which case the \token{truncated}
+attribute is true. An overview of the class specification is shown in
+figure \ref{fig:externalDefinitionUml} and the attributes of the class
+are defined below.
+
+It was discussed above that the recommended source of probability
+distribution definitions is \uncertml. In some cases \uncertml permits
+some flexibility in its description of some distributions and permits
+the invocation of several probability distributions in one
+definition. To avoid this and to provide clarity and appendix (section
+\ref{sec:uncertmlusage}) is provided to this document describing the
+available distributions and how they can be used by \distribshort.
+
+\begin{figure}[htb]
+\includegraphics[width=0.75\linewidth]{externalDefinitionUML}
+\caption{UML class diagram describing the \class{externalDefinition}
+  class and its association with \class{functionDefinition}.}
+\label{fig:externalDefinitionUml}
+\end{figure}
 
 \paragraph{\token{uri}}
 
@@ -413,22 +503,56 @@ order they are described below.
 
 \subsection{explicitPDF}
 
-This class defines a probability density function (PDF) explicitly and
-so provides a continuous probability distribution that can be
-sampled. The PDF is defined as a mathematical function using
-\mathml. The distribution can be truncated.
-
-\paragraph{truncated}
-
-See the truncated attribute in section \ref{sec:truncatt}.
+This class describes a continuous probability distribution by explicitly
+defining its probability density function (PDF). The PDF is described
+mathematically using a \mathml definition contained by the
+\class{explicitPDF} class. Note that this function definition is
+distinct from the fallback function described in section \ref{sec:fallbackfunc}.
 
 \subsection{explicitPMF}
 
-This class defines a discrete probability distribution described by a
-user-defined probability mass function (PMF). Here the PMF is defined
-as a category and its associated probability.
+A discrete probability distribution is described by
+\class{explicitPMF} and its associated classes, \class{category} and
+\class{probability}. Together they define a probability mass function
+(PMF) where each category can have an associated probability value
+(figure \ref{fig:explicitpmf}).
 
+\begin{figure}[htb]
+\includegraphics[width=0.75\linewidth]{explicitPMFUML.pdf}
+\caption{UML class diagram describing the \class{explicitPMF}
+  class and it's associated classes used to describe each category.}
+\label{fig:explicitpmf}
+\end{figure}
 
+\subsubsection{category}
+
+The \class{category} class is used to define a discrete category in
+the PMF. It is identified by an \token{id}, which should be unique
+within the PMF definition and a \token{name} that is intended
+to be human readable and meaningful. It has the following attributes.
+
+\paragraph{\token{id}}
+
+An identifier for this category of type \token{SId}. Note that this id
+is scoped by the \class{explicitPMF}. In other-words the id must be
+unique within the set of categories contained by an instance of
+\class{explicitPMF}.
+
+\paragraph{\token{name}}
+
+The name of the category that is intended to be human readable and
+meaningful. It is of type \token{string}. The name is optional and does
+not need to be unique.
+
+\subsubsection{\class{probability}}
+
+The \class{probability} class holds the mathematical definition of the
+probability value associated with a category. This value is defined by
+an associated \mathml definition. Using \mathml to define the
+probability gives the maximum flexibility as it permits the value to
+be obtained by the evaluation of a mathematical expression, as a
+numerical constant or by referencing a variable, which could be a
+parameter for example.
 
 \subsection{Using the \distribshort package}
 
@@ -444,8 +568,9 @@ used by instances of the following SBML classes:
 
 An invocation of a distribution behaves like any other function call
 in SMBL and the function is executed. For a statistical distribution
-this means that one or more values are sampled from the distribution
-each time the function definition is invoked.
+this means that one or more random values are sampled from the distribution
+each time the function definition is invoked. Each invocation implies
+one sampling operation.
 
 \subsection{Permitted Types}
 
@@ -457,7 +582,6 @@ consistency and conversion behaviour between scalar and non-scalar
 types is defined by the \arrays package.
 
 \subsection{External Definition of Distributions}
-\label{sec:extlDefnDistn}
 \label{sec:externaldistdef}
 
 The external definition is a URI that should refer to a standardised
@@ -469,24 +593,26 @@ following:
 \item The parameter arguments used by the function, including for each
  argument: its name and type (scalar or non-scalar). Note that all
  arguments are mandatory.
-\item The value and its type returned by the function.
-\item A detailed mathematics description of the statistical distribution being
-  sampled from.
+\item The type of the random value sampled from the probability distribution.
+\item An explicit and detailed mathematical description of the statistical distribution.
 \end{itemize}
 
-The recommended external definition for distributions is \uncertml. We
-have been liaising with the \uncertml team to ensure that they meet
-the above criteria.
+The recommended external definition for distributions is \uncertml: as
+discussed above (section \ref{sec:extlDefnDistn}). Appendix
+\ref{sec:uncertmlusage} clarifies how the distribution definitions
+should be invoked and the sampled value to expect when invoked as a
+\class{functionDefinition}.
 
 \subsection{Equivalence with Fallback Function}
+\label{sec:fallbackfunc}
 
 The \mathml definition directly contained by the
 \class{functionDefinition} is not used and is provided solely to
-satisfy the \emph{validity upon reduction} rule for packages. This
-rules states that the SBML document must be syntactically valid if all
-package specific elements are removed from it. To ensure that this is
-the case the fallback function used in relation to \distribshort must
-satisfy the following rules:
+satisfy the \emph{validity upon reduction} rule for packages
+\cite{sbmll3v1packrule}. This rules states that the SBML document must
+be syntactically valid if all package specific elements are removed
+from it. To ensure that this is the case the fallback function used in
+relation to \distribshort must satisfy the following rules:
 
 \begin{itemize}
 \item the lambda function should have the same number of arguments as
@@ -583,21 +709,26 @@ None as yet.
 \label{sec:unresolved}
 
 \begin{description}
-\item[what external distrib definition?] A key decision is what form the
-  external definition of the distributions will take. In particular
-  should we use \uncertml, a definition based on a snapshot of
-  \uncertml, another controlled vocabulary yet to be identified or do
-  we create our own?
-\item[Optional function arguments] It would be useful to provide
-  optional arguments to functions, which at the moment is not
-  possible. This would provide a convenient method for defining
-  truncated distributions: all distributions could have an optional
-  min and max argument that defaults to $-\inf$ and $+\inf$
-  respectively, but when set to a value it explicitly defines a
-  truncated function.
+\item Should the \class{explicitPDF} class have a truncation
+  attribute. This would allow one to define a truncated distribution
+  without defining the truncated PDF in the \mathml definition. Is
+  this desirable or not?
+\item The use of arrays. The package and examples have been written
+  that some distribution definitions will require the use of vector or
+  matrix types that can be provided by the Arrays package. While
+  relying on such types enables us to describe a wide range of
+  probability distributions this will come at the cost of delaying
+  this package's approval until Arrays has been developed and
+  approved. There are two alternative strategies. One is to only
+  support distributions that do not require array types (see appendix
+  \ref{sec:uncertmlusage}). The other would be to define workarounds
+  within \distribshort to provide array structures without using the
+  arrays package. The decision at COMBINE was to wait. Do we want to
+  revisit this decision?
 \end{description}
 
 \section{Acknowledgements}
+\label{sec:uncertmlusage}
 
 Much of the initial concrete work leading to this proposal document
 was carried out at the Statistical Models Workshop in Hinxton this
@@ -605,7 +736,7 @@ year (2011). A list of participants and recordings of the discussion
 is available from
 \url{http://sbml.org/Events/Other_Events/statistical_models_workshop_2011}.
 The authors would also like to thank the participants of the
-\distribshort sessions during HARMONY 2012 for their excellent
+\distribshort sessions during HARMONY 2012 and COMBINE 2012 for their excellent
 contributions in helping revising this proposal into something a lot
 closer to the finished version.
 
@@ -613,8 +744,105 @@ The authors would like to thank Sarah Keating and Maciej Swat for
 useful discussions; and Mike Hucka for \LaTeX{} advice and his
 beautiful template upon which this document is based.
 
-%\appendix
-%\section{Appendix}
+\appendix
+\section{Distributions incorporated from \uncertml}
+
+The distributions described by \uncertml \uncertml \footnote{These
+  distributions are defined here:
+  \url{http://www.uncertml.org/distributions}} will provide the
+standard external definition of distributions used by \distrib. The
+definitions are comprehensive, but have multiple implicit definitions
+in some cases. For example the mean and variance parameters of the
+Normal distribution can be each be described as a vector of $k$
+values, where each mean, variance pair describes a different
+probability distribution. However, in \distribshort we want to define
+one probability density and so it in necessary to disambiguate
+definitions where more than one is possible.
+
+The table below describes, for each probability distribution defined in
+\uncertml: the arguments (referred to as parameters in \uncertml) it
+takes, the type of each argument and type of the result obtained when
+a random value (or values) is sampled from the distribution. The type
+can be either a scalar (in effect a double because this is the only
+scalar type supported by SBML), or an array (again of doubles), which
+can have one or more dimensions.
+
+%\begin{center}
+\begin{longtable}[c]{ l l l l }
+\toprule
+\textbf{\uncertml Name} & \multicolumn{2}{c}{\textbf{Argument}} & \textbf{Sampled Result} \\
+\cmidrule(r){2-3}
+& \textbf{Name} & \textbf{Type} & \\
+\toprule 
+\endhead
+\cmidrule(r){3-4}
+\multicolumn{4}{r}{Continued on next page...}\\
+\endfoot
+\bottomrule
+\endlastfoot
+ BernouliDistribution & probability & scalar & scalar \\\midrule
+BetaDistribution & alpha & scalar & scalar \\
+                          & beta & scalar & \\\midrule
+BinomialDistribution & numberOfTrials & scalar & scalar\\
+                                 & probabilityOfSuccess & &\\\midrule
+CauchyDistribution & location & scalar & scalar \\
+                                 & scale & scalar & \\\midrule
+ChiSquaredDistribution & degreesOfFreedom & scalar & scalar \\\midrule
+DirichletDistribution & concentration & array[k], $k \ge 2$ & array[k] \\\midrule
+ExponentialDistribution & rate & scalar & scalar \\\midrule
+FDistribution & numerator & scalar & scalar \\
+                       & denominator & scalar & \\\midrule
+GammaDistribution & shape & scalar & scalar \\
+                                & scale & scalar &  \\\midrule
+GeometricDistribution & probability & scalar & scalar \\\midrule
+HypergeometricDistribution & populationSize & scalar & scalar \\
+                                             & numberOfTrials & scalar &\\
+                                             & numberOfSuccesses & scalar &\\\midrule
+InverseGammaDistribution & shape & scalar & scalar \\
+                                & scale & scalar &  \\\midrule
+LaplaceDistribution & location & scalar & scalar\\
+                                  & scale & scalar & \\\midrule
+LogNormalDistribution & logScale & scalar & scalar \\
+                                     & shape & scalar & \\\midrule
+LogisticDistribution & location & scalar & scalar \\
+                                & scale & scalar & \\\midrule
+MixtureModel & weight & ? & ? \\\midrule
+MultinomialDistribution & numberofTrials & scalar & array[k]\\
+                                       & probabiltyOfSuccess &
+                                       array[k]\\\midrule
+MultivariateNormalDistribution & mean & array[k] & array[k] \\
+                                                  & covarianceMatrix & array[k][k] & \\\midrule
+MultivariateStudentTDistribution & mean & array[k] & array[k] \\
+                                                         & covarianceMatrix & array[k][k]\\
+                                                         &
+                                                         degreesOfFreedom
+                                                         & scalar
+                                                         \\\midrule
+NegativeBinomialDistribution & numberOfFailures & scalar & scalar \\
+                                               & probability & scalar
+                                               & \\\midrule
+NormalDistribution & mean & scalar & scalar \\
+                                & variance & scalar & \\\midrule
+NormalInverseGammaDistribution & mean & scalar & scalar\\
+                                                       &
+                                                       varianceScaling
+                                                       & \\
+                                                       & shape &\\
+                                                       & scale & \\\midrule
+ParetoDistribution & scale & scalar & scalar \\
+                                & shape & scalar & \\\midrule
+PoissionDistribution & rate & scalar & scalar \\\midrule
+StudentTDistribution & location & scalar & scalar \\
+                                    & scale & scalar & \\
+                                    & degreesOfFreedom & scalar &
+                                    \\\midrule
+WeibullDistribution  & scale & scalar & scalar \\
+                                     & shape & scalar & \\\midrule
+WishartDistribution & scaleMatrix & scalar & scalar \\
+                                  & degreesOfFreedom & scalar & \\
+%\bottomrule
+\end{longtable}
+%\end{center}
 
 \bibliography{sbml-level-3-distrib-package-proposal}
 

@@ -145,7 +145,7 @@ the \Transition  class are defined in \sect{qualSpecies-class} and \sect{transit
 \label{qualSpecies-class}
 Similarly to the \sbml{Species} in SBML, the components of qualitative models refer to pools of entities that are considered indistinguishable and are each located in a specific \sbml{Compartment}. However, here components are characterised by their qualitative influences rather than by taking part in reactions. Therefore, we define the \QualitativeSpecies element to represent such pools of entities.
 
-In a Petri net, {\em qualitative species} refer to the places of the model, while in a logical model, they refer to the variables of this model (i.e. nodes of the influence graph).
+\hl{In a Petri net, {\em qualitative species} refer to the places of the model, while in a logical model, they refer to the variables of this model (i.e. nodes of the influence graph).}
 
 A \QualitativeSpecies describes a pool of indistinguishable entities in a \sbml{Compartment}. It is associated with  a \token{level} (an integer representing e.g. an activity state, or a functional level of concentration, etc)  %or a \token{symbolValue} from its \ListOfSymbolicValues.
  These objects classes are defined in \fig{qual-qualitative-species-uml}.
@@ -185,9 +185,13 @@ Typically, in a regulatory or influence graph a \QualitativeSpecies may receive 
 The \token{initialLevel} is an \primtype{integer} that defines the initial \emph{level} of the \QualitativeSpecies in its \sbml{Compartment}. This attribute is optional but if set it cannot exceed the value of the \token{maxlevel} attribute, if this has been set.
 
 \paragraph{The \token{maxLevel} attribute}
-The \token{maxLevel} is an \const{integer} that sets the maximal \emph{level} of the \qualt{QualitativeSpecies}. This attribute is optional.
+The \token{maxLevel} is an \const{integer} that sets the maximal \emph{level} of the \qualt{QualitativeSpecies}. This attribute is optional \textcolor{blue}{but when set, the \emph{level} of the \QualitativeSpecies must not exceed this value at any point in a simulation.}
 
-In Petri nets, this attribute is meant to define place capacities. Hence, a transition is not enabled if the value resulting from its firing would exceed the  \token{maxLevel} of one of its output places. In logical models, when defined, the \token{maxLevel} should be coherent with the \token{resultLevel} values in the function terms defined for the corresponding transition. This attribute is needed for a \QualitativeSpecies whose \token{constant} attribute is true to indicate the range of its possible levels.
+\textcolor{blue}{In Petri nets, this attribute is meant to define place capacities. Hence, a transition is not enabled if the value resulting from its firing would exceed the  \token{maxLevel} of one of its output places. }
+
+\textcolor{blue}{In logical models, the \token{maxLevel} should be coherent with the \token{resultLevel} values in the function terms defined for the corresponding transition, i.e. the model should not contain a \FunctionTerm that attempts to set a \emph{level} that exceeds this value.}
+
+\textcolor{blue}{This attribute is can also be used to indicate the range of possible levels for a \QualitativeSpecies whose \token{constant} attribute is true. This may seem a little contradictory, since if the \token{constant} attribute is true then the level associated with the \QualitativeSpecies cannot vary. However, it provides additional information regarding the possible levels particularly in the case where no \token{initialLevel} has been set.}
 
 %\subsubsection{The \class{SymbolicValue} class}
 %The \QualitativeSpecies element may contain at most one \ListOfSymbolicValues that contains zero or more %\SymbolicValue elements. An empty list is allowed, and useful for e.g. adding annotations.
@@ -218,7 +222,7 @@ In Petri nets, this attribute is meant to define place capacities. Hence, a tran
 \label{transitions-class}
 A \Transition element contains at most one \ListOfInputs and one \ListOfOutputs and exactly one \ListOfFunctionTerms. These objects classes are defined in \fig{qual-transition-uml}.
 
-The semantics of \Transition is that commonly used in Petri models, while in logical models, \Transition is used to specify the logical rule associated to a \QualitativeSpecies (that appears as an \Input of this \Transition). Hence, in principle, there is at most one \Transition defined for each component of the model. Note however, that input components, whose \token{constant} attribute is set to true, have no associated \Transition. 
+\hl{The semantics of \Transition is that commonly used in Petri models, while in logical models, \Transition is used to specify the logical rule associated to a \QualitativeSpecies (that appears as an \Input of this \Transition). Hence, in principle, there is at most one \Transition defined for each component of the model. Note however, that input components, whose \token{constant} attribute is set to true, have no associated \Transition. }
 
 \begin{figure}
   \includegraphics{figs/qual-transition-uml.pdf}
@@ -258,10 +262,10 @@ specification for more information.
 
 \subsubsection{The \class{Input} class}
 \label{input-class}
-The \ListOfInputs contains at least one element of type \Input. 
+\hl{The \ListOfInputs contains at least one element of type \Input. }
 %A transition with zero inputs can be useful for defining an initial assignment, where the state of an output %depends on a function but not on any input values. An empty list is allowed, and useful for e.g. adding %annotations.
 Each \Input refers to a \QualitativeSpecies that participates in the corresponding \Transition.
-In Petri nets, these are the input places of the transition. In logical models, they are the regulators of the species whose behaviour is defined by the transition.
+\hl{In Petri nets, these are the input places of the transition. In logical models, they are the regulators of the species whose behaviour is defined by the transition.}
 
 \paragraph{The \token{id} attribute}
 An \Input element has an optional \token{id} attribute of type \primtype{SId}. The identifier of an \Input can be used as a 
@@ -278,7 +282,9 @@ specification for more information.
 The required attribute \token{qualitativeSpecies}, of type \primtype{SIdRef}, is used to identify the \QualitativeSpecies that is the \emph{input} of this \Transition.  The attribute's value must be the identifier of an existing \QualitativeSpecies object in the model.  This attribute is comparable with the \token{species} attribute on the \sbml{SpeciesReference} element.
 
 \paragraph{The \token{thresholdLevel}  attribute}
-The \token{thresholdLevel} is a \primtype{integer} that can be used to set the threshold level of the particular input. This attribute relates to the contribution of this input for the transition to take place. In logical regulatory models, it refers to the threshold level above which the regulation takes place, while in a Petri net, it refers to the number of tokens required to enable to transition (wight of the arc connecting the input place to the transition). When defined, this attribute should be coherent with the content of the \FunctionTerm.
+The \token{thresholdLevel} is a \primtype{integer} that can be used to set the threshold level of the particular input. This attribute relates to the contribution of this input required for the transition to take place. In logical regulatory models, it refers to the threshold level above which the regulation takes place, while in a Petri net, it refers to the number of tokens required to enable to transition \hl{(weight of the arc connecting the input place to the transition). When defined, this attribute should be coherent with the content of the \FunctionTerm.}
+
+\textcolor{blue}{The \token{thresholdLevel} is used by the FunctionTerms associated with the containing \Transition to determine the applicable \token{resultLevel} that should be applied. The \token{id} of the \Input represents this value and can be used in the \token{math} element of a \FunctionTerm. When defined, this attribute should be coherent with the content of the \FunctionTerm, {\em i.e.} if a \emph{number} is used in the \FunctionTerm to compare the current \emph{level} of a species, this number must correspond to the \token{thresholdLevel} of the corresponding \Input.}
 
 \paragraph{The \token{transitionEffect} attribute}
 Each \Input has a required attribute \token{transitionEffect} of type \primtype{transitionInputEffect} which describes how the \QualitativeSpecies referenced by the \Input is affected by the \Transition. \tab{transition-input} shows the possible values with the interpretation of each value.
@@ -312,7 +318,7 @@ The \token{level} of qualitativeSpecies \val{B} is reduced; hence the \token{tra
 
 Similarly, the \token{level} of \val{C} is also reduced, but on this occasion by $2$ (the \token{threholdLevel}) times the appropriate \token{resultLevel} . 
 
-Hence, in logical models, the \token{transitionEffect} is set to \val{none}, while in Petri nets, it can be set to \val{none} (indicating a read arc) or to \val{consumption}.  The Petri net example in \ref{examples} provides further example of the use of the \token{transitionEffect} and \token{thresholdLevel} attributes. 
+\hl{It should be noted that in logical models the \token{transitionEffect} is always set to \val{none}, while in Petri nets, it can be set to \val{none} (indicating a read arc) or to \val{consumption}. } The Petri net example in \ref{examples} provides further example of the use of the \token{transitionEffect} and \token{thresholdLevel} attributes. 
 
 %\TODO{An example of a resultLevel modified by a thresholdLevel}
 
@@ -324,11 +330,13 @@ The \token{sign} of type \primtype{sign} can be used as an indication as to whet
 \subsubsection{The \class{Output} class}
 \label{output-class}
 
-The \ListOfOutputs contains at least one element of type \Output. 
+\hl{The \ListOfOutputs contains at least one element of type \Output. }
 %A transition with zero outputs can be useful for modelling the effect of the environment. For example, in %Petri nets, a sink transition (with no output) will consume all tokens arriving in its input places; in logical %models, there should not be such transitions. 
 
-Each \Output refers to a \QualitativeSpecies that participates in (is affected by) the corresponding \Transition.
-In a logical model, a \QualitativeSpecies should be referenced in at most one \ListOfOutputs, (that of the transition defining the evolution of this species). When a \Transition has several outputs, it is because the referenced species share the same regulators and the same logical rule.
+\hl{Each \Output refers to a \QualitativeSpecies that participates in (is affected by) the corresponding \Transition. When a \Transition has several outputs, it is because the referenced species share the same regulators and the same logical rules.}
+
+
+\hl{In a logical model, a \QualitativeSpecies should be referenced in at most one \ListOfOutputs, (that of the \Transition defining the evolution of this species). } \textcolor{blue}{This restriction is discussed in more detail in \ref{best-practices}}   
 
 
 \paragraph{The \token{id} attribute}
@@ -347,7 +355,7 @@ specification for more information.
 The required attribute \token{qualitativeSpecies}, of type \primtype{SIdRef}, is used to identify the \QualitativeSpecies that is the \emph{output} of this \Transition.  The attribute's value must be the identifier of an existing \QualitativeSpecies object in the model.  This attribute is comparable with the \token{species} attribute on the \sbml{SpeciesReference} element.
 
 \paragraph{The \token{outputLevel} attribute}
-The \token{outputLevel} is an \primtype{integer} used along with the \token{transitionEffect} to specify the effect of the \Transition on the corresponding \QualitativeSpecies. This attribute is optional.  It has no use in logical models. In Petri nets, it relates to the weight of the arc connecting the transition to the output place.
+The \token{outputLevel} is an \primtype{integer} used along with the \token{transitionEffect} to specify the effect of the \Transition on the corresponding \QualitativeSpecies. This attribute is optional.  \hl{It has no use in logical models. In Petri nets, it relates to the weight of the arc connecting the transition to the output place.}
 
 \paragraph{The \token{transitionEffect} attribute}
 Each \Output has a required attribute \token{transitionEffect} of type \primtype{transitionOutputEffect} which describes how the \QualitativeSpecies referenced by the \Output is affected by the \Transition. \tab{transition-output} shows the possible values with the interpretation of each value.
@@ -380,7 +388,7 @@ The following example illustrates the interpretation of the transitionEffect att
 
 \subsubsection{The \ListOfFunctionTerms class}
 
-The \ListOfFunctionTerms may contain any number of \FunctionTerm elements, and exactly one \DefaultTerm.  Each \FunctionTerm encodes the conditions under which this term is selected.  The \DefaultTerm describes the result of the \Transition applied by default ({\em i.e.} when no term evaluates to \val{true}). 
+The \ListOfFunctionTerms may contain any number of \FunctionTerm elements, and exactly one \DefaultTerm.  Each \FunctionTerm encodes the conditions under which this term is selected.  \hl{The \DefaultTerm describes the result of the \Transition applied by default ({\em i.e.} when no term evaluates to \val{true}). }
 
 \subsubsection{The \DefaultTerm class}
 \label{defaultTerm-class}
@@ -402,19 +410,19 @@ The result of the term is described by a the required attribute \token{resultLev
 The \token{resultLevel} is an \primtype{integer} describing a level.   The \token{resultLevel} is used; possibly together with the \token{thresholdLevel} or \token{outputLevel} to determine the level of a \QualitativeSpecies resulting from the \Transition. 
 
 \paragraph{The \sbml{Math} element:}
-Each \qual{FunctionTerm} holds a Boolean function encoded in a \sbml{Math} element, using the subset of MathML 2.0 as defined in SBML L3v1 Section 3.4.6.
-This element encodes the conditions under which the \FunctionTerm is selected.
+Each \qual{FunctionTerm} holds a \primtype{boolean} function encoded in a \sbml{Math} element, using the subset of MathML 2.0 as defined in SBML L3v1 Section 3.4.6.
+This element encodes the conditions under which the \FunctionTerm is selected. \hl{When the \sbml{Math} element contains the identifier of a \QualitativeSpecies, \Input or \Output, this identifier represents the level, \token{thresholdLevel} or \token{outputLevel} of the corresponding element. It should be noted that for the purposes of this specification these all have integer values. This specification does not preclude the use of these identifiers to represent \token{true} or \token{false}; however it is highly recommended that any the \token{math} element unambiguously returns a \primtype{boolean} function. Tools should take care to specify how integer values will be interpreted in relation to boolean constructs. }
 
 
-\subsubsection{Mathematical interpretation of SBML qual transitions and function terms}
+\hl{\subsubsection{Mathematical interpretation of Transitions and FunctionTerms}}
 
-In the Qualitative Models  package, {\em transitions} are the central mechanism for describing processes that change the levels of the qualitative species of the model. Here, we clarify their interpretation in the framework of logical modelling.
+\hl{In the Qualitative Models  package, {\em transitions} are the central mechanism for describing processes that change the levels of the qualitative species of the model. Here, we clarify their interpretation in the framework of logical modelling.}
 
-The {\em function terms}  of an SBML transition define the transition function of one qualitative species, {\em i.e.} its state transitions that depend on the levels of the species that appear as input of that transition (its "regulators"). The {\em function terms} together with the {\em default term} thus define a state transition table indicating what level the qualitative species will move to (target level), based on the current level of its regulators. In the case of multi-valued (as opposed to Boolean), this evolution proceeds step-wise towards the target level, {\em i.e.} each component of two successor states of the system differ at most by $1$. 
+\hl{The {\em function terms}  of a \Transition define the transition function one \QualitativeSpecies, {\em i.e.} its state transitions that depend on the levels of the species that appear as input of that transition (its "regulators"). The {\em function terms} together with the {\em default term} thus define a state transition table indicating what level the qualitative species will move to (target level), based on the current level of its regulators. In the case of multi-valued (as opposed to Boolean), this evolution proceeds step-wise towards the target level, {\em i.e.} each component of two successor states of the system differ at most by $1$. }\textcolor{blue}{The \QualitativeSpecies affected by the \Transition is referenced by the \Output element. In the situation where there is more than one \Output listed, the referenced species share the same regulators and the same logical rules.}
 
 \hl{The model must be fully defined. Whatever the state of the system, one single value must apply (that of the \DefaultTerm or the \token{resultLevel} of a \FunctionTerm). More than one \FunctionTerm can share the same \token{resultLevel}, which is the equivalent to a single term holding the {\bf disjunction} (OR) of all these terms.  There should be no conflicting terms:  whenever multiple function terms apply (are true), their \token{resultLevel} should be the same. }
 
-Importantly, given a model, one has then to choose an updating policy that defines how enabled transitions are processed (synchronously, asynchronously, etc.). However, this information is not part of the model {\em per se}. 
+\hl{Importantly, given a model, one has then to choose an updating policy that defines how enabled transitions are processed (synchronously, asynchronously, etc.). However, this information is not part of the model {\em per se}. }
 
 
 

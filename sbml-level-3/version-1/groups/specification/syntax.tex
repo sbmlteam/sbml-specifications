@@ -3,7 +3,7 @@
 \section{Package syntax and semantics}
 \label{sec:syntax}
 
-This section contains a definition of the syntax and semantics of the Groups package for \sbmlthreecore.  The Groups package involves four simple new object classes, \Group, \Member, \ListOfMembers and \ListOfGroups, as well as a simple extension of the existing \Model object class.  \sec{examples} contains complete examples of using the constructs in SBML models.
+This section contains a definition of the syntax and semantics of the Groups package for \sbmlthreecore.  The Groups package involves six new object classes, \Group, \Member, \MemberConstraints, \AttributeConstraint, \ListOfMembers and \ListOfGroups, as well as a simple extension of the existing \Model object class.  \sec{examples} contains complete examples of using the constructs in SBML models.
 
 % --------------------------------------------------------------------------
 \subsection{Namespace URI and other declarations necessary for using this package}
@@ -32,18 +32,6 @@ The following fragment illustrates the beginning of a typical SBML model using \
 The Groups package uses a number of the primitive data types described in Section~3.1 of the \sbmlthreecore specification, and adds one additional primitive type described below.
 
 
-% \subsubsection{Type \fixttspace\primtypeNC{GroupSId}}
-% \label{primtype-groupsid}
-
-% The type \primtype{GroupSId} is derived from \primtype{SId} (\sbmlthreecore specification Section~3.1.7) and has identical syntax.  The \primtype{GroupSId} type is used as the data type for the identifiers of \Group objects (see \sec{group-class}).  The purpose of having a separate type for such identifiers is to enable the space of possible group identifier values to be separated from the space of all other identifier values in SBML.  The equality of \primtype{GroupSId} values is determined by a case-sensitive, exact character sequence match.
-
-
-% \subsubsection{Type \fixttspace\primtypeNC{GroupSIdRef}}
-% \label{primtype-groupsidref}
-
-% The type \primtype{GroupSIdRef} is used for attributes that refer to identifiers of type \primtype{GroupSId}.  The type is derived from \primtype{GroupSId}, and has the restriction that the value of a \primtype{GroupSIdRef} type attribute must match the value of an existing \primtype{GroupSId} attribute in the model; in other words, the value of the attribute must be an existing group identifier.  As with \primtype{GroupSId}, the equality of \primtype{GroupSIdRef} values is determined by a case-sensitive character sequence match.
-
-
 \subsubsection{Type \fixttspace\primtypeNC{GroupKind}}
 \label{primtype-groupkind}
 
@@ -52,24 +40,24 @@ The \primtype{GroupKind} primitive data type is used in the definition of the \G
 
 \subsection{The \class{Group} class}
 \label{group-class}
-\label{listofmembers-class}
 
-The first and most central class in the Groups package is the \Group class.  \fig{group-uml} provides the UML diagram of its definition.  The \Group class is relatively simple; it only provides an optional identifier and name, and one required attribute, \token{kind}.  These attributes and their meanings are described below.
-
-\begin{figure}[bh]
-  \includegraphics{figs/group-uml}
-  \caption{The definition of the \Group class.  The \Member class is defined \sec{member-class}.}
-  \label{group-uml}
-  \label{member-uml}
-\end{figure}
+The first and most central class in the Groups package is the \Group class.  \fig{group-uml} provides the UML diagram of its definition.  The \Group class provides an optional identifier and name, one required attribute (\token{kind}), and two children:  a list of members of the group, and a \MemberConstraints child which imposes additional restrictions on those members.  These are described below.
 
 Since \Group is derived from \SBase, and \SBase provides the ability to attach SBO terms as well as MIRIAM annotations, the semantics of a given group in a model can be made more precise by reference to external controlled vocabularies and ontologies.  This capability is discussed further in \sec{semantics}.
 
 
 \subsubsection{The \fixttspace\tokenNC{id} and \fixttspace\tokenNC{name} attributes}
+\label{group-idname-attributes}
 
 The optional \token{id} attribute on the \Group object class serves to provide a way to identify a group.  The attribute takes a value of type \primtype{SId}.  Note that the identifier of a group carries no mathematical interpretation and cannot be used in mathematical formulas in a model.  \Group also has an optional \token{name} attribute, of type \primtype{string}.  The \token{name} attribute may be used in the same manner as other \token{name} attributes on \sbmlthreecore objects; please see Section~3.3.2 of the \sbmlthreecore specification for more information.
 
+
+\begin{figure}[bh]
+  \includegraphics{figs/group-uml}
+  \caption{The definition of the \Group class.  The \ListOfMembers, \Member, \MemberConstraints, and \AttributeConstraint classes are defined below.}
+  \label{group-uml}
+  \label{member-uml}
+\end{figure}
 
 \subsubsection{The \fixttspace\tokenNC{kind} attribute}
 \label{kind-attribute}
@@ -86,25 +74,54 @@ The optional \token{id} attribute on the \Group object class serves to provide a
 
 \end{description}
 
+\subsection{The \class{ListOfMembers} class}
+\label{listofmembers-class}
+
+The \ListOfMembers class is defined in \fig{member-uml}, and must have one or more \Member children.  Since \ListOfMembers is derived from \SBase, it inherits the \token{sboTerm} and \token{metaid} attributes, as well as the optional children \Notes and \Annotation.  Unlike most lists of objects in SBML, however, the \token{sboTerm} attribute and the \Notes and \Annotation children are taken here to apply directly to every SBML element referenced by each child \Member of this \ListOfMembers, if that referenced element has no such defintion.  If a referenced element has no defined \token{sboTerm}, that element should be considered to now have the \token{sboTerm} defined on the \ListOfMembers.  If a referenced element has no defined \Notes child, that element should be considered to now have the \Notes child of the \ListOfMembers.  If a referenced element has no defined \Annotation child, that element should be considered to now have the \Annotation child of the \ListOfMembers.
+
+\emph{Note: \notice Alternatively, any annotations could be considered to additionally apply to the referenced member, as well as any annotation it may already have.}
+
 
 \subsection{The \class{Member} class}
 \label{member-class}
 
-The \Member class is defined in \fig{member-uml}.  It has two optional attributes, \token{idRef} and \token{metaIdRef}, but exactly \emph{one} (and only one) of the attributes must have a value in a given \Member object instance.  These attributes are used to refer to other objects in the model (including, potentially, other \Group objects); the object so referenced is thus made a member of the group in which the \Member object is contained.  Multiple attributes are needed to account for the different types of identifiers that a given object may have.  The meaning and purpose of the attributes on the object class are described below.
+The \Member class is defined in \fig{member-uml}.  It has two optional attribute, \token{id} and \token{name} that allow others to reference it, and two optional attributes, \token{idRef} and \token{metaIdRef} that allow it to reference other elements, exactly \emph{one} (and only one) of which must have a value in a given \Member object instance.  The referenced object (including, potentially, another \Group object) is thus made a member of the group in which the \Member object is contained.  Multiple attributes are needed to account for the different types of identifiers that a given object may have.  The meaning and purpose of the attributes on the object class are described below.
 
 Since \Member is derived from \SBase and, as mentioned above, \SBase provides both the ability to attach SBO terms as well as MIRIAM annotations, the semantics of a given member in a model can be made more precise by reference to external controlled vocabularies and ontologies.
+
+
+\subsubsection{The \fixttspace\tokenNC{id} and \fixttspace\tokenNC{name} attributes}
+\label{member-idname-attributes}
+
+The optional \token{id} attribute on the \Member object class serves to provide a way to identify the member reference.  The attribute takes a value of type \primtype{SId}.  Note that the identifier of a member reference carries no mathematical interpretation and cannot be used in mathematical formulas in a model.  \Member also has an optional \token{name} attribute, of type \primtype{string}.  The \token{name} attribute may be used in the same manner as other \token{name} attributes on \sbmlthreecore objects; please see Section~3.3.2 of the \sbmlthreecore specification for more information.
 
 
 \subsubsection{The \fixttspace\tokenNC{idRef} attribute}
 \label{member-idref-attribute}
 
-The optional attribute \token{idRef} on the \Member class has type \primtype{SIdRef}.  The value must be the identifier of an object elsewhere in the SBML document.  (Object identifiers are usually set by attributes named \token{id}; thus, the \token{idRef} value will usually be the \token{id} value of an object in the SBML document.)  An example value of \token{idRef} might be the identifier of a species in the model, or the identifier of another group.
+The attribute \token{idRef} on the \Member class has type \primtype{SIdRef}, and must be defined if the \Member has no defined \token{metaIdRef} attribute, and must not be defined otherwise.  The value must be the identifier of an object elsewhere in the \Model.  (Object identifiers are usually set by attributes named \token{id}; thus, the \token{idRef} value will usually be the \token{id} value of an object in the \Model.)  An example value of \token{idRef} might be the identifier of a species in the model, or the identifier of another group.  The namespace in which the \primtype{SId} is to be found is the SId namespace of the \Model to which the \Group belongs.  This includes elements from SBML packages which may have elements with \token{id} values that are part of the SId namespace of the \Model, such as \Deletion elements from the Hierarchical Model Composition package, \FluxBound elements from the Flux Balance Constraints package, and \Group, \Member, \MemberConstraints, and \AttributeConstraint elements from this Groups package.  Conversely, elements with \token{id} values that are not part of the SId namespace of the \Model such as \Unit and \LocalParameter elements in \sbmlthreecore, or \Port elements from the Hierarchical Model Composition package, may not be referenced by this \token{idRef} attribute.
 
 
 \subsubsection{The \fixttspace\tokenNC{metaIdRef} attribute}
 \label{member-metaidref-attribute}
 
-The optional \Member attribute \token{metaIdRef} takes a value of type \primtype{IDREF}.  This attribute is used to refer to a \token{metaid} attribute value on some other object, for cases where the object being referenced does not have an identifier.  (This is the case with, for example, rules in \sbmlthreecore.)  Since meta identifiers are optional attributes of \SBase, all SBML objects have the potential to have a meta identifier value.
+The \Member attribute \token{metaIdRef} takes a value of type \primtype{IDREF}, and must be defined if the \Member has no defined \token{idRef} attribute, and must not be defined otherwise.  This attribute is used to refer to a \token{metaid} attribute value on some other object in the SBML Document, for cases where the object being referenced does not have an identifier in the \Model SId namespace, or is not a direct member of the same \Model.  (This is the case with, for example, rules in \sbmlthreecore.)  Since meta identifiers are optional attributes of \SBase, all SBML objects have the potential to have a meta identifier value, including most elements from other SBML packages.
+
+Note that if used in conjunction with the Hierarchical Model Composition package, this attribute can reference elements from other \Model objects in the same SBML Document!  It is suggested, but not required, that if a \Member object is created with such a reference, that reference be part of one or more \Submodels of the \Model parent of this \Group.  Further, it is suggested that if the \Model is flattened, that a separate \Member be created for each instance of the referenced element present in the flattened \Model (which will happen if the referenced element's \Model is instantiated by multiple \Submodel elements).
+
+\subsubsection{Members referencing other Groups and Members}
+\label{recursive-groups}
+
+If a \Member references a \Group or \ListOfMembers element, all the members of the referenced group are considered to be part of the parent group--this is equivalent to adding the members of the referenced group individually as members.  This means that any semantic restrictions or imlications of adding elements to this group apply to the referenced elements, and \emph{not} to the reference itself.  In other words, if a \ListOfMembers is annotated with an SBO term, and the \token{idRef} of a \Member child points to a different \Group, it is not that \Group that should be annotated with the SBO term, but its referenced members.  This applies recursively:  if the referenced \Group itself has referenced \Group members, those reference should also be discovered and annotated with the SBO term.
+
+A \Member referencing another \Member object is considered equivalent to pointing at the referenced element directly.  This is discouraged, and modelers are encouraged to point to the referenced element directly instead.
+
+\subsubsection{Members referencing other namespaces}
+\label{unfindable-members}
+
+If a \Member has a \token{idRef} or \token{metaIdRef} attribute which references an object from a namespace that is not understood by the interpreter, that \Member must be ignored---the object will not exist to need to become a member of the group, as the interpreter could not understand the package. If an interpreter cannot tell whether a referenced object does not exist or if exists in an unparsed namespace, it may choose to produce a warning.
+
+
 
 
 \subsubsection{Example}
@@ -149,6 +166,79 @@ As mentioned above, exactly one of the attributes \token{idRef} and \token{metaI
 ...
 \end{example}
 
+
+\subsection{The \class{MemberConstraints} class}
+\label{memberconstraints-class}
+
+The \MemberConstraints class is defined in \fig{group-uml} as a way to impose restrictions on the referenced member elements of a \Group.  It can be used to ensure that all members of a group are of the same SBML Class; that all members of a group have the same parent, or to ensure that all members of the group have the same attribute with the same value or with all different values.
+
+It has one required attribute, \token{membersShareType}, and three optional attributes: \token{idRef} and \token{metaIdRef}, and \token{membersShareParent}.  It also may contain one or more \AttributeConstraint child objects, all described below.
+
+\subsubsection{The \fixttspace\tokenNC{id} and \fixttspace\tokenNC{name} attributes}
+\label{memberconstraints-idname-attributes}
+
+The optional \token{id} attribute on the \MemberConstraints object class serves to provide a way to identify the constraints.  The attribute takes a value of type \primtype{SId}.  Note that this identifier carries no mathematical interpretation and cannot be used in mathematical formulas in a model.  \MemberConstraints also has an optional \token{name} attribute, of type \primtype{string}.  The \token{name} attribute may be used in the same manner as other \token{name} attributes on \sbmlthreecore objects; please see Section~3.3.2 of the \sbmlthreecore specification for more information.
+
+
+\subsubsection{The \fixttspace\tokenNC{membersShareType} attribute}
+\label{memberssharetype-attribute}
+
+The required attribute \token{membersShareType} on the \MemberConstraints class has type \primtype{boolean}.  If set to \val{true}, all referenced members of the \Group must be the same exact SBML class.  This means that sharing a base class (such as \SBase or \Rule) is insufficient: an \AlgebraicRule and a \RateRule are different classes from one another.
+
+If set to \val{false}, the referenced members of the \Group may be of any SBML class; no restrictions are implied.
+
+
+\subsubsection{The \fixttspace\tokenNC{membersShareParent} attribute}
+\label{membersshareparent-attribute}
+
+The optional attribute \token{membersShareParent} on the \MemberConstraints class has type \primtype{IDREF}.  If set, it must reference the \token{metaid} of an element of the SBML Document.  Furthermore, all referenced members of the \Group must share that element as a common parent, either directly or indirectly.  As an example, a \KineticLaw and a \LocalParameter might share the same \Reaction parent, even though the immediate parent of the \LocalParameter is a \ListOfLocalParameters.
+
+If unset, no implication is made about the common parent of the referenced members of the \Group.
+
+If a \token{membersShareParent} attribute references an object from a namespace that is not understood by the interpreter, the restriction of shared parentage can be ignored, though the interpreter may conclude that if it can properly reference one or more group members, it would have to be able to understand the parents of those members.  If an interpreter cannot tell whether a referenced object does not exist or if exists in an unparsed namespace, it may choose to produce a warning.
+
+
+
+\subsection{The \class{AttributeConstraint} class}
+\label{attributeconstraint-class}
+
+The \AttributeConstraint class is defined in \fig{group-uml} as a way to impose restrictions on common attributes of the referenced members of the \Group.  It has two optional attributes to identify the attribute constraint itself (\token{id} and \token{name}), and two other optional attributes (\token{identicalAttribute} and \token{distinctAttribute}) of which exactly \emph{one} (and only one) must be defined.
+
+\subsubsection{The \fixttspace\tokenNC{id} and \fixttspace\tokenNC{name} attributes}
+\label{attributeconstraint-idname-attributes}
+
+The optional \token{id} attribute on the \AttributeConstraint object class serves to provide a way to identify the \AttributeConstraint.  The attribute takes a value of type \primtype{SId}.  Note that this identifier carries no mathematical interpretation and cannot be used in mathematical formulas in a model.  \AttributeConstraint also has an optional \token{name} attribute, of type \primtype{string}.  The \token{name} attribute may be used in the same manner as other \token{name} attributes on \sbmlthreecore objects; please see Section~3.3.2 of the \sbmlthreecore specification for more information.
+
+
+\subsubsection{The \fixttspace\tokenNC{distinctAttribute} attribute}
+\label{distinctattribute-attribute}
+
+The attribute \token{distinctAttribute} on the \AttributeConstraint class has type \primtype{string}.  This attribute must be defined if the \AttributeConstraint has no defined \token{identicalAttribute}, and must not be defined otherwise.  The value of the string must be the name of an attribute shared by all referenced members of the \Group.  Furthermore, the \emph{values} of those attribute must be different across all referenced elements.  The rule from SBML Level~2 that no two \SpeciesType elements may share a compartment could be enforced here by setting this attribute to \val{compartment}.
+
+
+\subsubsection{The \fixttspace\tokenNC{identicalAttribute} attribute}
+\label{identicalattribute-attribute}
+
+The attribute \token{identicalAttribute} on the \AttributeConstraint class has type \primtype{string}.  This attribute must be defined if the \AttributeConstraint has no defined \token{distinctAttribute}, and must not be defined otherwise.  The value of the string must be the name of an attribute shared by all referenced members of the \Group.  Furthermore, the \emph{values} of those attributes must be the same for all referenced elements.  If the referenced members are all \Species, for example, this attribute might be set to be \val{boundaryCondition}, ensuring that all the referenced elements have the same value (\val{true} or \val{false}).  If these species all represented the concentration of dissolved oxygen in various different compartments, another \AttributeConstraint could be set with an \token{identicalAttribute} of \val{initialConcentration}, ensuring that the initial concentration of dissolved oxygen was the same across all compartments.
+
+\subsubsection{Example}
+
+A partial example of a working \MemberConstraints element is shown below.  In it, the two referenced members (\val{ATPc} and \val{ATPm}) are declared to be the same type using the \token{membersShareType} attribute, that they must have different compartments with a \token{distinctAttribute} attribute, and that they must both have the same initial concentration with a \token{identicalAttribute} attribute. 
+
+\begin{example}
+    <group id="ATP" kind="classification"> 
+        <listOfMembers sboTerm="SBO:0000248">
+            <member idRef="ATPc" />
+            <member idRef="ATPm" />
+        </listOfMembers>
+        <memberConstraints membersShareType="true">
+            <attributeConstraint distinctAttribute="compartment" />
+            <attributeConstraint identicalAttribute="initialConcentration" />
+        </memberConstraints>
+    </group> 
+\end{example}
+
+A complete SBML document including the above snippet is included in \sec{examples-speciestype}.
 
 \subsection{The extended \class{Model} class}
 \label{model-class}
@@ -248,13 +338,12 @@ Finally, as mentioned in \sec{member-class} above, groups can refer to other gro
 </model> 
 \end{example}
 
-The intended meaning of nested groups can be made more precise by annotating the group and members with appropriate MIRIAM annotations using controlled vocabulary terms that describe the meaning.
+The intended meaning of nested groups can be made more precise by annotating the group and list of members with appropriate MIRIAM annotations using controlled vocabulary terms that describe the meaning.
 
 
-\subsection{Lack of semantic restrictions}
+\subsection{Semantic restrictions}
 \label{semantic-restrictions}
 
-The current definition of the Groups package is such that the use of Groups constructs has no impact on the mathematics of a model.  No semantic restrictions are necessary. Further, as a consequence of this, this package would not be required for proper interpretation of a model. Models could use the \token{required}=\val{false} flag on the declaration of the package on the \token{<sbml>} element in a file.
+The current definition of the Groups package is such that the use of Groups constructs has no impact on the mathematics of a model.  As a consequence of this, this package is not required for proper interpretation of a model. Models must use the \token{required}=\val{false} flag on the declaration of the package on the \token{<sbml>} element in a file.
 
-Given this lack of impact on the mathematics of a model, the Groups package cannot accomplish one aspect of SBML Level~2's \SpeciesType construct: the Groups package does not impose the restriction that two \Species objects having the same \SpeciesType cannot have the same value for their respective \token{compartment} attributes.  It is notable, however, that a properly constructed model \emph{would not place two species of the same type in the same compartment in the first place}.  Such a model would not be mathematically correct, so software tools generally take precautions to prevent this from happening when they write an SBML model.  Having a \SpeciesType component in SBML does not aid a software tool in this regard.  For the reader of a model, the prohibition against this combination in SBML Level~2 adds only a minor opportunity to do error checking.  More commonly, \SpeciesType definitions in a model are used to add type information for the reader's benefit, in the sense of indicating that certain entities are of the same kind.  However, since \SpeciesType identifiers have no mathematical meaning in Level~2, these definitions are operationally meaningless.  The only utility is to provide a type of annotation.  The Groups package provides a more flexible means of providing such annotations.
-
+Because restrictions can be imposed on the group through the use of the \MemberConstraints element, the Groups package can fully recapture SBML Level~2's \SpeciesType construct: a modeler can add an \AttributeConstraint to the group imposing the restriction that two \Species objects in the same \Group cannot have the same value for their respective \token{compartment} attributes.  A fully worked example (which also imposes additional restrictions) is given in \sec{examples-speciestype}.

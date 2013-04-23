@@ -66,26 +66,26 @@ The optional \token{id} attribute on the \Group object class serves to provide a
 
 \begin{description}[font=\normalfont\ttfamily\color{black},style=nextline]
 
-\item[\token{classification}] The group represents a class, and its members have an \emph{is-a} relationship to the group.  (For example, the group could represent a type of molecule such as ATP, and the members could be species located in different compartments, thereby establishing that the species are pools of the same molecule in different locations.)
+\item[\token{classification}] The group represents a class, and its members have an \emph{is-a} relationship to the group.  For example, the group could represent a type of molecule such as ATP, and the members could be species located in different compartments, thereby establishing that the species are pools of the same molecule in different locations.
 
-\item[\token{partonomy}] The group represents a collection of parts, and its members have a \emph{part-of} relationship to the group.  (For example, the group could represent a cellular structure, and individual compartments could be made members of the group to indicate they represent subparts of that cellular structure.)
+\item[\token{partonomy}] The group represents a collection of parts, and its members have a \emph{part-of} relationship to the group.  For example, the group could represent a cellular structure, and individual compartments could be made members of the group to indicate they represent subparts of that cellular structure.
 
-\item[\token{collection}] The grouping is merely a collection for convenience, without an implied relationship between the members.  (For example, the group could be used to collect together multiple disparate components of a model---species, reactions, events---involved in a particular phenotype, and apply a common annotation rather than having to copy the same annotation to each component individually.)
+\item[\token{collection}] The grouping is merely a collection for convenience, without an implied relationship between the members.  For example, the group could be used to collect together multiple disparate components of a model---species, reactions, events---involved in a particular phenotype, and apply a common annotation rather than having to copy the same annotation to each component individually.
 
 \end{description}
 
 \subsection{The \class{ListOfMembers} class}
 \label{listofmembers-class}
 
-The \ListOfMembers class is defined in \fig{member-uml}, and must have one or more \Member children.  Since \ListOfMembers is derived from \SBase, it inherits the \token{sboTerm} and \token{metaid} attributes, as well as the optional children \Notes and \Annotation.  Unlike most lists of objects in SBML, however, the \token{sboTerm} attribute and the \Notes and \Annotation children are taken here to apply directly to every SBML element referenced by each child \Member of this \ListOfMembers, if that referenced element has no such defintion.  If a referenced element has no defined \token{sboTerm}, that element should be considered to now have the \token{sboTerm} defined on the \ListOfMembers.  If a referenced element has no defined \Notes child, that element should be considered to now have the \Notes child of the \ListOfMembers.  If a referenced element has no defined \Annotation child, that element should be considered to now have the \Annotation child of the \ListOfMembers.
+The \ListOfMembers class is defined in \fig{member-uml}, and must have one or more \Member children.  Since \ListOfMembers is derived from \SBase, it inherits the \token{sboTerm} and \token{metaid} attributes, as well as the optional children \Notes and \Annotation.  Unlike most lists of objects in SBML, however, the \token{sboTerm} attribute and the \Notes and \Annotation children are taken here to apply directly to every SBML element referenced by each child \Member of this \ListOfMembers, if that referenced element has no such defintion.  If a referenced element has no defined \token{sboTerm}, that element should be considered to now have the \token{sboTerm} defined on the \ListOfMembers.  If a referenced element has no defined \Notes child, that element should be considered to now have the \Notes child of the \ListOfMembers.  However, since annotations can be cumulative, If a referenced element has no defined \Annotation child, that element should be considered to now have the \Annotation child of the \ListOfMembers.
 
-\emph{Note: \notice Alternatively, any annotations could be considered to additionally apply to the referenced member, as well as any annotation it may already have.}
+If multiple \ListOfMembers reference the same SBML element, and more than one of them has a defined \token{sboTerm}, \Notes, or \Annotation element, those elements should be consistent with each other.
 
 
 \subsection{The \class{Member} class}
 \label{member-class}
 
-The \Member class is defined in \fig{member-uml}.  It has two optional attribute, \token{id} and \token{name} that allow others to reference it, and two optional attributes, \token{idRef} and \token{metaIdRef} that allow it to reference other elements, exactly \emph{one} (and only one) of which must have a value in a given \Member object instance.  The referenced object (including, potentially, another \Group object) is thus made a member of the group in which the \Member object is contained.  Multiple attributes are needed to account for the different types of identifiers that a given object may have.  The meaning and purpose of the attributes on the object class are described below.
+The \Member class is defined in \fig{member-uml}.  It has two optional attributes, \token{id} and \token{name}, that allow others to reference it, and two optional attributes, \token{idRef} and \token{metaIdRef} that allow it to reference other elements, exactly \emph{one} (and only one) of which must have a value in a given \Member object instance.  The referenced object (including, potentially, another \Group object) is thus made a member of the group in which the \Member object is contained.  Multiple attributes are needed to account for the different types of identifiers that a given object may have.  The meaning and purpose of the attributes on the object class are described below.
 
 Since \Member is derived from \SBase and, as mentioned above, \SBase provides both the ability to attach SBO terms as well as MIRIAM annotations, the semantics of a given member in a model can be made more precise by reference to external controlled vocabularies and ontologies.
 
@@ -105,23 +105,26 @@ The attribute \token{idRef} on the \Member class has type \primtype{SIdRef}, and
 \subsubsection{The \fixttspace\tokenNC{metaIdRef} attribute}
 \label{member-metaidref-attribute}
 
-The \Member attribute \token{metaIdRef} takes a value of type \primtype{IDREF}, and must be defined if the \Member has no defined \token{idRef} attribute, and must not be defined otherwise.  This attribute is used to refer to a \token{metaid} attribute value on some other object in the SBML Document, for cases where the object being referenced does not have an identifier in the \Model SId namespace, or is not a direct member of the same \Model.  (This is the case with, for example, rules in \sbmlthreecore.)  Since meta identifiers are optional attributes of \SBase, all SBML objects have the potential to have a meta identifier value, including most elements from other SBML packages.
+The \Member attribute \token{metaIdRef} takes a value of type \primtype{IDREF}, and must be defined if the \Member has no defined \token{idRef} attribute, and must not be defined otherwise.  This attribute is used to refer to a \token{metaid} attribute value on any other object in the \Model, for cases where the object being referenced does not have an identifier in the \Model SId namespace.  (This is the case with, for example, rules in \sbmlthreecore.)  Since meta identifiers are optional attributes of \SBase, all SBML objects have the potential to have a meta identifier value, including most elements from other SBML packages.
 
-Note that if used in conjunction with the Hierarchical Model Composition package, this attribute can reference elements from other \Model objects in the same SBML Document!  It is suggested, but not required, that if a \Member object is created with such a reference, that reference be part of one or more \Submodels of the \Model parent of this \Group.  Further, it is suggested that if the \Model is flattened, that a separate \Member be created for each instance of the referenced element present in the flattened \Model (which will happen if the referenced element's \Model is instantiated by multiple \Submodel elements).
+Note that even if used in conjunction with the Hierarchical Model Composition package, this attribute is not allowed to reference elements from other \Model objects in the same SBML Document.  Referenced elements must be normal members of the parent \Model, and submodel elements may be accessed normally by creating replacements.
+
 
 \subsubsection{Members referencing other Groups and Members}
-\label{recursive-groups}
+\label{nested-groups}
 
-If a \Member references a \Group or \ListOfMembers element, all the members of the referenced group are considered to be part of the parent group--this is equivalent to adding the members of the referenced group individually as members.  This means that any semantic restrictions or imlications of adding elements to this group apply to the referenced elements, and \emph{not} to the reference itself.  In other words, if a \ListOfMembers is annotated with an SBO term, and the \token{idRef} of a \Member child points to a different \Group, it is not that \Group that should be annotated with the SBO term, but its referenced members.  This applies recursively:  if the referenced \Group itself has referenced \Group members, those reference should also be discovered and annotated with the SBO term.
+If a \Member references a \Group, \ListOfMembers, or some other \Member element, it is that referencing element itself that is considered to be a member of the \Group, not the corresponding referenced element (or elements).  This is also true for elements from other packages that point to other elements, such as \SBaseRef elements from the Hierarchical Model Composition package.
 
-A \Member referencing another \Member object is considered equivalent to pointing at the referenced element directly.  This is discouraged, and modelers are encouraged to point to the referenced element directly instead.
+The implication of this is that all the rules in this specification that apply to members of a group (such as how the \token{kind} attribute functions, the application of \token{sboterm} attributes on a \ListOfMembers, and the \MemberConstraints restrictions, described below) apply to the child group itself, and not to its members.  If a parent group includes two species plus a child group which itself contains three other species, if the parent group's \ListOfMembers is given an \token{sboterm}, that term applies to the two species and the group, \emph{not} to the three child species members of the second group.  That parent group's \token{kind} would also almost certainly be \val{collection} or \val{partonomy}, and not \val{classification}, as two species and a group are very unlikely to be classified as the same thing. 
+
+In a future version of this specifiation, it may be possible to perform set operations on groups.  At that point, it will be possible to create set unions, which might then be further manipulated, analyzed, or annotated.
+
+Finally, groups are not permitted to be circular:  no \Member may reference itself, its parent \ListOfMembers, nor its parent \Group.  If a \Member references a \Group, the same restrictions apply to that subgroup's children:  they may not reference the \Member, its parent \ListOfMembers, nor its parent \Group, and if any of those children reference a \Group, the same restrictions apply to them, etc.
 
 \subsubsection{Members referencing other namespaces}
 \label{unfindable-members}
 
-If a \Member has a \token{idRef} or \token{metaIdRef} attribute which references an object from a namespace that is not understood by the interpreter, that \Member must be ignored---the object will not exist to need to become a member of the group, as the interpreter could not understand the package. If an interpreter cannot tell whether a referenced object does not exist or if exists in an unparsed namespace, it may choose to produce a warning.
-
-
+If a \Member has a \token{idRef} or \token{metaIdRef} attribute which references an object from a namespace that is not understood by the interpreter, that \Member must be ignored---the referenced object will not be understood by the interpreter, and therefore has no need to become a member of the group. If an interpreter cannot tell whether a referenced object does not exist or if exists in an unparsed namespace, it may choose to produce a warning.
 
 
 \subsubsection{Example}
@@ -170,9 +173,9 @@ As mentioned above, exactly one of the attributes \token{idRef} and \token{metaI
 \subsection{The \class{MemberConstraints} class}
 \label{memberconstraints-class}
 
-The \MemberConstraints class is defined in \fig{group-uml} as a way to impose restrictions on the referenced member elements of a \Group.  It can be used to ensure that all members of a group are of the same SBML Class; that all members of a group have the same parent, or to ensure that all members of the group have the same attribute with the same value or with all different values.
+The \MemberConstraints class is defined in \fig{group-uml} as a way to impose restrictions on the referenced member elements of a \Group.  It can be used to ensure that all members of a group are of the same SBML Class or to ensure that all members of the group have the same attribute with the same value or with all different values.
 
-It has one required attribute, \token{membersShareType}, and three optional attributes: \token{idRef} and \token{metaIdRef}, and \token{membersShareParent}.  It also may contain one or more \AttributeConstraint child objects, all described below.
+It has one required attribute, \token{membersShareType}, and two optional attributes: \token{id} and \token{name}.  It also may contain one or more \AttributeConstraint child objects, all described below.
 
 \subsubsection{The \fixttspace\tokenNC{id} and \fixttspace\tokenNC{name} attributes}
 \label{memberconstraints-idname-attributes}
@@ -187,16 +190,7 @@ The required attribute \token{membersShareType} on the \MemberConstraints class 
 
 If set to \val{false}, the referenced members of the \Group may be of any SBML class; no restrictions are implied.
 
-
-\subsubsection{The \fixttspace\tokenNC{membersShareParent} attribute}
-\label{membersshareparent-attribute}
-
-The optional attribute \token{membersShareParent} on the \MemberConstraints class has type \primtype{IDREF}.  If set, it must reference the \token{metaid} of an element of the SBML Document.  Furthermore, all referenced members of the \Group must share that element as a common parent, either directly or indirectly.  As an example, a \KineticLaw and a \LocalParameter might share the same \Reaction parent, even though the immediate parent of the \LocalParameter is a \ListOfLocalParameters.
-
-If unset, no implication is made about the common parent of the referenced members of the \Group.
-
-If a \token{membersShareParent} attribute references an object from a namespace that is not understood by the interpreter, the restriction of shared parentage can be ignored, though the interpreter may conclude that if it can properly reference one or more group members, it would have to be able to understand the parents of those members.  If an interpreter cannot tell whether a referenced object does not exist or if exists in an unparsed namespace, it may choose to produce a warning.
-
+This restriction can only be violated if there are two or more members of the group.
 
 
 \subsection{The \class{AttributeConstraint} class}
@@ -215,11 +209,20 @@ The optional \token{id} attribute on the \AttributeConstraint object class serve
 
 The attribute \token{distinctAttribute} on the \AttributeConstraint class has type \primtype{string}.  This attribute must be defined if the \AttributeConstraint has no defined \token{identicalAttribute}, and must not be defined otherwise.  The value of the string must be the name of an attribute shared by all referenced members of the \Group.  Furthermore, the \emph{values} of those attribute must be different across all referenced elements.  The rule from SBML Level~2 that no two \SpeciesType elements may share a compartment could be enforced here by setting this attribute to \val{compartment}.
 
+If the referenced attribute exists in a particular namespace, the namespace should be included as part of the string, with a colon separting it from the text of the attribute name itself (i.e. \val{groups:idRef}).
+
+This restriction can only be violated if there are two or more members of the group.
+
 
 \subsubsection{The \fixttspace\tokenNC{identicalAttribute} attribute}
 \label{identicalattribute-attribute}
 
 The attribute \token{identicalAttribute} on the \AttributeConstraint class has type \primtype{string}.  This attribute must be defined if the \AttributeConstraint has no defined \token{distinctAttribute}, and must not be defined otherwise.  The value of the string must be the name of an attribute shared by all referenced members of the \Group.  Furthermore, the \emph{values} of those attributes must be the same for all referenced elements.  If the referenced members are all \Species, for example, this attribute might be set to be \val{boundaryCondition}, ensuring that all the referenced elements have the same value (\val{true} or \val{false}).  If these species all represented the concentration of dissolved oxygen in various different compartments, another \AttributeConstraint could be set with an \token{identicalAttribute} of \val{initialConcentration}, ensuring that the initial concentration of dissolved oxygen was the same across all compartments.
+
+If the referenced attribute exists in a particular namespace, the namespace should be included as part of the string, with a colon separting it from the text of the attribute name itself (i.e. \val{groups:idRef}).
+
+This restriction can only be violated if there are two or more members of the group.
+
 
 \subsubsection{Example}
 
@@ -313,7 +316,7 @@ The meaning of a group can be further refined by using annotations (either SBO t
 
 \end{itemize}
 
-Finally, as mentioned in \sec{member-class} above, groups can refer to other groups, leading to the possibility of group hierarchies. To indicate a group is part of another group, one simply needs to include the first group's identifier as a member of the second group, as in the following example:
+Finally, as mentioned in \sec{nested-groups}, groups can refer to other groups, leading to the possibility of group hierarchies. To indicate a group is part of another group, one simply needs to include the first group's identifier as a member of the second group, as in the following example:
 
 \clearpage
 
@@ -346,4 +349,4 @@ The intended meaning of nested groups can be made more precise by annotating the
 
 The current definition of the Groups package is such that the use of Groups constructs has no impact on the mathematics of a model.  As a consequence of this, this package is not required for proper interpretation of a model. Models must use the \token{required}=\val{false} flag on the declaration of the package on the \token{<sbml>} element in a file.
 
-Because restrictions can be imposed on the group through the use of the \MemberConstraints element, the Groups package can fully recapture SBML Level~2's \SpeciesType construct: a modeler can add an \AttributeConstraint to the group imposing the restriction that two \Species objects in the same \Group cannot have the same value for their respective \token{compartment} attributes.  A fully worked example (which also imposes additional restrictions) is given in \sec{examples-speciestype}.
+Because restrictions can be imposed on the group through the use of the \MemberConstraints element, the Groups package can fully recapture SBML Level~2's \SpeciesType construct: to do so, the group's \token{kind} attribute should be set to \val{classification}, a \MemberConstraints should be added with its \token{membersShareType} attribute set to \val{true}, and it should be given a child \AttributeConstraint with its \token{distinctAttribute} attribute set to \val{compartment}.  A fully worked example (which also imposes additional restrictions) is given in \sec{examples-speciestype}.

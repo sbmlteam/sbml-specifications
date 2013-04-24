@@ -13,7 +13,207 @@
  datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes"
  xmlns:layout="http://www.sbml.org/sbml/level3/version1/layout/version1"
  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  
+  <!-- simple types -->
+  <define name="xsiType.simpleType">
+    <choice>
+      <value type="string">LineSegment</value>
+      <value type="string">CubicBezier</value>
+    </choice>
+  </define>
+  
+  <define name="SpeciesRefGlyphRole.simpleType">
+    <choice>
+      <value type="string">undefined</value>
+      <value type="string">substrate</value>
+      <value type="string">product</value>
+      <value type="string">sidesubstrate</value>
+      <value type="string">sideproduct</value>
+      <value type="string">modifier</value>
+      <value type="string">activator</value>
+      <value type="string">inhibitor</value>
+    </choice>
+  </define>
+  
+  <!-- VERY BASIC CLASSES -->
+  <define name="dimensions.datatype" combine="interleave">
+    <interleave>
+      <ref name="SBase.datatype"/>
+	  <optional>
+        <attribute name="layout:id">
+          <ref name="SId.simpleType"/>
+        </attribute>
+	  </optional>
+	  <attribute name="layout:width">
+		<data type="double"/>
+	  </attribute>
+	  <attribute name="layout:height">
+		<data type="double"/>
+	  </attribute>
+	  <optional>
+	    <attribute name="layout:depth">
+		  <data type="double"/>
+	    </attribute>
+	  </optional>	
+    </interleave>
+  </define>
+  
+  <define name="point.datatype" combine="interleave">
+    <interleave>
+      <ref name="SBase.datatype"/>
+	  <optional>
+        <attribute name="layout:id">
+          <ref name="SId.simpleType"/>
+        </attribute>
+	  </optional>
+	  <attribute name="layout:x">
+		<data type="double"/>
+	  </attribute>
+	  <attribute name="layout:y">
+		<data type="double"/>
+	  </attribute>
+	  <optional>
+	    <attribute name="layout:z">
+		  <data type="double"/>
+	    </attribute>
+	  </optional>	
+    </interleave>
+  </define>
+  
+  <!-- SLIGHTLY MORE COMPLEX CLASSES -->
+  <define name="boundingBox.datatype" combine="interleave">
+    <interleave>
+      <ref name="SBase.datatype"/>
+      <optional>
+        <attribute name="layout:id">
+          <ref name="SId.simpleType"/>
+        </attribute>
+      </optional>
+      <element name="layout:position">
+        <ref name="point.datatype"/>
+      </element>
+      <element name="layout:dimensions">
+        <ref name="dimensions.datatype"/>
+      </element>	  
+    </interleave>
+  </define>
+  
+  <define name="lineSegment.datatype" combine="interleave">
+    <interleave>
+      <ref name="SBase.datatype"/>
+      <attribute name="xsi:type">
+        <ref name="xsiType.simpleType"/>
+      </attribute>
+      <element name="layout:start">
+        <ref name="point.datatype"/>
+      </element>
+      <element name="layout:end">
+        <ref name="point.datatype"/>
+      </element>
+    </interleave>
+  </define>
+  
+  <define name="cubicBezier.datatype" combine="interleave">
+    <interleave>
+      <ref name="lineSegment.datatype"/>
+        <element name="layout:basePoint1">
+          <ref name="point.datatype"/>
+        </element>  
+        <element name="layout:basePoint2">
+          <ref name="point.datatype"/>
+        </element> 
+    </interleave>
+  </define>
+  
+  <define name="listOfLineSegments.datatype" combine="interleave">
+    <interleave>
+      <ref name="SBase.datatype"/>
+      <oneOrMore>
+        <element name="layout:curveSegment">
+          <choice>
+            <ref name="cubicBezier.datatype"/>            
+            <ref name="lineSegment.datatype"/>          
+          </choice>
+        </element>
+      </oneOrMore>
+    </interleave>
+  </define>
+  
+  <define name="curve.datatype" combine="interleave">
+    <interleave>
+      <element name="layout:listOfCurveSegments">
+        <ref name="listOfLineSegments.datatype"/>
+      </element>
+    </interleave>
+  </define>
+  
+  <!-- graphical object -->
+  <!-- note some graphical objects must has a bounding box
+       other can have either a bounding box or a curve or both -->
+  <define name="graphicalObjectBB.datatype" combine="interleave">
+    <interleave>
+      <ref name="SBase.datatype"/>
+        <attribute name="layout:id">
+          <ref name="SId.simpleType"/>
+        </attribute>
+      <optional>
+        <attribute name="layout:metaidRef">
+          <data type="IDREF"/>
+        </attribute>
+      </optional>
+      <element name="layout:boundingBox">
+        <ref name="boundingBox.datatype"/>
+      </element>
+    </interleave>
+  </define>
+  
+  <define name="graphicalObjectCurve.datatype" combine="interleave">
+    <interleave>
+      <ref name="SBase.datatype"/>
+      <attribute name="layout:id">
+        <ref name="SId.simpleType"/>
+      </attribute>
+      <optional>
+        <attribute name="layout:metaidRef">
+          <data type="IDREF"/>
+        </attribute>
+      </optional>
+      <element name="layout:curve">
+        <ref name="curve.datatype"/>
+      </element>
+    </interleave>
+  </define>
 
+  <define name="graphicalObjectBBandC.datatype" combine="interleave">
+    <interleave>
+      <ref name="SBase.datatype"/>
+      <attribute name="layout:id">
+        <ref name="SId.simpleType"/>
+      </attribute>
+      <optional>
+        <attribute name="layout:metaidRef">
+          <data type="IDREF"/>
+        </attribute>
+      </optional>
+      <element name="layout:boundingBox">
+        <ref name="boundingBox.datatype"/>
+      </element>
+      <element name="layout:curve">
+        <ref name="curve.datatype"/>
+      </element>
+    </interleave>
+  </define>
+  
+  <define name="graphicalObject.datatype" combine="interleave">
+      <choice>
+        <ref name="graphicalObjectBB.datatype"/>
+        <ref name="graphicalObjectCurve.datatype"/>
+        <ref name="graphicalObjectBBandC.datatype"/>
+      </choice>
+        
+  </define>
+
+<!-- extended sbml element  -->
   <define name="sbml.datatype" combine="interleave">
     <!-- the "required" attribute should be set to true when layout is required for the interpretation of this SBML document.
 	given the nature of the SBML-layout package, this attribute will usually be false -->
@@ -44,15 +244,21 @@
     </interleave>
   </define>
 
+<!-- the main layout element -->
   <define name="layout.datatype" combine="interleave">
     <interleave>
       <ref name="SBase.datatype"/>
-	  <element name="layout:dimensions">
-	    <ref name="dimensions.datatype"/>
-	  </element>
       <attribute name="layout:id">
         <ref name="SId.simpleType"/>
-      </attribute>      
+      </attribute>    
+      <optional>
+        <attribute name="layout:name">
+          <data type="string"/>
+        </attribute>
+      </optional>     
+      <element name="layout:dimensions">
+	      <ref name="dimensions.datatype"/>
+	    </element>   
       <optional>
         <element name="layout:listOfCompartmentGlyphs">
           <ref name="listOfCompartmentGlyphs.datatype"/>
@@ -80,132 +286,8 @@
       </optional>
     </interleave>
   </define>
-
-  <define name="dimensions.datatype" combine="interleave">
-    <interleave>
-      <ref name="SBase.datatype"/>
-	  <optional>
-        <attribute name="layout:id">
-          <ref name="SId.simpleType"/>
-        </attribute>
-	  </optional>
-	  <attribute name="layout:width">
-		<data type="double"/>
-	  </attribute>
-	  <attribute name="layout:height">
-		<data type="double"/>
-	  </attribute>
-	  <optional>
-	    <attribute name="layout:depth">
-		  <data type="double"/>
-	    </attribute>
-	  </optional>	
-    </interleave>
-  </define>
-
-  <define name="point.datatype" combine="interleave">
-    <interleave>
-      <ref name="SBase.datatype"/>
-	  <optional>
-        <attribute name="layout:id">
-          <ref name="SId.simpleType"/>
-        </attribute>
-	  </optional>
-	  <attribute name="layout:x">
-		<data type="double"/>
-	  </attribute>
-	  <attribute name="layout:y">
-		<data type="double"/>
-	  </attribute>
-	  <optional>
-	    <attribute name="layout:z">
-		  <data type="double"/>
-	    </attribute>
-	  </optional>	
-    </interleave>
-  </define>
-
-  <define name="boundingBox.datatype" combine="interleave">
-    <interleave>
-      <ref name="SBase.datatype"/>
-      <optional>
-        <attribute name="layout:id">
-          <ref name="SId.simpleType"/>
-        </attribute>
-      </optional>
-      <element name="layout:position">
-        <ref name="point.datatype"/>
-      </element>
-      <element name="layout:dimensions">
-        <ref name="dimensions.datatype"/>
-      </element>	  
-    </interleave>
-  </define>
-
-  <define name="graphicalObjectBB.datatype" combine="interleave">
-    <interleave>
-      <ref name="SBase.datatype"/>
-        <attribute name="layout:id">
-          <ref name="SId.simpleType"/>
-        </attribute>
-      <optional>
-        <attribute name="layout:metaidRef">
-          <ref name="SId.simpleType"/>
-        </attribute>
-      </optional>
-      <element name="layout:boundingBox">
-        <ref name="boundingBox.datatype"/>
-      </element>
-    </interleave>
-  </define>
   
-  <define name="graphicalObjectCurve.datatype" combine="interleave">
-    <interleave>
-      <ref name="SBase.datatype"/>
-      <attribute name="layout:id">
-        <ref name="SId.simpleType"/>
-      </attribute>
-      <optional>
-        <attribute name="layout:metaidRef">
-          <ref name="SId.simpleType"/>
-        </attribute>
-      </optional>
-      <element name="layout:curve">
-        <ref name="curve.datatype"/>
-      </element>
-    </interleave>
-  </define>
-  
-  <define name="graphicalObjectBBandC.datatype" combine="interleave">
-    <interleave>
-      <ref name="SBase.datatype"/>
-      <attribute name="layout:id">
-        <ref name="SId.simpleType"/>
-      </attribute>
-      <optional>
-        <attribute name="layout:metaidRef">
-          <ref name="SId.simpleType"/>
-        </attribute>
-      </optional>
-      <element name="layout:boundingBox">
-        <ref name="boundingBox.datatype"/>
-      </element>
-      <element name="layout:curve">
-        <ref name="curve.datatype"/>
-      </element>
-    </interleave>
-  </define>
-
-
-  <define name="graphicalObject.datatype" combine="interleave">
-      <choice>
-        <ref name="graphicalObjectBB.datatype"/>
-        <ref name="graphicalObjectCurve.datatype"/>
-        <ref name="graphicalObjectBBandC.datatype"/>
-      </choice>
-        
-  </define> 
-  
+  <!-- compartment glyph -->
   <define name="listOfCompartmentGlyphs.datatype" combine="interleave">
     <interleave>
       <ref name="SBase.datatype"/>
@@ -216,7 +298,7 @@
       </oneOrMore>
     </interleave>
   </define>
-
+  
   <define name="compartmentGlyph.datatype" combine="interleave">
     <interleave>
       <ref name="graphicalObjectBB.datatype"/>
@@ -225,9 +307,15 @@
           <ref name="SIdRef.simpleType"/>
         </attribute>
 	  </optional>
+      <optional>
+        <attribute name="layout:order">
+          <data type="double"/>
+        </attribute>
+      </optional>
     </interleave>
   </define>
-
+  
+  <!-- species glyph -->
   <define name="listOfSpeciesGlyphs.datatype" combine="interleave">
     <interleave>
       <ref name="SBase.datatype"/>
@@ -238,7 +326,7 @@
       </oneOrMore>
     </interleave>
   </define>
-
+  
   <define name="speciesGlyph.datatype" combine="interleave">
     <interleave>
       <ref name="graphicalObjectBB.datatype"/>
@@ -249,7 +337,36 @@
 	  </optional>
     </interleave>
   </define>
-
+  
+  <!-- reaction glyph -->
+  <define name="listOfSpeciesReferenceGlyphs.datatype" combine="interleave">
+    <interleave>
+      <ref name="SBase.datatype"/>
+      <oneOrMore>
+        <element name="layout:speciesReferenceGlyph">
+          <ref name="speciesReferenceGlyph.datatype"/>
+        </element>
+      </oneOrMore>
+    </interleave>
+  </define>
+  <define name="speciesReferenceGlyph.datatype" combine="interleave">
+    <interleave>
+      <ref name="graphicalObject.datatype"/>
+      <attribute name="layout:speciesGlyph">
+        <ref name="SIdRef.simpleType"/>
+      </attribute>
+      <optional>
+        <attribute name="layout:speciesReference">
+          <ref name="SIdRef.simpleType"/>
+        </attribute>
+      </optional>
+      <optional> 
+        <attribute name="layout:role">
+          <ref name="SpeciesRefGlyphRole.simpleType"/>
+        </attribute>
+      </optional>
+    </interleave>
+  </define>
   <define name="listOfReactionGlyphs.datatype" combine="interleave">
     <interleave>
       <ref name="SBase.datatype"/>
@@ -277,107 +394,8 @@
     </interleave>
   </define>
 
-  <define name="curve.datatype" combine="interleave">
-    <interleave>
-      <element name="layout:listOfCurveSegments">
-        <ref name="listOfLineSegments.datatype"/>
-      </element>
-    </interleave>
-  </define>
-
-  <define name="xsiType.simpleType">
-    <choice>
-      <value type="string">LineSegment</value>
-      <value type="string">CubicBezier</value>
-    </choice>
-  </define>
-
-  <define name="listOfLineSegments.datatype" combine="interleave">
-    <interleave>
-      <ref name="SBase.datatype"/>
-      <oneOrMore>
-        <element name="layout:curveSegment">
-          <ref name="cubicBezier.datatype"/>
-        </element>
-      </oneOrMore>
-    </interleave>
-  </define>
-
-  <define name="lineSegment.datatype" combine="interleave">
-    <interleave>
-      <ref name="SBase.datatype"/>
-      <element name="layout:start">
-        <ref name="point.datatype"/>
-      </element>
-      <element name="layout:end">
-        <ref name="point.datatype"/>
-      </element>
-    </interleave>
-  </define>
-
-  <define name="cubicBezier.datatype" combine="interleave">
-    <interleave>
-      <ref name="lineSegment.datatype"/>
-         <attribute name="xsi:type">
-          <ref name="xsiType.simpleType"/>
-         </attribute>
-      <optional>
-        <element name="layout:basePoint1">
-          <ref name="point.datatype"/>
-        </element>
-	  </optional>
-	  <optional>
-        <element name="layout:basePoint2">
-          <ref name="point.datatype"/>
-        </element>
-	  </optional>
-    </interleave>
-  </define>
-
-  <define name="SpeciesRefGlyphRole.simpleType">
-    <choice>
-      <value type="string">undefined</value>
-      <value type="string">substrate</value>
-      <value type="string">product</value>
-      <value type="string">sidesubstrate</value>
-      <value type="string">sideproduct</value>
-      <value type="string">modifier</value>
-      <value type="string">activator</value>
-      <value type="string">inhibitor</value>
-    </choice>
-  </define>
-  
-  <define name="listOfSpeciesReferenceGlyphs.datatype" combine="interleave">
-    <interleave>
-      <ref name="SBase.datatype"/>
-      <oneOrMore>
-        <element name="layout:speciesReferenceGlyph">
-          <ref name="speciesReferenceGlyph.datatype"/>
-        </element>
-      </oneOrMore>
-    </interleave>
-  </define>
-
-  <define name="speciesReferenceGlyph.datatype" combine="interleave">
-    <interleave>
-      <ref name="graphicalObject.datatype"/>
-      <attribute name="layout:speciesGlyph">
-        <ref name="SIdRef.simpleType"/>
-      </attribute>
-      <optional>
-        <attribute name="layout:speciesReference">
-          <ref name="SIdRef.simpleType"/>
-        </attribute>
-      </optional>
-      <optional> 
-        <attribute name="layout:role">
-          <ref name="SpeciesRefGlyphRole.simpleType"/>
-        </attribute>
-      </optional>
-    </interleave>
-  </define>
-
-  <define name="listOfTextGlyphs.datatype" combine="interleave">
+<!-- text glyph -->
+ <define name="listOfTextGlyphs.datatype" combine="interleave">
     <interleave>
       <ref name="SBase.datatype"/>
       <oneOrMore>
@@ -390,7 +408,7 @@
 
   <define name="textGlyph.datatype" combine="interleave">
     <interleave>
-      <ref name="graphicalObject.datatype"/>
+      <ref name="graphicalObjectBB.datatype"/>
 	  <optional>
         <attribute name="layout:graphicalObject">
           <ref name="SIdRef.simpleType"/>
@@ -403,65 +421,13 @@
 	  </optional>
 	  <optional>
         <attribute name="layout:originOfText">
-          <ref name="SId.simpleType"/>
+          <ref name="SIdRef.simpleType"/>
 		</attribute>
 	  </optional>	
     </interleave>
   </define>
 
-  <define name="listOfReferenceGlyphs.datatype" combine="interleave">
-    <interleave>
-      <ref name="SBase.datatype"/>
-      <oneOrMore>
-        <element name="layout:referenceGlyph">
-          <ref name="referenceGlyph.datatype"/>
-        </element>
-      </oneOrMore>
-    </interleave>
-  </define>
-  
-  <define name="referenceGlyph.datatype" combine="interleave">
-    <interleave>
-      <ref name="graphicalObject.datatype"/>
-      <optional>
-        <attribute name="layout:reference">
-          <ref name="SIdRef.simpleType"/>
-        </attribute>
-      </optional>
-      <optional>
-        <attribute name="layout:glyph">
-          <ref name="SIdRef.simpleType"/>
-        </attribute>
-      </optional>
-      <optional>
-        <attribute name="layout:role">
-          <data type="string"/>
-        </attribute>
-      </optional>	
-    </interleave>
-  </define>
-  
-  <define name="generalGlyph.datatype" combine="interleave">
-    <interleave>
-      <ref name="graphicalObject.datatype"/>
-      <optional>
-        <element name="layout:listOfReferenceGlyphs">
-          <ref name="listOfReferenceGlyphs.datatype"/>
-        </element>
-      </optional>
-      <optional>
-        <element name="layout:listOfSubGlyphs">
-          <ref name="listOfAdditionalGraphicalObjects.datatype"/>
-        </element>
-      </optional>
-      <optional>
-        <attribute name="layout:reference">
-          <ref name="SIdRef.simpleType"/>
-        </attribute>
-      </optional>
-    </interleave>
-  </define>
- 
+<!-- general glyph -->
   <define name="listOfAdditionalGraphicalObjects.datatype" combine="interleave">
     <interleave>
       <ref name="SBase.datatype"/>
@@ -477,5 +443,57 @@
       </oneOrMore>
     </interleave>
   </define>
+  
+  <define name="listOfReferenceGlyphs.datatype" combine="interleave">
+    <interleave>
+      <ref name="SBase.datatype"/>
+      <oneOrMore>
+        <element name="layout:referenceGlyph">
+          <ref name="referenceGlyph.datatype"/>
+        </element>
+      </oneOrMore>
+    </interleave>
+  </define>
+  
+  <define name="referenceGlyph.datatype" combine="interleave">
+    <interleave>
+      <ref name="graphicalObject.datatype"/>
+        <attribute name="layout:glyph">
+          <ref name="SIdRef.simpleType"/>
+        </attribute>
+      <optional>
+        <attribute name="layout:reference">
+          <ref name="SIdRef.simpleType"/>
+        </attribute>
+      </optional>   
+      <optional>
+        <attribute name="layout:role">
+          <data type="string"/>
+        </attribute>
+      </optional>	
+    </interleave>
+  </define>
+  
+  <define name="generalGlyph.datatype" combine="interleave">
+    <interleave>
+      <ref name="graphicalObject.datatype"/>
+      <optional>
+        <attribute name="layout:reference">
+          <ref name="SIdRef.simpleType"/>
+        </attribute>
+      </optional>
+      <optional>
+        <element name="layout:listOfReferenceGlyphs">
+          <ref name="listOfReferenceGlyphs.datatype"/>
+        </element>
+      </optional>
+      <optional>
+        <element name="layout:listOfSubGlyphs">
+          <ref name="listOfAdditionalGraphicalObjects.datatype"/>
+        </element>
+      </optional>
+    </interleave>
+  </define>
+ 
 
 </grammar>

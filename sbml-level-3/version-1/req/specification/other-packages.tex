@@ -1,0 +1,71 @@
+% -*- TeX-master: "main" -*-
+
+\section{Relationship with other packages}
+\label{other-packages}
+
+Each package that can be set \token{required}=\val{true} has the potential to interact with the Required Elements package.  For packages that have already been finalized, we present validation rules that, if followed, would allow a software package that did not understand the package in question to know what math was changed from what would have been expected, had those package constructs not been present.  For packages that have not yet been finalized, hypothetical validation rules are proposed based on the current version of the specification, but to fully ensure that all the appropriate \MathChanged elements were added to a document with that package, a full set of validation rules that matched the final package specification would have to be produced, either as a part of that other package's specification, or as part of a future version of this specification.
+
+It is important to note that a package can be set \token{required}=\val{true} for two reasons:  One, if the existing mathematical interpretation of the model has been changed, and two, if \emph{new} mathematics are introduced.  The Required Elements package is only concerned with the former.  For that reason, a document may have a required package present that nevertheless will not have any \MathChanged elements.
+
+Determining whether a model follows the given validation rules will require understanding of that package, which presents a sort of catch-22 for any software tool:  the only reason to use Required Elements constructs in the first place is to mitigate situations where a package is \emph{not} understood.  We propose that any software in this situation use an external validator that understands all packages in a technical sense, but has no need to actually interpret the models mathematically, to ensure that a model is valid, and then proceed from there.  If the model is valid, all mathematically-modified elements will be guaranteed to have \MathChanged children. 
+
+\subsection{The Hierarchical Model Composition package}
+
+The URI \val{http://www.sbml.org/sbml/level3/version1/comp/version1} is used to refer to the Hierarchical Model Composition package.  This must be the string used for any \token{changedBy} attribute that refers to this package.
+
+The Hierarchical Model Composition package allows modelers to compose models hierarchically, by adding a list of \Model objects to the document, allowing them to be imported into other models via the \Submodel construct, and then connecting elements of those models together with \ReplacedElement and \ReplacedBy constructs.
+
+It is only the last of those three abilities that can change the mathematical interpretation of an element of the main \Model object in an SBML Document.  Defining a new \Model will not change the interpretation of anything in the original \Model, nor will incorporating submodels into the original \Model.
+
+All elements with mathematical meaning which have been given a \ReplacedBy child have had their meaning changed, by definition.  Therefore, any \Compartment, \Parameter, \Reaction, \Species, \Constraint, \Event, \FunctionDefinition, \InitialAssignment, or \Rule with a \ReplacedBy child must be given a \MathChanged child.  (Other elements with mathematical meaning exist in SBML Level~3 Core, but are not on this list because they may not have \ReplacedBy children.)  The value of the \token{viableWithoutChange} may be set to be \val{true} if the original element is completely defined (or if it is \emph{at least as} defined as its replacement), and must be set \val{false} otherwise.  The attribute may also be set \val{false} if the original element differs from its replacement, and/or if their mathematical interpretation is changed by some other element in the replacement (such as by a \Rule or \Reaction; see below).
+
+\Compartment, \Parameter, \Reaction, \Species, and \SpeciesReference elements all have the ability to have their mathematical interpretation changed by \InitialAssignment, \Rule, and \Event constructs.  If any of these three elements are present in a \Submodel, and their target is an element in the main model (because their 'local' target has been replaced by the main model element), that element in the main model must be given a \MathChanged child referencing this package.  The value of the \token{viableWithoutChange} may be set to be \val{true} if the modeler determines that the absence of the \InitialAssignment, \Rule, or \Event creates an alternate model scenario that is nonetheless workable.
+
+Any element that does not fall under the above two situations will not have its math changed, and must therefore not have a \MathChanged child targeting this package.
+
+Modelers that wish to use \MathChanged elements in \Model elements that are \emph{not} the direct child of the \token{sbml} element may do so, but this only facilitates the translation of those tertiary models to their own SBML Documents:  any software that could read and understand a tertiary model must, by definition, be able to understand the Hierarchical Model Composition package, and therefore has no need of any \MathChanged element that targets this package.
+
+
+\subsection{The Flux Balance Constraints package}
+
+Currently, documents that use the Flux Balance Constraints package must set its \token{required} attribute to \val{false}, making it an illegal target of the Required Elements Package.  However, the SBML editors recently revised their interpretation of the \token{required} attribute such that future versions of the package may allow (or even require) that it be set to \val{true}.  However, even if this occurs, the function of this package is solely to define a new set of mathematical constructs, along with their interpretation:  no element not in the package is affected at all.  Therefore, there is no need to create any \MathChanged elements that target this package:  any such elements are illegal.
+
+
+\subsection{The Qualitative Models package}
+
+In Version~1 of the Qualitative Models package, all of the added constructs create a new mathematical system of \QualitativeSpecies and \Transitions, which can be affected by core constructs, but which cannot affect core constructs.  Therefore,  there is no need to create any \MathChanged elements that target this package:  any such elements are illegal.
+
+
+\subsection{The Distributions package}
+
+The Distrubtions package has not yet been finalized, but in its current (draft) form, it is used to annotate SBML elements with information about the error or uncertainty in their values, which does not affect the mathematics of the model, and to modify \FunctionDefinition elements to produce draws from distributions, instead of producing deterministic outcomes.  Any \FunctionDefinition so modified must be given a \MathChanged referring to this package; the \token{viableWithoutChange} element must be set \val{false} if the original \Math child is incomplete, and may be set \val{true} if the deterministic value it produces results in a workable, though non-random, model.  No other element may be given a \MathChanged child that targets this package.
+
+
+\subsection{The Multistate and Multicomponent Species package}
+
+The Multistate and Multicomponent Species package has not yet been finalized, but in its current (draft) form, it allows the redefinition of \Species and \Compartment elements as types which might be instantiated in a number of ways.  Any such 'prototype'-style elements would need \MathChanged children.  Furthermore, as currently written, no such \Species or \Compartment may be instantiated or changed, whether by attribute, \InitialAssignment, or \Rule, and the value of the \token{viableWithoutChange} attribute would always be required to be set \val{false}.
+
+
+\subsection{The Spatial Processes package}
+
+The Spatial Processes package has not yet been finalized, but in its current (draft) form, it modifies \Species, \Compartment, and \Reaction elements such that they can be modeled spatially, with partial differential equations.  All such modified elements must therefore be given \MathChanged children--the specification itself details how this is to be done, and what values for \token{viableWithoutChange} are approprite.
+
+
+\subsection{The Arrays package}
+
+The Arrays package has not yet been finalized, but in its current (draft) form, it has the ability to modify any element with mathematical meaning to represent an array instead of a single value.  All such modified elements must therefore be given \MathChanged children, with more details to follow as the package is developed.
+
+
+\subsection{The Dynamic Structures package}
+
+The Dynamic Structurs package has not yet been finalized, and is not, as of this writing, undergoing active development.  Any structures it sets in place to create or destroy elements with mathematical meaning would clearly affect the mathematics of the model, and any elements so affected would be appropriate targets for \MathChanged children.
+
+
+\subsection{Non-required packages}
+
+The Annotations, Layout, Render, Groups, and this Required Elements package all explicitly do not affect the mathematics of a model, and must be set \token{required}=\val{false}.  No \MathChanged element may therefore reference these packages.
+
+
+\subsection{Future packages}
+
+It is hoped that, should this Required Elements package prove useful, packages defined in the future will explicitly mention what elements it defines that must be given \MathChanged children, and what values to give its attributes.  

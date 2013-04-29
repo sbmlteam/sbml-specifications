@@ -5,53 +5,77 @@
 
 This section contains examples employing the Required Elements package for SBML Level~3.
 
-\subsection{Function whose meaning is adequately captured by Core mathematics}
+\subsection{Function whose interpretation is reasonable in the absence of a package}
 
 In this example, there is a \FunctionDefinition object that has had its mathematics changed by a (as-yet hypothetical) Distributions package.
 
 \begin{example}
 <listOfFunctionDefinitions> 
-  <functionDefinition id="unitGaussian" 
-                      xmlns:req="http://www.sbml.org/sbml/level3/version1/req/version1"
-                      req:mathOverridden="http://www.sbml.org/sbml/level3/version1/distrib/version1" 
-                      req:coreHasAlternateMath="true"> 
-    <math xmlns="http://www.w3.org/1998/Math/MathML" 
-          xmlns:sbml="http://www.sbml.org/sbml/level3/version1/core"> 
-       <lambda>
-         <cn> 0.5 </cn>
-       </lambda>
+  <functionDefinition id="unitGaussian"> 
+    <math xmlns="http://www.w3.org/1998/Math/MathML"> 
+      <lambda>
+        <bvar>
+          <ci> mean </ci>
+        </bvar>
+        <bvar>
+          <ci> variance </ci>
+        </bvar>
+        <ci> mean </ci>
+      </lambda>
     </math> 
-    <distrib:call xmlns:distrib="http://www.sbml.org/sbml/level3/version1/distrib/version1"
-                  distrib:function="gaussian" distrib:mean="0.5" distrib:variance="0.25"
-    </distrib:call> 
+    <distrib:pickFromUncertainty>
+      <distrib:input> mean </distrib:input>
+      <distrib:input> var </distrib:input>
+      <distrib:distribution xmlns:un="http://uncertml.org/3.0">
+        <un:NormalDistribution>
+           <un:mean>mean</un:mean>
+           <un:variance>var</un:variance>
+         </un:NormalDistribution>
+      </distrib:distribution>
+    </distrib:pickFromUncertainty>
+    <req:listOfMathChangeds>
+      <req:mathChanged changedBy="http://www.sbml.org/sbml/level3/version1/distrib/version1"
+                       viableWithoutChange="true" />
+    </req:listOfMathChangeds>
   </functionDefinition> 
 </listOfFunctionDefinitions> 
 \end{example}
 
-The function \token{unitGaussian} above has both a straight SBML Level~3 Core definition (whose MathML formula has the effect of returning the numerical value 0.5), and a package-defined version (in effect, ``select a random number from a Gaussian distribution with mean 0.5 and variance 0.25''). The modeler has elected to claim that the SBML Core definition's version of the function is adequate for the model in which it is being used, although different results are to be expected.
+The function \token{unitGaussian} above has both a straight SBML Level~3 Core definition (whose MathML formula has the effect of returning \val{mean}, unchanged), and a package-defined version (in effect, ``select a random number from a Gaussian distribution with mean \val{mean} and variance \val{var}''). The modeler has elected to claim that the SBML Core definition's version of the function is adequate for the model in which it is being used, although different results are to be expected.
 
 
-\subsection{Function whose meaning is \emph{not} adequately captured by Core mathematics}
+\subsection{Function whose interpretation is \emph{not} reasonable in the absence of a package}
 
-In this example, the modeler has decided that the plain SBML Level~3 Core version of the mathematics will not make an adequate substitution for using the mathematics defined by the Distributions package:
+In this example, the modeler has decided that the plain SBML Level~3 Core version of the mathematics will not make an adequate substitution for using the mathematics defined by the Distributions package, as it returns '0' instead of something more reasonable:
 
 \begin{example}
 <listOfFunctionDefinitions> 
-  <functionDefinition id="gaussian" 
-                      xmlns:req="http://www.sbml.org/sbml/level3/version1/req/version1"
-                      req:mathOverridden="http://www.sbml.org/sbml/level3/version1/distrib/version1" 
-                      req:coreHasAlternateMath="false"> 
-    <math xmlns="http://www.w3.org/1998/Math/MathML" 
-          xmlns:sbml="http://www.sbml.org/sbml/level3/version1/core"> 
-       <lambda>
-         <bvar> <ci> mean </ci> </bvar>
-         <bvar> <ci> variance </ci> </bvar>
-         <cn> 0 </cn>
-       </lambda>
+  <functionDefinition id="unitGaussian"> 
+    <math xmlns="http://www.w3.org/1998/Math/MathML"> 
+      <lambda>
+        <bvar>
+          <ci> mean </ci>
+        </bvar>
+        <bvar>
+          <ci> var </ci>
+        </bvar>
+        <cn> 0 </cn>
+      </lambda>
     </math> 
-    <distrib:call xmlns:distrib="http://www.sbml.org/sbml/level3/version1/distrib/version1"    
-                  distrib:function="gaussian" distrib:mean="mean" distrib:variance="variance"
-    </distrib:call> 
+    <distrib:pickFromUncertainty>
+      <distrib:input> mean </distrib:input>
+      <distrib:input> var </distrib:input>
+      <distrib:distribution xmlns:un="http://uncertml.org/3.0">
+         <un:NormalDistribution>
+           <un:mean>mean</un:mean>
+           <un:variance>var</un:variance>
+         </un:NormalDistribution>
+      </distrib:distribution>
+    </distrib:pickFromUncertainty>
+    <req:listOfMathChangeds>
+      <req:mathChanged changedBy="http://www.sbml.org/sbml/level3/version1/distrib/version1"
+                       viableWithoutChange="false" />
+    </req:listOfMathChangeds>
   </functionDefinition> 
 </listOfFunctionDefinitions> 
 \end{example} 
@@ -59,24 +83,35 @@ In this example, the modeler has decided that the plain SBML Level~3 Core versio
 
 \subsection{Function whose definition is incomplete}
 
-In the following example, the function definition is marked as having \token{coreHasAlternateMath}=\val{false} because the lambda function is actually incomplete.
+In the following example, the function definition is marked as having \token{viableWithoutChange}=\val{false} because the lambda function is actually incomplete, and returns nothing at all.
 
 \begin{example}
 <listOfFunctionDefinitions> 
-  <functionDefinition id="gaussian" 
-                      xmlns:req="http://www.sbml.org/sbml/level3/version1/req/version1"
-                      req:mathOverridden="http://www.sbml.org/sbml/level3/version1/distrib/version1" 
-                      req:coreHasAlternateMath="false"> 
-    <math xmlns="http://www.w3.org/1998/Math/MathML" 
-          xmlns:sbml="http://www.sbml.org/sbml/level3/version1/core"> 
+  <functionDefinition id="unitGaussian"> 
+    <math xmlns="http://www.w3.org/1998/Math/MathML"> 
       <lambda>
-        <bvar> <ci> mean </ci> </bvar>
-        <bvar> <ci> variance </ci> </bvar>
+        <bvar>
+          <ci> mean </ci>
+        </bvar>
+        <bvar>
+          <ci> variance </ci>
+        </bvar>
       </lambda>
     </math> 
-    <distrib:call xmlns:distrib="http://www.sbml.org/sbml/level3/version1/distrib/version1"    
-                  distrib:function="gaussian" distrib:mean="mean" distrib:variance="variance"
-    </distrib:call> 
+    <distrib:pickFromUncertainty>
+      <distrib:input> mean </distrib:input>
+      <distrib:input> var </distrib:input>
+      <distrib:distribution xmlns:un="http://uncertml.org/3.0">
+         <un:NormalDistribution>
+           <un:mean>mean</un:mean>
+           <un:variance>var</un:variance>
+         </un:NormalDistribution>
+      </distrib:distribution>
+    </distrib:pickFromUncertainty>
+    <req:listOfMathChangeds>
+      <req:mathChanged changedBy="http://www.sbml.org/sbml/level3/version1/distrib/version1"
+                       viableWithoutChange="false" />
+    </req:listOfMathChangeds>
   </functionDefinition> 
 </listOfFunctionDefinitions> 
 \end{example}

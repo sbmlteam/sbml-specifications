@@ -577,6 +577,11 @@ understand the \distribshort package.
 
 As outlined above, the \FunctionDefinition class is extended to contain a \DrawFromDistribution child.  Because a \FunctionDefinition must have a \LambdaClass child according to \sbmlthreecore, a valid function will still have one, but the \token{drawFromDistribution} child, if present, will override any definition found there.  However, software that does not support \distribshort could potentially invoke the function found in the \LambdaClass element (see \ref{sec:fallbackfunc}).
 
+In the \Model, an extended \FunctionDefinition can have two different uses.  First, it may be used in any \mathml to perform a draw from a distribution.  This draw will be unique for every use of the \FunctionDefinition, whether or not the draw is performed at the same simulation time as a different draw (for example, if used in two different \InitialAssignment elements).
+
+Secondly, it may be used in an \UncertMath element to denote that a particular element has the uncertainty defined by the extended function.  See \sec{uncertmath-class} for more details.
+
+
 \subsection{The \class{DrawFromDistribution} class}
 \label{drawFromDistribution-class}
 
@@ -636,9 +641,12 @@ Any other package that defines new contexts for MathML will also either be discr
 \subsection{Truncation}
 \label{truncation}
 
-Earlier versions of this specification allowed one to specify truncation values for UncertML distributions and explicit PDFs:  upper and lower limits to the distributions, between which values must be sampled.  However, this capability is being introduced in UncertML 3.0, making truncation elements superfluous for \PredefinedPDF elements, and explicit PDFs can be constructed to be truncated through the use of the \token{piecewise} \mathml construct, making truncation elements superfluous for \ExplicitPDF elements as well.  Truncation was never considered for inclusion for \ExplicitPMF functions, as truncating a sample is as simple as not including the rejected realizations.  Therefore, since its capabilities are duplicated elsewhere, truncation-specific elements have been dropped from this version of the specification.
+In order to perform truncation, one or both ends of the distribution are cut off, and the remaining function is re-scaled so the area under the curve is once again 1.0.  Earlier versions of this specification allowed one to specify truncation values for UncertML distributions and explicit PDFs:  upper and lower limits to the distributions, between which values must be sampled.  However, this capability is being introduced in UncertML 3.0, making truncation elements superfluous for \PredefinedPDF elements, and explicit PDFs can be constructed to be truncated through the use of the \token{piecewise} \mathml construct and a scaling factor, making truncation elements superfluous for \ExplicitPDF elements as well.  Truncation was never considered for inclusion for \ExplicitPMF functions, as truncating a sample is as simple as not including the rejected realizations.  Therefore, since its capabilities are duplicated elsewhere, truncation-specific elements have been dropped from this version of the specification.
 
 \emph{Note: \notice If the truncation elements were desired as a form of annotation, denoting the range between which most, if not all, of a given distribution would fall, that capability is not replicated in the other functions above, and would need to be re-added to this specification.}
+
+\emph{Note 2: \notice If UncertML 3.0 doesn't actually end up having a truncation element, we can add this back in.  Also, if people who would like to use the \ExplicitPDF element don't want to have to encode truncation in the MathML, it could be added back to there, too.}
+
 
 \subsection{Examples using the extended \FunctionDefinition}
 \label{sec:fd-examples}
@@ -681,7 +689,7 @@ Here, the \Input children of \DrawFromDistribution define the local \primtype{Un
         <apply>
           <ci> normal </ci>
           <ci> z </ci>
-          <cn type="integer"> 10 </cn>
+          <cn> 10 </cn>
         </apply>
       </math>
     </initialAssignment>
@@ -712,23 +720,23 @@ In the following example, a \FunctionDefinition is extended to define a draw fro
                xmlns="http://www.sbml.org/sbml/level3/version1/distrib/version1">
          <input> mu </input>
          <input> sigma </input>
-         <explicitPDF>
+         <explicitPDF xmlns="http://www.w3.org/1998/Math/MathML">
             <apply>
               <times/>
               <apply>
                 <divide/>
-                <cn type="integer"> 1 </cn>
+                <cn> 1 </cn>
                 <apply>
                   <times/>
                   <ci> sigma </ci>
                   <apply>
                     <root/>
                     <degree>
-                      <cn type="integer"> 2 </cn>
+                      <cn> 2 </cn>
                     </degree>
                     <apply>
                       <times/>
-                      <cn type="integer"> 2 </cn>
+                      <cn> 2 </cn>
                       <pi/>
                     </apply>
                   </apply>
@@ -750,14 +758,14 @@ In the following example, a \FunctionDefinition is extended to define a draw fro
                           <ci> mu </ci>
                         </apply>
                       </apply>
-                      <cn type="integer"> 2 </cn>
+                      <cn> 2 </cn>
                     </apply>
-                    <cn type="integer"> 2 </cn>
+                    <cn> 2 </cn>
                   </apply>
                   <apply>
                     <power/>
                     <ci> sigma </ci>
-                    <cn type="integer"> 2 </cn>
+                    <cn> 2 </cn>
                   </apply>
                 </apply>
               </apply>
@@ -934,6 +942,8 @@ The \UncertML class is defined as describing the uncertainty in its parent eleme
 
 For convenience, \uncertml provides a \token{StatisticsCollection}, which may be used to collect multiple other elements.  For clarity, if more than one \uncertml statistics element or \token{StatisticsCollection} are present, they should not conflict with each other.
 
+The namespace for IDs used in the \uncertml is the SId namespace of elements with mathematical meaning in the model, including from other packages.  If that other package is not understood by an interpreter, the \UncertML element may be ignored.  If an interpreter does not understand an ID and cannot tell whether that ID came from a not-understood package, it may issue a warning.
+
 \emph{The name ``UncertML'' \controversial might not be the best name for this class; the intent was to convey the idea 'uncertainty defined by UncertML' but that's too long.  Another option would be to define an ``Uncertainty'' class with an \UncertML child and a \Math child, but that seemed a bit of an overkill to me.  Any other ideas/opinions are appreciated.}
 
 
@@ -942,10 +952,13 @@ For convenience, \uncertml provides a \token{StatisticsCollection}, which may be
 
 The \UncertMath class, like the \UncertML class, describes the uncertainty in its parent element's mathematics.  It is provided as a way to reference distributions defined in function definitions elsewhere in the model which have been extended by \distribshort.  The most straightforward way to use the \UncertMath class is to simply include a single call to a \FunctionDefinition.  Other uses, such as adding a constant to a function definition (\val{myfunc(3.1) + 2}) are also possible, but discouraged.
 
-The \UncertMath class also contains an optional \token{index} attribute:  this is to assist with function definitions that return a vector, and indicate the position in the vector that corresponds to the parent element's value.  For example, a \FunctionDefinition might define an \ExplicitPMF where each realization contains three values, one for each of three different parameters in the model (see example \sec{uncertmath-index-example}.  Each of the three parameters could be given an \UncertMath child referencing that \FunctionDefinition, each with the index of the vector corresponding to its value.  Note that the index is zero-indexed:  the first position in the vector will have an \token{index} of \val{0}, the second of \val{1}, etc.
+The namespace for IDs used in the \uncertml is the SId namespace of elements with mathematical meaning in the model, including from other packages.  If that other package is not understood by an interpreter, the \UncertML element may be ignored.  If an interpreter does not understand an ID and cannot tell whether that ID came from a not-understood package, it may issue a warning.
+
+The \UncertMath class also contains an optional \token{index} attribute:  this is to assist with function definitions that return a vector, and indicate the position in the vector that corresponds to the parent element's value.  For example, a \FunctionDefinition might define an \ExplicitPMF where each realization contains three values, one for each of three different parameters in the model (see example \sec{uncertmath-index-example}).  Each of the three parameters could be given an \UncertMath child referencing that \FunctionDefinition, each with the index of the vector corresponding to its value.  Note that the index is zero-indexed:  the first position in the vector will have an \token{index} of \val{0}, the second of \val{1}, etc.
 
 With the release of the Arrays package, presumably the need for this attribute will go away, but it seems a simple enough addition in the absence of that package, and would provide a tangible benefit to many.  Even after the release of the Arrays package, some software might not support arrays, but will still want to annotate this information:  this attribute will allow them to do so.  See \sec{extended-sbase-examples} for examples of how this might work.
 
+It should be emphasized that the \UncertMath class is \emph{not} intended to be used like the \ExplicitPDF class, i.e. as a way to explicitly define a probability density function.  Instead, it is a way to provide a \emph{reference} to a probablity density function or probability mass function, as defined within an extended \FunctionDefinition.
 
 
 \subsection{Examples using extended \SBase}
@@ -962,7 +975,7 @@ In this example, a species is given a \UncertML child to describe its uncertaint
 ...
   <species id="x" compartment="C" boundaryCondition="false" initialConcentration="3.22"
            hasOnlySubstanceUnits="false" constant="false">
-    <uncertml xmlns="http://uncertml.org/3.0">
+    <distrib:uncertml xmlns="http://uncertml.org/3.0">
       <NormalDistribution>
         <mean> 3.2 </mean>
         <variance> 0.09 </variance>
@@ -970,14 +983,14 @@ In this example, a species is given a \UncertML child to describe its uncertaint
       <StandardDeviation>
         <values> 0.3 </values>
       </StandardDeviation>
-    </uncertml>
+    </distrib:uncertml>
   </species>
 ...
 \end{example}
 
 In the above example, a species whose initial concentration is 3.22 is noted as coming from a normal distribution with a mean of 3.2 and a variance of 0.09.  Additionally, its standard deviation is given as 0.3.  In this case, the standard deviation could have been calculated from the variance directly; the modeler has chosen to include both elements for the benefit of any other software that might understand standard deviation, but not the 'distributions' branch of \uncertml.
 
-Note also that 3.22 is different from 3.2:  evidently, this model was constructed as a realization of the underlying uncertainty, instead of trying to capture the single most likely model of the underlying process.
+Note also that 3.22 (the \token{initialConcentration}) is different from 3.2 (the \token{mean}):  evidently, this model was constructed as a realization of the underlying uncertainty, instead of trying to capture the single most likely model of the underlying process.
 
 
 \subsubsection{Combining \UncertML and \UncertMath}
@@ -1015,18 +1028,18 @@ This example is the same as the previous one, but uses \UncertMath to reference 
 <listOfSpecies>
   <species id="x" compartment="C" boundaryCondition="false" initialConcentration="3.22"
            hasOnlySubstanceUnits="false" constant="false">
-    <uncertml xmlns="http://uncertml.org/3.0">
+    <distrib:uncertml xmlns="http://uncertml.org/3.0">
       <StandardDeviation>
         <values> 0.3 </values>
       </StandardDeviation>
-    </uncertml>
-    <uncertMath xmlns="http://www.w3.org/1998/Math/MathML">
+    </distrib:uncertml>
+    <distrib:uncertMath xmlns="http://www.w3.org/1998/Math/MathML">
       <apply>
         <ci> normal </ci>
         <cn> 3.2 </cn>
         <cn> 0.09 </cn>
       </apply>
-    </uncertMath>
+    </distrib:uncertMath>
   </species>
 </listOfSpecies>
 ...
@@ -1053,23 +1066,23 @@ In the following example, a function definition is created with an \ExplicitPDF 
       <distrib:drawFromDistribution
                xmlns="http://www.sbml.org/sbml/level3/version1/distrib/version1">
          <input> mean </input>
-         <explicitPDF>
+         <explicitPDF xmlns="http://www.w3.org/1998/Math/MathML">
             <apply>
               <times/>
               <apply>
                 <divide/>
-                <cn type="integer"> 1 </cn>
+                <cn> 1 </cn>
                 <apply>
                   <times/>
                   <cn> 0.011 </cn>
                   <apply>
                     <root/>
                     <degree>
-                      <cn type="integer"> 2 </cn>
+                      <cn> 2 </cn>
                     </degree>
                     <apply>
                       <times/>
-                      <cn type="integer"> 2 </cn>
+                      <cn> 2 </cn>
                       <pi/>
                     </apply>
                   </apply>
@@ -1091,14 +1104,14 @@ In the following example, a function definition is created with an \ExplicitPDF 
                           <ci> mean </ci>
                         </apply>
                       </apply>
-                      <cn type="integer"> 2 </cn>
+                      <cn> 2 </cn>
                     </apply>
-                    <cn type="integer"> 2 </cn>
+                    <cn> 2 </cn>
                   </apply>
                   <apply>
                     <power/>
                     <cn> 0.011 </cn>
-                    <cn type="integer"> 2 </cn>
+                    <cn> 2 </cn>
                   </apply>
                 </apply>
               </apply>
@@ -1109,19 +1122,19 @@ In the following example, a function definition is created with an \ExplicitPDF 
   </listOfFunctionDefinitions>
   <listOfParameters>
     <parameter id="y" value="1.1" constant="true"/>
-      <uncertMath xmlns="http://www.w3.org/1998/Math/MathML">
+      <distrib:uncertMath xmlns="http://www.w3.org/1998/Math/MathML">
         <apply>
           <ci> dist1 </ci>
           <cn> 1.1 </cn>
         </apply>
-      </uncertMath>
+      </distrib:uncertMath>
     <parameter id="z" value="3.2" constant="true"/>
-      <uncertMath xmlns="http://www.w3.org/1998/Math/MathML">
+      <distrib:uncertMath xmlns="http://www.w3.org/1998/Math/MathML">
         <apply>
           <ci> dist1 </ci>
           <cn> 3.2 </cn>
         </apply>
-      </uncertMath>
+      </distrib:uncertMath>
   </listOfParameters>
 ...
 \end{example}
@@ -1160,34 +1173,34 @@ In the following example, a function definition is created with an \ExplicitPMF 
                <values> 1.72 50.0 0.0033 </values>
              </Realisation>
            </UnknownSample>
-         </predefinedPDF>
+         </explicitPMF>
       </distrib:drawFromDistribution>
     </functionDefinition>
   </listOfFunctionDefinitions>
   <listOfSpecies>
     <species id="S1" compartment="C" boundaryCondition="false" initialConcentration="2.24"
              hasOnlySubstanceUnits="false" constant="false">
-      <uncertMath index="0" xmlns="http://www.w3.org/1998/Math/MathML">
+      <distrib:uncertMath index="0" xmlns="http://www.w3.org/1998/Math/MathML">
         <apply>
           <ci> samples </ci>
         </apply>
-      </uncertMath>
+      </distrib:uncertMath>
     </species>
   </listOfSpecies>
   <listOfParameters>
     <parameter id="y" value="45.9" constant="true">
-      <uncertMath index="1" xmlns="http://www.w3.org/1998/Math/MathML">
+      <distrib:uncertMath index="1" xmlns="http://www.w3.org/1998/Math/MathML">
         <apply>
           <ci> samples </ci>
         </apply>
-      </uncertMath>
+      </distrib:uncertMath>
     </parameter>
     <parameter id="z" value="0.002" constant="true">
-      <uncertMath index="2" xmlns="http://www.w3.org/1998/Math/MathML">
+      <distrib:uncertMath index="2" xmlns="http://www.w3.org/1998/Math/MathML">
         <apply>
           <ci> samples </ci>
         </apply>
-      </uncertMath>
+      </distrib:uncertMath>
     </parameter>
   </listOfParameters>
 ...
@@ -1273,6 +1286,7 @@ None as yet.
   ambiguity. We should make a decision about the approach we want to
   take for the final version of this proposal.
   \emph{Lucian:  As is obvious, we did indeed go with using the uncertML as-is.  I think it works out a lot better this way, though I would still keep the appendix to ensure people understand the different distributions.}
+
 \item The use of arrays. The package and examples have been written
   that some distribution definitions will require the use of vector or
   matrix types that can be provided by the Arrays package. While

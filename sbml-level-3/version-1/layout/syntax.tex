@@ -123,11 +123,10 @@ For this purpose the \token{xsi:type} is set to the following fixed
 values: \val{LineSegment} for line segments and \val{CubicBezier} for 
 splines. 
 
- \subsection{General features} 
- \label{general-features} This section 
-describes the common classes \Point, \Dimensions and \BoundingBox that 
-are used by all other classes of this package. It also describes the 
-representation of curves. 
+\subsection{General features} 
+\label{general-features} This section describes the common classes 
+\Point, \Dimensions and \BoundingBox that are used by all other 
+classes of this package. It also describes the representation of curves. 
 
 \subsubsection{The Point class} \label{point-class} 
 \label{position-class} A point is specified via the required attributes 
@@ -294,7 +293,6 @@ Note that the \token{xsi:type} is from the \token{xsi} namespace:
 The \SBML \Model class is extended with the addition of one child the 
 \token{listOfLayouts}. A \Model may contain at most one such list. 
 
-
 \begin{figure}[!h]
 \includegraphics{uml/layout-extended-model-uml}\\
 \caption{The definitions of the extended \Model class.}
@@ -309,6 +307,9 @@ as well as the subcomponents for \Annotation and \Notes. The
 \ListOfLayouts must contain at least one \Layout (defined in 
 \ref{layout-class}). 
 
+Should the \Layout package be used in an \SBML Level~2 model, the 
+\ListOfLayouts needs to be placed in an \Annotation on the \Model element. 
+For a complete example that uses SBML Level 2 see \sec{l2example}.
 
 \subsection{The Layout class}
 \label{layout-class}
@@ -361,7 +362,8 @@ more \CompartmentGlyph elements.
 
 Note that not all \Compartment elements have to be represented by a 
 \CompartmentGlyph. In fact quite often the compartment is omitted 
-in a layout for a uni-compartmental network. 
+in a layout for a uni-compartmental network. (In which case the 
+\ListOfCompartmentGlyphs would be ommitted altogether.)
 
 
 \paragraph{The \token{listOfSpeciesGlyphs} element}
@@ -375,9 +377,8 @@ in this list.
 \paragraph{The \token{listOfReactionGlyphs} element}
 \label{listofreactionglyphs-class}
 The \token{listOfReactionGlyphs}, when present must contain one or more 
-\ReactionGlyph elements. Similar as with \ListOfCompartmentGlyphs and 
-\ListOfSpeciesGlyphs, not all reactions of the containing SBML model 
-have to be included in the containing layout. 
+\ReactionGlyph elements. Again, not all reactions of the containing SBML 
+model have to be included in the containing layout. 
 
 
 \paragraph{The \token{listOfTextGlyphs} element}
@@ -404,16 +405,14 @@ When using a \GraphicalObject it is recommended that some form of meta
 information is provided. For additional relationships such as SBML events 
 or rules, the \GeneralGlyph can be used, see \ref{generalglyph-class}. 
 
-
 \subsection{The GraphicalObject class} 
 \label{graphicalobject-class}
 All the more specific layout elements (\CompartmentGlyph, \GeneralGlyph, 
 \SpeciesGlyph, \ReactionGlyph, \ReferenceGlyph, \TextGlyph, and 
 \SpeciesReferenceGlyph) are derived from \GraphicalObject. 
 
-Each GraphicalObject has a \BoundingBox, which specifies the position 
+Each GraphicalObject has a mandatory \BoundingBox, which specifies the position 
 and the size of the object. 
-
 
 \begin{figure}[!h]
 \includegraphics{uml/layout-graphicalobject-uml}\\
@@ -421,8 +420,11 @@ and the size of the object.
 \caption{The definitions of the \GraphicalObject class.}
 \end{figure}
 
-Programs are encouraged to use annotations to \GraphicalObject elements 
-in the \token{listOf\-Additional\-Graphical\-Objects} that describe program 
+While \GraphicalObject is the base class for most elements in the \Layout 
+package, it is \textbf{not} an abstract class. It can be instantiated when used 
+in the \token{listOf\-Additional\-Graphical\-Objects} to describe additional 
+elements and relationships. Since it only describes a \BoundingBox, programs 
+are encouraged to add \Annotation objects that describe program 
 specific graphical information. 
 
 \paragraph{The \token{id} attribute}
@@ -434,7 +436,7 @@ The \GraphicalObject has a mandatory \token{id} attribute of type
 The \GraphicalObject has an optional \token{metaidRef} attribute of type 
 \primtype{IDREF} that allows the object to uniquely reference elements 
 in the \Model. Wherever possible it is preferred that the more specific 
-reference mechanisms are being used. 
+reference mechanisms are used. 
 
 
 \subsection{The CompartmentGlyph class }
@@ -460,12 +462,14 @@ compartment in the model. Since the \token{compartment} is optional, the
 user can specify compartments in the layout that are not part of the 
 model. 
 
+If the \token{compartment} attribute is used together with the \token{metaidRef} 
+they need to refer to the same object in the \Model.
+
 \paragraph{The \token{order} attribute}
 The \token{order} attribute is an optional attribute of type 
 \primtype{double}. It is there to handle the case where compartments in 
 a layout are overlapping, and tools would want to clearly disambiguate 
 which \CompartmentGlyph is on top of another one. 
-
 
 The \token{order} attribute follows the coordinate system. There 
 the \token{z} dimension is pointing into the screen, thus an element 
@@ -475,10 +479,18 @@ elements with a \textbf{higher} value.
 If not specified, the \token{order} is undefined and tools are free to 
 display the compartment glyphs in the order that best fits their needs. 
 
+Note: Usually the \token{order} attribute is only used for two dimensional
+layouts since in three dimensional layouts the \token{z} coordinate can be
+used to easily distinguish CompartmentGlyphs. However, there may be uses 
+for having the same \token{z} coordinate in three dimensional layouts, in 
+which case the \token{order} attribute will help to disambiguate the drawing
+order. 
+
 \subsection{The SpeciesGlyph class}
 \label{speciesglyph-class}
 In addition to the attributes from \GraphicalObject, the \SpeciesGlyph 
-object has an optional \token{species} attribute. For an example see \ref{example:speciesglyph}.
+object has an optional \token{species} attribute. For an example see 
+\ref{example:speciesglyph}.
 
 \begin{figure}[!h]
 \includegraphics{uml/layout-speciesglyph-uml}\\
@@ -494,7 +506,8 @@ the program to specify species representations that do not have a direct
 correspondence in the model. This might be useful if some pathway has 
 been collapsed, but is still treated by layout programs. 
 
-
+If the \token{species} attribute is used together with the \token{metaidRef} 
+they need to refer to the same object in the \Model.
 
 \subsection{The ReactionGlyph class}
 \label{reactionglyph-class}
@@ -530,6 +543,8 @@ The \token{reaction} attribute of type \primtype{SIdRef} is used to
 specify the \token{id} of the corresponding \Reaction in the model. This 
 reference is optional. 
 
+If the \token{reaction} attribute is used together with the \token{metaidRef} 
+they need to refer to the same object in the \Model.
 
 \paragraph {The \token{listOfSpeciesReferenceGlyphs} element}
 \label{listofspeciesreferenceglyphs-class}
@@ -569,16 +584,17 @@ If the \token{curve} is specified, it overrides the inherited bounding box.
 The \token{speciesGlyph} is of type \primtype{SIdRef}. It contains a 
 reference to the \token{id} of a \SpeciesGlyph object that is to be 
 connected to the \ReactionGlyph. 
- This attribute is mandatory so as to ensure unambiguity about which 
+This attribute is mandatory so as to ensure unambiguity about which 
 SpeciesGlyph has to be connected with this ReactionGlyph. 
-
-
 
 \paragraph{The \token{speciesReference} attribute}
 The \token{speciesReference} is an optional attribute of type 
 \primtype{SIdRef} that allows modelers to connect the \SpeciesReferenceGlyph with 
 a particular \SpeciesReference (or \ModifierSpeciesReference) of the 
 containing model. 
+
+If the \token{speciesReference} attribute is used together with the \token{metaidRef} 
+they need to refer to the same object in the \Model.
 
 NOTE: The \token{id} on a \SpeciesReference and 
 \ModifierSpeciesReference was only introduced in \sbmlthreecore, in 
@@ -598,10 +614,10 @@ namespace of the SBML model and can thus be used to reference a given
 species reference. For a complete example see also 
 \ref{example:speciesreferenceid}. 
 
-
 \paragraph{The \token{role} attribute}
 \label{attribute:role}
-The \token{role} attribute is of \primtype{SpeciesReferenceRole} and is 
+The \token{role} attribute is of \primtype{SpeciesReferenceRole} 
+(see \ref{speciesreferencerole-type}) and is 
 used to specify how the species reference should be displayed. Allowed 
 values are \token{substrate}, \token{product}, \token{sidesubstrate}, 
 \token{sideproduct}, \token{modifier}, \token{activator}, 
@@ -625,7 +641,9 @@ information from the model needs to be overridden.
 \end{itemize}
 
 In order to specify more specific types of interactions it is 
-recommended to use the \token{sboTerm} on the \SpeciesReference. 
+recommended to use the \token{sboTerm} on the \SpeciesReference. If both
+\token{role} and \token{sboTerm} are specified and conflicting, it is the 
+\token{role} that takes precedence. 
 
 
 \paragraph{The \token{curve} element}
@@ -663,6 +681,8 @@ The \GeneralGlyph is defined via an optional attribute \token{reference}
 as well as the elements \token{curve}, \token{listOfReference\-Glyphs} and 
 \token{listOfSubGlyphs}. 
 
+For an example that uses the \GeneralGlyph to represents a basic influence
+see \ref{example-generalglyph}.
 
 \begin{figure}[!h]
 \includegraphics[scale=0.9]{uml/layout-generalglyph-model-uml}\\
@@ -675,6 +695,8 @@ The optional \token{reference} attribute of type \primtype{SIdRef} that
 can be used to specify the \token{id} of the corresponding element in 
 the model that is represented. 
 
+If the \token{reference} attribute is used together with the \token{metaidRef} 
+they need to refer to the same object in the \Model.
 
 \paragraph {The \token{listOfSubGlyphs} element}
 \label{listofsubglyphs-class}
@@ -772,6 +794,9 @@ contains the \token{id} of any \GraphicalObject and specifies that the
 \TextGlyph should be considered to be a label to that object. This 
 allows modelers to indicate that the label is to be moved together with the 
 object. 
+
+If the \token{graphicalObject} attribute is used together with the \token{metaidRef} 
+they need to refer to the same object in the \LayoutClass.
 
 \paragraph{The \token{text} attribute}
 The optional \token{text} attribute is of type \primtype{string}. It 

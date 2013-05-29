@@ -12,8 +12,9 @@
 \newcommand{\sbmlverone}{SBML Level 3 Version 1\xspace}
 
 \newcommand{\DrawFromDistribution}{\defRef{DrawFromDistribution}{drawFromDistribution-class}}
-\newcommand{\ExplicitPDF}{\defRef{ExplicitPDF}{explicitPDF-class}}
-\newcommand{\Input}{\defRef{Input}{input-class}}
+%\newcommand{\ExplicitPDF}{\defRef{ExplicitPDF}{explicitPDF-class}}
+\newcommand{\ListOfDistribInputs}{\defRef{ListOfDistribInputs}{drawFromDistribution-class}}
+\newcommand{\DistribInput}{\defRef{DistribInput}{distribInput-class}}
 \newcommand{\DistributionOrSample}{\defRef{DistributionOrSample}{distributionOrSample-class}}
 \newcommand{\UncertML}{\defRef{UncertML}{uncertml-class}}
 \newcommand{\UncertMath}{\defRef{Math}{uncertmath-class}}
@@ -45,8 +46,8 @@
 \begin{document}
 
 \packageTitle{The Distributions Package\\for SBML Level 3}
-\packageVersion{Version 0.11 (Draft)}
-\packageVersionDate{17 May, 2013}
+\packageVersion{Version 0.12 (Draft)}
+\packageVersionDate{XX June, 2013}
 %\packageGeneralURL{http://sbml.org/Community/Wiki/SBML_Level_3_Proposals/Distributions_and_Ranges}
 %\packageThisVersionURL{}
 
@@ -107,7 +108,8 @@ suggested at combine and subsequently through list discussions.\\ \midrule
 and comments from Maciej Swat and Sarah Keating.\\ \midrule
 0.10 (Draft) & 10 Jan 2013 & Stuart Moodie & Modified based on comments
 from MS.\\ \midrule
-0.11 (Draft) & 17 May 2013 & Lucian Smith & Modified based on Stuart's proposals and PWG discussion.\\
+0.11 (Draft) & 17 May 2013 & Lucian Smith & Modified based on Stuart's proposals and PWG discussion.\\ \midrule
+0.12 (Draft) & XX June 2013 & Lucian Smith and Stuart Moodie & Modified based on HARMONY 2013 discussion.\\
 \bottomrule
 \end{edtable}
 
@@ -138,7 +140,6 @@ probability distribution. In particular the following are in scope:
 \begin{itemize}
 \item Sampling from a continuous distribution.
 \item Sampling from a discrete distribution.
-\item Sampling from user-defined probability density function.
 \item Sampling from user-defined discrete probability density function.
 \item The specification of descriptive statistics (mean, standard
   deviation, standard error, etc.).
@@ -148,6 +149,7 @@ At one point the following were considered for inclusion in this
 package but are now \textbf{out of scope}:
 
 \begin{itemize}
+\item Sampling from user-defined probability density function.
 \item Stochastic differential equations.
 \item Other functions used to characterise a probability distribution,
   such as cumulative distribution functions (CDF) or survival functions, etc.
@@ -157,7 +159,7 @@ package but are now \textbf{out of scope}:
 
 This proposal describes the consensus view of workshop participants
 and subscribers to the sbml-distrib mailing list. Although it was
-written by the listed author(s) it does not soley reflect their views nor is
+written by the listed authors it does not soley reflect their views nor is
 it their proposal. Rather, it is their understanding of the consensus
 view of what the \distrib package should do and how it should do
 it. The contributors listed have made significant contributions to the
@@ -400,6 +402,14 @@ Early 2013 saw a good amount of discussion on the \distribshort Package Working 
 \item To use UncertML to encode descriptive statistics of SBML elements such as mean, standard deviation, standard error, etc.) bringing this capability back in scope for this package.
 \end{itemize}
 
+
+\subsubsection{HARMONY 2013: Connecticut}
+
+At HARMONY at UConn in Connecticut, further discussions revealed the importance of distinguishing the ability to describe an element as a distributed variable vs. a function call within the model performing a draw from a distribution.
+
+We also decided to discard the encoding of explicit PDFs for now, as support for it is remarkably complicated, for very small gains.  If demand for it seems to increase in the future, we might be able to convince UncertML to add support for arbitrary PDFs in their own specification, or we could add it back here.
+
+
 \section{Proposed syntax and semantics}
 
 \subsection{Overview}
@@ -483,7 +493,7 @@ Every SBML Level~3 package is identified uniquely by an XML namespace URI.  For 
 \uri{http://www.sbml.org/sbml/level3/version1/distrib/version1}
 \end{center}
 
-In addition, SBML documents using a given package must indicate whether understanding the package is required for complete mathematical interpretation of a model.  This is done using the attribute \token{required} on the \token{<sbml>} element in the SBML document.  For the \distrib package, the value of this attribute must be \val{true} if there are any \DrawFromDistribution elements in the model, as these elements override the core definition of a \FunctionDefinition.  Otherwise, the value of this attribute must be \val{false}, because the other elements of the \distrib package do not change or add to the mathematical meaning of the model.
+In addition, SBML documents using a given package must indicate whether the package may be used to change the mathematical meaning of \sbmlthreecore elements.  This is done using the attribute \token{required} on the \token{<sbml>} element in the SBML document.  For the \distrib package, the value of this attribute must be \val{true}, as the \DrawFromDistribution element overrides the core definition of a \FunctionDefinition.  Note that the value of this attribute must \emph{always} be set to \val{true}, even if the particular model does not contain any \DrawFromDistribution elements.
 
 The following fragment illustrates the beginning of a typical SBML model using \sbmlthreecore and this version of the \distrib package:
 
@@ -504,7 +514,7 @@ The \distrib package uses the \val{string} primitive data type described in Sect
 \subsubsection{Type \fixttspace\primtypeNC{UncertId}}
 \label{primtype-portid}
 
-The type \primtype{UncertId} is derived from \primtype{SId} (\sbmlthreecore specification Section~3.1.7) and has identical syntax.  The \primtype{UncertId} type is used to create local IDs that can be used in the extended \FunctionDefinition objects to refer to the arguments of the function, in much the same way that the identities of the \token{bvar} elements are used in MathML \token{lambda} elements.  Each \primtype{UncertId} has a scope local to the \FunctionDefinition in which it is found.  The
+The type \primtype{UncertId} is derived from \primtype{SId} (\sbmlthreecore specification Section~3.1.7) and has identical syntax.  The \primtype{UncertId} type is used to create local IDs that can be used in the extended \FunctionDefinition objects to refer to the arguments of the function, in much the same way that the identities of the \token{bvar} elements are used in MathML \token{lambda} elements.  Each \primtype{UncertId} has a scope local to the \DrawFromDistribution in which it is found.  The
 equality of \primtype{UncertId} values is determined by an exact
 character sequence match; i.e., comparisons of these identifiers must be
 performed in a case-sensitive manner.
@@ -517,7 +527,7 @@ Type \primtype{UncertIdRef} is used for references to
 identifiers of type \primtype{UncertId}.  This type is derived from
 \primtype{UncertId}, but with the restriction that the value of an
 attribute having type \primtype{UncertIdRef} must match the value of a
-\primtype{UncertId} found in the same parent \FunctionDefinition as the
+\primtype{UncertId} found in the same parent \DrawFromDistribution as the
 \primtype{UncertIdRef}.  As with \primtype{UncertId}, the equality of
 \primtype{UncertIdRef} values is determined by exact character sequence
 match; i.e., comparisons of these identifiers must be performed in a
@@ -534,28 +544,29 @@ mechanism for sampling a random value from a probability
 distribution. This implies that it must define the probability distribution and then must sample a
 random value from that distribution.
 
-Secondly, it provides a mechanism for annotating elements with information about their uncertainty.  By far the most common use case for this will be to provide the standard deviation for a value, but may also be used to define things such as the exact distribution or the set of samples from which a value was drawn.
+Secondly, it provides a mechanism for describing elements with information about their uncertainty.  One common use case for this will be to provide the standard deviation for a value.  Another may be describing a parameter's distribution, so that a better search can be performed in a parameter scan experiment.
 
-There are two ways to define a probability distribution in
-\distribshort. The first is to use UncertML to define a distribution
-or a probability mass function (PMF).  The second way is to define
-a probability density function (PDF) using MathML.
+Both purposes are achieved by using \uncertml.  Probability density functions (PDFs) are defined in the \val{Distri\-butions} branch of \uncertml, probability mass functions (PMFs) are defined in the \val{Samples} branch, and summary statistics in the \val{Statistics} branch.
 
-Strictly speaking, all we need are the explicit PDF and PMF
-definitions. However, one advantage of using the UncertML pre-defined
+%The second way is to define
+%a probability density function (PDF) using MathML.
+
+It is technically possible to provide an explicit PDF in MathML instead of using the pre-defined PDFs from \uncertml.  However, one advantage of using the UncertML pre-defined
 distributions is that software can easily recognise the distribution
 and use an optimised built-in implementation rather than interpreting
 the distribution from the PDF definitions. For some
 applications such optimisations make important performance
 differences.  Another advantage is that some software may only support certain types of distributions, and having them predefined makes it simpler for the software to inform a user that a particular distribution is not supported.
 
-As mentioned above, the distribution must be sampled. In \distribshort
-the distributions are sampled when they are invoked. To reuse a
-sampled value the value must be assigned to a parameter first, such as through the use of an \InitialAssignment or \EventAssignment.
+It is hoped that if users find the need to define distributions not covered by UncertML, that they will either be able to encode those distributions as combinations of other predefined distributions, or that they will be able to persuade \uncertml to either add the new distribution to the list, or provide a way to encode explicit PDFs within \uncertml itself.
 
-\subsubsection{Design Overview}
+When a distribution is defined in a \FunctionDefinition, it is sampled when it is invoked. To reuse a
+sampled value, the value must be assigned to a parameter first, such as through the use of an \InitialAssignment or \EventAssignment.  When a distribution is defined elsewhere, that information may be used outside of the model, using whatever methodology is appropriate to answer the question being pursued.
 
-SBML Core is extended by extending the \FunctionDefinition class as
+
+\subsection{The extended \class{FunctionDefinition} class}
+
+To model random processes, this package extends the \FunctionDefinition class as
 can be seen in the UML representation in \fig{fig:funcdef}. The redefined \FunctionDefinition optionally
 contains a single \token{drawFromDistribution} child.
 
@@ -568,44 +579,50 @@ understand the \distribshort package.
 
 \begin{figure}[htb]
 \includegraphics[width=0.75\linewidth]{distrib-functionDefinition.pdf}
-\caption{The definition of the extended \FunctionDefinition class, plus the \DrawFromDistribution, \Input, \DistributionOrSample, and \ExplicitPDF classes.  A \DrawFromDistribution element must have exactly one \DistributionOrSample or \ExplicitPDF child.  Together, these classes provide a way to transform a \FunctionDefinition to sample from a probability density function or a probability mass function.}
+\caption{The definition of the extended \FunctionDefinition class, plus the \DrawFromDistribution, \ListOfDistribInputs, \DistribInput, and \DistributionOrSample classes.  A \DrawFromDistribution element must have exactly one \DistributionOrSample child.  Together, these classes provide a way to transform a \FunctionDefinition to sample from a probability density function or a probability mass function.}
 \label{fig:funcdef}
 \end{figure}
 
 
-\subsection{The extended \class{FunctionDefinition} class}
-
 As outlined above, the \FunctionDefinition class is extended to contain a \DrawFromDistribution child.  Because a \FunctionDefinition must have a \LambdaClass child according to \sbmlthreecore, a valid function will still have one, but the \token{drawFromDistribution} child, if present, will override any definition found there.  However, software that does not support \distribshort could potentially invoke the function found in the \LambdaClass element (see \ref{sec:fallbackfunc}).
 
-In the \Model, an extended \FunctionDefinition can have two different uses.  First, it may be used in any \mathml to perform a draw from a distribution.  This draw will be unique for every use of the \FunctionDefinition, whether or not the draw is performed at the same simulation time as a different draw (for example, if used in two different \InitialAssignment elements).
+In the \Model, an extended \FunctionDefinition may be used in any \mathml to perform a draw from a distribution.  This draw will be unique for every use of the \FunctionDefinition, whether or not the draw is performed at the same simulation time as a different draw (for example, if used in two different \InitialAssignment elements).
 
-Secondly, it may be used in an \Uncertainty element to denote that a particular element has the uncertainty defined by the extended function.  See \sec{uncertmath-class} for more details.
+%In the \Model, an extended \FunctionDefinition can have two different uses.  First, it may be used in any \mathml to perform a draw from a distribution.  This draw will be unique for every use of the \FunctionDefinition, whether or not the draw is performed at the same simulation time as a different draw (for example, if used in two different \InitialAssignment elements).
+
+%Secondly, it may be used in an \Uncertainty element to denote that a particular element has the uncertainty defined by the extended function.  See \sec{uncertmath-class} for more details.
+
 
 
 \subsection{The \class{DrawFromDistribution} class}
 \label{drawFromDistribution-class}
 
-As illustrated in \fig{fig:funcdef}, the \DrawFromDistribution class may have any number of \Input children, which act as the arguments to the function--they serve the same role as the \token{bvar} elements of the \LambdaClass child of a \FunctionDefinition.  As such, order is important:  the first \Input child represents the first argument to the function, etc.
+As illustrated in \fig{fig:funcdef}, the \DrawFromDistribution class may have a \ListOfDistribInputs child, which must in turn contain one or more \DistribInput children, which act as the arguments to the function--they serve the same role as the \token{bvar} elements of the \LambdaClass child of a \FunctionDefinition.  The order of arguments is determined by the \token{index} attribute:  the first argument (if any) must have an index of \val{0}, the second of \val{1}, etc.
 
-It must also have one other child:  a \DistributionOrSample if it is intended to represent a probability density function (PDF) or probability mass function (PMF) defined by \uncertml, or an \ExplicitPDF if it is intended to represent an explicit PDF represented in \mathml.  Each of these situations is described below.  In all cases, the IDs defined by the \Input objects are used as the variables within the distribution.
+It must also have a \DistributionOrSample child, representing a probability density function (PDF) or probability mass function (PMF) defined by \uncertml.  Within the \uncertml, the \primtype{UncertId}s defined by the \DistribInput objects are used as the variables within the distribution.
 
-\subsection{The \class{Input} class}
-\label{input-class}
 
-The \Input class mimics the \token{bvar} elements of MathML lambda functions.  It has a single text node child, which must contain a \primtype{string} (optionally surrounded by whitespace) of type \primtype{UncertId}.  These IDs represent the arguments to the function, and serve as local identifiers, referenced only by the other children of the \DrawFromDistribution class. See the examples in \ref{sec:fd-examples} for more details.
+\subsection{The \class{DistribInput} class}
+\label{distribInput-class}
 
-Because the \LambdaClass child of the \FunctionDefinition is required, it must have the same number of \token{bvar} children as the \DrawFromDistribution has \Input children.  They do not, however, have to have the same IDs:  the \token{bvar} ids are defined as being local to the \LambdaClass function in much the same way that the \Input IDs are defined as being local to the \DrawFromDistribution object.
+The \DistribInput class mimics the \token{bvar} elements of MathML lambda functions.  It must have an \token{id} attribute of type \primtype{UncertId} and an \token{index} attribute of type \primtype{non-negative integer}.  It may additionally have a \token{name} attribute of type \token{string}, which may be used in the same manner as other \token{name} attributes on \sbmlthreecore objects; please see Section~3.3.2 of the \sbmlthreecore specification for more information.
 
-The value \val{x} may not be used as an \primtype{UncertId} in an \Input element; that symbol is reserved for use by the \ExplicitPDF element (see \ref{explicitPDF-class}).
+Each \DistribInput element represents an argument to the function, and serves as a local identifier, referenced only by the \uncertml in the sibling \DistributionOrSample class. See the examples in \ref{sec:fd-examples} for more details.
+
+Because the \LambdaClass child of the \FunctionDefinition is required, it must have the same number of \token{bvar} children as the \DrawFromDistribution has \DistribInput children.  They do not, however, have to have the same IDs:  the \token{bvar} ids are defined as being local to the \LambdaClass function in much the same way that the \DistribInput IDs are defined as being local to the \DrawFromDistribution object.
+
+Each \token{index} attribute on a \DistribInput within a \ListOfDistribInputs element must have a unique value, numbered consecutively from \val{0}:  if one \DistribInput is present, its \token{index} value must be \val{0}; if there are two, they must have \token{index} values of \val{0} and \val{1}, etc.
+
+%The value \val{x} may not be used as an \primtype{UncertId} in an \DistribInput element; that symbol is reserved for use by the \ExplicitPDF element (see \ref{explicitPDF-class}).
 
 \subsection{The \class{DistributionOrSample} class}
 \label{distributionOrSample-class}
 
 The \DistributionOrSample class, like the \Math class of many \sbmlthreecore elements, is a container for UncertML XML.  It must contain one of the 28 'Distribution' elements or one of the three 'Samples' elements (RandomSample, SystematicSample, or UnknownSample) defined at \url{http://uncertml.org/dictionary}, and have the namespace \val{http://uncertml.org/3.0}.  Note that as of this writing, UncertML is only formally defined through version 2.0, making this use of version 3.0 somewhat speculative.  However, the \distribshort Package Working Group has been in communication with the developers of UncertML, and feel certain that the change needed in UncertML to accomodate its use in this package (namely, the possible substitution of IDs for numbers) will be made for UncertML 3.0.
 
-When a \DistributionOrSample is encountered, its parent \FunctionDefinition is defined as sampling from the defined distribution, and returning that sample.  It may contain any number of \token{UncertIdRef} strings, each of which must correspond to an \token{UncertId} defined in an \Input in the same function.
+When a \DistributionOrSample is encountered, its parent \FunctionDefinition is defined as sampling from the defined distribution, and returning that sample.  It may contain any number of \token{UncertIdRef} strings, each of which must correspond to an \token{UncertId} defined in a \DistribInput in the same function.
 
-The full list of the 28 distributions and how they can be used is provided in \ref{sec:uncertmlusage}.  Four of these distributions (Dirichlet, Multinomial, Multivariate Normal, and Multivariate Student T) use vectors as both input and output.  It is possible, if tedious, to provide vector input to these distributions by simply defining each element of the required vector as a numeric value or as an \primtype{UncertId}.  However, it is not possible in \sbmlthreecore to take a single vector and simultaneously assign its values to different elements, or even to use a vector within MathML.  While it would be theoretically possible to define new elements in this specification to work around this limitation, such capabilities are more obviously the domain of the Arrays package within SBML, or of SED-ML\footnote{\url{http://sed-ml.org/}} (to set a suite of element values).  Unfortunately, as of this writing, the Arrays package has not yet been finalized, and many aspects of it have not been set.  Therefore, it is left to the future finalized Arrays package to define how to utilize a \FunctionDefinition that returns a vector, and how to define a \FunctionDefinition that takes a vector as input.  It is also possible for other individuals or groups to come up with custom annotations that define how to do this, and in fact, this is encouraged for any group that requires the use of any of these four distributions for their models.  If no such definitions exist, however, any numerical results from the use of these functions remain undefined, and therefore unsimulatable.  (Such models may still be useful descriptions of certain situations, however.)  A final possibility is that SED-ML could be extended to extract the function definition, perform the sampling itself, and use the resulting vector to assign initial values to certain elements.
+The full list of the 28 distributions and how they can be used is provided in \ref{sec:uncertmlusage}.  Four of these distributions (Dirichlet, Multinomial, Multivariate Normal, and Multivariate Student T) use vectors as both input and output.  It is possible, if tedious, to provide vector input to these distributions by simply defining each element of the required vector as a numeric value or as an \primtype{UncertId}.  However, it is not possible in \sbmlthreecore to take a single vector and simultaneously assign its values to different elements, or even to use a vector within MathML.  While it would be theoretically possible to define new elements in this specification to work around this limitation, such capabilities are more obviously the domain of the Arrays package within SBML, or of SED-ML\footnote{\url{http://sed-ml.org/}} (to set a suite of element values).  Unfortunately, as of this writing, the Arrays package has not yet been finalized, and many aspects of it have not been set.  Therefore, it is left to the future finalized Arrays package to define how to utilize a \FunctionDefinition that returns a vector, and how to define a \FunctionDefinition that takes a vector as input.  It is also possible for other individuals or groups to come up with custom annotations that define how to do this, and in fact, this is encouraged for any group that requires the use of any of these four distributions for their models.  If no such definitions exist, however, any numerical results from the use of these functions remain undefined, and models using this technique are unsimulatable.  (Such models may still be useful descriptions of certain situations, however.)  A final possibility is that SED-ML could be extended to extract the function definition, perform the sampling itself, and use the resulting vector to assign initial values to certain elements.
 
 All three Sample elements in UncertML are logistically identical, and only semantically different.  The RandomSample describes a set of realizations known to come from a randomly-distributed source.  The SystematicSample describes a set of deliberately chosen realizations, such as those resulting from unscented sampling methods for Gaussian random variables.  The UnknownSample describes a set of realizations for which the source distribution is unknown.  All three describe a set of realizations, each with a weight and one or more values. The weights of all realizations in a single Sample must sum to 1.0.
 
@@ -620,12 +637,10 @@ Similarly, there is no \token{string} data type for SBML elements defined in \sb
 Note \notice that the \ExplicitPMF class in previous versions of this specification did not use \uncertml, and instead defined its own way of listing samples.  The functionality (with the addition of IDs instead of numbers in \uncertml 3.0) is identical.
 
 
-\subsection{The \class{ExplicitPDF} class}
-\label{explicitPDF-class}
+%\subsection{The \class{ExplicitPDF} class}
+%\label{explicitPDF-class}
 
-The \ExplicitPDF class is a container for MathML XML.  It must define a function, using the same MathML allowed in the rest of the SBML Document, for the value \val{x} that integrates to 1.0 over all \token{x}, and which never evaluates to a negative value for any \token{x}.  It may also use the \primtype{UncertIDRef} identifiers defined by its sibling \Input elements, and the \primtype{SId}s of any other \FunctionDefinition, but no other identifier.  For this reason, \val{x} is illegal to use as an \primtype{UncertId} in any \Input element in the model:  it is reserved for use by the \ExplicitPDF class.  As is the case in \sbmlthreecore, circular function definitions are illegal: the \primtype{SId} of a \FunctionDefinition may not be used in its own child \ExplicitPDF, nor may it use the \primtype{SId} of a \FunctionDefinition that references itself, etc.
-
-To draw a value from an explicit PDF, choose a value between 0 and 1 (non-inclusive), and integrate the function from x=-infinity until your chosen value is reached, and return the value of x at that point.  For example, if you chose the value 0.5 when integrating an explicit Gaussian function, you would return the mean of that function.
+%The \ExplicitPDF class is a container for MathML XML.  It must define a function, using the same MathML allowed in the rest of the SBML Document, for the value \val{x} that integrates to 1.0 over all \token{x}, and which never evaluates to a negative value for any \token{x}.  It may also use the \primtype{UncertIDRef} identifiers defined by its sibling \DistribInput elements, and the \primtype{SId}s of any other \FunctionDefinition, but no other identifier.  For this reason, \val{x} is illegal to use as an \primtype{UncertId} in any \DistribInput element in the model:  it is reserved for use by the \ExplicitPDF class.  As is the case in \sbmlthreecore, circular function definitions are illegal: the \primtype{SId} of a \FunctionDefinition may not be used in its own child \ExplicitPDF, nor may it use the \primtype{SId} of a \FunctionDefinition that references itself, etc.
 
 
 \subsection{Discrete vs. continuous sampling}
@@ -638,11 +653,11 @@ Any other package that defines new contexts for MathML will also either be discr
 \subsection{Truncation}
 \label{truncation}
 
-In order to perform truncation, one or both ends of the distribution are cut off, and the remaining function is re-scaled so the area under the curve is once again 1.0.  Earlier versions of this specification allowed one to specify truncation values for UncertML distributions and explicit PDFs:  upper and lower limits to the distributions, between which values must be sampled.  However, this capability is being introduced in UncertML 3.0, making truncation elements superfluous for \DistributionOrSample elements, and explicit PDFs can be constructed to be truncated through the use of the \token{piecewise} \mathml construct and a scaling factor, making truncation elements superfluous for \ExplicitPDF elements as well.  Truncation was never considered for inclusion for explicit PMF functions, as truncating a sample is as simple as not including the rejected realizations.  Therefore, since its capabilities are duplicated elsewhere, truncation-specific elements have been dropped from this version of the specification.
+In order to perform truncation, one or both ends of the distribution are cut off, and the remaining function is re-scaled so the area under the curve is once again 1.0.  Earlier versions of this specification allowed one to specify truncation values for UncertML distributions and explicit PDFs:  upper and lower limits to the distributions, between which values must be sampled.  However, this capability is being introduced in UncertML 3.0, making truncation elements superfluous for \DistributionOrSample elements.  Truncation was never considered for inclusion for explicit PMF functions, as truncating a sample is as simple as not including the rejected realizations.  Therefore, since its capabilities are duplicated elsewhere, truncation-specific elements have been dropped from this version of the specification.
 
 \emph{Note: \notice If the truncation elements were desired as a form of annotation, denoting the range between which most, if not all, of a given distribution would fall, that capability is not replicated in the other functions above, and would need to be re-added to this specification.}
 
-\emph{Note 2: \notice If UncertML 3.0 doesn't actually end up having a truncation element, we can add this back in.  Also, if people who would like to use the \ExplicitPDF element don't want to have to encode truncation in the MathML, it could be added back to there, too.}
+\emph{Note 2: \notice If UncertML 3.0 doesn't actually end up having a truncation element, we can add this back in.}
 
 
 \subsection{Examples using the extended \FunctionDefinition}
@@ -661,21 +676,23 @@ In the following example, a \FunctionDefinition is extended to define a draw fro
         <!-- Overridden MathML -->
       </math>
       <drawFromDistribution xmlns="http://www.sbml.org/sbml/level3/version1/distrib/version1">
-         <input> avg </input>
-         <input> var </input>
-         <uncertml xmlns="http://uncertml.org/3.0">
-           <NormalDistribution>
-             <mean> avg </mean>
-             <variance> var </variance>
-           </NormalDistribution>
-         </uncertml>
+        <listOfDistribInputs>
+          <distribInput id="avg" index="0"/>
+          <distribInput id="var" index="1"/>
+        </listOfDistribInputs>
+        <uncertml xmlns="http://uncertml.org/3.0">
+          <NormalDistribution>
+            <mean> avg </mean>
+            <variance> var </variance>
+          </NormalDistribution>
+        </uncertml>
       </drawFromDistribution>
     </functionDefinition>
   </listOfFunctionDefinitions>
 ...
 \end{example}
 
-Here, the \Input children of \DrawFromDistribution define the local \primtype{UncertId}s \val{avg} and \val{var}, which are then used by the \DistributionOrSample as the \token{mean} and \token{variance} of a normal distribution, as defined by UncertML.  This function could then be used anywhere the \FunctionDefinition id \val{normal} can be used, as for example in an \InitialAssignment:
+Here, the \DistribInput children of \DrawFromDistribution define the local \primtype{UncertId}s \val{avg} and \val{var}, which are then used by the \DistributionOrSample as the \token{mean} and \token{variance} of a normal distribution, as defined by UncertML.  This function could then be used anywhere the \FunctionDefinition id \val{normal} can be used, as for example in an \InitialAssignment:
 
 \begin{example}
 ...
@@ -695,84 +712,84 @@ Here, the \Input children of \DrawFromDistribution define the local \primtype{Un
 
 This use would apply a draw from a normal distribution with mean \val{z} and variance \val{10} to the SBML element \val{y}.
 
-\subsubsection{Defining a normal distribution with an explicit PDF}
-In the following example, a \FunctionDefinition is extended to define a draw from a normal distribution defined in MathML, with \val{x} as the variable to be sampled.  The normal distibution equation is described in \ref{fig:normalequation}.
+%\subsubsection{Defining a normal distribution with an explicit PDF}
+%In the following example, a \FunctionDefinition is extended to define a draw from a normal distribution defined in MathML, with \val{x} as the variable to be sampled.  The normal distibution equation is described in \ref{fig:normalequation}.
 
-\begin{figure}[htb]
-\includegraphics[width=0.2\linewidth]{gaussian_distribution_function.png}
-\caption{The equation for a normal distribution.}
-\label{fig:normalequation}
-\end{figure}
+%\begin{figure}[htb]
+%\includegraphics[width=0.2\linewidth]{gaussian_distribution_function.png}
+%\caption{The equation for a normal distribution.}
+%\label{fig:normalequation}
+%\end{figure}
 
 
-\begin{example}
-...
-  <listOfFunctionDefinitions>
-    <functionDefinition id="normal">
-      <math xmlns="http://www.w3.org/1998/Math/MathML">
-        <!-- Overridden MathML -->
-      </math>
-      <drawFromDistribution xmlns="http://www.sbml.org/sbml/level3/version1/distrib/version1">
-         <input> mu </input>
-         <input> sigma </input>
-         <math xmlns="http://www.w3.org/1998/Math/MathML">
-            <apply>
-              <times/>
-              <apply>
-                <divide/>
-                <cn> 1 </cn>
-                <apply>
-                  <times/>
-                  <ci> sigma </ci>
-                  <apply>
-                    <root/>
-                    <degree>
-                      <cn> 2 </cn>
-                    </degree>
-                    <apply>
-                      <times/>
-                      <cn> 2 </cn>
-                      <pi/>
-                    </apply>
-                  </apply>
-                </apply>
-              </apply>
-              <apply>
-                <exp/>
-                <apply>
-                  <times/>
-                  <apply>
-                    <divide/>
-                    <apply>
-                      <power/>
-                      <apply>
-                        <minus/>
-                        <apply>
-                          <minus/>
-                          <ci> x </ci>
-                          <ci> mu </ci>
-                        </apply>
-                      </apply>
-                      <cn> 2 </cn>
-                    </apply>
-                    <cn> 2 </cn>
-                  </apply>
-                  <apply>
-                    <power/>
-                    <ci> sigma </ci>
-                    <cn> 2 </cn>
-                  </apply>
-                </apply>
-              </apply>
-            </apply>
-         </math>
-      </drawFromDistribution>
-    </functionDefinition>
-  </listOfFunctionDefinitions>
-...
-\end{example}
+%\begin{example}
+%...
+%  <listOfFunctionDefinitions>
+%    <functionDefinition id="normal">
+%      <math xmlns="http://www.w3.org/1998/Math/MathML">
+%        <!-- Overridden MathML -->
+%      </math>
+%      <drawFromDistribution xmlns="http://www.sbml.org/sbml/level3/version1/distrib/version1">
+%         <input> mu </input>
+%         <input> sigma </input>
+%         <math xmlns="http://www.w3.org/1998/Math/MathML">
+%            <apply>
+%              <times/>
+%              <apply>
+%                <divide/>
+%                <cn> 1 </cn>
+%                <apply>
+%                  <times/>
+%                  <ci> sigma </ci>
+%                  <apply>
+%                    <root/>
+%                    <degree>
+%                      <cn> 2 </cn>
+%                    </degree>
+%                    <apply>
+%                      <times/>
+%                      <cn> 2 </cn>
+%                      <pi/>
+%                    </apply>
+%                  </apply>
+%                </apply>
+%              </apply>
+%              <apply>
+%                <exp/>
+%                <apply>
+%                  <times/>
+%                  <apply>
+%                    <divide/>
+%                    <apply>
+%                      <power/>
+%                      <apply>
+%                        <minus/>
+%                        <apply>
+%                          <minus/>
+%                          <ci> x </ci>
+%                          <ci> mu </ci>
+%                        </apply>
+%                      </apply>
+%                      <cn> 2 </cn>
+%                    </apply>
+%                    <cn> 2 </cn>
+%                  </apply>
+%                  <apply>
+%                    <power/>
+%                    <ci> sigma </ci>
+%                    <cn> 2 </cn>
+%                  </apply>
+%                </apply>
+%              </apply>
+%            </apply>
+%         </math>
+%      </drawFromDistribution>
+%    </functionDefinition>
+%  </listOfFunctionDefinitions>
+%...
+%\end{example}
 
-Again, the \Input children of \DrawFromDistribution define the local \primtype{UncertId}'s \val{mu} and \val{sigma}.  Here, they are used by the \ExplicitPDF as the \token{mean} and \token{variance} of a normal distribution of \val{x}.  This function could then be used anywhere the \FunctionDefinition id \val{normal} can be used, exactly as above.
+%Again, the \DistribInput children of \DrawFromDistribution define the local \primtype{UncertId}'s \val{mu} and \val{sigma}.  Here, they are used by the \ExplicitPDF as the \token{mean} and \token{variance} of a normal distribution of \val{x}.  This function could then be used anywhere the \FunctionDefinition id \val{normal} can be used, exactly as above.
 
 
 \subsubsection{Defining a 'die roll' PMF with UncertML}
@@ -826,10 +843,12 @@ In the following example, a \FunctionDefinition is extended to define a draw fro
         <!-- Overridden MathML -->
       </math>
       <drawFromDistribution xmlns="http://www.sbml.org/sbml/level3/version1/distrib/version1">
-         <input> A </input>
-         <input> B </input>
-         <input> C </input>
-         <input> D </input>
+        <listOfDistribInputs>
+          <distribInput id="A" index="0"/>
+          <distribInput id="B" index="1"/>
+          <distribInput id="C" index="2"/>
+          <distribInput id="D" index="3"/>
+        </listOfDistribInputs>
          <uncertml xmlns="http://uncertml.org/3.0">
            <RandomSample>
              <Realisation>
@@ -898,14 +917,16 @@ In the following example, the fallback function is coded to simply return \val{m
         </lambda>
       </math>
       <drawFromDistribution xmlns="http://www.sbml.org/sbml/level3/version1/distrib/version1">
-         <input> avg </input>
-         <input> var </input>
-         <uncertml xmlns="http://uncertml.org/3.0">
-           <NormalDistribution>
-             <mean> avg </mean>
-             <variance> var </variance>
-           </NormalDistribution>
-         </uncertml>
+        <listOfDistribInputs>
+          <distribInput id="avg" index="0"/>
+          <distribInput id="var" index="1"/>
+        </listOfDistribInputs>
+        <uncertml xmlns="http://uncertml.org/3.0">
+          <NormalDistribution>
+            <mean> avg </mean>
+            <variance> var </variance>
+          </NormalDistribution>
+        </uncertml>
       </drawFromDistribution>
     </functionDefinition>
   </listOfFunctionDefinitions>
@@ -954,7 +975,7 @@ The \UncertMath class child of \Uncertainty, like the \UncertML class, describes
 
 The namespace for IDs used in the \mathml is the SId namespace of elements with mathematical meaning in the model, including from other packages.  If that other package is not understood by an interpreter, the \UncertMath element may be ignored.  If an interpreter does not understand an ID and cannot tell whether that ID came from a not-understood package, it may issue a warning.
 
-It should be emphasized that this \UncertMath class is \emph{not} intended to be used like the \ExplicitPDF class, i.e. as a way to explicitly define a probability density function.  Instead, it is a way to provide a \emph{reference} to a probablity density function or probability mass function, as defined within an extended \FunctionDefinition.
+It should be emphasized that this \UncertMath class is \emph{not} intended to be used as a way to explicitly define a probability density function.  Instead, it is a way to provide a \emph{reference} to a PDF or PMF, as defined within an extended \FunctionDefinition.
 
 
 \subsection{Examples using extended \SBase}
@@ -1011,8 +1032,10 @@ This example is the same as the previous one, but uses \UncertMath to reference 
       </lambda>
     </math>
     <drawFromDistribution xmlns="http://www.sbml.org/sbml/level3/version1/distrib/version1">
-       <input> avg </input>
-       <input> var </input>
+        <listOfDistribInputs>
+          <distribInput id="avg" index="0"/>
+          <distribInput id="var" index="1"/>
+        </listOfDistribInputs>
        <uncertml xmlns="http://uncertml.org/3.0">
          <NormalDistribution>
            <mean> avg </mean>
@@ -1038,7 +1061,7 @@ This example is the same as the previous one, but uses \UncertMath to reference 
           <cn> 0.09 </cn>
         </apply>
       </math>
-    <uncertainty>
+    <distrib:uncertainty>
   </species>
 </listOfSpecies>
 ...
@@ -1046,100 +1069,106 @@ This example is the same as the previous one, but uses \UncertMath to reference 
 
 Again, the \UncertML notes that the standard deviation is 0.3, and the \UncertMath notes that the mean is 3.2 and the variance is 0.09.
 
-\subsubsection{Basic \UncertMath example}
+%\subsubsection{Basic \UncertMath example}
 
-In the following example, a function definition is created with an \ExplicitPDF child, then used to annotate two parameters.
+%In the following example, a function definition is created with an \ExplicitPDF child, then used to annotate two parameters.
 
-\begin{example}
-...
-  <listOfFunctionDefinitions>
-    <functionDefinition id="dist1">
-      <math xmlns="http://www.w3.org/1998/Math/MathML">
-        <lambda>
-          <bvar>
-            <ci> mean </ci>
-          </bvar>
-          <ci> mean </ci>
-        </lambda>
-      </math>
-      <drawFromDistribution xmlns="http://www.sbml.org/sbml/level3/version1/distrib/version1">
-         <input> mean </input>
-         <math xmlns="http://www.w3.org/1998/Math/MathML">
-            <apply>
-              <times/>
-              <apply>
-                <divide/>
-                <cn> 1 </cn>
-                <apply>
-                  <times/>
-                  <cn> 0.011 </cn>
-                  <apply>
-                    <root/>
-                    <degree>
-                      <cn> 2 </cn>
-                    </degree>
-                    <apply>
-                      <times/>
-                      <cn> 2 </cn>
-                      <pi/>
-                    </apply>
-                  </apply>
-                </apply>
-              </apply>
-              <apply>
-                <exp/>
-                <apply>
-                  <times/>
-                  <apply>
-                    <divide/>
-                    <apply>
-                      <power/>
-                      <apply>
-                        <minus/>
-                        <apply>
-                          <minus/>
-                          <ci> x </ci>
-                          <ci> mean </ci>
-                        </apply>
-                      </apply>
-                      <cn> 2 </cn>
-                    </apply>
-                    <cn> 2 </cn>
-                  </apply>
-                  <apply>
-                    <power/>
-                    <cn> 0.011 </cn>
-                    <cn> 2 </cn>
-                  </apply>
-                </apply>
-              </apply>
-            </apply>
-        </math>
-      </drawFromDistribution>
-    </functionDefinition>
-  </listOfFunctionDefinitions>
-  <listOfParameters>
-    <parameter id="y" value="1.1" constant="true"/>
-      <distrib:uncertainty>
-        <math xmlns="http://www.w3.org/1998/Math/MathML">
-          <apply>
-            <ci> dist1 </ci>
-            <cn> 1.1 </cn>
-          </apply>
-        </math>
-      <parameter id="z" value="3.2" constant="true"/>
-        <math xmlns="http://www.w3.org/1998/Math/MathML">
-          <apply>
-            <ci> dist1 </ci>
-            <cn> 3.2 </cn>
-          </apply>
-        </math>
-    </distrib:uncertainty>
-  </listOfParameters>
-...
-\end{example}
+%\begin{example}
+%...
+%  <listOfFunctionDefinitions>
+%    <functionDefinition id="dist1">
+%      <math xmlns="http://www.w3.org/1998/Math/MathML">
+%        <lambda>
+%          <bvar>
+%            <ci> mean </ci>
+%          </bvar>
+%          <ci> mean </ci>
+%        </lambda>
+%      </math>
+%      <drawFromDistribution xmlns="http://www.sbml.org/sbml/level3/version1/distrib/version1">
+%         <listOfDistribInputs>
+%           <distribInput id="mean" index="0"/>
+%         </listOfDistribInputs>
+%         <math xmlns="http://www.w3.org/1998/Math/MathML">
+%            <apply>
+%              <times/>
+%              <apply>
+%                <divide/>
+%                <cn> 1 </cn>
+%                <apply>
+%                  <times/>
+%                  <cn> 0.011 </cn>
+%                  <apply>
+%                    <root/>
+%                    <degree>
+%                      <cn> 2 </cn>
+%                    </degree>
+%                    <apply>
+%                      <times/>
+%                      <cn> 2 </cn>
+%                      <pi/>
+%                    </apply>
+%                  </apply>
+%                </apply>
+%              </apply>
+%              <apply>
+%                <exp/>
+%                <apply>
+%                  <times/>
+%                  <apply>
+%                    <divide/>
+%                    <apply>
+%                      <power/>
+%                      <apply>
+%                        <minus/>
+%                        <apply>
+%                          <minus/>
+%                          <ci> x </ci>
+%                          <ci> mean </ci>
+%                        </apply>
+%                      </apply>
+%                      <cn> 2 </cn>
+%                    </apply>
+%                    <cn> 2 </cn>
+%                  </apply>
+%                  <apply>
+%                    <power/>
+%                    <cn> 0.011 </cn>
+%                    <cn> 2 </cn>
+%                  </apply>
+%                </apply>
+%              </apply>
+%            </apply>
+%        </math>
+%      </drawFromDistribution>
+%    </functionDefinition>
+%  </listOfFunctionDefinitions>
+%  <listOfParameters>
+%    <parameter id="y" value="1.1" constant="true">
+%      <distrib:uncertainty>
+%        <math xmlns="http://www.w3.org/1998/Math/MathML">
+%          <apply>
+%            <ci> dist1 </ci>
+%            <cn> 1.1 </cn>
+%          </apply>
+%        </math>
+%      </distrib:uncertainty>
+%    </parameter>
+%    <parameter id="z" value="3.2" constant="true">
+%      <distrib:uncertainty>
+%        <math xmlns="http://www.w3.org/1998/Math/MathML">
+%          <apply>
+%            <ci> dist1 </ci>
+%            <cn> 3.2 </cn>
+%          </apply>
+%        </math>
+%      </distrib:uncertainty>
+%    </parameter>
+%  </listOfParameters>
+%...
+%\end{example}
 
-In the above example, a function definition is provided with an \ExplicitPDF that defines a distribution with a mean of \val{mean} and a variance of \val{0.011}.  The parameters \val{y} and \val{z} are each annotated with an \UncertMath child that calls that function, the first with the argument \val{1.1} (its value), and the second with the argument \val{3.2} (its value).  The effect of adding the \Uncertainty children, then, is to denote that both values come from a gaussian distribution with a mean of the parameter value, and a variance of \token{0.011}.  Note that this use of the \distribshort package does not use \uncertml at all.
+%In the above example, a function definition is provided with an \ExplicitPDF that defines a distribution with a mean of \val{mean} and a variance of \val{0.011}.  The parameters \val{y} and \val{z} are each annotated with an \UncertMath child that calls that function, the first with the argument \val{1.1} (its value), and the second with the argument \val{3.2} (its value).  The effect of adding the \Uncertainty children, then, is to denote that both values come from a gaussian distribution with a mean of the parameter value, and a variance of \token{0.011}.  Note that this use of the \distribshort package does not use \uncertml at all.
 
 
 \subsubsection{An \UncertMath example using indices}
@@ -1256,7 +1285,7 @@ values, and assigned to the variable \val{correlated\_params}.  This vector is t
 
 \subsection{User-defined continuous distribution }
 
-In this example, an \ExplicitPDF is constructed, and used in three places:  to denote the uncertainty in the parameter \val{V}, the uncertainty in the initial assignment to \val{V}, and to construct the initial assignment itself.  Note that strictly speaking, since \val{V} is constant, one could assume that the uncertainty in the parameter itself was identical to the uncertainty in its initial assigment; both are given here by way of illustration.
+In this example, an extended function definition is constructed, and used in three places:  to denote the uncertainty in the parameter \val{V}, the uncertainty in the initial assignment to \val{V}, and to construct the initial assignment itself.  Note that strictly speaking, since \val{V} is constant, one could assume that the uncertainty in the parameter itself was identical to the uncertainty in its initial assigment; both are given here by way of illustration.
 
 \exampleFile{examples/user-defined.xml}
 
@@ -1276,11 +1305,12 @@ None as yet.
 \label{sec:unresolved}
 
 \begin{enumerate}
-\item Should the \ExplicitPDF class have a truncation
+\item Should the ExplicitPDF class have a truncation
   attribute? This would allow one to define a truncated distribution
   without defining the truncated PDF in the \mathml definition. Is
   this desirable or not?
   \emph{Lucian:  I think not.  Since explicit PDFs can already be truncated through the use of the 'piecewise' function, let's see how this works out for people first before putting in new functionality that has to be implemented explicitly.  (On the other hand, it may turn out that if people have to implement it for UncertML, they may not mind implementing it for explicit PDFs either.  In that case if it was much easier to implement truncated explicit PDFs as models, it might be worth adding in some constructs.  Either way, I vote for waiting for implementations to clear things up here.)}
+  \emph{Lucian: Follow-up:  Explicit PDFs have been removed entirely!}
 
 \item Currently the proposal provides an appendix that clarifies the
   parameters that should be specified for each \uncertml distribution and their

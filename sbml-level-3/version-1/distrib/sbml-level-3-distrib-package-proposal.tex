@@ -17,7 +17,7 @@
 \newcommand{\DistribInput}{\defRef{DistribInput}{distribInput-class}}
 \newcommand{\DistributionOrSample}{\defRef{DistributionOrSample}{distributionOrSample-class}}
 \newcommand{\UncertML}{\defRef{UncertML}{uncertml-class}}
-\newcommand{\UncertMath}{\defRef{Math}{uncertmath-class}}
+%\newcommand{\UncertMath}{\defRef{Math}{uncertmath-class}}
 \newcommand{\Uncertainty}{\defRef{Uncertainty}{uncertainty-class}}
 
 \newcommand{\ExplicitPMF}{\textbf{\class{ExplicitPMF}}\xspace}
@@ -28,16 +28,12 @@
 \newcommand{\Math}{\textbf{\class{Math}}\xspace}
 
 \newcommand{\arraysshort}{arrays\xspace}
-\newcommand{\arrays}{Arrays and Sets\xspace}
+\newcommand{\arrays}{Arrays\xspace}
 \newcommand{\distribshort}{\emph{distrib}\xspace}
 \newcommand{\distrib}{Distributions\xspace}
 \newcommand{\mathml}{MathML\xspace}
-\newcommand{\mlambda}{\class{Lambda}\xspace}
-\newcommand{\mmath}{\class{Math}\xspace}
-\newcommand{\numl}{NuML\xspace}
 \newcommand{\req}{Required Elements\xspace}
 \newcommand{\uncertml}{UncertML\xspace}
-\newcommand{\unidistrib}{\abstractclass{IUncertainty}\xspace}
 
 \reversemarginpar  % Want "\watchout" to be put on the left, not the right.
 \newcommand{\watchout}{\marginpar{\hspace*{34pt}\raisebox{-0.5ex}{\Large\ding{43}}}}
@@ -694,6 +690,8 @@ In the following example, a \FunctionDefinition is extended to define a draw fro
 
 Here, the \DistribInput children of \DrawFromDistribution define the local \primtype{UncertId}s \val{avg} and \val{var}, which are then used by the \DistributionOrSample as the \token{mean} and \token{variance} of a normal distribution, as defined by UncertML.  This function could then be used anywhere the \FunctionDefinition id \val{normal} can be used, as for example in an \InitialAssignment:
 
+\clearpage
+
 \begin{example}
 ...
   <listOfInitialAssignments>
@@ -835,6 +833,8 @@ No inputs are provided.  The four \token{Realisation} children of \token{RandomS
 \subsubsection{Defining a 'pick one' sample with UncertML}
 In the following example, a \FunctionDefinition is extended to define a draw from an UncertML-defined set of samples:
 
+\clearpage
+
 \begin{example}
 ...
   <listOfFunctionDefinitions>
@@ -902,6 +902,8 @@ Clearly, these rules can only be enforced by a \distribshort-aware validator.
 
 In the following example, the fallback function is coded to simply return \val{mean}, the first argument of the function.  Note that the arguments have been given different local IDs (\val{mean} and \val{v} instead of \val{avg} and \val{var}); their equivalence is based on order, not string matching.
 
+\clearpage
+
 \begin{example}
   <listOfFunctionDefinitions>
     <functionDefinition id="normal">
@@ -935,27 +937,30 @@ In the following example, the fallback function is coded to simply return \val{m
 \subsection{The extended \SBase class}
 \label{sec:extended-sbase-class}
 
-As can be seen in \fig{extended-sbase-uml}, the SBML base class \SBase is extended to include an optional \Uncertainty child, which may contain an \UncertML child and/or a \UncertMath child, each containing what is essentially annotation about the uncertainty of its parent element.  In \sbmlthreecore, one should only extend those \SBase elements with mathematical meaning (so, \Compartment, \Parameter, \Reaction, \Species, and \SpeciesReference), or those \SBase elements with \Math children (so, \Constraint, \Delay, \EventAssignment, \FunctionDefinition, \InitialAssignment, \KineticLaw,\Priority, \Rule, and \Trigger).  This is added here to \SBase instead of to each of these the various SBML elements so that other packages inherit the ability to extend their own elements in the same fashion:   the \FluxBound class from the Flux Balance Constraints package has mathematical meaning, for example, and can be given information about the distribution or set of samples from which it was drawn.  Similarly, the \FunctionTerm class from the Qualitative Models package has a \Math child, which could be similarly extended.
+As can be seen in \fig{extended-sbase-uml}, the SBML base class \SBase is extended to include an optional \Uncertainty child, which must contain an \UncertML child containing what information about the uncertainty of its parent element.  In \sbmlthreecore, one should only extend those \SBase elements with mathematical meaning (so, \Compartment, \Parameter, \Reaction, \Species, and \SpeciesReference), or those \SBase elements with \Math children (so, \Constraint, \Delay, \EventAssignment, \FunctionDefinition, \InitialAssignment, \KineticLaw,\Priority, \Rule, and \Trigger).  This is added here to \SBase instead of to each of these the various SBML elements so that other packages inherit the ability to extend their own elements in the same fashion:   the \FluxBound class from the Flux Balance Constraints package has mathematical meaning, for example, and can be given information about the distribution or set of samples from which it was drawn.  Similarly, the \FunctionTerm class from the Qualitative Models package has a \Math child, which could be similarly extended.
+
+\begin{figure}[bh]
+  \includegraphics{extended-sbase}
+  \caption{The definition of the extended \SBase class to include a new optional \Uncertainty child, which in turn has an \UncertML child in the \uncertml namespace.  Intended for use with any element with mathematical meaning, or with a \Math child.}
+  \label{extended-sbase-uml}
+\end{figure}
 
 A few SBML elements can interact in interesting ways that can confuse the semantics here.  A \Reaction element and its \KineticLaw child, for example, both reference the exact same mathematics, and should therefore have the same \Uncertainty.  Similarly, if an \InitialAssignment assigns to a constant element (\Parameter, \Species, etc.), the uncertainty for both should be the same, or only one should be provided.
 
 Other elements not listed above should probably not be given an \Uncertainty child, as it would normally not make sense to talk about the uncertainty of something that doesn't have a corresponding mathematical meaning.  However, because packages or annotations can theoretically give new meaning (including mathematical meaning) to elements that previously did not have them, this is not a requirement.
 
-\begin{figure}[bh]
-  \includegraphics{extended-sbase}
-  \caption{The definition of the extended \SBase class to include a new optional \Uncertainty child, which in turn has optional \UncertML and \UncertMath children.  Intended for use with any element with mathematical meaning, or with a \Math child.}
-  \label{extended-sbase-uml}
-\end{figure}
-
 
 \subsection{The \class{Uncertainty} class}
 \label{uncertainty-class}
 
-The \Uncertainty class is a container for \UncertML and/or \UncertMath that collectively descibes the uncertainty in the parent element's mathematical meaning.
+The \Uncertainty class is a container for \UncertML that descibes the uncertainty in the parent element's mathematical meaning.
 
-It also contains an optional \token{index} attribute:  this is to assist with function definitions that return a vector, and indicate the position in the vector that corresponds to the parent element's value.  For example, a \FunctionDefinition might define an explicit PMF where each realization contains three values, one for each of three different parameters in the model (see example \sec{uncertmath-index-example}).  Each of the three parameters could be given an \Uncertainty child containg \UncertMath referencing that \FunctionDefinition, each with the index of the vector corresponding to its value.  Note that the index is zero-indexed:  the first position in the vector will have an \token{index} of \val{0}, the second of \val{1}, etc.
+The optional \token{id} attribute on the \Uncertainty object class serves to provide a way to identify the uncertainty.  The attribute takes a value of type \primtype{SId}.  Note that the identifier of a the uncertainty carries no mathematical interpretation and cannot be used in mathematical formulas in a model.  \Uncertainty also has an optional \token{name} attribute, of type \primtype{string}.  The \token{name} attribute may be used in the same manner as other \token{name} attributes on \sbmlthreecore objects; please see Section~3.3.2 of the \sbmlthreecore specification for more information.
 
-With the release of the Arrays package, presumably the need for this attribute will go away, but it seems a simple enough addition in the absence of that package, and would provide a tangible benefit to many.  Even after the release of the Arrays package, some software might not support arrays, but will still want to annotate this information:  this attribute will allow them to do so.  See \sec{extended-sbase-examples} for examples of how this might work.
+
+%It also contains an optional \token{index} attribute:  this is to assist with function definitions that return a vector, and indicate the position in the vector that corresponds to the parent element's value.  For example, a \FunctionDefinition might define an explicit PMF where each realization contains three values, one for each of three different parameters in the model (see example \sec{uncertmath-index-example}).  Each of the three parameters could be given an \Uncertainty child containg \UncertMath referencing that \FunctionDefinition, each with the index of the vector corresponding to its value.  Note that the index is zero-indexed:  the first position in the vector will have an \token{index} of \val{0}, the second of \val{1}, etc.
+%
+%With the release of the Arrays package, presumably the need for this attribute will go away, but it seems a simple enough addition in the absence of that package, and would provide a tangible benefit to many.  Even after the release of the Arrays package, some software might not support arrays, but will still want to annotate this information:  this attribute will allow them to do so.  See \sec{extended-sbase-examples} for examples of how this might work.
 
 
 \subsection{The \class{UncertML} class}
@@ -968,20 +973,20 @@ For convenience, \uncertml provides a \token{StatisticsCollection}, which may be
 The namespace for IDs used in the \uncertml is the SId namespace of elements with mathematical meaning in the model, including from other packages.  If that other package is not understood by an interpreter, the \UncertML element may be ignored.  If an interpreter does not understand an ID and cannot tell whether that ID came from a not-understood package, it may issue a warning.
 
 
-\subsection{The \class{Math} class}
-\label{uncertmath-class}
+%\subsection{The \class{Math} class}
+%\label{uncertmath-class}
 
-The \UncertMath class child of \Uncertainty, like the \UncertML class, describes the uncertainty in its parent element's mathematics.  It is provided as a way to reference distributions defined in function definitions elsewhere in the model which have been extended by \distribshort.  The most straightforward way to use the \UncertMath class is to simply include a single call to a \FunctionDefinition.  Other uses, such as adding a constant to a function definition (\val{myfunc(3.1) + 2}) are also possible, but discouraged.
+%The \UncertMath class child of \Uncertainty, like the \UncertML class, describes the uncertainty in its parent element's mathematics.  It is provided as a way to reference distributions defined in function definitions elsewhere in the model which have been extended by \distribshort.  The most straightforward way to use the \UncertMath class is to simply include a single call to a \FunctionDefinition.  Other uses, such as adding a constant to a function definition (\val{myfunc(3.1) + 2}) are also possible, but discouraged.
 
-The namespace for IDs used in the \mathml is the SId namespace of elements with mathematical meaning in the model, including from other packages.  If that other package is not understood by an interpreter, the \UncertMath element may be ignored.  If an interpreter does not understand an ID and cannot tell whether that ID came from a not-understood package, it may issue a warning.
+%The namespace for IDs used in the \mathml is the SId namespace of elements with mathematical meaning in the model, including from other packages.  If that other package is not understood by an interpreter, the \UncertMath element may be ignored.  If an interpreter does not understand an ID and cannot tell whether that ID came from a not-understood package, it may issue a warning.
 
-It should be emphasized that this \UncertMath class is \emph{not} intended to be used as a way to explicitly define a probability density function.  Instead, it is a way to provide a \emph{reference} to a PDF or PMF, as defined within an extended \FunctionDefinition.
+%It should be emphasized that this \UncertMath class is \emph{not} intended to be used as a way to explicitly define a probability density function.  Instead, it is a way to provide a \emph{reference} to a PDF or PMF, as defined within an extended \FunctionDefinition.
 
 
 \subsection{Examples using extended \SBase}
 \label{extended-sbase-examples}
 
-Several examples are given to illustrate the use of the \UncertML and \UncertMath classes, both individually and in tandem:
+Several examples are given to illustrate the use of the \Uncertainty class:
 
 
 \subsubsection{Basic \UncertML example}
@@ -1012,62 +1017,62 @@ In the above example, a species whose initial concentration is 3.22 is noted as 
 Note also that 3.22 (the \token{initialConcentration}) is different from 3.2 (the \token{mean}):  evidently, this model was constructed as a realization of the underlying uncertainty, instead of trying to capture the single most likely model of the underlying process.
 
 
-\subsubsection{Combining \UncertML and \UncertMath}
+%\subsubsection{Combining \UncertML and \UncertMath}
 
-This example is the same as the previous one, but uses \UncertMath to reference a \FunctionDefinition defined as a normal distribution, and \UncertML to note the standard deviation:
+%This example is the same as the previous one, but uses \UncertMath to reference a \FunctionDefinition defined as a normal distribution, and \UncertML to note the standard deviation:
 
-\begin{example}
-...
-<listOfFunctionDefinitions>
-  <functionDefinition id="normal">
-    <math xmlns="http://www.w3.org/1998/Math/MathML">
-      <lambda>
-        <bvar>
-          <ci> mean </ci>
-        </bvar>
-        <bvar>
-          <ci> variance </ci>
-        </bvar>
-        <ci> mean </ci>
-      </lambda>
-    </math>
-    <drawFromDistribution xmlns="http://www.sbml.org/sbml/level3/version1/distrib/version1">
-        <listOfDistribInputs>
-          <distribInput id="avg" index="0"/>
-          <distribInput id="var" index="1"/>
-        </listOfDistribInputs>
-       <uncertml xmlns="http://uncertml.org/3.0">
-         <NormalDistribution>
-           <mean> avg </mean>
-           <variance> var </variance>
-         </NormalDistribution>
-       </uncertml>
-    </drawFromDistribution>
-  </functionDefinition>
-</listOfFunctionDefinitions>
-<listOfSpecies>
-  <species id="x" compartment="C" boundaryCondition="false" initialConcentration="3.22"
-           hasOnlySubstanceUnits="false" constant="false">
-    <distrib:uncertainty>
-      <uncertml xmlns="http://uncertml.org/3.0">
-        <StandardDeviation>
-          <values> 0.3 </values>
-        </StandardDeviation>
-      </uncertml>
-      <math xmlns="http://www.w3.org/1998/Math/MathML">
-        <apply>
-          <ci> normal </ci>
-          <cn> 3.2 </cn>
-          <cn> 0.09 </cn>
-        </apply>
-      </math>
-    <distrib:uncertainty>
-  </species>
-</listOfSpecies>
-...
-\end{example}
+%\begin{example}
+%...
+%<listOfFunctionDefinitions>
+%  <functionDefinition id="normal">
+%    <math xmlns="http://www.w3.org/1998/Math/MathML">
+%      <lambda>
+%        <bvar>
+%          <ci> mean </ci>
+%        </bvar>
+%        <bvar>
+%          <ci> variance </ci>
+%        </bvar>
+%        <ci> mean </ci>
+%      </lambda>
+%    </math>
+%    <drawFromDistribution xmlns="http://www.sbml.org/sbml/level3/version1/distrib/version1">
+%        <listOfDistribInputs>
+%          <distribInput id="avg" index="0"/>
+%          <distribInput id="var" index="1"/>
+%        </listOfDistribInputs>
+%       <uncertml xmlns="http://uncertml.org/3.0">
+%         <NormalDistribution>
+%           <mean> avg </mean>
+%           <variance> var </variance>
+%         </NormalDistribution>
+%       </uncertml>
+%    </drawFromDistribution>
+%  </functionDefinition>
+%</listOfFunctionDefinitions>
+%<listOfSpecies>
+%  <species id="x" compartment="C" boundaryCondition="false" initialConcentration="3.22"
+%           hasOnlySubstanceUnits="false" constant="false">
+%    <distrib:uncertainty>
+%      <uncertml xmlns="http://uncertml.org/3.0">
+%        <StandardDeviation>
+%          <values> 0.3 </values>
+%        </StandardDeviation>
+%      </uncertml>
+%      <math xmlns="http://www.w3.org/1998/Math/MathML">
+%        <apply>
+%          <ci> normal </ci>
+%          <cn> 3.2 </cn>
+%          <cn> 0.09 </cn>
+%        </apply>
+%      </math>
+%    <distrib:uncertainty>
+%  </species>
+%</listOfSpecies>
+%...
+%\end{example}
 
-Again, the \UncertML notes that the standard deviation is 0.3, and the \UncertMath notes that the mean is 3.2 and the variance is 0.09.
+%Again, the \UncertML notes that the standard deviation is 0.3, and the \UncertMath notes that the mean is 3.2 and the variance is 0.09.
 
 %\subsubsection{Basic \UncertMath example}
 
@@ -1171,76 +1176,85 @@ Again, the \UncertML notes that the standard deviation is 0.3, and the \UncertMa
 %In the above example, a function definition is provided with an \ExplicitPDF that defines a distribution with a mean of \val{mean} and a variance of \val{0.011}.  The parameters \val{y} and \val{z} are each annotated with an \UncertMath child that calls that function, the first with the argument \val{1.1} (its value), and the second with the argument \val{3.2} (its value).  The effect of adding the \Uncertainty children, then, is to denote that both values come from a gaussian distribution with a mean of the parameter value, and a variance of \token{0.011}.  Note that this use of the \distribshort package does not use \uncertml at all.
 
 
-\subsubsection{An \UncertMath example using indices}
+\subsubsection{An \UncertML example with a PMF}
 \label{uncertmath-index-example}
 
-In the following example, a function definition is created with a \DistributionOrSample child that returns a vector, which is used to annotate two parameters and a species.
+In the following example, a species and two parameters are all given \UncertML children indicating that they were sampled from a PMF.  Because all three have the same \token{Realisation} IDs, the assumption can be made that the three values are correlated, and are drawn from \val{patient1}, \val{patient2}, or \val{patient3}.
 
 \begin{example}
 ...
-  <listOfFunctionDefinitions>
-    <functionDefinition id="samples">
-      <math xmlns="http://www.w3.org/1998/Math/MathML">
-        <lambda>
-          <cn> 0.0 </cn>
-        </lambda>
-      </math>
-      <drawFromDistribution xmlns="http://www.sbml.org/sbml/level3/version1/distrib/version1">
+  <listOfSpecies>
+    <species id="S1" compartment="C" boundaryCondition="false" initialConcentration="2.24"
+             hasOnlySubstanceUnits="false" constant="false">
+      <distrib:uncertainty>
          <uncertml xmlns="http://uncertml.org/3.0">
            <UnknownSample>
              <Realisation id="patient1">
                <weight> 0.5 </weight>
-               <values> 1.01 42.3 0.004 </values>
+               <values> 1.01 </values>
              </Realisation>
              <Realisation id="patient2">
                <weight> 0.25 </weight>
-               <values> 2.24 45.9 0.002</values>
+               <values> 2.24 </values>
              </Realisation>
              <Realisation id="patient3">
                <weight> 0.25 </weight>
-               <values> 1.72 50.0 0.0033 </values>
+               <values> 1.72 </values>
              </Realisation>
            </UnknownSample>
          </uncertml>
-      </drawFromDistribution>
-    </functionDefinition>
-  </listOfFunctionDefinitions>
-  <listOfSpecies>
-    <species id="S1" compartment="C" boundaryCondition="false" initialConcentration="2.24"
-             hasOnlySubstanceUnits="false" constant="false">
-      <distrib:uncertainty index="0">
-        <math xmlns="http://www.w3.org/1998/Math/MathML">
-          <apply>
-            <ci> samples </ci>
-          </apply>
-        </math>
       </distrib:uncertainty>
     </species>
   </listOfSpecies>
   <listOfParameters>
     <parameter id="y" constant="true" value="45.9">
-      <distrib:uncertainty index="1">
-        <math xmlns="http://www.w3.org/1998/Math/MathML">
-          <apply>
-            <ci> samples </ci>
-          </apply>
-        </math>
+      <distrib:uncertainty>
+         <uncertml xmlns="http://uncertml.org/3.0">
+           <UnknownSample>
+             <Realisation id="patient1">
+               <weight> 0.5 </weight>
+               <values> 42.3 </values>
+             </Realisation>
+             <Realisation id="patient2">
+               <weight> 0.25 </weight>
+               <values> 45.9 </values>
+             </Realisation>
+             <Realisation id="patient3">
+               <weight> 0.25 </weight>
+               <values> 50.0 </values>
+             </Realisation>
+           </UnknownSample>
+         </uncertml>
       </distrib:uncertainty>
     </parameter>
     <parameter id="z" constant="true" value="0.002">
-      <distrib:uncertainty index="2">
-        <math xmlns="http://www.w3.org/1998/Math/MathML">
-          <apply>
-            <ci> samples </ci>
-          </apply>
-        </math>
+      <distrib:uncertainty>
+         <uncertml xmlns="http://uncertml.org/3.0">
+           <UnknownSample>
+             <Realisation id="patient1">
+               <weight> 0.5 </weight>
+               <values> 0.004 </values>
+             </Realisation>
+             <Realisation id="patient2">
+               <weight> 0.25 </weight>
+               <values> 0.002 </values>
+             </Realisation>
+             <Realisation id="patient3">
+               <weight> 0.25 </weight>
+               <values> 0.0033 </values>
+             </Realisation>
+           </UnknownSample>
+         </uncertml>
       </distrib:uncertainty>
     </parameter>
   </listOfParameters>
 ...
 \end{example}
 
-In this example, the \val{samples} function is never used in any math in the model, and is instead used just for the purposes of annotation.  The three realizations it contains (patients 1-3) each have three values associated with them.  The second realization (from patient 2) has been assigned to the species \val{S1} and the parameters \val{y} and \val{z}, respectively.  Each element was then annotated with \UncertMath that it came from the \val{samples} distribution, each with an \token{index} value corresponding to its position in the \token{values} vector.
+
+In this example, the chosen value for all three elements is the Realisation from \val{patient2}, and presumably comes from the same external data source.
+
+In a version of this model that used Arrays package constructs, a single vector could be created with all three values in it, and given an \UncertML child with \token{value} elements that contained vectors instead of single values.
 
 
 \section{Interaction with other packages}
@@ -1267,12 +1281,14 @@ consistent with current SBML semantics.
 
 \exampleFile{examples/pkpd.xml}
 
+
 \subsection{Truncated distribution}
 \label{sec: truncated-eg}
 
 To encode a truncated distribution we rely on an as-of-this-writing hypothetical extention to \uncertml (the \token{lower} and \token{upper} child elements of \token{NormalDistribution}).  The final version of truncation in \uncertml may not look exactly like this example, but should follow the basics.  Note that the values for truncation are here provided as arguments to the function definition, but could instead be hard-coded.
 
 \exampleFile{examples/truncated_distn.xml}
+
 
 \subsection{Multivariate distribution}
 
@@ -1282,6 +1298,7 @@ covariance matrix and the sampled values are returned as a vector of 2
 values, and assigned to the variable \val{correlated\_params}.  This vector is then used to assign values to \val{V} and \val{C1}, thereby associating those two values with the same draw from the multivariate normal distribution.  The use of various array and matrix \mathml here is speculative:  in the absence of a finalized Arrays package, it is impossible to tell exactly what form that will take.  However, all of the functionality expressed here will need to be incorported in some form into the Arrays package, and much if not all of it may take the form illustrated here.
 
 \exampleFile{examples/mutivariate_example.xml}
+
 
 \subsection{User-defined continuous distribution }
 
@@ -1297,9 +1314,11 @@ In this example, a \DistributionOrSample is used where the weights themselves ar
 
 \exampleFile{examples/user-defined-pmf.xml}
 
+
 \section{Prototype implementations}
 
 None as yet.
+
 
 \section{Unresolved issues}
 \label{sec:unresolved}

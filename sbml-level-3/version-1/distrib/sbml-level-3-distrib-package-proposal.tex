@@ -403,8 +403,11 @@ Early 2013 saw a good amount of discussion on the \distribshort Package Working 
 
 At HARMONY at UConn in Connecticut, further discussions revealed the importance of distinguishing the ability to describe an element as a distributed variable vs. a function call within the model performing a draw from a distribution.
 
-We also decided to discard the encoding of explicit PDFs for now, as support for it is remarkably complicated, for very small gains.  If demand for it seems to increase in the future, we might be able to convince UncertML to add support for arbitrary PDFs in their own specification, or we could add it back here.
-
+We also decided to discard the encoding of explicit PDFs for now, as
+support for it is remarkably complicated, and there no demand for
+it. The current design could be extended to support this feature so if
+there is demand for it in the future support for explicit PDFs could
+be reintroduced.
 
 \section{Proposed syntax and semantics}
 
@@ -554,7 +557,7 @@ the distribution from the PDF definitions. For some
 applications such optimisations make important performance
 differences.  Another advantage is that some software may only support certain types of distributions, and having them predefined makes it simpler for the software to inform a user that a particular distribution is not supported.
 
-It is hoped that if users find the need to define distributions not covered by UncertML, that they will either be able to encode those distributions as combinations of other predefined distributions, or that they will be able to persuade \uncertml to either add the new distribution to the list, or provide a way to encode explicit PDFs within \uncertml itself.
+It is hoped that if users find the need to define distributions not covered by UncertML, that they will either be able to encode those distributions as combinations of other predefined distributions, or that they will be able to persuade \uncertml to either add the new distribution to the list.
 
 When a distribution is defined in a \FunctionDefinition, it is sampled when it is invoked. To reuse a
 sampled value, the value must be assigned to a parameter first, such as through the use of an \InitialAssignment or \EventAssignment.  When a distribution is defined elsewhere, that information may be used outside of the model, using whatever methodology is appropriate to answer the question being pursued.
@@ -819,6 +822,7 @@ In the following example, a \FunctionDefinition is extended to define a draw fro
                <weight> 0.25 </weight>
                <values> 4 </values>
              </Realisation>
+           </RandomSample>
          </uncertml>
       </drawFromDistribution>
     </functionDefinition>
@@ -876,6 +880,10 @@ In the following example, a \FunctionDefinition is extended to define a draw fro
 
 In this example, the function 'pickone' is defined, with four arguments, \val{A}, \val{B}, \val{C}, and \val{D}.  When called, each argument has an equal chance of being chosen as the return value.
 
+{\color{red} Stuart: \controversial This seems a bit idiosyncratic to me. Are you trying to get
+  round the fact that SBML doesn't support strings? If so I'd leave
+  that up to the modeller. They can map numeric values to their
+  categories.  }
 
 \subsection{Equivalence with Fallback Function}
 \label{sec:fallbackfunc}
@@ -991,7 +999,40 @@ Several examples are given to illustrate the use of the \Uncertainty class:
 
 \subsubsection{Basic \UncertML example}
 
-In this example, a species is given a \UncertML child to describe its uncertainty in two ways:
+In these examples, a parameter is given an \UncertML child to describe its uncertainty in two ways:
+
+
+{\color{red}%
+Stuart: I'd \controversial give 2 examples here. Although you could put both
+constructs together it may confuse to do so as a basic
+example. Actually looking at this example I think it would be simpler
+to only allow this type of construct for parameters. Here you are
+defining the uncertainty about the \emph{initialConcentration} of the
+species, not the species itself. For example if you
+define the uncertainty, but not the initialConcentration, what does
+the uncertainty describe in this case? If you can only describe the
+uncertainty of a parameter then this problem does away if the
+parameter is used to describe the initial concentration. For example:
+
+\begin{example}
+  <parameter id="ic" value="3.22">
+    <distrib:uncertainty>
+      <uncertml xmlns="http://uncertml.org/3.0">
+        <NormalDistribution>
+          <mean> ic </mean>
+          <variance> 0.09 </variance>
+        </NormalDistribution>
+      </uncertml>
+    <distrib:uncertainty>
+  </parameter>
+...
+  <species id="x" compartment="C" boundaryCondition="false" initialConcentration="ic"
+           hasOnlySubstanceUnits="false" constant="false"/>
+...
+\end{example}
+
+}
+
 
 \begin{example}
 ...
@@ -1175,6 +1216,59 @@ Note also that 3.22 (the \token{initialConcentration}) is different from 3.2 (th
 
 %In the above example, a function definition is provided with an \ExplicitPDF that defines a distribution with a mean of \val{mean} and a variance of \val{0.011}.  The parameters \val{y} and \val{z} are each annotated with an \UncertMath child that calls that function, the first with the argument \val{1.1} (its value), and the second with the argument \val{3.2} (its value).  The effect of adding the \Uncertainty children, then, is to denote that both values come from a gaussian distribution with a mean of the parameter value, and a variance of \token{0.011}.  Note that this use of the \distribshort package does not use \uncertml at all.
 
+\subsubsection{Defining a Random Variable}
+
+In addition to describing the uncertainty about an experimental
+observation one can also use this mechanism to describe a parameter as
+a random variable. In the example below the parameter, $Z$, is defined
+as following a normal distribution, with a given mean and variance. No
+value is given for the parameter so it is then up the modeller to
+decide how to use this random variable. For example they may choose to
+simulate the model in which case they may provide values for $mu\_Z$
+and $var\_Z$ and then sample a random value from the
+simulation. Alternatively they may choose to carry out a parameter
+estimation and use experimental observations to estimate $mu\_Z$ and
+$var\_Z$.
+
+\begin{example}
+    <listOfParameters>
+	<parameter id=”mu_Z” value=”10”/>
+	<parameter id=”var_Z value=”0.1”/>
+	<parameter id="Z">
+          <distrib:uncertainty>
+	    <Distribution  xmlns="http://www.uncertml.org/3.0">
+	      <NormalDistribution>
+	        <mean><ref id="mu_Z"/></mean>
+	        <variance><ref id=”var_Z”/></variance>
+	      </NormalDistribution>
+	    </Distribution>
+          </distrib:uncertainty>
+	</parameter>
+    </listOfParameters>   
+\end{example}
+
+{\color{red}%
+  Stuart:\controversial This example illustrates the kind of use cases
+  I was describing at HARMONY. I hope this isn't controversial, but I
+  want us to be clear that we all happy using this interpretation of
+  uncertainty too. If so then it makes sense to have an example. }
+
+{\color{red}%
+  Stuart:\controversial In writing this I just realised that you are
+  using an <uncertml xmlns="http://uncertml.org/3.0"> element to
+  define uncertml elements. I know there is a whole section devoted to
+  it, but I didn't realise the significance of it. In \uncertml there
+  isn't an element like this. In \uncertml 3.0 the plan is to provide
+  3 grouping elements for each of the subsets in \uncertml:
+  Statistics, Distributions and Samples. The idea behind this is it
+  allows an XML language that uses \uncertml to constrain its use to
+  one or more of these subsets. So for example if we only want to use
+  distributions then we only allow an \uncertml Distribution element
+  at a given point. This is shown in the example above. I haven't
+  changed any of the other examples or the class diagrams, but I think
+  they do need to be modified accordingly.
+}
+
 
 \subsubsection{An \UncertML example with a PMF}
 \label{uncertmath-index-example}
@@ -1251,8 +1345,32 @@ In the following example, a species and two parameters are all given \UncertML c
 ...
 \end{example}
 
-
 In this example, the chosen value for all three elements is the Realisation from \val{patient2}, and presumably comes from the same external data source.
+
+{\color{red} Stuart:\controversial I'm not at all sure about this. I
+  don't think that's a correct use of realisations to interpret that the same ID implies correlation. However, I have asked Dan
+  for clarification on the use of realisations so we can get the
+  definitive view on this. Aside from the above example it may be good
+  to start off with a simple example. How about this?
+
+\begin{example}
+...
+  <parameter id="gender">
+    <distrib:uncertainty>
+      <Statistic  xmlns="http://www.uncertml.org/3.0">
+        <DiscreteProbability>
+          <!-- M=0 F=1 -->
+          <categories>0 1</mean>
+          <probabilities>0.6 0.4</probabilities>
+        </DiscreteProbability>
+      </Statistic>
+    </distrib:uncertainty>
+  </parameter>
+...
+\end{example}
+
+We could be clever and add a third gender!
+}
 
 In a version of this model that used Arrays package constructs, a single vector could be created with all three values in it, and given an \UncertML child with \token{value} elements that contained vectors instead of single values.
 
@@ -1279,6 +1397,10 @@ initialAssignments element in this example. Later use of the variable
 does not result in re-sampling from the distribution. This is
 consistent with current SBML semantics.
 
+{\color{red}Stuart:\controversial I'd like to add another example here
+  that defines them model without sampling. We can have 2 versions of
+  the same model. I'll come back to it...}
+
 \exampleFile{examples/pkpd.xml}
 
 
@@ -1304,6 +1426,11 @@ values, and assigned to the variable \val{correlated\_params}.  This vector is t
 
 In this example, an extended function definition is constructed, and used in three places:  to denote the uncertainty in the parameter \val{V}, the uncertainty in the initial assignment to \val{V}, and to construct the initial assignment itself.  Note that strictly speaking, since \val{V} is constant, one could assume that the uncertainty in the parameter itself was identical to the uncertainty in its initial assigment; both are given here by way of illustration.
 
+{\color{red}Stuart:\controversial I don't understand how this is a
+  user-defined continuous distribution. It's just showing the usage of
+  a distribution. No?
+}
+
 \exampleFile{examples/user-defined.xml}
 
 
@@ -1322,6 +1449,10 @@ None as yet.
 
 \section{Unresolved issues}
 \label{sec:unresolved}
+
+
+{\color{red} Stuart:\controversial I'm happy to removed this section -
+  unless of course any new issues come up!}
 
 \begin{enumerate}
 \item Should the ExplicitPDF class have a truncation
@@ -1418,107 +1549,10 @@ Hucka for \LaTeX{} advice and the beautiful template upon which this
 document is based.
 
 \appendix
-\section{Distributions incorporated from \uncertml}
-\label{sec:uncertmlusage}
+\section{Changes anticipated in UncertML 3.0}
 
-\emph{Note: It would be nice if this table was extended to include basic definitions of the various distributions.}
-
-The distributions described by \uncertml \footnote{These
-  distributions are defined here:
-  \url{http://www.uncertml.org/distributions}} will provide the
-standard external definition of distributions used by \distrib. The
-definitions are comprehensive, but have multiple implicit definitions
-in some cases. For example the mean and variance parameters of the
-Normal distribution can be each be described as a vector of $k$
-values, where each mean, variance pair describes a different
-probability distribution. However, in \distribshort we want to define
-one probability density and so it in necessary to disambiguate
-definitions where more than one is possible.
-
-The table below describes, for each probability distribution defined in
-\uncertml: the arguments (referred to as parameters in \uncertml) it
-takes, the type of each argument and type of the result obtained when
-a random value (or values) is sampled from the distribution. The type
-can be either a scalar (in effect a double because this is the only
-scalar type supported by SBML), or an array (again of doubles), which
-can have one or more dimensions.
-
-%\begin{center}
-\begin{longtable}[c]{ l l l l }
-\toprule
-\textbf{\uncertml Name} & \multicolumn{2}{c}{\textbf{Argument}} & \textbf{Sampled Result} \\
-\cmidrule(r){2-3}
-& \textbf{Name} & \textbf{Type} & \\
-\toprule 
-\endhead
-\cmidrule(r){3-4}
-\multicolumn{4}{r}{Continued on next page...}\\
-\endfoot
-\bottomrule
-\endlastfoot
- BernouliDistribution & probability & scalar & scalar \\\midrule
-BetaDistribution & alpha & scalar & scalar \\
-                          & beta & scalar & \\\midrule
-BinomialDistribution & numberOfTrials & scalar & scalar\\
-                                 & probabilityOfSuccess & &\\\midrule
-CauchyDistribution & location & scalar & scalar \\
-                                 & scale & scalar & \\\midrule
-ChiSquaredDistribution & degreesOfFreedom & scalar & scalar \\\midrule
-DirichletDistribution & concentration & array[k], $k \ge 2$ & array[k] \\\midrule
-ExponentialDistribution & rate & scalar & scalar \\\midrule
-FDistribution & numerator & scalar & scalar \\
-                       & denominator & scalar & \\\midrule
-GammaDistribution & shape & scalar & scalar \\
-                                & scale & scalar &  \\\midrule
-GeometricDistribution & probability & scalar & scalar \\\midrule
-HypergeometricDistribution & populationSize & scalar & scalar \\
-                                             & numberOfTrials & scalar &\\
-                                             & numberOfSuccesses & scalar &\\\midrule
-InverseGammaDistribution & shape & scalar & scalar \\
-                                & scale & scalar &  \\\midrule
-LaplaceDistribution & location & scalar & scalar\\
-                                  & scale & scalar & \\\midrule
-LogNormalDistribution & logScale & scalar & scalar \\
-                                     & shape & scalar & \\\midrule
-LogisticDistribution & location & scalar & scalar \\
-                                & scale & scalar & \\\midrule
-MixtureModel & weight & ? & ? \\\midrule
-MultinomialDistribution & numberofTrials & scalar & array[k]\\
-                                       & probabiltyOfSuccess &
-                                       array[k]\\\midrule
-MultivariateNormalDistribution & mean & array[k] & array[k] \\
-                                                  & covarianceMatrix & array[k][k] & \\\midrule
-MultivariateStudentTDistribution & mean & array[k] & array[k] \\
-                                                         & covarianceMatrix & array[k][k]\\
-                                                         &
-                                                         degreesOfFreedom
-                                                         & scalar
-                                                         \\\midrule
-NegativeBinomialDistribution & numberOfFailures & scalar & scalar \\
-                                               & probability & scalar
-                                               & \\\midrule
-NormalDistribution & mean & scalar & scalar \\
-                                & variance & scalar & \\\midrule
-NormalInverseGammaDistribution & mean & scalar & scalar\\
-                                                       &
-                                                       varianceScaling
-                                                       & \\
-                                                       & shape &\\
-                                                       & scale & \\\midrule
-ParetoDistribution & scale & scalar & scalar \\
-                                & shape & scalar & \\\midrule
-PoissionDistribution & rate & scalar & scalar \\\midrule
-StudentTDistribution & location & scalar & scalar \\
-                                    & scale & scalar & \\
-                                    & degreesOfFreedom & scalar &
-                                    \\\midrule
-WeibullDistribution  & scale & scalar & scalar \\
-                                     & shape & scalar & \\\midrule
-WishartDistribution & scaleMatrix & scalar & scalar \\
-                                  & degreesOfFreedom & scalar & \\
-%\bottomrule
-\end{longtable}
-%\end{center}
+{\color{red}Stuart:\controversial Add a section here or in the main text outlining what
+  UncertML 3.0 will look like.}
 
 \bibliography{sbml-level-3-distrib-package-proposal}
 

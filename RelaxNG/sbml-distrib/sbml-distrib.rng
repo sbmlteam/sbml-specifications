@@ -8,14 +8,56 @@
    and data types.  Please see the file ../sbml.rng and the
    information written at http://sbml.org/RNG_validation
 -->
+<!-- current schema reflects Distrib Specification Version 0.12 XX June 2013 -->
 
 <grammar xmlns="http://relaxng.org/ns/structure/1.0"
   ns="http://www.sbml.org/sbml/level3/version1/distrib/version1"
   datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes">
 
-  <!-- additional types -->
+  <!-- simple types defined in distrib -->
+  <define name="UncertId.simpleType">
+    <ref name="SId.simpleType"/>
+  </define>
 
-  <define name="uncertml.datatype" combine="interleave">
+  <define name="UncertIdRef.simpleType">
+    <ref name="UncertId.simpleType"/>
+  </define>
+
+
+
+  <!-- additional elements for distrib -->
+
+  <!-- distribInput class -->
+  <define name="distribInput.datatype">
+    <interleave>
+      <ref name="SBase.datatype"/>
+    </interleave>
+    <attribute name="id" ns="http://www.sbml.org/sbml/level3/version1/distrib/version1">
+      <ref name="UncertId.simpleType"/>
+    </attribute>
+    <optional>
+      <attribute name="name" ns="http://www.sbml.org/sbml/level3/version1/distrib/version1">
+        <data type="string"/>
+      </attribute>
+    </optional>
+    <attribute name="index" ns="http://www.sbml.org/sbml/level3/version1/distrib/version1">
+      <data type="nonNegativeInteger"/>
+    </attribute>
+  </define>
+
+  <define name="listOfDistribInputs.datatype" combine="interleave">
+    <interleave>
+      <ref name="SBase.datatype"/>
+      <oneOrMore>
+        <element name="distribInput" ns="http://www.sbml.org/sbml/level3/version1/distrib/version1">
+          <ref name="distribInput.datatype"/>
+        </element>
+      </oneOrMore>
+    </interleave>
+  </define>
+
+  <!-- Distribution class -->
+  <define name="distribution.datatype" combine="interleave">
     <mixed>
       <zeroOrMore>
         <element>
@@ -26,62 +68,61 @@
               <text/>
             </attribute>
           </zeroOrMore>
-          <ref name="uncertml.datatype"/>
+          <ref name="distribution.datatype"/>
         </element>
       </zeroOrMore>
     </mixed>
   </define>
 
-  <!-- additional elements for distrib -->
-
-  <!-- input element -->
-  <define name="input.datatype">
-    <ref name="SBase.datatype"/>
-    <text/>
-  </define>
-
-  <!-- drawFromDistribution element -->
+  <!-- drawFromDistribution class -->
   <define name="drawFromDistrib.datatype" combine="interleave">
     <interleave>
       <ref name="SBase.datatype"/>
       <optional>
-        <ref name="math.datatype"/>
-      </optional>
-      <optional>
-        <ref name="uncertml.datatype"/>
-      </optional>
-      <zeroOrMore>
-        <element name="input" ns="http://www.sbml.org/sbml/level3/version1/distrib/version1">
-          <ref name="input.datatype"/>
+        <element name="listOfDistribInputs" ns="http://www.sbml.org/sbml/level3/version1/distrib/version1">
+          <ref name="listOfDistribInputs.datatype"/>
         </element>
-      </zeroOrMore>
+      </optional>
+      <element name="Distribution" ns="http://uncertml.org/3.0">
+        <ref name="distribution.datatype"/>
+      </element>
     </interleave>
   </define>
 
-<!-- =uncertainty element -->
-  <define name="uncertainty.datatype" combine="interleave">
+ <!-- AbstractUncertainty class -->
+  <define name="abstractUncertainty.datatype" combine="interleave">
+    <mixed>
+      <zeroOrMore>
+        <element>
+          <nsName ns="http://uncertml.org/3.0"/>
+          <zeroOrMore>
+            <attribute>
+              <anyName/>
+              <text/>
+            </attribute>
+          </zeroOrMore>
+          <ref name="abstractUncertainty.datatype"/>
+        </element>
+      </zeroOrMore>
+    </mixed>
+  </define>
+  
+  <!-- uncertainty class -->
+  <define name="uncertainty.datatype">
     <interleave>
       <ref name="SBase.datatype"/>
-      <optional>
-        <ref name="math.datatype"/>
-      </optional>
-      <optional>
-        <ref name="uncertml.datatype"/>
-      </optional>
-      </interleave>
-      <optional>
-        <attribute name="id" ns="http://www.sbml.org/sbml/level3/version1/distrib/version1">
-          <ref name="SId.simpleType"/>
-        </attribute>
-      </optional>
+      <element name="AbstractUncertainty" ns="http://uncertml.org/3.0">
+        <ref name="abstractUncertainty.datatype"/>
+      </element>
+    </interleave>    
     <optional>
-      <attribute name="name" ns="http://www.sbml.org/sbml/level3/version1/distrib/version1">
-        <data type="string"/>
+      <attribute name="id" ns="http://www.sbml.org/sbml/level3/version1/distrib/version1">
+        <ref name="SId.simpleType"/>
       </attribute>
     </optional>
     <optional>
-      <attribute name="index" ns="http://www.sbml.org/sbml/level3/version1/distrib/version1">
-        <data type="nonNegativeInteger"/>
+      <attribute name="name" ns="http://www.sbml.org/sbml/level3/version1/distrib/version1">
+        <data type="string"/>
       </attribute>
     </optional>
   </define>
@@ -96,7 +137,7 @@
       </optional>
     </interleave>
   </define>
-  
+
   <!-- extended functionDefinition -->
   <define name="functionDefinition.datatype" combine="interleave">
     <optional>
@@ -106,8 +147,8 @@
       </element>
     </optional>
   </define>
-  
-  <!-- top level sbml element --> 
+
+  <!-- top level sbml element -->
   <define name="sbml.datatype" combine="interleave">
     <!-- MUST PUT ns -->
     <attribute name="required" ns="http://www.sbml.org/sbml/level3/version1/distrib/version1">

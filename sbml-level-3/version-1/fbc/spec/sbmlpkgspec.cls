@@ -1,12 +1,10 @@
-%% ============================================================================
-%% Filename:     sbmlpkgspec.cls
+%% Filename:     sbmlpkgspec.cls                         -*- mode: latex -*-
 %% Description:  LaTeX style file for SBML Level 3 package specifications
 %% Author(s):    Michael Hucka <mhucka@caltech.edu>
 %% Organization: California Institute of Technology
 %% Date created: 2011-08-11
-%% https://sbml.svn.sourceforge.net/svnroot/sbml/trunk/project/tex/sbmlpkgspec
 %%
-%% Copyright 2007-2012 California Institute of Technology, Pasadena, CA, USA.
+%% Copyright 2007-2013 California Institute of Technology, Pasadena, CA, USA.
 %% 
 %% This file is free software; you can redistribute it and/or modify it
 %% under the terms of the GNU Lesser General Public License as published
@@ -29,9 +27,8 @@
 %% You should have received a copy of the GNU Lesser General Public License
 %% along with this library; if not, write to the Free Software Foundation,
 %% Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.
-%% ============================================================================
 
-\def\filedate{2012/11/30}
+\def\filedate{2013/07/24}
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesClass{sbmlpkgspec}[\filedate\space SBML Level 3
 Package Specification Style]
@@ -137,7 +134,6 @@ Package Specification Style]
     bookmarksnumbered=true]{hyperref}
   \else
     \RequirePackage[pdftex,breaklinks=true,colorlinks=true,
-    bookmarks=true,bookmarksopen=true,bookmarksopenlevel=2,
     pdfhighlight=/O,linkcolor={sbmlblue},citecolor={sbmlblue},
     urlcolor={sbmlblue},anchorcolor={sbmlblue},bookmarksnumbered]{hyperref}
   \fi
@@ -1035,27 +1031,36 @@ Package Specification Style]
 % JSBML User Guide directory.
 
 \labelformat{chapter}{Chapter~#1}
-\labelformat{section}{Section~#1}
-\labelformat{subsection}{Section~#1}
-\labelformat{subsubsection}{Section~#1}
-\labelformat{paragraph}{Section~#1}
 \labelformat{table}{Table~#1}
 \labelformat{figure}{Figure~#1}
 
-\newcommand{\@commonFloatRefNoStar}[1]{\xspace\Vref*{#1}\xspace}
-\newcommand{\@commonFloatRefStar}[1]{\xspace\ref{#1}\xspace}
+\newcommand{\sectionlabel}{Section}
+\newcommand{\setlabel}[1]{\renewcommand{\sectionlabel}{#1}}
+\newcommand{\normallabels}{\setlabel{Section}}
+\newcommand{\appendixlabels}{\setlabel{Appendix}}
 
-\newcommand{\fig}[1]{\@commonFloatRefNoStar{#1}}
-\WithSuffix\newcommand\fig*[1]{\@commonFloatRefStar{#1}}
+\labelformat{section}{\sectionlabel~#1}
+\labelformat{subsection}{\sectionlabel~#1}
+\labelformat{subsubsection}{\sectionlabel~#1}
+\labelformat{paragraph}{\sectionlabel~#1}
 
-\newcommand{\tab}[1]{\@commonFloatRefNoStar{#1}}
-\WithSuffix\newcommand\tab*[1]{\@commonFloatRefStar{#1}}
+\newcommand{\@commonRefNoStar}[1]{\xspace\Vref*{#1}\xspace}
+\newcommand{\@commonRefStar}[1]{\ref{#1}\xspace}
 
-\renewcommand{\sec}[1]{\@commonFloatRefNoStar{#1}}
-\WithSuffix\newcommand\sec*[1]{\@commonFloatRefStar{#1}}
+\newcommand{\fig}[1]{\normallabels\@commonRefNoStar{#1}}
+\WithSuffix\newcommand\fig*[1]{\normallabels\@commonRefStar{#1}}
 
-\newcommand{\sect}[1]{\@commonFloatRefNoStar{#1}}
-\WithSuffix\newcommand\sect*[1]{\@commonFloatRefStar{#1}}
+\newcommand{\tab}[1]{\normallabels\@commonRefNoStar{#1}}
+\WithSuffix\newcommand\tab*[1]{\normallabels\@commonRefStar{#1}}
+
+\renewcommand{\sec}[1]{\normallabels\@commonRefNoStar{#1}}
+\WithSuffix\newcommand\sec*[1]{\normallabels\@commonRefStar{#1}}
+
+\newcommand{\sect}[1]{\normallabels\@commonRefNoStar{#1}}
+\WithSuffix\newcommand\sect*[1]{\normallabels\@commonRefStar{#1}}
+
+\newcommand{\apdx}[1]{\appendixlabels\@commonRefNoStar{#1}}
+\WithSuffix\newcommand\apdx*[1]{\appendixlabels\@commonRefStar{#1}}
 
 
 % Misc.

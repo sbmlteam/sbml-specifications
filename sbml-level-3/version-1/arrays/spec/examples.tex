@@ -1,0 +1,609 @@
+% -*- TeX-master: "main"; fill-column: 72 -*-
+
+\section{Examples}
+\label{examples}
+
+This section contains a variety of examples of SBML Level~3 Version~1
+documents employing the Arrays package.
+
+\subsection{Array of Reactions}
+
+This example creates an array {\tt cell} of 100 compartments, arrays for species {\tt A}, {\tt B}, and {\tt C} also of size 100 with each one placed in the corresponding compartment {\tt cell(i)}, and an array of 100 reactions with one within each {\tt cell(i)} converting {\tt A(i)} plus {\tt B(i)} into {\tt C(i)}.
+
+\begin{verbatim}
+<listOfCompartments> 
+<!-- Specifies size of all arrays (i.e., n:=100) -->
+<parameter id="n" value="100"...>
+<!-- Create an array of n compartments -->
+ <compartment id="cell"...>
+  <arrays:orderedListOfDimensions>
+   <arrays:dimension id="i" size="n"/>
+  </arrays:orderedListOfDimensions>
+ </compartment>
+</listOfCompartments> 
+<listOfSpecies>
+ <!-- Create array of n species A with A(i) implicitly placed in cell(i) -->
+ <species id="A" compartment="cell" ... > 
+  <arrays:orderedListOfDimensions>
+   <arrays:dimension id="i" size="n"/>
+  </arrays:orderedListOfDimensions>
+ </species>
+ <!-- Create array of n species B with B(i) implicitly placed in cell(i) -->
+ <species id="B" compartment="cell" ... > 
+  <arrays:orderedListOfDimensions>
+   <arrays:dimension id="i" size="n"/>
+  </arrays:orderedListOfDimensions>
+ </species>
+ <!-- Create array of n species C with C(i) implicitly placed in cell(i) -->
+ <species id="C" compartment="cell" ... >
+  <arrays:orderedListOfDimensions>
+   <arrays:dimension id="i" size="n"/>
+  </arrays:orderedListOfDimensions>
+ </species>
+</listOfSpecies>
+<!-- Create array of n reactions r with r(i) converting A(i) and B(i) into C(i)-->
+<listOfReactions>
+ <reaction id="r" ...> 
+  <arrays:orderedListOfDimensions>
+   <arrays:dimension id="i" size="n"/>
+  </arrays:orderedListOfDimensions>
+  <listOfReactants>
+   <speciesReference species="A">
+    <arrays:orderedListOfIndices>
+     <arrays:index>
+      <math><apply><selector/><ci>A<ci><ci>i</ci></apply></math>
+     </arrays:index>
+    </arrays:orderedListOfIndices>
+   </speciesReference>
+   <speciesReference species="B"> 
+    <arrays:orderedListOfIndices>
+     <arrays:index>
+      <math><apply><selector/><ci>B<ci><ci>i</ci></apply></math>
+     </arrays:index>
+    </arrays:orderedListOfIndices>
+   </speciesReference>
+  </listOfReactants> 
+  <listOfProducts>
+   <speciesReference species="C"> 
+    <arrays:orderedListOfIndices>
+     <arrays:index>
+      <math><apply><selector/><ci>C<ci><ci>i</ci></apply></math>
+     </arrays:index>
+    </arrays:orderedListOfIndices>
+   </speciesReference>
+  </listOfProducts>
+ </reaction>
+</listOfReactions>
+\end{verbatim}
+
+% \subsection{Array of Parameters}
+
+% \begin{verbatim}
+% <listOfCompartments> 
+%  <compartment id="cell"...>
+%   <arrays:orderedListOfDimensions>
+%    <arrays:dimension id="i" lowerLimit="1" upperLimit="100"/>
+%   </arrays:orderedListOfDimensions>
+% </compartment>
+% </listOfCompartments> 
+% <listOfParameters>
+%  <parameter id="radius" ...> 
+%   <arrays:orderedListOfDimensions>
+%    <arrays:dimension id="i" lowerLimit="1" upperLimit="100"/>
+%  </arrays:orderedListOfDimensions>
+%  <parameter id="position" ...>
+%   <arrays:orderedListOfDimensions>
+%    <arrays:dimension id="i" lowerLimit="1" upperLimit="100"/>
+%    <arrays:dimension id="j" lowerLimit="1" upperLimit="3"/>
+%   </arrays:orderedListOfDimensions> 
+%  </parameter>
+% </listOfParameters>
+% \end{verbatim}
+
+\subsection{Array of Rate Rules}
+
+\begin{eqnarray*}
+\frac{dx_i}{dt} & = & \left\{ \begin{array}{l}
+  y,~~i = 1,2,3,4,5 \\
+ 2y,~~i = 6, 7, 8 
+\end{array}
+\right.
+\end{eqnarray*}
+\begin{verbatim}
+<listOfParameters>
+ <!-- Create size variables for arrays -->
+ <parameter id="n" value="8"/>
+ <parameter id="m" value="5"/>
+ <parameter id="o" value="3"/>
+ <!-- Create array x of size n -->
+ <parameter id="x" ...> 
+  <arrays:orderedListOfDimensions>
+   <arrays:dimension id="i" size="n"/>
+  </arrays:orderedListOfDimensions>
+ </parameter>
+ <!-- Create scalar parameter y -->
+ <parameter id="y" .../>
+</listOfParameters>
+<listOfRules>
+ <!-- Create rate rules dx(i)/dt = y for i = 1,2,3,4,5 -->
+ <rateRule variable="x">
+  <arrays:orderedListOfDimensions>
+   <arrays:dimension id="i" size="m"/>
+  </arrays:orderedListOfDimensions>
+  <arrays:orderedListOfIndices>
+   <arrays:index>
+    <math><apply><selector/><ci>x<ci><ci>i</ci></apply></math>
+   </arrays:index>
+  </arrays:orderedListOfIndices>
+  <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <ci>y</ci></math>
+ </rateRule>
+ <!-- Create rate rules dx(i)/dt = 2*y for i = 6,7,8 -->
+ <rateRule variable="x">
+  <arrays:orderedListOfDimensions>
+   <arrays:dimension id="i" size="o"/>
+  </arrays:orderedListOfDimensions>
+  <arrays:orderedListOfIndices>
+   <arrays:index>
+    <math>
+    <apply>
+     <selector/>
+      <ci>x<ci>
+      <apply>
+       <plus/>
+        <ci>i</ci>
+        <ci>5</ci>
+      </apply>
+     </apply>
+    </math>
+   </arrays:index>
+  </arrays:orderedListOfIndices>
+  <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <apply><times/>
+   <cn type="integer">2</cn> <ci>y</ci>
+  </apply></math> 
+ </rateRule>
+</listOfRules>
+\end{verbatim}
+
+\subsection{Array of Events}
+
+\begin{eqnarray*}
+\textup{If }x_i > 1\textup{ then set }x_i & = & \left\{ \begin{array}{l}
+0.5,~~i = 1,2,3,4,5 \\
+0.75,~~i = 6,7,8
+\end{array}
+\right.
+\end{eqnarray*}
+
+\begin{verbatim}
+<listOfParameters>
+ <!-- Create size variables for arrays -->
+ <parameter id="n" value="8"/>
+ <parameter id="m" value="5"/>
+ <parameter id="o" value="3"/>
+ <!-- Create array x of size n -->
+ <parameter id="x" ...> 
+  <arrays:orderedListOfDimensions>
+   <arrays:dimension id="i" size="n"/>
+  </arrays:orderedListOfDimensions>
+</listOfParameters>
+<listOfEvents>
+ <!-- Create events to set x(i) to 0.5 when x(i)>1 for i = 1,2,3,4,5 -->
+ <event id="eventSmall">
+  <arrays:orderedListOfDimensions>
+   <arrays:dimension id="i" size="m"/>
+  </arrays:orderedListOfDimensions>
+  <trigger>
+   <math xmlns="http://www.w3.org/1998/Math/MathML">
+    <list>
+     <apply>
+      <gt/>
+       <apply>
+        <selector/>
+        <ci>x</ci>
+        <ci>i</ci>
+       </apply>
+      <cn type="integer">1</cn>
+     </apply>
+    </list>
+   </math>
+  </trigger>
+  <listOfEventAssignments>
+   <eventAssignment variable="x">
+    <arrays:orderedListOfIndices>
+     <arrays:index>
+      <math><apply><selector/><ci>x<ci><ci>i</ci></apply></math>
+     </arrays:index>
+    </arrays:orderedListOfIndices>
+    <math xmlns="http://www.w3.org/1998/Math/MathML">
+     <cn type="real">0.5</cn>
+    </math>
+   </eventAssignment>
+  </listOfEventAssignments>
+ </event>
+ <!-- Create events to set x(i) to 0.75 when x(i)>1 for i = 6,7,8 -->
+ <event id="eventBig">
+  <arrays:orderedListOfDimensions>
+   <arrays:dimension id="i" size="o"/>
+  </arrays:orderedListOfDimensions>
+  <trigger>
+   <math xmlns="http://www.w3.org/1998/Math/MathML">
+    <list>
+     <apply>
+      <gt/>
+       <apply>
+        <selector/>
+        <ci>x</ci>
+        <apply>
+         <plus/>
+          <ci>i</ci>
+          <cn>5</cn>
+        </apply>
+       </apply>
+      <cn type="integer">1</cn>
+     </apply>
+    </list>
+   </math>
+  </trigger>
+  <listOfEventAssignments>
+   <eventAssignment variable="x">
+    <arrays:orderedListOfIndices>
+     <arrays:index>
+      <math>
+       <apply>
+        <selector/>
+        <ci>x<ci>
+        <apply>
+         <plus/>
+          <ci>i</ci>
+          <cn>5</cn>
+        </apply>
+       </apply>
+      </math>
+     </arrays:index>
+    </arrays:orderedListOfIndices>
+    <math xmlns="http://www.w3.org/1998/Math/MathML">
+     <cn type="real">0.75</cn>
+    </math>
+   </eventAssignment>
+  </listOfEventAssignments>
+ </event>
+</listOfEvents>
+\end{verbatim}
+
+\subsection{Initial Assignment Arrays}
+
+This will set an the same initial value to all 10 elements of the x array.
+
+\begin{verbatim}
+<listOfParameters>
+ <!-- Set size n=10 -->
+ <parameter id="n" value="10"/>
+ <!-- Set array parameters x(i)=5.7 for all i=1,...,10 -->
+ <parameter id="x" value="5.7"...>
+  <arrays:orderedListOfDimensions>
+   <arrays:dimension id="i" size="n">
+  </arrays:orderedListOfDimensions> 
+ </parameter>
+</listOfParameters>
+\end{verbatim}
+
+This could also be done with an initial assignment.
+
+\begin{verbatim}
+<listOfParameters> 
+ <!-- Set size n=10 -->
+ <parameter id="n" value="10"/>
+ <!-- Create an array x of size n -->
+ <parameter id="x"...>
+  <arrays:orderedListOfDimensions>
+   <arrays:dimension id="i" size="n"/> 
+  </arrays:orderedListOfDimensions>
+ </parameter> ...
+</listOfParameters> ...
+<listOfInitialAssignments>
+ <!-- Set array parameters x(i)=5.7 for all i=1,...,10 -->
+ <initialAssignment variable="x">
+  <math>
+   <cn>5.7<cn>
+  </math>
+ </initialAssignment>
+</listOfInitialAssignments>
+\end{verbatim}
+
+Here is an example where half of the array is assigned 5.7 and the other half is 3.2. 
+
+\begin{verbatim}
+<listOfParameters> 
+ <!-- Set size n=10 -->
+ <parameter id="n" value="10"/>
+ <!-- Set size m=5 -->
+ <parameter id="m" value="5"/>
+ <!-- Create an array x of size n -->
+ <parameter id="x"...>
+  <arrays:orderedListOfDimensions>
+   <arrays:dimension id="i" size="n"/> 
+  </arrays:orderedListOfDimensions>
+ </parameter> ...
+</listOfParameters> ...
+<listOfInitialAssignments>
+ <!-- Set array parameters x(i)=5.7 for i=1,...,5 -->
+ <initialAssignment variable="x"> 
+  <arrays:orderedListOfDimensions>
+   <arrays:dimension id="i" size="m"/>
+  </arrays:orderedListOfDimensions>
+  <arrays:orderedListOfIndices>
+   <arrays:index>
+    <math><apply><selector/><ci>x<ci><ci>i</ci></apply></math>
+   </arrays:index>
+  </arrays:orderedListOfIndices>
+  <math><cn>5.7<cn></math>
+ </initialAssignment>
+ <!-- Set array parameters x(i)=3.2 for i=6,...,10 -->
+ <initialAssignment variable="x">
+  <arrays:orderedListOfDimensions>
+   <arrays:dimension id="i" size="m"/>
+  </arrays:orderedListOfDimensions>
+  <arrays:orderedListOfIndices>
+   <arrays:index>
+    <math>
+     <apply>
+      <selector/>
+      <ci>x<ci>
+      <apply>
+       <plus/>
+       <ci>i</ci>
+       <ci>m</ci>
+      </apply>
+     </apply>
+    </math>
+   </arrays:index>
+  </arrays:orderedListOfIndices>
+  <math><cn>3.2<cn></math>
+ </initialAssignment>
+</listOfInitialAssignments>
+\end{verbatim}
+
+This could also be done using the {\tt vector} operator.
+
+\begin{verbatim}
+<initialAssignment variable="x"> 
+ <math>
+  <vector> 
+   <cn>5.7</cn> 
+   <cn>5.7</cn> 
+   <cn>5.7</cn> 
+   <cn>5.7</cn> 
+   <cn>5.7</cn> 
+   <cn>3.2</cn> 
+   <cn>3.2</cn> 
+   <cn>3.2</cn> 
+   <cn>3.2</cn> 
+   <cn>3.2</cn>
+  </vector>
+ </math>
+</initialAssignment>
+\end{verbatim}
+
+The {\tt matrix} and {\tt matrixrow} operators can also be used for initial assignments.
+
+\begin{verbatim}
+<listOfParameters>
+ <!-- Create size variable n=3 -->
+ <parameter id="n" value="3"> 
+ <!-- Create a two dimensional array of size n by n -->
+ <parameter id="Ident" value="0"> 
+  <arrays:orderedListOfDimensions>
+   <arrays:dimension id="i" size="n"/>
+   <arrays:dimension id="j" size="n"/>
+  </arrays:orderedListOfDimensions>
+ </parameter>
+</listOfParameters>
+<listOfInitialAssignments>
+ <!-- Assign Ident to the identity matrix -->
+ <initialAssignment variable="Ident">
+  <math>
+   <matrix> 
+    <matrixrow> <cn>1</cn> <cn>0</cn> <cn>0</cn> </matrixrow>
+    <matrixrow> <cn>0</cn> <cn>1</cn> <cn>0</cn> </matrixrow> 
+    <matrixrow> <cn>0</cn> <cn>0</cn> <cn>1</cn> </matrixrow> 
+   </matrix>
+  </math> 
+ </initialAssignment>
+</listOfInitialAssignments>
+\end{verbatim}
+
+Here is an example to assign a single value. 
+
+\begin{verbatim}
+<initialAssignment variable="Ident"> 
+ <arrays:orderedListOfIndices>
+  <arrays:index>
+   <math><apply><selector/><ci>Ident<ci><ci>2</ci></apply></math>
+  </arrays:index>
+  <arrays:index>
+   <math><apply><selector/><ci>Ident<ci><ci>1</ci></apply></math>
+  </arrays:index>
+ </arrays:orderedListOfIndices>
+ <math>
+  <cn>14<cn>
+ </math>
+<initialAssignment>
+\end{verbatim}
+
+\subsection{Examples for array referencing}
+
+Here is an example array reference using {\tt selector}.
+\begin{displaymath}
+0.1 * s1[x]
+\end{displaymath}
+\begin{verbatim}
+<math xmlns="http://www.w3.org/1998/Math/MathML">
+ <apply>
+  <times/>
+   <apply>
+    <selector/>
+     <ci> s1 </ci>
+     <ci> x </ci> 
+   </apply>
+   <cn> 0.1 </cn>
+ </apply>
+</math>
+\end{verbatim}
+
+%{\bf QUESTION: what is the best way to access elements in arrays with more than 2 dimensions?}
+
+Here is a more complicated example of array referencing.
+\begin{displaymath}
+w[i]= A[i,1]v[1]+ A[i,2]v[2]+ A[i,3]v[3]
+\end{displaymath}
+
+\begin{verbatim}
+<listOfParameters> 
+ <!-- Create size variable n=3 -->
+ <parameter id="n" value="3".../>
+ <!-- Create 2-dimensional array A of size n by n -->
+ <parameter id="A">
+  <arrays:orderedListOfDimensions>
+   <arrays:dimension id="i" size="n"/> 
+   <arrays:dimension id="j" size="n"/>
+  </arrays:orderedListOfDimensions> 
+ </parameter> 
+ <!-- Create an array v of size n -->
+ <parameter id="v">
+  <arrays:orderedListOfDimensions>
+   <arrays:dimension id="i" size="n"/>
+  </arrays:orderedListOfDimensions> 
+ </parameter> 
+ <!-- Create an array w of size n -->
+ <parameter id="w">
+  <arrays:orderedListOfDimensions>
+   <arrays:dimension id="i" size="n"/>
+  </arrays:orderedListOfDimensions> 
+ </parameter>
+</listOfParameters>
+<listOfRules>
+ <!-- w(i) = A(i,1)v(1) + A(i,2)v(2) + A(i,3)v(3) -->
+ <assignmentRule variable="w">
+  <arrays:orderedListOfDimensions>
+   <arrays:dimension id="i" size="n"/>
+  </arrays:orderedListOfDimensions> 
+  <arrays:orderedListOfIndices>
+   <arrays:index>
+    <math><apply><selector/><ci>w<ci><ci>i</ci></apply></math>
+   </arrays:index>
+  </arrays:orderedListOfIndices>
+  <math xmlns="http://www.w3.org/1998/Math/MathML">
+   <apply><plus/>
+    <apply><times/>
+     <apply><selector/><ci>A</ci><ci>i</ci><cn type="integer">1</cn></apply>
+     <apply><selector/><ci>v</ci><cn type="integer">1</cn></apply>
+    </apply>
+    <apply><times/>
+     <apply><selector/><ci>A</ci><ci>i</ci><cn type="integer">2</cn></apply>
+     <apply><selector/><ci>v</ci><cn type="integer">2</cn></apply>
+    </apply>
+    <apply><times/>
+     <apply><selector/><ci>A</ci><ci>i</ci><cn type="integer">3</cn></apply>
+     <apply><selector/><ci>v</ci><cn type="integer">3</cn></apply>
+    </apply>
+   </apply>
+  </math>
+ </assignmentRule>
+</listOfRules>
+\end{verbatim}
+
+This could also be done with {\tt scalarproduct} as follows:
+
+\begin{verbatim}
+<assignmentRule variable="w">
+ <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <apply>
+   <ci>scalarproduct</ci>
+   <ci>A</ci>
+   <ci>v</ci>
+  </apply>
+ </math>
+</assignmentRule>
+\end{verbatim}
+
+\subsection{Array references in functions}
+
+Functions can also make reference to array variables, but in this case, it is not necessary to declare arrays as such within the function or to declare the array indices or limits within functions.  The following defines a function on two vectors, 
+\begin{eqnarray*}
+f(x,y) & = & x[2]y[1] - y[2]x[1]
+\end{eqnarray*}
+The arguments are declared as vectors using the type field of the ci command.
+
+\clearpage
+
+\begin{verbatim}
+<!-- f(x,y) = x(2)y(1) - y(2)x(1) -->
+<functionDefinition id="f" />
+ <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <lambda>
+   <bvar>
+    <ci>x</ci>
+   </bvar>
+   <bvar>
+    <ci>y</ci>
+   </bvar>
+   <apply>
+    <plus/>
+    <apply>
+     <times/>
+     <apply>
+      <ci>selector</ci>
+      <ci>x</ci>
+      <cn type="integer">2</cn>
+     </apply>
+     <apply>
+      <ci>selector</ci>
+      <ci>y</ci>
+      <cn type="integer">1</cn>
+     </apply>
+    </apply>
+    <apply>
+     <times/>
+     <cn type="integer">-1</cn>
+     <apply>
+      <times/>
+      <apply>
+       <ci>selector</ci>
+       <ci>x</ci>
+       <cn type="integer">1</cn>
+      </apply>
+      <apply>
+       <ci>selector</ci>
+       <ci>y</ci>
+       <cn type="integer">2</cn>
+      </apply>
+     </apply>
+    </apply>
+   </apply>
+  </lambda>
+ </math>
+</functionDefinition>
+\end{verbatim}
+
+% \subsection{\FBC syntax examples}
+
+% \paragraph{Encoding the \FluxBound}
+% As described in \ref{fluxbound-class} the flux bound represents a mathematical (in)equality of the form <\token{reaction}> <\token{operator}> <\token{value}>. In SBML Level~3 Version~1 with \FBC this is encoded as:
+% %
+% \exampleFile{examples/ex_fb_fbc.txt}
+% %
+% This example illustrates two things: the encoding of $\infty$ and that care should be used when selecting inequalities such as \val{less} or \val{greater}. While mathematically there is a difference, this difference is only practically relevant when working with rational arithmetic (solvers).
+
+% \paragraph{Encoding the \Objective}
+% The \FBC allows for the definition of multiple `objective functions' with one being designated as active (see \ref{objective-class}) the following example illustrates this:
+% %
+% \exampleFile{examples/ex_objf_fbc.txt}
+% %
+% Note how both \Objective instances differ in \token{type} and each contains different set of \class{FluxObjectives}.
+
+% \paragraph{The extended \Species}
+% The \FBC package extend the \SBML \Species of \sbmlthreecore by providing attributes for storing \token{charge} and \token{chemicalFormula}
+% %
+% \exampleFile{examples/ex_spec_l3.txt}

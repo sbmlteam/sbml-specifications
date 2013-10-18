@@ -927,6 +927,11 @@ effects:
 
 \begin{enumerate}
 
+
+\begin{blockChanged}
+\item The replaced element is considered to be removed from the model.
+\end{blockChanged}
+
 \item Attributes having values of type \primtype{SIdRef} that refer to
   the replaced element are considered to refer to the replacement
   element instead.
@@ -1126,6 +1131,16 @@ of a \ReplacedBy element is a \Reaction, it may be scaled by the
 on the \Submodel it is a member of, so references to the object in the
 containing model should take that into account.
 
+\begin{blockChanged}
+Overall, the same things apply to elements referenced in a \ReplacedBy
+construct as happen to the elements referenced in a \ReplacedElement
+construct.  The same things are true as are listed in \sec{replacedelement-class},
+with the difference that the 'replaced element' is the parent of the
+\ReplacedBy element, and the 'replacement element' is the element
+referenced by the \ReplacedBy element.
+\end{blockChanged}
+
+
 \paragraph{Attributes inherited from \class{SBaseRef}}
 
 The \ReplacedBy class, being derived from \SBaseRef, inherits the latter
@@ -1180,13 +1195,18 @@ implications.  We list some crucial ones below:
   reference to the replaced element can be updated with a reference to
   the replacement element.
 
-\item \emph{Replacements must be unique}.  A given object
-  being replaced may only appear in exactly one \ReplacedElement object
-  anywhere in a model; otherwise, it would imply multiple entities
-  replace the same object, and this would lead to ambiguities (e.g., in
-  old references to the entities being replaced).  A \ReplacedElement
-  object referring to a \Deletion is the only type of entity
-  that may be listed in more than one \ListOfReplacedElements.
+\item \emph{Replacements must be unique}.  Any single SBML object
+  may only appear in exactly one \ReplacedElement, \begin{blockChanged}
+  \Port, or \Deletion object; one \emph{set} of \ReplacedBy objects,
+  or be the parent of a \ReplacedBy object.  In other words, a single
+  object may be directly replaced, deleted, turned into a port, or
+  replace one or more other objects, but may not do more than one of
+  those things at a time.  Otherwise, it would lead to ambiguities (e.g., in
+  old references to the entities being replaced).
+  \end{blockChanged}
+  A \ReplacedElement
+  object referring to a \Deletion is the only exception to this rule, 
+  and may be listed in more than one \ListOfReplacedElements.
 
 \item \emph{Units should stay the same}.  Any element with defined units
   should only be replaced by elements with the same defined units if no
@@ -1221,6 +1241,38 @@ to it are redirected, and in the latter case, references to it are
 considered invalid.  Therefore, an element that has no identifiers or
 no references may be replaced or deleted, with no functional difference
 between the two approaches.
+
+\begin{blockChanged}
+\subsubsection{Implications for replacements and deletions of subobjects}
+
+Replacing and deleting objects is fairly intuitive for 'top-level' SBML objects:
+if a \Species is replaced, you now have the new species instead; if a \Reaction
+is deleted, it no longer affects the \Species it used to affect.
+
+However, for elements such as a \KineticLaw or \SpeciesReference that exist as children of other SBML objects, while the rules are identical to the rules for replacing and deleting anything else, the implications are slightly different:  when an element is replaced or deleted, it is considered to have been removed from the model entirely, and its parent therefore no longer contains it.  Its former parent has no explicit relationship (except through IdRefs) with any replacement object that may have been defined.
+\end{blockChanged}
+
+\begin{table}[thb]
+ \begin{edtable}{tabular}{p{0.9in}p{0.9in}p{4.1in}}
+   \toprule
+   \textbf{If the parent is:} & \textbf{And the child is:} & \textbf{The result is:}\\
+   \midrule
+\begin{blockChanged}Deleted\end{blockChanged}& \begin{blockChanged}Deleted\end{blockChanged}  & \begin{blockChanged}Both the parent and child are removed from the model.  Any references to either object are invalid and must be removed.\end{blockChanged}\\
+\begin{blockChanged}Deleted\end{blockChanged}& \begin{blockChanged}Replaced\end{blockChanged} & \begin{blockChanged}Both the parent and child are removed from the model.  Any references to the child object are now considered to refer to its replacement object.  Any references to the parent object are invalid and must be removed.\end{blockChanged}\\
+\begin{blockChanged}Replaced\end{blockChanged}& \begin{blockChanged}Deleted\end{blockChanged}  & \begin{blockChanged}Both the parent and child are removed from the model.  Any references to the parent object are now considered to refer to its replacement object.  Any references to the child object are invalid and must be removed.\end{blockChanged}\\
+\begin{blockChanged}Replaced\end{blockChanged}& \begin{blockChanged}Replaced\end{blockChanged} & \begin{blockChanged}Both the parent and child are removed from the model.  References to the parent object are now considered to refer to the parent's replacement, and any references to the child object are now considered to refer to the child's replacement.\end{blockChanged}\\
+   \bottomrule
+\end{edtable}
+\label{nested-replacement-table}
+\caption{The effects of deletions and replacements on nested objects.} 
+\end{table}
+
+\begin{blockChanged}
+It would be unusual, but possible, for this to represent an actual modeling scenario.  For example, a \SpeciesReference that referred to a ubiquitous small molecule could be removed if the new model was a simplified version that no longer needed the explicit reference.  A \Reaction's \KineticLaw might be removed if the model was going to be newly used in a Flux Balance context, where kinetic laws are inferred instead of being explicit.
+
+It is perhaps a more likely scenario that if something is replaced, a subcomponent of the replaced item also be replaced by a parallel subcomponent of the replacement item.  In this case, both the parent and the child are considered to be removed from the original model, and any references to the replaced parent are now considered to point to the replacement parent, and any references to the replaced child are considered to point to the replacement child.  This can have an actual effect in the case where the stoichiometry of a reaction (the mathematical meaning of a \SpeciesReference) is being set or being used by some other construct such as an \InitialAssignment.  The full list of implications for replacing nested objects is listed in \tab{nested-replacement-table}.
+\end{blockChanged}
+
 
 % -----------------------------------------------------------------------------
 \subsection{The \class{SBaseRef} class}

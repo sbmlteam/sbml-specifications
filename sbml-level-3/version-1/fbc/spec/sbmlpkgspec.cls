@@ -173,6 +173,20 @@ Package Specification Style]
 
 \RequirePackage{overpic}
 
+% We don't need the rotating package in this file, but there is a strange
+% interaction between the rotating package and something else in sbmlpkgclass
+% (I don't know what).  The effect of the interaction is that sidewaystable
+% environment contents are shifted left on the page (or from the perspective
+% of the rotated table, shiftted up).  The solution is to set \rotFPtop, but
+% asking users of sbmlpkgclass to know that they have to do this is too much
+% to ask.  So, to avoid people experiencing the problem and wasting time
+% trying to figure out what's causing it, I decided it's better to preload
+% rotating.  The problem was first reported to me by Maciej Swat in Aug. 2013
+% and I found the solution at http://tex.stackexchange.com/a/47879/8318
+
+\RequirePackage{rotating}
+\setlength{\rotFPtop}{0pt plus 1fil}
+
 
 %% ----------------------------------------------------------------------------
 %% Font selection.
@@ -811,8 +825,7 @@ Package Specification Style]
   \vskip\belowcaptionskip}
 \ifx\@makerotcaption\undefined
 \else
-  \typeout{\space\space\space\space\space\space\space\space\space
-           `rotating' package detected}
+  % Adjustment for the "rotating" package.
   \renewcommand{\@makerotcaption}[2]{%
     \renewcommand{\baselinestretch}{0.9}
     \captionfont%

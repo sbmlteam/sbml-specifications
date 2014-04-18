@@ -20,7 +20,7 @@ SBML_BIB=$(SBML_PROJECT)/bib
 SBML_TEXINPUTS    = .:$(SBML_TEX)//:$(TEXINPUTS)
 SBML_BIBINPUTS    = .:$(SBML_BIB)/:$(BIBINPUTS)
 
-MAIN_FILE = sbml-level-3-version-1-core
+MAIN_FILE = sbml-level-3-version-2-core
 MATHML_SCHEMA = ../mathml-schema/sbml-mathml.xsd
 
 default: pdf

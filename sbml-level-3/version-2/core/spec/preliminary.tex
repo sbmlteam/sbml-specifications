@@ -269,12 +269,14 @@ greatly reduced.  Finally, unlike \primtype{ID}, \primtype{SId}
 does not include Unicode character codes; the identifiers are
 plain text.
 
+\changed{When an SBML element inherits the \token{id} attribute from \SBase, and does not change its data type to something derived from \primtype{SId} (such as \primtype{UnitSId}, below), this means that the the value of its \token{id} attribute must be unique across all such \primtype{SId} \token{id} attributes within that \Model.  Collectively, this is referred to as the '\primtype{SId} namespace of the model'.}
+
 
 \subsubsection{Type \primtype{SIdRef}}
 \label{sec:sidref}
 
 Type \primtype{SIdRef} is used for all attributes that refer to
-identifiers of type \primtype{SId} in a model.  This type is
+identifiers of type \primtype{SId} in a \Model.  This type is
 derived from \primtype{SId}, but with the restriction that the
 value of an attribute having type \primtype{SIdRef} must equal the
 value of \emph{some} \primtype{SId} attribute in the model where
@@ -323,6 +325,16 @@ As with \primtype{UnitSId}, the equality of \primtype{UnitSIdRef}
 values is determined by exact character sequence match; \ie
 comparisons of these identifiers must be performed in a
 case-sensitive manner.
+
+
+\begin{blockChanged}
+\subsubsection{Type \primtype{LocalSId}}
+\label{sec:localsid}
+
+The type \primtype{LocalSId} is derived from \primtype{SId}
+(Section~\ref{sec:sid}) and has identical syntax.  The
+\primtype{LocalSId} type is used as the datatype of the \token{id} of a \LocalParameter to potentially override and provide new valid targets for \token{Math} references within the element's parent \KineticLaw of a \Reaction.  Any \token{math} \token{<ci>} child of a \KineticLaw whose text matches the \token{id} of a \LocalParameter of that same \KineticLaw is taken to refer to that \LocalParameter, and not any other element in the \Model whose \token{id} may also match that string.  However, the \LocalParameter is not added to the \primtype{SId} namespace of the model, and no other \Math object or \primtype{SIdRef} may reference it.
+\end{blockChanged}
 
 
 \subsubsection{Type \primtype{SBOTerm}}
@@ -382,11 +394,107 @@ Figure~\vref{fig:sbase}.
   \label{fig:sbase}
 \end{figure}
 
-\SBase contains two attributes and two subobjects, all of which
-are optional: \token{metaid}, \token{sboTerm}, \Notes and
-\Annotation.  These are discussed separately in the following
+\SBase contains \changed{four attributes and two subobjects, all of which
+are optional: \token{id}, \token{name}, \token{metaid}, \token{sboTerm}, \Notes and
+\Annotation.}  These are discussed separately in the following
 subsections.
 
+
+\begin{blockChanged}
+%-----------------------------------------------------------------------------
+\subsubsection{The \token{id} attribute}
+\label{sec:idnameattribs}
+\label{sec:identifiers}
+%-----------------------------------------------------------------------------
+
+The \token{id} attribute is an optional attribute on the \SBase class, meaning that all elements defined in in the SBML namespace may have one.  It is used to identify a component within the model.  Other SBML objects can refer to the component using this identifier.  The data type of \token{id} is \primtype{SId} (Section~\ref{sec:sid}), though subclasses of \SBase may refine this by using a derived type such as \primtype{UnitSId} (Section~\ref{sec:unitsid}), or \primtype{LocalSId} (Section~\ref{sec:localsid}).  Additionally, when SBML packages define new classes that inherit from \SBase, they may also refine the type of the \token{id}, and use \primtype{UnitSId}, \primtype{LocalSId}, or a new type defined within that package.
+
+In addition, elements that derive from \SBase may (and often will) declare that the \token{id} attribute is required for that element, instead of being optional.
+\end{blockChanged}
+
+A model can contain a large number of components representing
+different parts.  This leads to a problem in deciding the scope of
+an identifier: in what contexts does a given identifier \emph{X}
+represent the same thing?  The approaches used in existing
+simulation packages tend to fall into two categories which we may
+call global and local.  The \emph{global} approach places all
+identifiers into a single global space of identifiers, so that an
+identifier \emph{X} represents the same thing wherever it appears
+in a given model definition.  The \emph{local} approach places
+symbols in separate identifier namespaces, depending on the
+context, where the context may be, for example, individual
+reaction rate expressions.  The latter approach means that a model
+may use the same identifier \emph{X} in different rate expressions
+and have each instance represent a different quantity.
+
+The scoping rules in \sbmlthree are intended as a compromise to help
+support both scenarios:
+\begin{itemize}
+  
+\item The identifier (\ie the value of the attribute \token{id}) of
+  every \changed{\SBase-derived class that does not declare otherwise}
+  must be unique across the set of all such identifiers in
+  the model.  This means, for example, that a reaction and a
+  species definition cannot both have the same identifier.
+
+\item The identifier of every \UnitDefinition must be unique
+  across the set of all such identifiers in the model \changed{plus the set 
+  of base unit definitions in Table~\vref{tab:unitkind}.}  However,
+  unit identifiers live in a separate space of identifiers from
+  other identifiers in the model, by virtue of the fact that the
+  data type of unit identifiers is \primtype{UnitSId}
+  (Section~\ref{sec:unitsid}) and not \primtype{SId}.
+  
+\item Each \Reaction instance (see Section~\ref{sec:reactions})
+  establishes a separate private local space for local parameters
+  represented by objects of class \LocalParameter.  Within the
+  definition of that reaction, local parameter identifiers
+  override (shadow) identical identifiers \changed{from the \primtype{SId} namespace of the model}
+  outside of that reaction.  Of course, the corollary of this is
+  that local parameters inside a \Reaction object instance are not
+  visible to other objects outside of that reaction. \changed{This is denoted by defining the data type of the \token{id} attribute of a \LocalParameter to be \primtype{LocalSId} (Section~\ref{sec:localsid}) and not \primtype{SId}.}
+
+\begin{blockChanged}
+\item The identifier of every \SBase-derived class defined in an SBML package will be part of the \primtype{SId} namespace of the model by default, but may declare its \token{id} attribute to be a derived type, whether one defined in core or one defined by that package.  Any element with an \token{id} of any particular type follows the rules of uniqueness for that type.  As an example, the Hierarchical Model Composition package defines a \primtype{PortSId} type, which the \token{id}'s of \Port objects have.  All \Port elements in a \Model must therefore be unique only amongst the other \Port objects in that \Model, much like \UnitDefinition elements in core.
+\end{blockChanged}
+
+\end{itemize}
+
+
+\subsubsection{The \token{name} attribute}
+\label{sec:name}
+
+In contrast to the \token{id} attribute, the \token{name} attribute
+is not intended to be used for cross-referencing
+purposes within a model.  Its purpose instead is to provide a
+human-readable label for the component.  The data type of 
+\token{name} is the type \primtype{string} defined in XML
+Schema~\citep{biron:2000,thompson:2000} and discussed further in
+Section~\ref{sec:primitive-types}.  SBML imposes no restrictions
+as to the content of \token{name} attributes beyond those restrictions
+defined by the \primtype{string} type in XML Schema.
+In addition, there are no restrictions on the uniqueness
+of \token{name} values in a model (unlike the restrictions on
+\token{id} values discussed in Section~\ref{sec:identifiers}).
+
+
+\begin{blockChanged}
+\subsubsection{Why are \token{id} and \token{name} defined on \class{SBase}}
+\label{sec:why-on-sbase}
+
+In previous versions of the SBML specification, \token{id} and \token{name} were defined only for particular elements.  This was changed for several reasons.
+\begin{itemize}
+  
+\item In previous versions of SBML, references to SBML elements (attributes of type \primtype{SIdRef}) were used almost exclusively to reference the mathematical meaning of the element.  As SBML has developed (and particularly as packages have appeared), this is no longer the case:  elements are referenced with regards to their structural role in the model with packages such as Layout and Hierarchical Model Composition.
+
+\item While the \token{metaid} attribute fulfils a similar role on the \SBase class, it is undesirable to use for several reasons.  It has a less restricted and more aesthetically displeasing format (allowing unicode characters), and its scope cannot be ammended as needed for elements such as \UnitDefinitions and \LocalParameters.  Having a model-wide scope instead of a document-wide scope was also desirable for the Hierarchical Model Composition package.
+
+\item Because core elements may reference package elements directly in this version of the specification, and because package elements themselves may reference core elements and elements from other packages, it was felt that the easiest way to facilitate this would be to provide the \token{id} attribute on \SBase directly, to centralize the rules about referencing other elements.
+
+\item The \token{name} attribute has traditionally been paired with the \token{id} attribute, so as to always be able to provide a user-readable moniker for any element with an \token{id}.  With \token{id} now on \SBase, it made sense to also include \token{name}.
+
+\end{itemize}
+\end{blockChanged}
 
 \subsubsection{The \token{metaid} attribute}
 \label{sec:metaid}
@@ -715,142 +823,6 @@ software applications.  If such data affect the interpretation of
 a model, then software interoperability is greatly impeded.  
 Recommendations regarding the use of any sort of annotation are
 given in Section~\ref{sec:bp:annotations}.  
-
-
-%-----------------------------------------------------------------------------
-\subsection{The \token{id} and \token{name} attributes on SBML components}
-\label{sec:idnameattribs}
-%-----------------------------------------------------------------------------
-
-As will become apparent below, most objects in SBML include two
-common attributes: \token{id} and \token{name}.  These attributes are not
-defined on \SBase (as explained in
-Section~\ref{sec:why-not-on-sbase} below), but where they do
-appear, the common rules of usage described below apply.
-
-
-\subsubsection{The \token{id} attribute and identifier scoping}
-\label{sec:identifiers}
-
-The \token{id} attribute is mandatory on most (but not all)
-objects in SBML.  It is used to identify a component within the
-model.  Other SBML objects can refer to the component using this
-identifier.  The data type of \token{id} is always either
-\primtype{SId} (Section~\ref{sec:sid}) or \primtype{UnitSId}
-(Section~\ref{sec:unitsid}), depending on the object in question.
-
-A model can contain a large number of components representing
-different parts.  This leads to a problem in deciding the scope of
-an identifier: in what contexts does a given identifier \emph{X}
-represent the same thing?  The approaches used in existing
-simulation packages tend to fall into two categories which we may
-call global and local.  The \emph{global} approach places all
-identifiers into a single global space of identifiers, so that an
-identifier \emph{X} represents the same thing wherever it appears
-in a given model definition.  The \emph{local} approach places
-symbols in separate identifier namespaces, depending on the
-context, where the context may be, for example, individual
-reaction rate expressions.  The latter approach means that a model
-may use the same identifier \emph{X} in different rate expressions
-and have each instance represent a different quantity.
-
-The scoping rules in \sbmlthree are intended as a compromise to help
-support both scenarios:
-\begin{itemize}
-  
-\item The identifier (\ie the value of the attribute \token{id}) of
-  every \FunctionDefinition, 
-  \Compartment, \Species, \Parameter, \Reaction,
-  \SpeciesReference, \ModifierSpeciesReference, \Event, and
-  \Model, must be unique across the set of all such identifiers in
-  the model.  This means, for example, that a reaction and a
-  species definition cannot both have the same identifier.
-
-\item The identifier of every \UnitDefinition must be unique
-  across the set of all such identifiers in the model \changed{plus the set 
-  of base unit definitions in Table~\vref{tab:unitkind}.}  However,
-  unit identifiers live in a separate space of identifiers from
-  other identifiers in the model, by virtue of the fact that the
-  data type of unit identifiers is \primtype{UnitSId}
-  (Section~\ref{sec:unitsid}) and not \primtype{SId}.
-  
-\item Each \Reaction instance (see Section~\ref{sec:reactions})
-  establishes a separate private local space for local parameters
-  represented by objects of class \LocalParameter.  Within the
-  definition of that reaction, local parameter identifiers
-  override (shadow) identical identifiers (whether those
-  identifiers refer to parameters, species or compartments)
-  outside of that reaction.  Of course, the corollary of this is
-  that local parameters inside a \Reaction object instance are not
-  visible to other objects outside of that reaction.
-
-\end{itemize}
-
-
-\subsubsection{The \token{name} attribute}
-\label{sec:name}
-
-In contrast to the \token{id} attribute, the \token{name} attribute is
-optional and is not intended to be used for cross-referencing
-purposes within a model.  Its purpose instead is to provide a
-human-readable label for the component.  The data type of 
-\token{name} is the type \primtype{string} defined in XML
-Schema~\citep{biron:2000,thompson:2000} and discussed further in
-Section~\ref{sec:primitive-types}.  SBML imposes no restrictions
-as to the content of \token{name} attributes beyond those restrictions
-defined by the \primtype{string} type in XML Schema.
-In addition, there are no restrictions on the uniqueness
-of \token{name} values in a model (unlike the restrictions on
-\token{id} values discussed in Section~\ref{sec:identifiers}).
-
-
-\subsubsection{Why \token{id} and \token{name} are not defined on \class{SBase}}
-\label{sec:why-not-on-sbase}
-
-Although many SBML components feature \token{id} and \token{name},
-these attributes are purposefully not defined on \SBase.  There
-are several reasons for this.
-\begin{itemize}
-  
-\item The presence of an SBML identifier attribute (\token{id})
-  necessarily requires specifying scoping rules for the
-  corresponding identifiers.  However, the \SBase abstract type is
-  used as the basis for defining components whose scoping rules
-  are in some cases different from each other.  (See
-  Section~\ref{sec:identifiers} for more details).  If \SBase were
-  to have an \token{id} attribute, then the specification of \SBase
-  would need a default scoping rule and this would then have to be
-  overloaded on derived classes that needed different scoping.
-  This would make the SBML specification even more complex.
-  
-\item Identifiers are optional on some SBML components and required
-  on most others.  If \token{id} were defined as optional on
-  \SBase, most component classes would separately have to redefine
-  \token{id} as being mandatory---hardly an improvement over the
-  current arrangement.  Conversely, if \token{id} were defined as
-  mandatory on \SBase, it would prevent it from being optional on
-  components where it \emph{is} currently optional.
-  
-\item The \SBase abstract type is used as the base type for
-  certain objects such as \SBML, \AssignmentRule,
-  etc., which do not have identifiers because these components do
-  not need to be referenced by other components.  If \SBase had a
-  mandatory \token{id} attribute, \emph{all} objects of
-  these other types in a model would then need to be assigned
-  unique identifiers.  Similarly, because \SBase is the
-    base type of the \token{listOf\rule{0.5in}{0.5pt}} lists,
-  putting \token{id} on \SBase would require all of these lists in
-  a model to be given identifiers.  This would be a needless
-  burden on software developers, tools, and SBML users, requiring
-  them to generate and store additional identifiers for objects
-  that never need them.
-  
-\item \SBase does not have a \token{name} simply because such an
-  attribute is always paired with an \token{id}.  Without
-  \token{id} on \SBase, it does not make sense to have
-  \token{name}.
-
-\end{itemize}
 
 
 %-----------------------------------------------------------------------------
@@ -1187,12 +1159,13 @@ is used:
   \FunctionDefinition object in the model.
   
 \item Otherwise, the identifier referenced by the \token{ci}
-  element must belong to a \FunctionDefinition, \Compartment,
-  \Species, \Parameter, \Reaction or \SpeciesReference object
-  defined in the model.  Table~\ref{fig:ci} lists the only
-  possible interpretations of using such an identifier in SBML.
+  element must belong to \changed{an element defined in the model as being in the \primtype{SId} namespace of the \Model that has mathematical meaning.  In core, this includes any \FunctionDefinition, \Compartment, \Species, \Parameter, \Reaction or \SpeciesReference object defined in the model, plus (for \token{math} child of a \KineticLaw) any \LocalParameter children that \KineticLaw might have.  In addition, any object defined in a package whose \token{id} was declared as also being in the \primtype{SId} namespace of the \Model and as having mathematical meaning may be referenced.}
+  Table~\ref{fig:ci} lists the only
+  possible interpretations of using such a core identifier in SBML.
 
 \end{itemize}
+
+%TODO:  fix the line wrapping in this table:  Mike?
 
 \begin{table}[thb]
   \centering
@@ -1232,6 +1205,14 @@ is used:
     the reaction where the \SpeciesReference object is defined \par
     & Section~\ref{sec:speciesreferences-units}
     \\[-9pt]
+    \changed{\LocalParameter}
+    & \changed{the value of the local parameter}
+    & \changed{Section~\ref{subsec:localparameter-units}}
+    \\[8pt]
+    \changed{Mathematical elements defined in packages}
+    & \changed{the value of that package element}
+    & \changed{The specification of that package}
+    \\[8pt]
     \bottomrule
   \end{edtable}
   \caption{The possible interpretations of different SBML
@@ -1251,6 +1232,9 @@ can additionally refer to identifiers of \LocalParameter objects
 defined within that \KineticLaw instance; see
 Section~\ref{subsec:kinetic-law} for more information.
 
+\begin{blockChanged}
+If the referent of a \token{ci} element is an element in an SBML namespace that is not understood by the interpreter, the \token{math} element in which it appears no longer has a mathematical interpretation, and may be ignored by the software.  If an interpreter cannot tell whether a referenced object does not exist or if it exists in an unparsed namespace, it may produce a warning.  This situation may only arise if a package is present in the SBML document with a \token{package:required} attribute of \val{true}.
+\end{blockChanged}
 
 \subsubsection{Interpretation of boolean values}
 \label{sec:handling-booleans}
@@ -1369,7 +1353,7 @@ encodes the formula $x + t$, where $t$ stands for time.
 </math>
 \end{example}
 
-\clearpage
+%\clearpage
 
 In the fragment above, the use of the token \token{t} is mostly a
 convenience for human readers---the string inside the

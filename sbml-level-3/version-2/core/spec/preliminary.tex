@@ -1339,7 +1339,30 @@ following URIs defined by SBML:
 \begin{blockChanged}
 \item \uri{http://www.sbml.org/sbml/symbols/timederivative}.  This represents the derivative with respect to time of an SBML \primtype{SId}.  It represents a function that takes a single argument which must be a \token{ci} element, and returns the current rate of change of that referenced symbol with respect to time.
 
-  In the event of a discontinuity, such as might happen due to an \Event, a \token{piecewise} function, or at the beginning of a time course simulation (i.e. at $t=0$), the rate of change is defined as the right-handed time derivative of the symbol, that is, the derivative with respect to time of the symbol moving forward in time from the current time, and not the derivative with respect to time from the recent past up until the current time.  Thus, the time derivative of a symbol whose \primtype{SId} appears as the \token{variable} of a \RateRule will always take the calculated value of that \RateRule, using the current values of all symbols.  Similarly, the time derivative of a non-boundary \Species which appears in one or more reactions will be calculable from the stoichimetries and \KineticLaw \Math of every \Reaction in which it appears.  No \Event can affect the time derivative of a symbol except indirectly.
+  The \emph{timederivative} of a symbol can be calculated from other model elements:
+
+  \begin{itemize}
+
+    \item The time derivative of any constant symbol will be zero.
+
+    \item The time derivative of a symbol whose \primtype{SId} appears as the \token{variable} of a \RateRule will always take the calculated value of that \RateRule, using the current values of all symbols.
+
+    \item The time derivative of the \emph{amount} of a non-boundary \Species which appears in one or more reactions will be calculable from the stoichimetries and \KineticLaw \Math of every \Reaction in which it appears, plus any appropriate \token{conversionFactor} values (see Section \ref{sec:about-kinetic-laws}).  If the \emph{species quantity} is in terms of its \emph{concentration}, this will need to be converted by the \token{size} of the \Compartment in which it appears, which may itself be changing in time.  This could then be calculated as follows, where $[X]$ is the concentration of X, $X$ the amount, and $V$ the size of its compartment:
+    % From Stefan Hoops, https://groups.google.com/forum/#!msg/sbml-interoperability/m6ALOUxhl8I/7u6d2UJ5FjYJ
+    \begin{linenomath}
+      \begin{larray*}
+        \frac{d[X]}{dt} &=& \frac{d(X/V)}{dt} \\
+                        &=& \frac{1}{V} \cdot \frac{dX}{dt} + X \cdot \frac{d(1/V)}{dt} \\
+                        &=& \frac{1}{V} \cdot \frac{dX}{dt} - \frac{X}{V^2} \cdot \frac{dV}{dt}
+      \end{larray*}
+    \end{linenomath}
+    When $dV/dt$ is equal to zero, the final term drops out.
+
+    \item The time derivative of a symbol whose \primtype{SId} appears as the \token{variable} of an \AssignmentRule or which is calculated from an \AlgebraicRule must be calculated by calculating the derivative of that \Rule.  This may be a fairly complicated endeavor, and modelers should be aware that not all simulators will be able to perform the calculation.
+
+  \end{itemize}
+
+  In the event of a discontinuity, such as might happen due to an \Event, a \token{piecewise} function, or at the beginning of a time course simulation (i.e. at $t=0$), the rate of change is defined as the right-handed time derivative of the symbol, that is, the derivative with respect to time of the symbol moving forward in time from the current time, and not the derivative with respect to time from the recent past up until the current time.  Thus, the \emph{timederivative} of a symbol will always be calculable from the set of current values of symbols in the model.  No \Event can affect the time derivative of a symbol except indirectly.
 \end{blockChanged}
 
 \end{itemize}

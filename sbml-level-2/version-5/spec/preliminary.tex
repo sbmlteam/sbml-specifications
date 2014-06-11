@@ -1562,50 +1562,47 @@ applied:
     \token{constant}=\val{true}, only an \InitialAssignment can
     override the value.
     
-  \item All \InitialAssignment definitions take effect at $t_i$
-    and continue to have effect up to and including $t = 0$,
-    overriding any initial values on \Species, \Compartment and
-    \Parameter.  Since \InitialAssignment{}s contain mathematical
-    formulas, different values may be computed at each time step
-    $t$ in $t_i \leq t \leq 0$.
+\begin{blockChanged}
+  \item All \InitialAssignment definitions take effect,
+    overriding initial values on any \Species, \Compartment or
+    \Parameter.
 
-%    The value of every \Species, \Compartment, and \Parameter    
-%    object whose identifier is \emph{not} the subject of an
-%    \InitialAssignment is assigned by the definition of that
-%    object in the model; conversely, the value of every \Species,
-%    \Compartment, and \Parameter object whose identifier \emph{is}
-%    the subject of an \InitialAssignment is computed and assigned
-%    by that \InitialAssignment.  
-%    All assignments of both kinds are
-%    performed once and thereafter are in effect for $t \geq t_i$.
+  \item All \AssignmentRule and \AlgebraicRule definitions take effect.  These rules also override any initial values of any \Species, \Compartment, or \Parameter in the model.  Only elements set \token{constant}=\val{false} can be affected in this way.  (Note there cannot be both an \AssignmentRule and an \InitialAssignment for the same identifier, nor may an \AlgebraicRule determine the value of any element that has an \InitialAssignment; see Section~\ref{sec:rules}.)
+
+  \item The identifier of any \Reaction is the value of its \KineticLaw.  This cannot yet affect the \Species referenced by the \Reaction, but the identifier itself may appear in the math of other elements calculated above.
+\end{blockChanged}
 
   \end{itemize}
-  
-\item For time $t \geq t_i$:
+
+\item \changed{For time $t_i < t < 0$}
   \begin{itemize}
-    
-  \item \AssignmentRule and \AlgebraicRule definitions are in
-    effect from this point in time forward and may influence the
-    values of \Species quantity, \Compartment size, and \Parameter
-    values.  (Note there cannot be both an \AssignmentRule and an
-    \InitialAssignment for the same identifier; see
-    Section~\ref{sec:rules}.)
 
+\begin{blockChanged}
+  \item Any \Species, \Compartment, or \Parameter with no \InitialAssignment or \Rule that targets it continues to have its initial value, as defined by the relevant attribute.
+
+  \item Any \InitialAssignment definition continues to take effect.  Since these contain mathematical formulas, different values may be computed at each time step t in $t_i \leq t \leq 0$.
+
+  \item Any \AssignmentRule or \AlgebraicRule definition continues to take effect, and may not be overridden.  Again, different values may be computed at each time step t in $t_i \leq t \leq 0$.
+
+  \item The identifier of any \Reaction continues to be the value of its \KineticLaw.  Again, different values may be computed at each time step t in $t_i \leq t \leq 0$.
+
+\end{blockChanged}
   \end{itemize}
-  
+
+
 \item At time $t = 0$:
   \begin{itemize}  
-    
-  \item The system of equations constructed by combining
-    \AssignmentRule equations, \AlgebraicRule equations, \RateRule
-    equations, and the equations constructed from the \Reaction
-    definitions in the model, are used to obtain consistent
-    initial conditions for numerical solver algorithms.  (Note
-    that there cannot be both an \AssignmentRule and a \RateRule
-    for the same identifier, or both an \AssignmentRule and an
-    \InitialAssignment for the same identifier; see
-    Section~\ref{sec:assignmentrule}.)
-    
+
+\begin{blockChanged}
+  \item The identifier of any \Reaction continues to be the value of its \KineticLaw, but may begin to affect its referenced \Species.  A \Reaction with a \token{fast} attribute of \val{false} (the default) affects its \Species at a rate, that is, an amount per time.  As the time that has passed is still zero, the change in the referenced \Species is also zero.  But reactions with a \token{fast} attribute of \val{true} \emph{do} affect the levels of their referenced \Species, regardless of the timeframe involved, and thus may change the value of their referenced \Species even at time $t=0$.
+
+  \item Any element with mathematical meaning with no \InitialAssignment or \Rule that targets it continues to have its initial value, as defined by the relevant attribute, but may now be overridden by any fast \Reaction, executed as above.
+
+  \item Any \InitialAssignment definition continues to take effect, but may now be overridden by any fast \Reaction, executed as above.
+
+  \item Any \AssignmentRule or \AlgebraicRule definition continues to take effect, and may not be overridden.
+\end{blockChanged}
+
   \item \Constraint definitions begin to take effect (and a
     constraint violation may result; see
     Section~\ref{sec:constraints}).
@@ -1614,7 +1611,18 @@ applied:
   
 \item For time $t > 0$:
   \begin{itemize}
-    
+
+\begin{blockChanged}
+  \item The value of any element with mathematical meaning may now be overridden by any construct in SBML (though it may retain its original value if no such constructs apply).
+
+  \item The value of any element with an \InitialAssignment may also now be overridden by any construct in SBML (though it may retain the value set by the \InitialAssignment if no such constructs apply).
+
+  \item Any \AssignmentRule or \AlgebraicRule definition continues to take effect, and still may not be overridden by any other SBML construct.
+
+  \item Any \Reaction can begin to affect its referenced \Species.  Its identifier continues to be the value of its \KineticLaw.
+
+\end{blockChanged}
+
   \item \RateRule definitions can begin to take effect.
     
   \item \Event definitions can begin to take effect.  (Note that
@@ -1640,8 +1648,6 @@ alter the steps above.
 SBML models may not be \emph{overdetermined}, that is, one cannot define a model with multiple constructs that each define their own way of establishing the value of a symbol.  (The exception to this rule is that one may have one element with an attribute defining its initial value which is overruled by an \InitialAssignment or \Rule.)  Such models are inherently self-contradictory, and thus not valid.  However, it is perfectly legal to define and exchange an \emph{underdetermined} model, that is, a model with one or more symbols that have no way of establishing their values (such as a model with a \Parameter with no \token{initialValue}, no \InitialAssignment, and no relevant \Rule), or a model with multiple correct solutions (such as a model with an \AlgebraicRule that could be used to determine either one but not both of two different symbols, or an \AlgebraicRule with multiple solutions, like $0=x^2-4$).  Such models cannot be simulated without extra information being added in some way, but they are \emph{incomplete}, not \emph{self-contradictory}, and therefore valid.
 
 There are a number of reasons one may wish to create an underdetermined SBML model.  At the most basic level, one may be in the process of creating a fully-determined model, but are not yet finished doing so, either as a work in progress on one tool, or as part of a model-creating pipeline across multiple tools.  Similarly, one may be interested in creating a model that reflects the current state of knowledge about a biological system, and that knowledge itself may be incomplete.  One may also be interested in performing a type of analysis other than simulation, such as a structural analysis, which does not require all symbols to be numerically defined.
-
-It is also possible that the missing information is provided by an SBML package like the Flux Balance Constraints package.  Package information may provide the missing information needed to resolve the system, or provide a new context for the model indicating the type(s) of analyses for which the model was designed.
 
 Different simulation software tools approach the problem of underdetermined models in different ways when asked to perform a simulation.  Some simply refuse, requiring more information from the user before proceeding.  Others provide defaults (typically telling the user they are doing so) for symbols whose values are not established by the model, using values of '1' or '0', depending on the element type.  In the case of encountering an \AlgebraicRule with multiple solutions, some software tools allow the use of \Constraint elements to choose one solution over another ($0=x^2-4; x<0$).  All of these approaches are valid responses to encountering an underdetermined SBML model, but no one solution is established cannonically as being 'correct', as different situations warrant different responses.
 

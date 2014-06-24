@@ -65,14 +65,14 @@ Type \primtype{SpIdRef} is used for all attributes that refer to identifiers of 
 The \primtype{BoundaryConditionKind} primitive data type is used in the definition of the \BoundaryCondition class.  The type \primtype{BoundaryConditionKind} is derived from type \primtype{string} and its values are restricted to being one of the following possibilities: \val{Robin\_valueCoefficient}, \val{Robin\_inwardNormalGradientCoefficient}, \val{Robin\_sum}, \val{\changed{Neumann}}, and \val{\changed{Dirichlet}}.  Attributes of type \primtype{BoundaryConditionKind} cannot take on any other values.  The meaning of these values is discussed in the context of the \BoundaryCondition class's definition in \sec{BoundaryCondition-class}.
 
 
-\subsubsection{Type \fixttspace\primtypeNC{ComponentKind}}
+\subsubsection{Type \fixttspace\primtypeNC{\changed{CoordinateKind}}}
 \label{primtype-componentkind}
 
-The \primtype{ComponentKind} primitive data type is used in the definition of the \CoordinateComponent class.  \primtype{ComponentKind} is derived from type \primtype{string} and its values are restricted to being one of the following possibilities: \val{cartesianX}, \val{cartesianY}, and \val{cartesianZ}.
+The \primtype{\changed{CoordinateKind}} primitive data type is used in the definition of the \CoordinateComponent class.  \primtype{\changed{CoordinateKind}} is derived from type \primtype{string} and its values are restricted to being one of the following possibilities: \val{cartesianX}, \val{cartesianY}, and \val{cartesianZ}.
 %, \val{spherical\-Radius}, \val{sphericalAzimuth}, \val{sphericalElevation}, \val{cylindrical\-Radius}, \val{cylindricalAzimuth}, \val{cylindricalHeight}, \val{polarRadius}, and \val{polarAzimuth}.
-Attributes of type \primtype{ComponentKind} cannot take on any other values.  The meaning of these values is discussed in the context of the \CoordinateComponent class's definition in \sec{CoordinateComponent-class}.
+Attributes of type \primtype{\changed{CoordinateKind}} cannot take on any other values.  The meaning of these values is discussed in the context of the \CoordinateComponent class's definition in \sec{CoordinateComponent-class}.
 
-Other \primtype{ComponentKind} types are held in reserve for future versions of this specification, and may include \val{spherical\-Radius}, \val{sphericalAzimuth}, \val{sphericalElevation}, \val{cylindrical\-Radius}, \val{cylindricalAzimuth}, \val{cylin\-dricalHeight}, \val{polarRadius}, and \val{polarAzimuth}.
+Other \primtype{\changed{CoordinateKind}} types are held in reserve for future versions of this specification, and may include \val{spherical\-Radius}, \val{sphericalAzimuth}, \val{sphericalElevation}, \val{cylindrical\-Radius}, \val{cylindricalAzimuth}, \val{cylin\-dricalHeight}, \val{polarRadius}, and \val{polarAzimuth}.
 
 
 
@@ -85,7 +85,7 @@ Other \primtype{ComponentKind} types are held in reserve for future versions of 
 \subsubsection{Type \fixttspace\primtypeNC{DiffusionKind}}
 \label{primtype-diffusionkind}
 
-The \primtype{DiffusionKind} primitive data type is used in the definition of the \DiffusionCoefficient class.  \primtype{DiffusionKind} is derived from type \primtype{string} and its values are restricted to being one of the following possibilities: \val{isotropic} and \val{tensor}.  Attributes of type \primtype{DiffusionKind} cannot take on any other values.  The meaning of these two values is discussed in the context of the \DiffusionCoefficient class's definition in \sec{DiffusionCoefficient-class}.
+The \primtype{DiffusionKind} primitive data type is used in the definition of the \DiffusionCoefficient class.  \primtype{DiffusionKind} is derived from type \primtype{string} and its values are restricted to being one of the following possibilities: \val{isotropic}, \changed{\val{anisotropic}}, and \val{tensor}.  Attributes of type \primtype{DiffusionKind} cannot take on any other values.  The meaning of these two values is discussed in the context of the \DiffusionCoefficient class's definition in \sec{DiffusionCoefficient-class}.
 
 
 \subsubsection{Type \fixttspace\primtypeNC{FunctionKind}}
@@ -228,15 +228,22 @@ It is possible to define both diffusion and advection for the same \Species.
 The required \token{variable} attribute of \DiffusionCoefficient is of type \primtype{SIdRef} and is the \primtype{SId} of the \Species or \Parameter in the model whose diffusion coefficient is being set.
 
 \subsubsection{The \token{type} attribute}
-The required \token{type} attribute of \DiffusionCoefficient is of type \primtype{DiffusionKind} and indicates whether the diffusion coefficient is \val{isotropic} (i.e. applies equally in all dimensions/directions) or \val{tensor} (i.e. applies only for a particular pair of coordinate indices).  Coefficients of type \val{isotropic} may not have any child \CoordinateIndex children, while coefficients of type \val{tensor} must have exactly two.
+The required \token{type} attribute of \DiffusionCoefficient is of type \primtype{DiffusionKind} and indicates whether the diffusion coefficient is \val{isotropic} (i.e. applies equally in all dimensions/directions) \val{tensor} (i.e. applies only for a particular pair of coordinates), \changed{or \val{anisotropic} (i.e. applies only for a single coordinate)}.  Coefficients of type \val{isotropic} may not have any child \changed{\CoordinateReference} children; coefficients of type \val{tensor} must have exactly two; \changed{and coefficients of type \val{anisotropic} must have exactly one}.
 
 
-\subsubsection{The \class{CoordinateIndex} class}
-\label{CoordinateIndex-class}
-The optional \CoordinateIndex children of the \DiffusionCoefficient object represent the index attributes of the \CoordinateComponent (e.g. 0 for x, 1 for y, 2 for z), for specifying the diffusion coefficient for flux in the plane defined by the two \CoordinateIndex axes.  
-\token{coordinateIndex} direction due to a gradient in the \token{coordinateIndex} direction (diagonal term of the diffusion tensor).  If the \token{coordinateIndex} is missing, the diffusion is considered to be Isotropic.
+\subsubsection{The \class{\changed{CoordinateReference}} class}
+\label{CoordinateReference-class}
+The optional \changed{\CoordinateReference} children of the \DiffusionCoefficient object contain \changed{(in their own \token{coordinate} attribute)} the \changed{type} attributes of the \CoordinateComponent (e.g. \changed{\val{cartesianX}, \val{cartesianY}, or \val{cartesianZ}}), for specifying axis or axes it applies to.
 
-{\color{red} Lucian: \notice I updated this some, but was also thinking:  if we remove the 'index' value from the \CoordinateComponent, it might make sense for the \token{coordinateIndex} attribute to be of type \primtype{SpIdRef} instead, and have it reference the actual coordinate component from the model.  In other words, instead of 'coordinateIndex=0', you'd have 'coordinate=\val{x}'.  Does this seem reasonable?  Also, we'll have to think about what to do with this if we ever add back in other coordinate systems.}
+\begin{blockChanged}
+If the \DiffusionCoefficient has two \CoordinateReference children, the diffusion coefficient is defined for flux in the plane defined by the two \changed{\CoordinateReference} axes.  The diffusion is defined in relation to the direction due to a gradient in the diagonal term of the diffusion tensor for the two coordinates.
+
+If the \DiffusionCoefficient has exactly one \CoordinateReference child, the diffusion is considered to be anisotropic. To be complete, one \DiffusionCoefficient will need to be defined per axis.
+
+If the \DiffusionCoefficient has no \CoordinateReference children, the diffusion is considered to be Isotropic.
+\end{blockChanged}
+
+{\color{red} Lucian: \notice Updated again, but still potentially in flux.  We probably need more text here in general to describe the situation.}
 
 \subsubsection{\DiffusionCoefficient uniqueness}
 Only one \DiffusionCoefficient may be defined per \Species per pair of valid axes in the \Compartment in which it resides.  Since isotropic diffusion is defined for all axes at once, this means that if an isotropic \DiffusionCoefficient is defined for a \Species, it may have no other diffusuion coefficients.
@@ -253,10 +260,10 @@ It is possible to define both diffusion and advection for the same \Species.
 \subsubsection{The \token{variable} attribute}
 The \token{variable} attribute of \AdvectionCoefficient is of type \primtype{SIdRef} and is the SId of the \Species or \Parameter in the model whose advection coefficient (transport velocity) is being set.
 
-\subsubsection{The \token{coordinateIndex} attribute}
-The \token{coordinateIndex} is of type \primtype{int} and represents the coordinate component of the velocity. For example, if the \Geometry is defined in the Cartesian coordinate system and is 2-dimensional, the species can have velocity terms for both X and Y. If the \Parameter represents the transport velocity of the species in the X-coordinate, the \token{coordinateIndex} attribute will take a value of 0, and if it represents the velocity in the Y-coordinate, the attribute will take a value of 1.  Only one \AdvectionCoefficient may be defined per \Species per valid \token{coordinateIndex}.
+\subsubsection{The \token{\changed{coordinate}} attribute}
+The \token{\changed{coordinate}} is of type \primtype{CoordinateKind} and represents the coordinate component of the velocity. For example, if the \Geometry is defined in the Cartesian coordinate system and is 2-dimensional, the species can have velocity terms for both X and Y. If the \Parameter represents the transport velocity of the species in the X-coordinate, the \token{\changed{coordinate}} attribute will take a value of \changed{\val{cartesianX}}, and if it represents the velocity in the Y-coordinate, the attribute will take a value of \changed{\val{cartesianY}}.  Only one \AdvectionCoefficient may be defined per \Species per valid \token{\changed{coordinate}}.
 
-{\color{red} Lucian: \notice Again, this might be clearer as a 'coordinate' attribute of type 'SpIdRef' instead of linking things to indices.}
+{\color{red} Lucian: \notice Changed to CoordinateKind.}
 
 
 \subsection{The \class{BoundaryCondition} class}
@@ -357,16 +364,16 @@ A \CoordinateComponent is identified with the \token{\changed{id}} attribute whi
  
 Because a \CoordinateComponent represents an entire axis, it is not appropriate, should it be connected to a \Parameter via a \SpatialSymbolReference, for that \Parameter to be set via an \InitialAssignment or \Rule.  Rather, it is treated like the SBML core \token{csymbol} \val{time}, and can be used as an independent variable in other calculations.
 
-\subsubsection{The \token{componentType} attribute}
-The \token{componentType} attibute of type \primtype{ComponentKind} represents the type of the coordinate component, and may take one of a subset of all possible \primtype{ComponentKind} values depending on its parent \Geometry, as defined in \tab{CoordinateComponent-Geometry-relation}.
-%For all \primtype{GeometryKind} values except \val{cartesian}, exactly one \CoordinateComponent must exist with each of the allowed \primtype{ComponentKind} values:  in other words, a \val{cylendrical} \Geometry must have exactly three \CoordinateComponent children, each one having a different allowed value for its \token{componentType} attribute.
-For Cartesian geometries, one-dimensional geometries may be defined by having a single \val{cartesianX} \CoordinateComponent; two-dimensional geometries may be defined by having two \CoordinateComponent children with \token{componentType} values of \val{cartesianX} and \val{cartesianY}, and three-dimensional geometries may be defined by having three \CoordinateComponent children with \token{componentType} values of \val{cartesianX}, \val{cartesianY}, and \val{cartesianZ}.
+\subsubsection{The \token{\changed{type}} attribute}
+The \token{\changed{type}} attibute of type \primtype{\changed{CoordinateKind}} represents the type of the coordinate component, and may take one of a subset of all possible \primtype{\changed{CoordinateKind}} values depending on its parent \Geometry, as defined in \tab{CoordinateComponent-Geometry-relation}.
+%For all \primtype{GeometryKind} values except \val{cartesian}, exactly one \CoordinateComponent must exist with each of the allowed \primtype{\changed{CoordinateKind}} values:  in other words, a \val{cylendrical} \Geometry must have exactly three \CoordinateComponent children, each one having a different allowed value for its \token{\changed{type}} attribute.
+For Cartesian geometries, one-dimensional geometries may be defined by having a single \val{cartesianX} \CoordinateComponent; two-dimensional geometries may be defined by having two \CoordinateComponent children with \token{\changed{type}} values of \val{cartesianX} and \val{cartesianY}, and three-dimensional geometries may be defined by having three \CoordinateComponent children with \token{\changed{type}} values of \val{cartesianX}, \val{cartesianY}, and \val{cartesianZ}.
 
 \begin{table}[thb]
   \begin{edtable}{tabular}{>{\centering\arraybackslash}m{0.9in} >{\centering\arraybackslash}m{0.7in} >{\raggedright\arraybackslash}m{4.4in}}
   %\begin{edtable}{tabular}{p{0.9in}p{0.7in}p{4.4in}}
     \toprule
-    \textbf{GeometryKind} & \textbf{Dimensions} & \textbf{ComponentKinds} \\
+    \textbf{GeometryKind} & \textbf{Dimensions} & \textbf{\changed{CoordinateKind}s} \\
     \midrule
     \token{cartesian}   & 1 & \val{cartesianX} (\token{coord1})\\
     \token{cartesian}   & 2 & \val{cartesianX} (\token{coord1}) and \val{cartesianY} (\token{coord2})\\
@@ -376,7 +383,7 @@ For Cartesian geometries, one-dimensional geometries may be defined by having a 
  %   \token{spherical}   & 3 & \val{sphericalRadius} (\token{coord1}), \val{sphericalAzimuth} (\token{coord2}), and \val{sphericalElevation} (\token{coord3})\\
     \bottomrule
   \end{edtable}
-  \caption{Correspondance between the \token{type} of a \Geometry and the possible \token{componentType}s of it child \CoordinateComponent elements.  Also noted is the corresponding attribute (\token{coord1}, \token{coord2}, or \token{coord3}) corresponding to each axis when defining \InteriorPoint elements (see \sec{InteriorPoint-class}).} 
+  \caption{Correspondance between the \token{type} of a \Geometry and the possible \token{\changed{type}}s of its child \CoordinateComponent elements.  Also noted is the corresponding attribute (\token{coord1}, \token{coord2}, or \token{coord3}) corresponding to each axis when defining \InteriorPoint elements (see \sec{InteriorPoint-class}).} 
   \label{CoordinateComponent-Geometry-relation}
 \end{table}
 
@@ -472,7 +479,7 @@ For those geometric descriptions that can describe multiple disjoint domains bel
 Each \InteriorPoint has three attributes: \token{coord1}, \token{coord2}, and \token{coord3}. 
 
 \subsubsection{The \token{coord1}, \token{coord2}, and \token{coord3} attributes}
-An InteriorPoint element represents a single point within the defined coordinate system and should be in the interior of the domain that contains it. It has three attributes, \token{coord1}, \token{coord2}, and \token{coord3}, of type \primtype{double}, representing the position along each of the up to three coordinate axes defined by the \CoordinateComponents (with \token{index} 0, 1, and 2 respectively for a three dimensional geometry; see \tab{CoordinateComponent-Geometry-relation}).
+An InteriorPoint element represents a single point within the defined coordinate system and should be in the interior of the domain that contains it. It has three attributes, \token{coord1}, \token{coord2}, and \token{coord3}, of type \primtype{double}, representing the position along each of the up to three coordinate axes defined by the \CoordinateComponents \changed{(with \token{type} \val{cartesianX}, \val{cartesianY}, and \val{cartesianZ}, respectively, for each \token{coord\_} attribute}; see \tab{CoordinateComponent-Geometry-relation}).
 
 Each \InteriorPoint must define the same number of attributes as there are dimensions of the corresponding \Geometry to which it belongs.
 
@@ -756,13 +763,13 @@ The child \token{csgNode} element represents the geometry that is to be transfor
 The \CSGTranslation element represents a translation transformation on a \CSGNode (a transformation or set operation on one or a set of \CSGPrimitives) or a \CSGPrimitive along the axes defined in the \Geometry. This element has 3 attributes:
 
 \subsubsection{The \token{translateX} attribute}
-The \token{translateX} attribute is of type \primtype{double}. It represents the translation of the \CSGNode along the x-axis (the \CoordinateComponent with the \token{componentType} of \val{cartesianX}).
+The \token{translateX} attribute is of type \primtype{double}. It represents the translation of the \CSGNode along the x-axis (the \CoordinateComponent with the \token{\changed{type}} of \val{cartesianX}).
 
 \subsubsection{The \token{translateY} attribute}
-The \token{translateY} attribute is of type \primtype{double}. It represents the translation of the \CSGNode along the y-axis (the \CoordinateComponent with the \token{componentType} of \val{cartesianY}).
+The \token{translateY} attribute is of type \primtype{double}. It represents the translation of the \CSGNode along the y-axis (the \CoordinateComponent with the \token{\changed{type}} of \val{cartesianY}).
 
 \subsubsection{The \token{translateZ} attribute}
-The \token{translateZ} attribute is of type \primtype{double}. It represents the translation of the \CSGNode along the z-axis (the \CoordinateComponent with the \token{componentType} of \val{cartesianZ}).
+The \token{translateZ} attribute is of type \primtype{double}. It represents the translation of the \CSGNode along the z-axis (the \CoordinateComponent with the \token{\changed{type}} of \val{cartesianZ}).
 
 {\color{red} Lucian: \notice I still think it's awkward to have attributes here that correspond to attribute *values* somewhere else, but it's at least not incorrect, like it was before we stripped everything but the cartesian coordinate system.  Not sure what a good fix would be, though.}
 
@@ -771,15 +778,15 @@ The \token{translateZ} attribute is of type \primtype{double}. It represents the
 The \CSGRotation element represents a rotation transformation on a \CSGNode (a transformation or set operation on one or a set of \CSGPrimitives) or a \CSGPrimitive about the axes defined in the \Geometry. This element has 4 attributes:
 
 \subsubsection{The \token{rotateX} attribute}
-The \token{rotateX} attribute is of type \primtype{double}. It represents the rotation of the \CSGNode along the x-axis (the \CoordinateComponent with the \token{componentType} of \val{cartesianX}).
+The \token{rotateX} attribute is of type \primtype{double}. It represents the rotation of the \CSGNode along the x-axis (the \CoordinateComponent with the \token{\changed{type}} of \val{cartesianX}).
 
 {\color{red} Lucian: \notice I don't know what 'the rotation' means, since there's already an angle attribute.  Are we talking relative rotation of that angle on this axis?  I think we need more semantics here.}
 
 \subsubsection{The \token{rotateY} attribute}
-The \token{rotateY} attribute is of type \primtype{double}. It represents the rotation of the \CSGNode along the y-axis (the \CoordinateComponent with the \token{componentType} of \val{cartesianY}).
+The \token{rotateY} attribute is of type \primtype{double}. It represents the rotation of the \CSGNode along the y-axis (the \CoordinateComponent with the \token{\changed{type}} of \val{cartesianY}).
 
 \subsubsection{The \token{rotateZ} attribute}
-The \token{rotateZ} attribute is of type \primtype{double}. It represents the rotation of the \CSGNode along the z-axis (the \CoordinateComponent with the \token{componentType} of \val{cartesianZ}).
+The \token{rotateZ} attribute is of type \primtype{double}. It represents the rotation of the \CSGNode along the z-axis (the \CoordinateComponent with the \token{\changed{type}} of \val{cartesianZ}).
 
 
 \subsubsection{The \token{rotationAngleInRadians} attribute}
@@ -793,13 +800,13 @@ The \CSGScale element represents a scale transformation on a \CSGNode (a transfo
 {\color{red} Lucian: \notice Does it make a difference if the object is scaled and remains centered where it was, or leaves its corner at the origin?  If so, the version used should be explicitly stated here, I think.}
 
 \subsubsection{The \token{scaleX} attribute}
-The \token{scaleX} attribute is of type \primtype{double}. It represents the amount of scaling of the \CSGNode along the x-axis (the \CoordinateComponent with the \token{componentType} of \val{cartesianX}).
+The \token{scaleX} attribute is of type \primtype{double}. It represents the amount of scaling of the \CSGNode along the x-axis (the \CoordinateComponent with the \token{\changed{type}} of \val{cartesianX}).
 
 \subsubsection{The \token{scaleY} attribute}
-The \token{scaleY} attribute is of type \primtype{double}. It represents the amount of scaling of the \CSGNode along the y-axis (the \CoordinateComponent with the \token{componentType} of \val{cartesianY}).
+The \token{scaleY} attribute is of type \primtype{double}. It represents the amount of scaling of the \CSGNode along the y-axis (the \CoordinateComponent with the \token{\changed{type}} of \val{cartesianY}).
 
 \subsubsection{The \token{scaleZ} attribute}
-The \token{scaleZ} attribute is of type \primtype{double}. It represents the amount of scaling of the \CSGNode along the z-axis (the \CoordinateComponent with the \token{componentType} of \val{cartesianZ}).
+The \token{scaleZ} attribute is of type \primtype{double}. It represents the amount of scaling of the \CSGNode along the z-axis (the \CoordinateComponent with the \token{\changed{type}} of \val{cartesianZ}).
 
 \subsection{The \class{CSGHomogeneousTransformation} class}
 \label{CSGHomogeneousTransformation-class}

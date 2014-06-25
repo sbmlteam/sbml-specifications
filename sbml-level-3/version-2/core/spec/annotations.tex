@@ -128,6 +128,8 @@ below.
 \newcommand{\history}          {\historyNS\xspace}
 \newcommand{\resourceURINS}    {\colorbox[rgb]{.8,.8,1}{\underline{\texttt{URI}}}}
 \newcommand{\resourceURI}      {\resourceURINS\xspace}
+\newcommand{\nestedContentNS}  {\colorbox[gray]{.7}{\texttt{[NESTED CONTENT]}}}
+\newcommand{\nestedContent}    {\nestedContentNS\xspace}
 
 \vspace*{-0.5ex}
 \begin{example}
@@ -146,6 +148,7 @@ below.
           <rdf:Bag>
             <rdf:li rdf:resource="\resourceURINS" />
             \moreOfTheSame
+            \nestedContent
           </rdf:Bag>
         </\relationElementNS>
         \moreOfTheSame
@@ -171,7 +174,9 @@ or {\scalefont{0.98}\uri{http://biomodels.net/model-qualifiers/}}
 URI identifying a resource (see
 Section~\ref{sec:uri-in-annotation}); and \history refers to
 optional content described in
-Section~\ref{sec:model-history-annotation}.  The string
+Section~\ref{sec:model-history-annotation}.
+\changed{\nestedContent refers to other optional RDF elements such as \token{bqbiol:isDescribedBy} that describe a clarification or another annotation about the \relationElement in which it appears.  Nested content allows one to, for example, describe protein modifications on species, or to add evidence codes for an annotation.}
+The string
 `\otherContent' is a placeholder for either no content or valid
 XML content that is not defined by the annotation scheme described
 here but is consistent with the relevant standards for the
@@ -200,8 +205,9 @@ or resource.  Although Section~\ref{sec:qualified-dc-annotation}
 describes the detailed semantics of each of the relation element
 types, the content of these elements follows the same form shown
 in the template above.  A BioModels.net relation element must only
-contain a single \token{rdf:Bag} element which in turn must only
-contain one or more \token{rdf:li} elements.  The \token{rdf:li}
+contain a single \token{rdf:Bag} element which in turn must 
+contain one or more \token{rdf:li} elements, \changed{and may additionally contain nested content that provides additional annotations about the contents of the \token{rdf:Bag}}.
+The \token{rdf:li}
 elements must only have a \token{rdf:resource} attribute
 containing a URI referring to an information resource (see
 Section~\ref{sec:uri-in-annotation}).
@@ -212,7 +218,7 @@ Section~\ref{sec:uri-in-annotation}).
 %within a model component.
 
 %LS DEBUG:  I have no idea why the following 'clearpage' is required, but without it, compilation hangs.  It's the weirdest thing.
-\clearpage
+%\clearpage
 
 %=============================================================================
 \subsection{Use of URIs}
@@ -294,37 +300,6 @@ information in RDF content elsewhere (e.g., after the first
 the scope of the simple annotation scheme described here, and as
 such, there is no guarantee that other software could understand
 it.
-
-%=============================================================================
-\subsection{Relation elements}
-\label{sec:qualified-dc-annotation}
-%=============================================================================
-
-Different BioModels.net qualifier elements encode different types
-of relationships.  As described above, when appearing in an
-annotation, each qualifier element encloses a set of
-\token{rdf:li} elements.  Its appearance in a relation element
-implies a specific relationship between the enclosing SBML object
-and the resources referenced by the \token{rdf:li} elements.
-When several relation elements with the same name are placed in
-the same SBML element's annotation, they represent alternatives.
-For example, two \token{bqbiol:hasPart} elements within a \Species
-object represent two different sets of references to the parts
-making up the biological entity represented by the species.  (The
-species is not made up of \emph{all} the entities represented by
-all the references combined; they are alternatives.)
-
-Table~\vref{tab:miriam-qualifiers} lists the elements defined at
-the time of this writing.  The list is divided into two symbol
-namespaces.  One is for model qualifiers, and this one has the URI
-\uri{http://biomodels.net/model-qualifiers/} (for which we use the
-prefix \token{bqmodel} in examples shown in this section).  The
-other namespace is for biological qualifiers; this has the URI
-\uri{http://biomodels.net/biology-qualifiers/} (for which we use
-the prefix \token{bqbiol}).  The list will only grow; \ie no
-element will be removed from the list.
-
-\clearpage
 
 \begin{table}[b]
   \small
@@ -436,6 +411,35 @@ element will be removed from the list.
   \label{tab:miriam-qualifiers}
 \end{table}
 
+
+%=============================================================================
+\subsection{Relation elements}
+\label{sec:qualified-dc-annotation}
+%=============================================================================
+
+Different BioModels.net qualifier elements encode different types
+of relationships.  As described above, when appearing in an
+annotation, each qualifier element encloses a set of
+\token{rdf:li} elements.  Its appearance in a relation element
+implies a specific relationship between the enclosing SBML object
+and the resources referenced by the \token{rdf:li} elements.
+When several relation elements with the same name are placed in
+the same SBML element's annotation, they represent alternatives.
+For example, two \token{bqbiol:hasPart} elements within a \Species
+object represent two different sets of references to the parts
+making up the biological entity represented by the species.  (The
+species is not made up of \emph{all} the entities represented by
+all the references combined; they are alternatives.)
+
+Table~\vref{tab:miriam-qualifiers} lists the elements defined at
+the time of this writing.  The list is divided into two symbol
+namespaces.  One is for model qualifiers, and this one has the URI
+\uri{http://biomodels.net/model-qualifiers/} (for which we use the
+prefix \token{bqmodel} in examples shown in this section).  The
+other namespace is for biological qualifiers; this has the URI
+\uri{http://biomodels.net/biology-qualifiers/} (for which we use
+the prefix \token{bqbiol}).  The list will only grow; \ie no
+element will be removed from the list.
 
 %===============================================================
 \subsection{History}
@@ -968,3 +972,40 @@ the generic GO term ``phosphorylation''.
   </annotation>
 </reaction>
 \end{example}
+
+\begin{blockChanged}
+The following example demonstrates the use of nested terms to describe not only that a species is in a particular compartment, but why this is believed to be true:
+
+\begin{example}
+<species id="S1" metaid="_000004" compartment="lysosome"
+         hasOnlySubstanceUnits="false" boundaryCondition="false"
+         constant="false">
+  <annotation>
+    <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+             xmlns:bqbiol="http://biomodels.net/biology-qualifiers/"
+             xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
+      <rdf:Description rdf:about="#_000004">
+        <bqbiol:occursIn>
+          <rdf:Bag>
+            <rdf:li rdf:resource="http://identifiers.org/go/GO:0005764"/>
+            <bqbiol:isDescribedBy>
+              <rdf:Bag>
+                <rdf:li rdf:resource="http://identifiers.org/pubmed/1111111"/>
+              </rdf:Bag>
+            </bqbiol:isDescribedBy>
+            <bqbiol:isDescribedBy>
+              <rdf:Bag>
+                <rdf:li rdf:resource="http://identifiers.org/eco/ECO:0000004"/>
+              </rdf:Bag>
+            </bqbiol:isDescribedBy>
+          </rdf:Bag>
+        </bqbiol:occursIn>
+      </rdf:Description>
+    </rdf:RDF>
+  </annotation>
+</species>
+\end{example}
+
+In descriptive terms, the SBML species \val{S1} (with metaid \val{\_000004}) occurs in \val{go/GO:0005764} (the lysosome).  This is described by the publication \val{pubmed/1111111}, and is believed to be true because of the evidence \val{eco/ECO:0000004} (cell fractionation evidence).
+
+\end{blockChanged}

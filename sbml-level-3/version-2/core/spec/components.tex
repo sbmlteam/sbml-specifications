@@ -548,7 +548,7 @@ function called in subsequent MathML \token{apply} elements.
     \token{lambda} expression (or a \token{lambda} surrounded by a
     \token{semantics} element).  A function definition must
     contain exactly one \token{math} element defined by the
-    \class{Lambda} class.  Note also that \class{Lambda} is not
+    \class{Lambda} class, \changed{plus a boolean \token{isRecursive} attribute}.  Note also that \class{Lambda} is not
     derived from \SBaseUpright, which means that the attributes defined
     on \SBaseUpright are \emph{not} available on the \token{math}
     element.  A sequence of \changed{zero} or more instances of
@@ -564,7 +564,7 @@ Function definitions in SBML (also informally known as
 As is made clearer below, a function cannot reference
 parameters or other model quantities outside of itself; values
 must be passed as parameters to the function.  Moreover, recursive
-and mutually-recursive functions are not permitted.  The purpose
+and mutually-recursive functions are permitted \changed{only if the value of the \token{isRecursive} attribute is set to \val{true}}.  The purpose
 of these limitations is to balance power against complexity of
 implementation.  With the restrictions as they are, function
 definitions could, if desired, be implemented as textual substitutions.
@@ -576,6 +576,13 @@ programming languages.
 \subsubsection{The \token{id} attribute}
 
 The \token{id} attribute that \FunctionDefinition inherits from \SBase is changed here to be required instead of optional, and otherwise behaves as described in Section~\ref{sec:idnameattribs}.  It has mathematical meaning in that it may be used in \token{math} elements as the first target of an \token{apply} element, but has no value associated with it, and may not be the target of an \InitialAssignment, \EventAssignment, or \Rule.
+
+
+\subsubsection{The \token{isRecursive} attribute}
+
+The \token{isRecursive} attribute is of type \primtype{boolean}, and indicates whether the \FunctionDefinition is recursive or not.  If the \FunctionDefinition's child \class{Lambda} element refers to itself, either directly or indirectly, this attribute must be set \val{true}.  Otherwise, it may be set \val{false}.
+
+Recursive functions must terminate, however, as they might through the use of a \token{piecewise} function.
 \end{blockChanged}
 
 \subsubsection{The \token{math} element}
@@ -599,8 +606,10 @@ contain references to identifiers other than the
 is, the contents of MathML \token{ci} elements inside the body of
 the \token{lambda} can only be one of two kinds of
   identifiers: (i) the \changed{symbols} declared by its \token{bvar}
-  elements, or (ii) the identifiers of other
-\FunctionDefinition{} objects defined in the same model.  This
+  elements, (ii) the identifiers of other
+\FunctionDefinition objects defined in the same model,
+\changed{or (iii) its own identifier (if the \token{isRecursive} attribute is set to \val{true}).}
+.  This
 restriction also applies to the \token{csymbol} elements for
 \quantity{time}, \quantity{avogadro}, \quantity{delay}, \changed{ and \quantity{rateOf}}.
 Functions must be written so that all model \changed{symbols} they use are

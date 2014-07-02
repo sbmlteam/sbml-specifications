@@ -295,3 +295,133 @@ namespace   \textls[-25]{\uri {http://www.w3.org/1998/Math/MathML”}}.
 
 \section{Example Algorithm for Producing a ``flattened'' Model}
 \label{flatten}
+\fig{flattening-algo} presents a possible algorithm for interpreting the
+Arrays constructs and creating a ``flattened''
+SBML document. After performing the steps of the
+flattening algorithm, the result should be evaluated for validity
+according to the normal rules of SBML Level~3 Version~1 Core and (if
+applicable) the rules defined by any other Level~3 packages used in the
+model.
+
+\begin{figure}[thb]
+  \renewcommand{\arraystretch}{0.85}
+  \newcounter{rownum}
+  \setcounter{rownum}{0}
+  \setlength{\tabcolsep}{4pt}
+  \begin{edtable}{tabular}{>{\stepcounter{rownum}\therownum.}rp{6.05in}}
+    \toprule
+    \multicolumn{1}{r}{\textbf{Step}} & \textbf{Procedure} \\
+    \midrule
+
+    & Let $M$ be a map that maps an SBase to a list of flattened identifiers. 
+    \\[6pt]
+
+
+    & Examine all SBase objects of the model containing a list of
+    \Dimension objects that are being validated. 
+    \\[6pt]
+
+
+   & For a given SBase object with identifier ``\emph{S}'', verify
+    that no object identifier or meta identifier of objects in the
+    model (i.e., the \token{id} or \token{metaid} attribute values)
+    begin with the character sequence ``\emph{S\_\_}''; if there
+    \emph{is} an existing identifier or meta identifier beginning with
+    ``\emph{S\_\_}'', add an underscore to ``\emph{S\_\_}'' (i.e., to
+    produce ``\emph{S\_\_\_}'') and again check that the sequence is
+    unique.  Continue adding underscores until you find a unique prefix.
+    Let ``\emph{P}'' stand for this final prefix. 
+    \\[6pt]
+
+
+    & Transform ``\emph{S}'' as follows:
+    \begin{enumerate}[leftmargin=3ex,label={\alph*})]
+
+    \item Let $\alpha$ := 0 and $V:=\langle P \rangle$.
+    
+    \item Retrieve the \Dimension object
+      associated with ``\emph{S}'' that has array dimension $\alpha$.
+       
+
+    \item Let $T := \langle \rangle$. For each index $i$ in $0\leq i < n$ where n is the size of the \Dimension
+      object, create new identifiers by
+      prepending each element in $V$ to each value of $i$ and add them to $T$.
+
+    \item Add the new identifiers to the ordered list V (i.e. $V:=V \cdot T$).
+
+    \item Increment $\alpha$ (i.e. $\alpha := \alpha + 1$)
+
+    \item   If ``\emph{S}'' contains a \Dimension object with array
+      dimension $\alpha$, then for each element $\nu$ in $V$, remove  $\nu$ from $V$ and verify
+    that no object identifier or meta identifier of objects in the
+    model (i.e., the \token{id} or \token{metaid} attribute values)
+    begin with the character sequence ``\emph{ $\nu$ \_\_}''; if there
+    \emph{is} an existing identifier or meta identifier beginning with
+    ``\emph{ $\nu$ \_\_}'', add an underscore to ``\emph{ $\nu$ \_\_}'' (i.e., to
+    produce ``\emph{ $\nu$ \_\_\_}'') and again check that the sequence is
+    unique.  Continue adding underscores until you find a unique
+    prefix. Add the new identifier back to $V$ and jump back to 4b).
+
+    \vspace*{-0.5em}
+    \end{enumerate}
+    \\
+
+    & Add the $\langle S , V \rangle $ pair to the map $M$ and repeat
+    the above steps for the remaining objects. 
+    \\[6pt]
+
+    & Examine all SBase objects of the model being validated. 
+    \\[6pt]
+
+    %&For each identifier in $V$, create a new SBase object of the
+    %  same type as ``S ''.
+    %  \\[6pt]
+
+    & For a given SBase object with identifier ``\emph{S}'' that
+    contains a list of \Dimension objects, create $n$ copies of that
+    SBase with the
+    same attributes other than the identifier of
+    ``\emph{S}''  and and them to the
+    parent of  ``\emph{S}''  (i.e. $S[0], S[1], \ldots , S[n-1]$ where n is the
+    product of the size of each \Dimension object). The
+    identifier of each element in the array corresponds to the value in $M$ mapped to SBase
+    ``\emph{S}'' at the appropriate index.
+    \\[6pt]
+
+
+    &Transform every \primtype{SIdRef}, MathML vector, and MathML selector objects that
+    ``\emph{S}'' is referencing as follows:
+
+    \begin{enumerate}[leftmargin=3ex,label={\alph*})]
+
+   \item If ``\emph{S}'' has a list of \Index objects, then
+          evaluate the math of each \Index object. Use the evaluated index
+          values to retrieve the corresponding identifier from $M$ or
+          vector, and to calculate the index of the selector math.
+
+    \item If  ``\emph{S}'' has an \primtype{SIdRef} and does not have a list of \Index objects, and 
+      then the index values are the same as the parent's values. Use
+      these values to retrieve the corresponding identifier from
+      $M$.
+
+ 
+
+    \vspace*{-0.5em}
+    \end{enumerate}
+    \\
+
+  & If  ``\emph{S}'' has an assignment that evaluates to a vector, then
+      create $n$ copies of this SBase by repeating steps 3 and
+      4. Repeat step 8 for each created SBase.
+      \\[6pt]
+
+  &  Remove SBase object ``\emph{S}''  and repeat steps 6 - 9 for all
+  remaining objects  and preserve notes and annotations as well as constructs
+    from other SBML Level~3 packages.
+    \\
+    \bottomrule
+  \end{edtable}
+  \caption{Example algorithm for ``flattening'' a model to remove
+    Arrays package constructs.}
+  \label{flattening-algo}
+\end{figure}

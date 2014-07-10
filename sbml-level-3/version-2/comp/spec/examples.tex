@@ -1,0 +1,103 @@
+% -*- TeX-master: "main"; fill-column: 72 -*-
+
+\section{Examples}
+\label{examples}
+
+This section contains a variety of examples employing the Hierarchical
+Model Composition package.
+
+\subsection{Simple aggregate model}
+
+The following is a simple aggregate model, with one defined model being
+instantiated twice:
+
+\exampleFile{figs/eg-simple-aggregate.xml}
+
+In the model above, we defined a two-step enzymatic process, with
+species \val{S} and \val{E} forming a complex, then dissociating to
+\val{E} and \val{D}.  The aggregate model instantiates it twice, so the
+resulting model (the one with the identifier \val{aggregate}) has two
+parallel processes in two parallel compartments performing the same
+reaction.  The compartments and processes are independent, because there
+is nothing in the model that links them together.
+
+
+\subsection{Example of importing definitions from external files}
+
+Now suppose that we have saved the above SBML content to a file named
+\val{enzyme\_model.xml}.  The following example imports the model
+\val{enzyme} from that file into a new model:
+
+\exampleFile{figs/eg-import-external.xml}
+
+In the model above, we import \val{enzyme} twice to create submodels
+\val{A} and \val{B}.  We then create a compartment and species local to
+the parent model, but use that compartment and species to replace
+\val{compartment} and \val{S}, respectively, from the two instantiations
+of \val{enzyme}.  The result is a model with a single compartment and
+two reactions; the species \val{S} can either bind with enzyme \val{E}
+(from submodel \val{A}) to form \val{D} (from submodel \val{A}), or with
+enzyme \val{E} (from submodel \val{B}) to form \val{D} (from submodel
+\val{B}).
+
+
+\subsection{Example of using ports}
+
+In the following, we define one model (\val{simple}) with a single
+reaction involving species \val{S} and \val{D}, and ports, and we
+again import model \val{enzyme}:
+
+\exampleFile{figs/eg-ports.xml}
+
+In model \val{simple} above, we give ports to the compartment, the two
+species, and the reaction.  Then, in model \val{com\-plex\-i\-fied}, we import
+both \val{simple} and the model \val{enzyme} from the file
+\val{enzyme\_model.xml}, and replace the simple reaction with the more
+complex two-step reaction by deleting reaction \val{J0} from model
+\val{simple} and replacing \val{S} and \val{D} from both models with
+local replacements.  Note that it is model \val{simple} that defines the
+initial concentrations of \val{S} and \val{D}, so our modeler set the 
+version in the containing model to be replaced by those elements, instead of 
+having the external version replacing those elements.  Also note that since
+\val{simple} defines ports, the \token{port} attribute is used for the
+subelements that referenced \val{simple} model elements, but
+\val{idRef} still had to be used for subelements referencing
+\val{enzyme}.
+
+In the resulting model, \val{S} is converted to \val{D} by a two-step
+enzymatic reaction defined wholly in model \val{enzyme}, with the
+initial concentrations of \val{S} and \val{D} set in
+\val{simple}.  If \val{simple} had other reactions that created
+\val{S} and destroyed \val{D}, \val{S} would be created, would bind with
+\val{E} to form \val{D}, and \val{D} would then be destroyed, even
+though those reaction steps were defined in separate models.
+
+
+\subsection{Example of deletion replacement}
+
+In reference to the previous example, what if we would like to annotate
+that the deleted reaction had been \emph{replaced} by the two-step
+enzymatic process?  To do that, we must include those reactions as 
+references in the parent model.  However, because we want to leave the complexity of the 
+\val{E} and \val{ES} species to the \val{com\-plex\-i\-fied} model,
+the two reactions in the containing model will contain almost no information
+and serve only as placeholders for the express purpose of being replaced by
+the fuller version in the \val{com\-plex\-i\-fied} submodel:  The first (\val{J0}) has
+only \val{S} as a reactant, and is set to be replaced by \val{J0} from
+\val{com\-plex\-i\-fied}, while the second (\val{J1}) has only \val{D} as a 
+product, and is set to be replaced by \val{J1} from \val{com\-plex\-i\-fied}.
+
+The following SBML fragment demonstrates one way of doing that.
+
+\exampleFile{figs/eg-replacement.xml}
+
+In the example above, we recreated \val{enzyme} so as to provide it with
+ports, then created dummy versions of the reactions from
+\val{com\-plex\-i\-fied} so we can reference the deleted \val{oldrxn} in
+the replacements lists.  Note that we list the deletion of \val{oldrxn}
+for both of the two new reactions, since the full reactions still live
+in \val{com\-plex\-i\-fied}.
+
+The net result is a model where \val{com\-plex\-i\-fied} supplies the mechanism
+for the conversion of \val{S} to \val{D}, while the initial conditions of
+both species is set in \val{simple}.

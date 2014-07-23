@@ -45,6 +45,8 @@ to be able to add further information about the functional role of a
 species, it is necessary to add this additional information using the 
 annotation format described here.
 
+\changed{All annotations only add additional qualifying information, and never change existing information.  As such, they can be ignored without changing the (broader) meaning of the model.  The same is true of nested annotations (described below): these sub-annotations qualify their parent annotation, but never change the fundamental meaning of that annotation.}
+
 
 \subsection{XML namespaces in the standard annotation}
 
@@ -144,7 +146,7 @@ element names in either the namespace
 a URI.  \texttt{[MODEL\_HISTORY]} refers to an optional section
 described in Section~\ref{sec:model-history-annotation} which can
 only be present within SBML model elements.
-\changed{\texttt{NESTED\_CONTENT} refers to other optional RDF elements such as \token{bqbiol:isDescribedBy} that describe a clarification or another annotation about the \texttt{RELATION\_ELEMENT} in which it appears.  Nested content allows one to, for example, describe protein modifications on species, or to add evidence codes for an annotation.  As with all annotations, these nested annotations only add additional information, and never change existing information.  As such, they can be ignored without changing the (broader) meaning of the model.}
+\changed{\texttt{NESTED\_CONTENT} refers to other optional RDF elements such as \token{bqbiol:isDescribedBy} that describe a clarification or another annotation about the \texttt{RELATION\_ELEMENT} in which it appears.  Nested content allows one to, for example, describe protein modifications on species, or to add evidence codes for an annotation.  Nested content relates to its containing \texttt{RELATION\_ELEMENT}, not the other way around.  It qualifies it, but does not change its meaning.  As such, ignoring a \texttt{NESTED\_CONTENT} does not affect the information provided by the containing \texttt{RELATION\_ELEMENT}.}
 `\texttt{+++}' is a
 placeholder for either no content or valid XML syntax that is not
 defined by the standard annotation scheme but is consistent with
@@ -335,6 +337,13 @@ the time of writing:
   instance, this qualifier might be used to link the model to a
   model database.
 
+\item \token{bqmodel:isDerivedFrom}
+    The modeling object
+    represented by the component of the encoded model is derived
+    from the modeling object represented by the referenced resource.
+    For instance, they can be the fruit of a refinement or their
+    adaptation for use in a different context.
+
 \item \token{bqmodel:isDescribedBy} The modeling object
   encoded by the SBML component is described by
   the referenced resource. This relation might be used to link
@@ -351,10 +360,22 @@ the time of writing:
   resource, either physically or logically. This relation might be
   used to link a complex to the description of its components.
 
+\item \token{bqbiol:hasProperty}
+    The subject of the referenced
+    resource is a property of the biological entity represented by
+    the model component.  This relation might be used when a
+    biological entity has a given activity or exerts a specific
+    function.
+
 \item \token{bqbiol:isPartOf} The biological entity represented by
   the SBML component is a physical or logical part of the subject
   of the referenced resource. This relation might be used to link
   a component to the description of the complex it belongs to.
+
+\item \token{bqbiol:isPropertyOf}
+    The biological entity
+    represented by the SBML component is a property of the
+    referenced resource.
 
 \item \token{bqbiol:isVersionOf} The biological entity represented
   by the SBML component is a version or an instance of the subject
@@ -603,7 +624,7 @@ complex between the protein calmodulin and calcium ions:
         <bqbiol:hasPart>
           <rdf:Bag>
             <rdf:li rdf:resource="\changed{http://identifiers.org/uniprot/P62158}\!"/>
-            <rdf:li rdf:resource="\changed{http://identifiers.org/kegg.compound/C00076}\!"/>
+            <rdf:li rdf:resource="\changed{http://identifiers.org/chebi/CHEBI:29108}\!"/>
           </rdf:Bag>
         </bqbiol:hasPart>
       </rdf:Description>
@@ -931,5 +952,34 @@ The following example demonstrates the use of nested terms to describe not only 
 \end{example}
 
 In descriptive terms, the SBML species \val{S1} (with metaid \val{\_000004}) occurs in \val{go/GO:0005764} (the lysosome).  This is described by the publication \val{pubmed/1111111}, and is believed to be true because of the evidence \val{eco/ECO:0000004} (cell fractionation evidence).
+
+The following example demonstrates the use of nested terms to describe that
+the annotated species represents a phosphorylated form of a particular
+protein:
+
+\begin{example}
+<species id="S1" metaid="_000004" compartment="cell"
+         hasOnlySubstanceUnits="false" boundaryCondition="false"
+         constant="false">
+  <annotation>
+    <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+             xmlns:bqbiol="http://biomodels.net/biology-qualifiers/"
+      <rdf:Description rdf:about="#_000004" >
+        <bqbiol:isVersionOf>
+          <rdf:Bag>
+            <rdf:li rdf:resource="urn:miriam:uniprot:P04551"/>
+            <bqbiol:isVersionOf>
+              <rdf:Bag>
+                <rdf:li rdf:resource="urn:miriam:obo.mod:MOD\%3A00047"/>
+              </rdf:Bag>
+            </bqbiol:isVersionOf>
+          </rdf:Bag>
+        </bqbiol:isVersionOf>
+      </rdf:Description>
+    </rdf:RDF>
+  <annotation>
+</species>
+\end{example}
+
 
 \end{blockChanged}

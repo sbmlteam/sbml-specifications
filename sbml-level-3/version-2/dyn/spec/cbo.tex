@@ -1,0 +1,95 @@
+% -*- TeX-master: "main"; fill-column: 72 -*-
+
+\section{The Cell Behavior Ontology and the \token{cboTerm} attribute}
+\label{sec:CBO}
+
+It is difficult to determine the semantics of \Event constructs used to model intrinsic cellular behavior from SBML attributes alone. The \token{id} attribute on \Event objects allows for unique identification and cross-referencing while the \token{name} attribute allows the assignment of human readable labels to Events. Possible values for these attributes are unrestricted so that modelers can choose whichever fits their modeling framework and preference best. However, this means that without any additional human intervention, software tools are unable to discern the semantics of an extended \Event element modeling dynamic behavior. For instance, it would be inadvisable to interpret that an \Event is modeling the process of cellular death even if the \token{id} and \token{name} of such \Event have the \primtype{string} \val{Cell Death} as value. Additionally, as one may need to convert a dynamic \Event between different representations (e.g., Cellular Potts Model vs. Center-based off-lattice Model), there is a need to provide a standard, framework-independent, way of associating \Event components with given cellular processes.
+
+A solution inspired by \sbmlthreecore is to associate model components with terms from carefully curated controlled vocabularies (CVs). This is the purpose of the \token{cboTerm} provided in the extended \Event class in \sec{subsec:extEvent}. The \token{cboTerm} facilitates the annotation of \Event components with terms belonging to the Cell Behavior Ontology (CBO) \citep{Sluka2014}. In this section, we discuss \textbf{CBO}, its usage in SBML models via the \token{cboTerm} attribute and relevant modeling implications.
+
+\subsection{Cell Behavior Ontology (CBO)}
+\label{subsec:bioCBO}
+
+The development and use of bio-ontologies stems from the need to characterize and describe domains of biology in a standard way. The Cell Behavior Ontology (CBO) provides a carefully curated, controlled vocabulary that can be used to describe the behavior of a cell over time (dynamics) in a framework-independent manner, which enables the reliable exchange of biological descriptions. The Dynamic Structures SBML extension allows modelers to use a subset of the available identifiers to tag SBML \Event components via its attribute \token{cboTerm} to make the underlying biology (spatiality) of the cellular process being modeled more explicit. The relationship between a \token{cboTerm} term describing an extended \Event and the CBO term being used is of the form "the Event is-A X", where X is the CBO term. Though CBO support provides an important source of information to understand the meaning of an \Event, software does not need to support cboTerms to be considered SBML-compliant.
+
+Although the use of \token{cboTerm} attributes for \Event components extended by this extension is required, the presence of a \token{cboTerm} is not understood to change the way the \Event is mathematically interpreted and simulated. Annotating SBML \Event elements with CBO terms simply adds additional semantic information that may be used to convert the \Event from one framework to another when shared; it enables software tools to recognize precisely what the component is meant to be. For example, if the \token{cboTerm} has the value of \url{http://cbo.biocomplexity.indiana.edu/svn/cbo/trunk/CBO_1_0.owl#CellDeath} for a given \Event, regardless of the value that the \token{id} or \token{name} attributes are given or the modeling method used, the \Event labeled with this ontological term will be understood to model the dynamics of cellular death.
+
+{\color{red} Harold: \notice The initial release of CBO assumes spatial objects are 3D and exist in a standard Cartesian coordinate system, but does this really apply to us? By simply annotating using CBO terms, we are using CBO differently from it's intended use, which involves the creation of a meta-model of a computational model and subsequent linking of it to simulation results. If this is not how CBO is meant to be used, does this mean that we don't have to enforce CBOs restrictions for objects modeled in lower dimensions? We'd have to think what to do if we allow objects to be modeled in other coordinate systems?
+}
+
+\subsubsection{Structure of the Cell Behavior Ontology}
+\label{subsec:CBOstructure}
+
+The purpose of CBO is to standardize the description of the intrinsic physical and biological characteristics of cells and tissues, which provides a basis for describing the spatial and observable dynamic behavior of cells in SBML models. To achieve this, CBO is split into controlled vocabularies for \textbf{CBO \textunderscore Objects}, which describe the physical entities of a biological model and \textbf{CBO \textunderscore Processs}, which describe the processes the aforementioned objects participate in. \ref{fig:CBOHierarchy} illustrates the taxonomy of CBO at the highest level.
+
+
+\begin{figure}[tbhp]
+	\centering
+	%\usepackage{graphicx}
+	\includegraphics[width=0.25\textwidth]{images/CBO_Hierarchy.pdf}\\
+	\caption{The controlled vocabularies that make up the main branches of CBO.} \label{fig:CBOHierarchy}
+\end{figure}
+
+As this SBML extension uses CBO only as a reference ontology for the description of dynamic processes described as events, all of the supported vocabulary is taken from the \textbf{CBO \textunderscore Process} branch. Though \textbf{CBO \textunderscore Process} terms encompass length scales that range from subcellular to cell aggregates and time scales that range from seconds to decades, only the subset in \sec{subsubsec:supportedCBO} is allowed.
+
+\subsection{Using CBO and cboTerm}
+\label{subsec:CBOTerm&CBO}
+
+The \token{cboTerm} attribute for extended \Event constructs is always of \primtype{CBOTerm} data type, as defined in \sec{attr:cboTerm}. When present, the attribute's value must be the full identifier of a single term taken from the Cell Behavior Ontology (\url{http://bioportal.bioontology.org/ontologies/CBO}). The term chosen should be the most precise one that best summarizes the phenomenon represented by the extended \Event object. The relationship indicated by the presence of a non-empty \token{cboTerm} attribute in an \Event is of the form "the Event is-A X", where X is the CBO term. 
+
+\subsubsection{Supported CBO terms in Event Components}
+\label{subsubsec:supportedCBO}
+
+One of the mechanisms the Dynamic Structures package uses to support dynamic cellular behavior is the extension of the already existing SBML \Event construct. Under this extension, \Event objects carry a \token{cboTerm} attribute whose value must be a full term identifier, taken from the \textbf{CBO \textunderscore Process} vocabulary branch, which describes the behavior modeled by said \Event. Given substantial community input, the initial version of this package only supports a handful of dynamic cellular behaviors. \ref{fig:allowedCBO} displays supported dynamic processes and their corresponding CBO terms.
+
+\begin{table}[h]
+	\begin{tabular}{@{}ll@{}}
+		\toprule
+		\multicolumn{1}{c}{\textbf{Cell Behaviors}} & \multicolumn{1}{c}{\textbf{ CBO Terms}}                                   \\ \midrule
+		Cell Division                              & http://cbo.biocomplexity.indiana.edu/svn/cbo/trunk/CBO\_1\_0.owl\#CellDivision        \\
+		Cell Death                                 & http://cbo.biocomplexity.indiana.edu/svn/cbo/trunk/CBO\_1\_0.owl\#CellDeath           \\
+		Cell Differentiation                       & http://cbo.biocomplexity.indiana.edu/svn/cbo/trunk/CBO\_1\_0.owl\#CellDifferentiation \\ \bottomrule
+	\end{tabular}
+		\caption{Dyn-supported cell behavior and corresponding CBO terms} \label{fig:allowedCBO}
+\end{table}
+
+{\color{red} Harold: \notice I am being very conservative here. Not sure differentiation belongs here and how we would support it. In consideration are growth and movement though movement is implied by already modeled terms such as differentiation. Does this mean that we need to support movement explicitly or just as a consequence of other cell behavior? Shall we include any others?}
+
+A CBO term for \textbf{\textit{Cell Division}} as value for a \token{cboTerm} attribute indicates that the \Event defines the mathematical conditions under which cell division is to take place by means of its \Trigger. \Compartments whose \token{id} is reference by the \token{component} attribute of contained \EventAssignment constructs, and all SBML elements contained within, will be copied into a daughter compartment and placed according to each \EventAssignment.
+
+A CBO term for \textbf{\textit{Cell Death}} as value for a \token{cboTerm} attribute indicates that the \Event defines the mathematical conditions under which cell death is to take place by means of its \Trigger. \Compartments whose \token{id} is reference by the \token{component} attribute of contained \EventAssignment constructs, and all SBML elements contained within, will be removed from simulation according to each \EventAssignment.
+
+A CBO term for \textbf{\textit{Cell Differentiation}} as value for a \token{cboTerm} attribute indicates that the \Event defines the mathematical conditions under which cell differentiation is to take place by means of its \Trigger.
+
+{\color{red} Harold: \notice  Is the move/positioning is carried out left to SED-ML? There are mnay kinds of Cell-Division, examine closer to determine what we need for each!}
+
+
+\subsubsection{Tradeoffs in using CBO terms}
+\label{subsec:tradeoffCBO}
+
+The presented CBO-based approach to annotating SBML \Event components with controlled terms has, just like the SBO-based approach presented in \sbmlthreecore, the following strengths:
+
+\begin{enumerate}
+	\item The syntax required is very straight-forward and requires a single \primtype{string} containing the \primtype{id} of a supported CBO term.
+	\item Supported CBO terms cover a relevant portion of the cellular behaviors required by the community
+	\item It does not interfere with already-existing annotation schemes implemented by either Core and SBML extensions.
+\end{enumerate}
+
+The following list illustrates some of the weaknesses of following the proposed approach:
+
+\begin{enumerate}
+	\item The Cell Behavior Ontology is a recent and evolving ontology. As such, it is susceptible to minor changes in its hierarchical taxonomy. These however, should not affect the \token{ids} of the terms themselves.
+\end{enumerate}
+
+{\color{red} Harold: \notice Can we think of any other benefits or weaknesses?}
+
+\subsubsection{Relationships to the SBML annotation element}
+\label{subsubsec:CBO&Annot}
+
+A way to provide additional information to that within SBML elements is the \token{sBase} usage of the \Annotation component. Annotations are commonly used by software tools, which have their own vocabulary for supporting similar cellular behaviors. However, the best-practice recommendation for interoperability is to use the \token{cboTerm} attribute in the \Event element rather than inside an \Annotation component. Software tools are encouraged to translate their tool-specific \Annotation scheme to the proposed \textbf{CBO-based} approach when writing SBML code that supports dynamic cellular behavior.
+
+\subsection{Discussion}
+\label{subsec:CBODiscussion}
+
+{\color{red} Harold: \notice In this section SBML core touches on the implication of adding CBO support such as frequency of change of the ontology and consequences to already existing models, consistency, and Internet access and caching ontology version. This would be practically identical though I could include a few words on this}
+

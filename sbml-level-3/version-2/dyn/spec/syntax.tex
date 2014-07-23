@@ -1,315 +1,156 @@
 % -*- TeX-master: "main"; fill-column: 72 -*-
 
 \section{Proposed syntax and semantics}
-\label{syntax}
+\label{sec:syntax}
 
-In this section, we define the syntax and semantics of the Arrays package for SBML Level~3 Version~1.  We describe the various data types and constructs defined in this package, then in \sect{examples}, we provide complete examples of using the constructs in example SBML models.
+In this section, we define the syntax and semantics of the Dynamic Structures package for SBML Level~3 Version~2. We delineate the data types and constructs defined in this package, then in \sec{sec:examples}, we provide complete examples of using the constructs in example SBML models.
 
-% -----------------------------------------------------------------------------
+\subsection{Overview of dyn extension}
+\label{subsec:overview}
+
+The primary mechanism this package uses to support dynamic cellular behavior are the \Event and \EventAssignment constructs. The Dynamic Structures package extends these components not only to allow modelers to indicate at which point during simulation (i.e., under what cellular conditions), but how certain SBML structural components (compartments or submodels) are affected in response to dynamic cellular processes. To fully enable this, dyn also extends the \Compartment object class to facilitate the representation of spatial rearrangements that follow dynamic cellular processes. Though such representations vary across tools based on the chosen modeling paradigm, this language extension defines the necessary constructs to enable tools to encode dynamic cellular behavior regardless of mathematical method or spatial representation framework.
+
+{\color{red} Harold: \notice Out of the types of off-lattice frameworks, our proposed approach only covers center-based (objects spatially identified by the coordinates of their center of mass) and doesn't support vertix-based (where each object has several vertices that together uniquely describe its position)}
+
 \subsection{Namespace URI and other declarations necessary for using this package}
-\label{xml-namespace}
+\label{subsec:xml-namespace}
 
 Every SBML Level~3 package is identified uniquely by an XML namespace URI.
 For an SBML document to be able to use a given SBML Level~3 package, it
 must declare the use of that package by referencing its URI.  The following
-is the namespace URI for this version of the Arrays
-package for SBML Level~3 Version~1:
+is the namespace URI for this version of the Dynamic Structures
+package for SBML Level~3 Version~2:
+
 \begin{center}
-\uri{http://www.sbml.org/sbml/level3/version1/arrays/version1}
+\uri{http://www.sbml.org/sbml/level3/version2/dyn/version1}
 \end{center}
 
 In addition, SBML documents using a given package must indicate whether
 understanding the package is required for complete mathematical
 interpretation of a model, or whether the package is optional.  This is
 done using the attribute \token{required} on the \token{<sbml>} element in
-the SBML document.  For the Arrays package, the value of
+the SBML document.  For the Dynamic Structure package, the value of
 this attribute must be set to \val{true}.
 The following fragment illustrates the beginning of a typical SBML model
-using SBML Level~3 Version~1 and this version of the Arrays package:
+using \sbmlthreecore and this version of the dyn package:
 
 \begin{example}
 <?xml version="1.0" encoding="UTF-8"?>
-<sbml xmlns="http://www.sbml.org/sbml/level3/version1/core" level="3" version="1"
-      xmlns:fbc="http://www.sbml.org/sbml/level3/version1/arrays/version1" arrays:required="true">
+<sbml xmlns="http://www.sbml.org/sbml/level3/version2/core" level="3" version="2"
+      xmlns:fbc="http://www.sbml.org/sbml/level3/version2/dyn/version1" arrays:required="true">
 \end{example}
 
 \subsection{Primitive data types}
+\label{subsec:primitives}
+The Dynamic Structure package uses a number of the primitive data types described in Section 3.1 of the \sbmlthreecore specification as well as a number of XML Schema 1.0 data types~\citep{biron:2000}. More specifically, we make use of \primtype{SId}, \primtype{int}, and \primtype{SIdRef}. This package also adds additional primitive data types described below.
 
-Section~3.1 of the \sbmlthreecore specification defines a number of primitive data types and also uses a number of XML Schema 1.0 data types~\citep{biron:2000}.  More specifically, we make use of \primtype{SId}, \primtype{string}, \primtype{int}, and \primtype{SIdRef}.  
+\subsubsection{\emph{Type} \primtype{CBOTerm}}
+\label{dat:CBOTerm}
 
-% The Arrays package also defines two new primitive data types defined below.
+The type \primtype{CBOTerm} is used as the data type of the attribute cboTerm on the \Event object class. \primtype{CBOTerm} follows the syntax defined for the \primtype{anyURI} data type, which considers it a character string data type whose values are interpretable as URIs~(Universal Resource Identifiers; \citep{Means:2001}; \citep{w3c:2000b}) as described by the W3C document RFC 3986 \citep{Berners-Lee:2005}. Examples of valid string values of type CBOTerm are:  
+\begin{center}
+\url{http://cbo.biocomplexity.indiana.edu/svn/cbo/trunk/CBO_1_0.owl#Apoptosis} \url{http://cbo.biocomplexity.indiana.edu/svn/cbo/trunk/CBO_1_0.owl#Movement}
+\end{center}
+These values are meant to be the identifiers of terms from the Cell Behavior Ontology (CBO) whose curated vocabulary describes cellular entities and processes in computational models. \sec{sec:CBO} provides more information about the ontology, supported ontological terms and general principles for their use in SBML models.
 
-%% QUESTION: IS THIS STILL NEEDED?  PERHAPS NOT FOR L3V2.
+\subsubsection{\emph{Type} \primtype{CoordinateSystemKind}}
+\label{dat:CoordSystemKind}
 
-% \subsubsection{\emph{Type} \primtype{DimSId}}
+Type \primtype{CoordinateSystemKind} is a primitive data type that is used in extending the \Compartment object to indicate the coordinate system in which the position of modeling elements is to be specified. \primtype{CoordinateSystemKind} is derived from the basic \primtype{XML} type \primtype{string}, but with restrictions about the sequences in which characters may appear. Values for attributes of this data type can only include: \val{cartesian}. The meaning of each of these values is discussed in the context of the extended \Compartment object in \sec{subsec:extCompartment}.
 
-% The type \primtype{DimSId} is derived from \primtype{SId} (SBML Level 3 Version 1 Core specification Section 3.1.7) and has identical syntax. The \primtype{DimSId} type is used as the data type for the identifiers of \Dimension objects. The purpose of having a separate type for such identifiers is to enable the space of possible dimension identifier values to be separated from the space of all other identifier values in SBML.  The scope of the \primtype{DimSId} is local to the enclosing object definition and is not visible outside the object definition.  The equality of \primtype{DimSId} values is determined by an exact character sequence match; i.e., comparisons of these identifiers must be performed in a case-sensitive manner.
+{\color{red} Harold: \notice  If we indicate a coordinateSystem such as cartesian, we should also support other such as "cylindrical", "spherical", and "polar" (which the spatial package also supports). It would make for a more 
+	
+If SED-ML is used, using more coordinate systems would mean that not only would we need to worry about translating how dynamic processes are represented across spatial frameworks, but coordinate systems! (Another layer of complexity)}
 
-%\subsubsection{\emph{Type} \{ 0, 1 \}}
+\subsubsection{\emph{Type} \primtype{CoordinateKind}}
+\label{dat:CoordKind}
 
-%This type is simply the \primtype{int} type limited to the values of 0 and 1.
+The \primtype{CoordinateKind} primitive data type is used in the definition of the \CoordinateComponent class. \primtype{CoordinateKind} is derived from the basic \primtype{XML} type \primtype{string} though it restricts possible values attributes of this data type can take. Supported values include: \val{cartesianX}, \val{cartesianY}, \val{cartesianZ}. Attributes of \primtype{CoordinateKind} type are discussed in the context of the extended \Compartment object in \sec{subsec:extCompartment}.
 
-\subsection{Dimensions}
-\label{sec:dimension}
+{\color{red} Harold: \notice If cylindrical, spherical and polar coordinate systems are used, the list of possible values for this data type would need to be extended to include: "sphericalRadius", "sphericalAzimuth", "sphericalElevation", "cylindrical-Radius", "cylindricalAzimuth", "cylindricalHeight", "polarRadius", and "polarAzimuth". }
 
-As shown in \ref{fig:dimensions_uml}, the arrays package extends the \SBase class from core SBML with the addition of a list of \Dimension objects.  An object with a list of dimensions is an array, and the number of dimensions is equivalent to the number of \Dimension objects in the list.  Currently, SBML objects are restricted to at most three dimensions. 
+\subsection{The extended \class{Event} object}
+\label{subsec:extEvent}
 
-\begin{figure}[tbhp]
-  \centering
-  % Requires \usepackage{graphicx}
-  \includegraphics[width=0.5\textwidth]{images/dimensionsUML.pdf}\\
-  \caption{A UML representation of the dimension classes. See \ref{conventions}} for conventions related to this figure. \label{fig:dimensions_uml}
-\end{figure}
-
-%\subsubsection{Dimension}
-
-\paragraph{The \primtype{id} attribute}
-
-The \Dimension object has an optional attribute, \primtype{id}, used to give the dimension an identifier.  The value of \primtype{id} must conform to the syntax permitted by the \primtype{SId} data type described in Section 3.1.7 of the SBML Level 3 Version 1 Core specification.  The scope of the \primtype{id} attribute is local to the enclosing object definition and is not visible outside the object definition.  The \primtype{id} attribute must be used as described in Section 3.3 of the SBML Level 3 Version 1 Core specification.  
-
-\paragraph{The \primtype{name} attribute}
-
-\Dimension also has an optional \primtype{name} attribute, of type \primtype{string} (see Section 3.1.1 and Section 3.3 of the SBML Level 3 Version 1 Core specification).  
-
-\paragraph{The \primtype{size} attribute}
-
-Each dimension of an array has a fixed size which is set with the \primtype{size} attribute.  The size attribute is of type \primtype{SIdRef} (see Section 3.1.8 of the SBML Level 3 Version 1 Core specification) and must refer to a \Parameter object instance defined in the model.  The \Parameter referenced must be \primtype{constant}, scalar, and have a defined initial value.
-
-\paragraph{The \primtype{arrayDimension} attribute}
-
-The \primtype{arrayDimension} attribute specifies which dimension is defined by this \Dimension object.  
-Currently, the only allowed values for \primtype{arrayDimension} are 0, 1, and 2 (i.e., at most 3-dimensional arrays).  Also, there can be at most one \Dimension for each possible value of \primtype{arrayDimension}.  Finally, if a list of dimensions includes a \Dimension with \primtype{arrayDimension} value of 1, it must also include one with value 0.  Similarly, if it includes a \Dimension with \primtype{arrayDimension} value of 2, it must include ones with value 0 and 1, as well.  
-
-\paragraph{Example}
-
-As an example, a $10 \times 10$ array of compartments C could be defined as:
-
-\begin{example}
-<parameter id="n" value="10"/>
-<compartment id="C" ...>
-  <arrays:listOfDimensions>
-    <arrays:dimension id="i" name="Row" size="n" arrayDimension="0"/>
-    <arrays:dimension id="j" name="Column" size="n" arrayDimension="1"/>
-  </arrays:listOfDimensions>
-</compartment>
-\end{example}
-
-\paragraph{Dimension usage}
-\label{sec:dimensionUsage}
-
-In SBML Level~3 Core, the following objects are not permitted to have a \ListOfDimensions:
-\begin{itemize}
-\item \token{Models}, 
-\item \token{FunctionDefinitions}, 
-\item \token{Units}, 
-\item \token{UnitDefinitions}, 
-\item \token{KineticLaws}, 
-\item \token{LocalParameters}, 
-\item \token{Triggers}, 
-\item \token{Priorities}, and 
-\item \token{Delays}.
-\end{itemize}
-All other SBML Level~3 Core objects are permitted to have a \ListOfDimensions including:
-\begin{itemize}
-\item \token{Compartments},
-\item \token{Species},
-\item \token{Parameters},
-\item \token{Initial assignments},
-\item \token{Rules},
-\item \token{Constraints},
-\item \token{Reactions},
-\item \token{Species references},
-\item \token{Events}, and
-\item \token{Event assignments}.  
-\end{itemize}
-All SBML objects defined by packages that inherit from \SBase are permitted to have a \ListOfDimensions unless it is explicitly disallowed in the corresponding package specification. 
-
-It is important to note that it is assumed that all elements of arrays created in this way share the same attribute values.  For example, if an initial value is specified for a compartment size, parameter value, or species amount then every element of the array takes that initial value.  To specify different initial values to different elements of an array, an initialAssignment should be used. 
-
-\subsection{Indices}
-\label{sec:index}
-
-As shown in \ref{fig:indices_uml}, the arrays package extends the \SBase class from core SBML with the addition of a list of indices.  Each index in this list is used to specify an array index for a reference to an arrayed object specified in an attribute for this SBML element.    Each arrayed object specified in an attribute can have at most one index for each dimension specified for that object.  
-For example, if the referenced object is a one-dimensional array, it can have one index.  If the referenced object is a two-dimensional array, it can have two indices.  In these cases, the referenced object is a scalar.  Note that if a two-dimensional array has only one index, the reference would return a one-dimensional array specified by this index.  If no index is specified, then the entire array is being referenced.  
+The \Event class is extended in the Dynamic Structure package. The addition of a \token{cboTerm} attribute is designed to allow a modeler or a software package to attach semantical information to events triggered in response to dynamic cellular processes in an SBML model. \ref{fig:UMLExtendedEvent} provides the corresponding UML diagram. 
 
 \begin{figure}[tbhp]
   \centering
-  % Requires \usepackage{graphicx}
-  \includegraphics[width=0.65\textwidth]{images/indicesUML.pdf}\\
-  \caption{A UML representation of the index classes. See \ref{conventions}} for conventions related to this figure. \label{fig:indices_uml}
+  %\usepackage{graphicx}
+  \includegraphics[width=0.25\textwidth]{images/UMLExtendedEvent.pdf}\\
+  \caption{A UML representation of the extended \Event class. See \ref{subsec:conventions}} for conventions related to this figure. \label{fig:UMLExtendedEvent}
 \end{figure}
 
-\paragraph{The \primtype{referencedAttribute} attribute}
+\subsubsection{The \token{cboTerm} attribute}
+\label{attr:cboTerm}
 
-The \primtype{referencedAttribute} attribute specifies the attribute of the SBML object to which this index is referencing.  
+The attribute called \token{cboTerm} on the \Event class supports the use of Cell Behavior Ontology(CBO) terms to provide semantic encoding of dynamic cellular events in SBML models. By adding CBO terms, modelers can semantically annotate event constructs to explicitly indicate which cellular processes are being modeled in each \Event instance. The relationship is of the form "the Event is-a X", where X is the CBO term. The term chosen should be the most precise one that captures the role of the Event in the model. The value of \token{cboTerm} must conform to the syntax permitted by the \primtype{CBOTerm} data type previously described in \sec{dat:CBOTerm} of the current specification. The scope of the \token{cboTerm} attribute is local to the enclosing object definition and is not visible outside the object definition. For a discussion on supported values for \token{cboTerm} and CBO in general see \sec{sec:CBO}
 
-\paragraph{The \primtype{arrayDimension} attribute}
+\subsection{The extended \class{EventAssignment} object}
+\label{subsec:extEventAssignment}
 
-The \primtype{arrayDimension} attribute specifies which dimension this index corresponds to.
-Currently, the only allowed values for \primtype{arrayDimension} are 0, 1, and 2 (i.e., at most 3-dimensional arrays can be indexed).  Also, there can be at most one \Index for each possible value of \primtype{arrayDimension}.  Finally, if a list of indices includes an \Index with \primtype{arrayDimension} value of 1, it must also include one with value 0.  Similarly, if it includes an \Index with \primtype{arrayDimension} value of 2, it must include ones with value 0 and 1, as well.
+In every instance of an event definition in a model, the subobject \ListOfEventAssignments element must have a non-empty list of one or more elements of class \EventAssignment. This package extends the \EventAssignment class to add a \token{component} attribute to allow modelers to indicate which cellular structures are involved in an event executed to model dynamic cellular behavior. The definition for the extension of the \EventAssignment element is shown in \ref{fig:UMLExtendedEventAssignment}.
+ 
+\begin{figure}[tbhp]
+	\centering
+	%\usepackage{graphicx}
+	\includegraphics[width=0.25\textwidth]{images/UMLExtendedEventAssignment.pdf}\\
+	\caption{A UML representation of the extended \EventAssignment class. See \ref{subsec:conventions}} for conventions related to this figure. \label{fig:UMLExtendedEventAssignment}
+\end{figure}
 
-\paragraph{The \primtype{math} element}
+\subsubsection{The \token{component} attribute}
+\label{attr:component}
 
-The \primtype{math} element provides a mathematical expression which is evaluated to determine the index value for the reference.  Note that arrays are 0-based which means that an object of size $n$ can have index values between 0 and $n-1$.  When an index value computes to a value outside this range during simulation, this is an \emph{array out-of-bounds} error and simulation should terminate and report this error to the user.
+\token{Component} is a mandatory attribute of the type \primtype{SidRef} that is used to uniquely identify the cellular structure (either compartment or submodels) to be dynamically altered when a dynamic event is executed. When this attribute points to \Compartment elements, they must have a child \ListOfCoordinateComponents as seen in \ref{subsec:extCompartment}. This ensures that when an extended event is executed, referenced cellular compartments will have an assigned spatial location, which is necessary when modeling cellular behavior. If this is not the case, the \EventAssignment is not considered to be part of the dynamic representation of the model.
 
-\paragraph{Example}
+{\color{red} Harold: \notice How do we exactly indicate what happens to all the compartments within? Do we have separate EventAssignments-one for each contained element?}
 
-The example below copies a reverse copy of the array in parameter x into parameter y.  
+\subsection{The extended \class{Compartment} object}
+\label{subsec:extCompartment}
 
-\begin{example}
-<parameter id="n" value="10"/>
-<parameter id="X" ...>
-  <arrays:listOfDimensions>
-    <arrays:dimension id="i" size="n" arrayDimension="0"/>
-  </arrays:listOfDimensions>
-</parameter>
-<parameter id="Y" ...>
-  <arrays:listOfDimensions>
-    <arrays:dimension id="i" size="n" arrayDimension="0"/>
-  </arrays:listOfDimensions>
-</parameter>
-<assignmentRule variable=Y>
-  <arrays:listOfDimensions>
-    <arrays:dimension id="i" size="n" arrayDimension="0"/>
-  </arrays:listOfDimensions>
-  <arrays:listOfIndices>
-    <arrays:index referencedAttribute="variable" arrayDimension="0">
-      <math>
-        <apply>
-          <minus/>
-          <cn>9</cn>
-          <ci>i</ci>
-        </apply>
-      </math>
-    </arrays:index>
-  </arrays:listOfIndices>
-  <math>
-    <apply>
-      <selector/>
-      <ci>X</ci>
-      <ci>i</ci>
-    </apply>
-  </math> 
-</assignmentRule>
-\end{example}
+The \Compartment class must be extended to represent the spatial location and subsequent rearrangement that follows dynamic cellular processes emulated by extended \Event constructs. Refer to \sec{sec:CBO} for a list of supported dynamic cellular processes and associated ontological terms. This package adds the mandatory attribute \token{coordinateSystem} and subobjects \ListOfCoordinateComponents and \CoordinateComponent to describe the spatial location of modeling objects. \ref{fig:UMLExtendedCompartment} provides the corresponding UML diagram of the various features of the extended \Compartment class. 
 
-Basically, this example is equivalent to:
+{\color{red} Harold: \notice If we add a rotation attribute here to support 2D representations (bacterial growth) where rotation is important in spatially describing objects, how exactly do we do it? Rotation would be measured in what units (radians, degrees)? Would rotation be relative to a given coordinate component? 
 
-\begin{example}
-n = 10;
-for (i=0; i < n; i++) {
-    Y[9 - i] = X[i];
+Also, should the CoordinateSystem attribute reside in Compartment? If we only have one allowed value (cartesian) it doesn't matter. However, if we allow several possible coordinate systems (spherical,cylindrical, etc) users may indicate different ones for extended Compartments in the same model, which would be an error. As we cannot use defaults, I think this attribute should be more general so it applies to all Compartments at once.
 }
-\end{example}
 
-\paragraph{Index usage}
+\begin{figure}[tbhp]
+	\centering
+	%\usepackage{graphicx}
+	\includegraphics[width=0.85\textwidth]{images/UMLExtendedCompartment.pdf}\\
+	\caption{UML diagram for the extension of the \Compartment object and the definition of \ListOfCoordinateComponents and \CoordinateComponent classes. See \ref{subsec:conventions} for conventions related to this figure.} \label{fig:UMLExtendedCompartment}
+\end{figure}
 
-Only objects that have defined attributes of \primtype{SIdRef} type can have a list of indices.  For SBML Level~3 Core, the following objects can have a list of indices:
-\begin{itemize}
-\item Model - conversionFactor
-\item Species - compartment, conversionFactor
-\item Reactions - compartment
-\item Initial assignments - symbol
-\item Rules - variable
-\item Species references - species
-\item Events assignments - variable
-\end{itemize}
-Similarly, for packages, any objects that have defined attributes of \primtype{SIdRef} type can also have indices.  In all cases, the object referenced by an index must, of course, be an arrayed object (i.e., have a specified dimension), and it must include the dimension being indexed.
+\subsubsection{The \token{coordinateSystem} attribute}
+\label{attr:coordSystem}
 
-Finally, the \primtype{math} element must be statically computable.  In other words, any identifier that appears in the math, other than a \Dimension \primtype{id} for this object, must be a constant.
+The \token{coordinateSystem} attribute is a required attribute of type \primtype{CoordinateSystemKind}. It represents the coordinate system used by a \Compartment to indicate its spatial location. A value of \val{cartesian} indicates that the \Compartment is in a cartesian coordinate system (1, 2 or 3D) and that the coordinate components correspond to the x, y, and z cartesian components.
 
-\subsection{Mathematical formulas}
-\label{math-formulas}
-Section~3.4 of the \sbmlthreecore specification defines how mathematical expressions are expressed in SBML using a subset of MathML 2.0 \citep{w3c:2000b}.  In order to support arrays, the operators in this subset must be extended to support \token{ci} elements which are arrays.  For unary operators (the trigonometric operators, \token{abs}, \token{exp}, \token{ln}, \token{log}, \token{floor}, \token{ceiling}, \token{factorial}, and \token{not}), it is assumed that the operator is performed element-wise on each entry in the array.  For operators with two or more operands (the relational operators, \token{piecewise}, \token{plus}, \token{minus}, \token{times}, \token{divide}, \token{power}, \token{root}, \token{and}, \token{or}, and \token{xor}), it is again assumed that the operator is performed element-wise on each entry in the array.  In this case, it is required that each operand have the same dimensions with the same sizes or be a scalar value.  If an operand is a scalar value, it is assumed to be extended to an array of the same dimensions and sizes as the other operands, so it can be applied element-wise as well.  
+%The CoordinateComponent class 3-dimensional). A value of “cylindrical” indicates that the geometry is a three-dimensional cylendrical coordinate system, with coordinate components corresponding to radial distance, azimuth angle, and axial position. A value of “spherical” indicates that the geometry is a three-dimensional spherical coordinate system, with coordinate components corresponding to radial distance, polar angle, and azimuth angle. A value of “polar” indicates that the geometry is a two-dimensional polar coordinate system, with coordinate components corresponding to radial distance and angle (the two-dimensional equivalent of the cylendrical coordinate system). 
 
-The arrays package also extends the supported MathML subset to include the following:
-\begin{itemize}
-\item \emph{constructors}: \token{vector}
-% {\bf matrix and matrixrow} 
-\item \emph{element referenced operator}: \token{selector}
-% \item \emph{qualifier components}: \token{lowlimit}, \token{uplimit} \token{condition}
-% \item \emph{linear algebra operators}: \token{vectorproduct}, \token{scalarproduct}, \token{outerproduct} 
-%\begin{itemize}
-%  \item{\bf determinant} %% Must be square matrix
-%  \item {\bf transpose} %% Matrix
-%  \item {\bf inverse} %% Matrix (?)
-%\end{itemize}
-%% Use lowlimit/uplimit 
-% \item \emph{sum product operators:} \token{sum}, \token{product}
-%% Use condition to set range
-% \item \emph{quantifier operators:} \token{forall}, \token{exists}
-% \item \emph{statistics operators:} \token{mean}, \token{sdev}, \token{variance}, \token{median}, \token{mode}, \token{moment}, \token{momentabout}
-\end{itemize}
+{\color{red} Harold: \notice  Do we expect to model something of higher dimensions than 3D cartesian coordinate system? Specifying how the actual dynamic events are carried out in SED-ML is not only dependent on translating between spatial frameworks (off-lattice vs lattice-based), but on the dimension of the spaces indicated. We need to be careful!}
 
-The arguments of a MathML \token{vector} must all have the same number of dimensions and agree on their size.  For example, the following use of \token{vector} is invalid, but it would be valid if $m=2$ instead.
-\begin{example}
-<parameter id="n" value="2"/>
-<parameter id="m" value="3"/>
-<parameter id="X" ...>
-  <arrays:listOfDimensions>
-    <arrays:dimension id="i" size="n" arrayDimension="0"/>
-  </arrays:listOfDimensions>
-</parameter>
-<parameter id="Y" ...>
-  <arrays:listOfDimensions>
-    <arrays:dimension id="i" size="m" arrayDimension="0"/>
-  </arrays:listOfDimensions>
-</parameter>
-<parameter id="Z" ...>
-  <arrays:listOfDimensions>
-    <arrays:dimension id="i" size="n" arrayDimension="0"/>
-    <arrays:dimension id="j" size="n" arrayDimension="1"/>
-  </arrays:listOfDimensions>
-</parameter>
-<initialAssignment variable="Z"> 
- <math xmlns="http://www.w3.org/1998/Math/MathML">
-  <vector> 
-   <ci>X</ci> 
-   <ci>Y</ci>
-  </vector>
- </math>
-</initialAssignment>
-\end{example}
+\subsubsection{The \class{ListOfCoordinateComponents} class}
+\label{subsec:listCoordComp}
 
-The first argument of a MathML \token{selector} must be a MathML \token{vector} object or a valid identifier to an \SBase object extended with a list of \Dimension objects. The remaining arguments of a MathML \token{selector} must evaluate to non-negative integers, and it must be statically computable.  In other words, any identifier that appears in the argument, other than a \Dimension \primtype{id} for this object, must be a constant.  An example use of \token{selector} is in the \InitialAssignment below.  Note that the first argument is the vector $Y$, and the second argument is $i + (m-n)$.  The math in the second argument only includes the \Dimension \primtype{id} $i$ for this object and constant parameters.  Therefore, it is statically computable to take the values 1 for $i=0$ and 2 for $i=1$ which are both valid values for the vector $Y$.
-\begin{example}
-<parameter id="n" value="2" constant=''true''/>
-<parameter id="m" value="3" constant=''true''/>
-<parameter id="X" ...>
-  <arrays:listOfDimensions>
-    <arrays:dimension id="i" size="n" arrayDimension="0"/>
-  </arrays:listOfDimensions>
-</parameter>
-<parameter id="Y" ...>
-  <arrays:listOfDimensions>
-    <arrays:dimension id="i" size="m" arrayDimension="0"/>
-  </arrays:listOfDimensions>
-</parameter>
-<initialAssignment variable="X"> 
-  <arrays:listOfDimensions>
-    <arrays:dimension id="i" size="n" arrayDimension="0"/>
-  </arrays:listOfDimensions>
-  <arrays:listOfIndices>
-    <arrays:index referencedAttribute="variable" arrayDimension="0">
-      <math>
-        <ci>i</ci>
-      </math>
-    </arrays:index>
-  </arrays:listOfIndices>
-  <math xmlns="http://www.w3.org/1998/Math/MathML">
-    <apply>
-      <selector/> 
-        <ci>Y</ci> 
-        <apply>
-          <plus/>
-            <ci>i</ci>
-            <apply>
-              <minus/>
-                <ci>m</ci>
-                <ci>n</ci>
-            </apply>
-        </apply>
-    </apply>
-  </math>
-</initialAssignment>
-\end{example}
+\Compartments mapped by an \EventAssignment construct must contain an element called listOfCoordinateComponents, of class \ListOfCoordinateComponents. This object contains a list of \CoordinateComponent objects that define the coordinate system in which the component is modeled. If mapped, a \Compartment cannot have an empty \ListOfCoordinateComponents list.
+
+\subsection{The \class{CoordinateComponent} class}
+\label{subsec:coordComp}
+
+Instances of the \CoordinateComponent class represent individual coordinate components of the spatial location of mapped \Compartment structures that are involved in dynamic events. This construct defines two attributes: \token{coordinateIndex} and \token{variable}. Being derived from SBase, this class also has all the usual attributes and elements of its parent class.
+
+{\color{red} Harold: \notice So far we've defined the coordinate system and components to each x,y,z triplet for all compartments involved but nowhere have we defined the minimum and maximum values of the coordinate axis along which objects are modeled.
+}
+
+\subsubsection{The \token{coordinateIndex} attribute}
+\label{attr:coordIndex}
+
+The attribute \token{coordinateIndex} of type \primtype{CoordinateKind} is added to uniquely identify a coordinate axes in the defined \token{coordinateSystem}. \token{CoordinateIndex} may take one of all the possible \primtype{CoordinateKind} values specified in \sec{dat:CoordKind}. A single \val{cartesianX} \CoordinateComponent can be used to define one-dimensional systems; two-dimensional systems are in turn characterized by having two \CoordinateComponent children with \token{coordinateIndex} values of \val{cartesianX} and \val{cartesianY}; and three-dimensional ones can be defined by having three \CoordinateComponent elements with \token{coordinateIndex} values of \val{cartesianX}, \val{cartesianY}, and \val{cartesianZ}. 
+
+\subsubsection{The \token{variable} attribute}
+\label{attr:variable}
+
+The \token{variable} attribute of type \primtype{SidRef} contains the identifier of a \Parameter defined in the model to explicitly specify an object's position. The scope of the referenced \Parameter component must be global to the whole model and its \token{constant} attribute must be set to \val{false} as spatial location of the associated \Compartment may change in response to dynamic processes.
+

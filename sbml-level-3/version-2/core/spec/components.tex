@@ -2157,37 +2157,26 @@ an \InitialAssignment can set the value of a constant whereas an
 \AssignmentRule cannot.
 
 
-\subsubsection{The \token{symbol} attribute}
-
-\InitialAssignment contains the mandatory attribute
-\token{symbol}, of type \primtype{SIdRef}.  The value of this
-attribute \changed{must be the identifier of an element in the \primtype{SId} namespace of the model that has mathematical meaning.  In core, this includes any \Compartment, \Species, \SpeciesReference or global \Parameter elsewhere in the model.  In addition, any package element in the same \Model with an identifier in the \primtype{SId} namespace with mathematical meaning may also be the target of the \token{symbol} attribute.}
-
-The purpose of the
-\InitialAssignment is to define the initial value of the constant
-or variable referred to by the \token{symbol} attribute.  (The
-attribute's name is \token{symbol} rather than \token{variable}
-because it may assign values to constants as well as variables in
-a model; see Section~\ref{sec:initial-assignment-semantics}
-below.)
-
-An initial assignment cannot be made to reaction identifiers, that
-is, the \token{symbol} attribute value of an \InitialAssignment cannot
-be an identifier that is the \token{id} attribute value of a \Reaction
-object in the model.  This is identical to a restriction placed on
-rules (see Section~\ref{sec:ruleconstraints}).
-
-
 \begin{blockChanged}
-If the \token{symbol} references an element in an SBML namespace that is not
-  understood by the interpreter, the initial assignment must be ignored---the 
-  object's initial value will not need to be set, as the interpreter could not
-  understand that package.  If an interpreter cannot tell whether 
-  a referenced object does not exist or if it exists in an unparsed namespace,
-  it may produce a warning.  This situation may only arise if a package is present in the SBML document with a \token{package:required} attribute of \val{true}.
+\subsubsection{The \token{id} attribute}
+\label{sec:initialassignment-id}
+
+\InitialAssignment inherits an optional \token{id} attribute of type \primtype{SId} from \SBase.  The identifier of an \InitialAssignment has no mathematical meaning in a model.
 \end{blockChanged}
 
-\subsubsection{The \token{math} element}
+
+\subsubsectionChanged{The \token{symbol} attribute}
+
+\begin{blockChanged}
+\InitialAssignment contains the mandatory attribute \token{symbol}, of type \primtype{SIdRef}.  The purpose of \InitialAssignment is to define the initial value of the constant or variable referred to by the \token{symbol} attribute.  (The attribute's name is \token{symbol} rather than \token{variable} because it may assign values to constants as well as variables in a model; see Section~\ref{sec:initial-assignment-semantics} below.)
+
+The value of the \token{symbol} attribute must be the identifier of an object in the \primtype{SId} namespace of the model; moreover, the object must be of a class that is defined to have mathematical meaning in SBML.  In SBML Level~3 Core, the types of objects whose identifiers are permitted as the values of \InitialAssignment \token{symbol} attributes are \Compartment, \Species, \SpeciesReference and (global) \Parameter objects in the model.  In addition, classes of objects defined by SBML Level~3 packages to have mathematical meaning may also be defined by those packages to be permissible targets of \InitialAssignment objects; in other words, \InitialAssignment \token{symbol} attributes may also reference identifiers in the \primtype{SId} namespace defined by SBML Level~3 packages.  An initial assignment cannot be made to reaction identifiers, that is, the \token{symbol} attribute value of an \InitialAssignment cannot be an identifier that is the \token{id} attribute value of a \Reaction object in the model.  This is identical to a restriction placed on rules (see Section~\ref{sec:ruleconstraints}).
+
+If the \token{symbol} attribute of an \InitialAssignment object references an object in an SBML namespace that is not understood by the interpreter reading a given SBML document (that is, if the object is defined by an SBML Level~3 package that the software does not support), the assignment must be ignored---the object's initial value will not need to be set, as the interpreter could not understand that package.  If an interpreter cannot establish whether a referenced object is missing from the model or instead is defined in an SBML namespace not understood by the interpreter, it may produce a warning to the user.  (The latter situation may only arise if an SBML package is present in the SBML document with a \token{package:required} attribute of \val{true}.)
+\end{blockChanged}
+
+
+\subsubsectionChanged{The \token{math} element}
 
 The \token{math} element contains a MathML expression used to
 calculate the value of the entity referenced by \token{symbol}.
@@ -2196,7 +2185,7 @@ unit associated with the identifier given in the \token{symbol}
 attribute.
 
 
-\subsubsection{The \token{sboTerm} attribute}
+\subsubsectionChanged{The \token{sboTerm} attribute}
 \label{sec:initialassignment-sboterm}
 
 \InitialAssignment inherits an optional \token{sboTerm}
@@ -2216,15 +2205,7 @@ information on a model.  Applications are free to ignore
 benefit of SBO labels.
 
 
-\begin{blockChanged}
-\subsubsection{The \token{id} attribute}
-\label{sec:initialassignment-id}
-
-\InitialAssignment inherits an optional \token{id} attribute from \SBase, of type \primtype{SId}.  Despite having a \token{math} child, the \token{id} of an \InitialAssignment takes on no mathematical meaning, and the value of its \token{math} child may not be changed directly.
-\end{blockChanged}
-
-
-\subsubsection{Semantics of initial assignments}
+\subsubsectionChanged{Semantics of initial assignments}
 \label{sec:initial-assignment-semantics}
 
 The value calculated by an \InitialAssignment object overrides the
@@ -2235,7 +2216,7 @@ having that compartment's \token{id} as its \token{symbol} value,
 then the interpretation is that the \token{size} assigned in the
 \Compartment object definition should be ignored and the value
 assigned based on the computation defined in the
-\InitialAssignment.  \changed{For core elements,} initial assignments can take place for
+\InitialAssignment.  \changed{For SBML Level~3 Core,} initial assignments can take place for
 \Compartment, \Species, \SpeciesReference and global \Parameter
 objects regardless of the value of their \token{constant}
 attribute.
@@ -2287,14 +2268,13 @@ of \changed{symbol} being set:
   parameter units.)
 
 \begin{blockChanged}
-\item \emph{In the case of an element from a package}, an \InitialAssignment sets
-  the referenced element's initial value (as defined by that package) to the value of the formula in
-  \token{math}.  The unit associated with the value produced by
-  the formula should be the same as that element's \token{units}
-  attribute value, should it have such an attribute, or be equal to
-  the units of elements of that type, should elements of that type
-  all be defined as having the same units.
-
+\item \emph{In the case of an object from an SBML Level~3 package}, an \InitialAssignment sets
+  the referenced object's initial value (however such values are defined by the package) to the value of the formula in
+  \token{math}.  The unit of measurement associated with the value produced by
+  the formula should be the same as that object's \token{units}
+  attribute value (if it has such an attribute), or be equal to
+  the units of model components of that type (if objects of that type
+  are defined by the package as having the same units).
 \end{blockChanged}
 
 \end{itemize}

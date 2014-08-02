@@ -178,12 +178,12 @@ Figure~\ref{fig:id}.
   \ttfamily
   \small
   \centering
-  \vspace*{-1ex}
+  \vspace*{-1.5ex}
   \begin{edtable}{tabular}{lll}
     NameChar & ::= & letter | digit | '.' | '-' | '\_' | ':' | CombiningChar | Extender\\
     ID       & ::= & ( letter | '\_' | ':' ) NameChar*
   \end{edtable}
-  \vspace*{-3pt}
+  \vspace*{-5pt}
   \caption{Type \primtype{ID}
     expressed in the variant of BNF used by the XML 1.0
     specification~\protect\citep{bray:2004}.  The characters
@@ -226,7 +226,8 @@ XML elements).
 \label{sec:sid}
 
 The type \primtype{SId} is the type of the \token{id} attribute found
-on the majority of SBML components.  \primtype{SId} is a data type
+\changed{on the abstract class \SBase, and thus available on every
+component class derived from \SBase in SBML \thisLV.}  \primtype{SId} is a data type
 derived from the basic XML type \primtype{string}, but with
 restrictions about the characters permitted and the sequences in
 which those characters may appear.  The definition is shown in
@@ -253,24 +254,6 @@ The equality of \primtype{SId} values is determined by an exact
 character sequence match; \ie comparisons of these identifiers
 must be performed in a case-sensitive manner.  This applies to all
 uses of \token{SId}.
-
-\begin{blockChanged}
-
-In SBML Level~3 Version~2 Core, \SBase is defined to have an
-optional attribute \token{id}, which means that every object
-derived from \SBase also has this attribute.  Every \primtype{SId}
-attribute value in a \Model object must be unique within that
-\Model object.  However, some objects refine the possible scope of
-\token{id} values by using a type derived from \primtype{SId} that
-imposes further restrictions; for example, \LocalParameter is
-defined to have an \token{id} attribute with type
-\primtype{LocalSId} rather than plain \primtype{SId}, and this
-type has its own uniqueness constraints.  Outside of these
-specialized types, the set of \primtype{SId} values in a model is
-informally referred to as the ``\primtype{SId} namespace of the
-model''.
-
-\end{blockChanged}
 
 Type \primtype{SId} is purposefully not derived from the XML
 \primtype{ID} type (Section~\ref{sec:id}).  Using \primtype{ID}
@@ -349,7 +332,7 @@ case-sensitive manner.
 
 The \primtype{LocalSId} type is used as the data type for the \token{id} attribute of \LocalParameter.  The type \primtype{LocalSId} is derived from \primtype{SId} (Section~\ref{sec:sid}) and has identical syntax; it is defined as its own type to make it easier to specify a modified scope for identifiers referenced by mathematical formulas inside \KineticLaw objects.
 
-As explained in Section~\ref{sec:identifiers}, each \Reaction object introduces a local namespace for local parameter identifiers (i.e., the \token{id} attribute values of \LocalParameter objects within that \Reaction's \KineticLaw object).  The essential result is that any \token{math} \token{<ci>} child of the \KineticLaw whose text matches the \token{id} value of a \LocalParameter in that same \KineticLaw is taken to refer to that \LocalParameter object, and not to any other object that may have the same \token{id} value in the rest of the \Model.  The \primtype{LocalSId} value of a \LocalParameter object's \token{id} attribute is not part of the \primtype{SId} namespace of the model, nor of the \primtype{LocalSId} namespace of any other \Reaction object.
+As explained in Section~\ref{sec:identifiers}, each \Reaction object introduces a local namespace for local parameter identifiers (i.e., the \token{id} attribute values of \LocalParameter objects within that \Reaction's \KineticLaw object).  The consequence is that any \token{math} \token{<ci>} child of the \KineticLaw whose text matches the \token{id} value of a \LocalParameter in that same \KineticLaw is taken to refer to that \LocalParameter object, and not to any other object that may have the same \token{id} value in the rest of the \Model.  The \primtype{LocalSId} value of a \LocalParameter object's \token{id} attribute is not part of the \primtype{SId} namespace of the model, nor of the \primtype{LocalSId} namespace of any other \Reaction object.
 
 \end{blockChanged}
 
@@ -425,9 +408,11 @@ subsections.
 \label{sec:sbase-id}
 %-----------------------------------------------------------------------------
 
-The \token{id} attribute is an optional attribute on the \SBase class.  The \token{id} attribute value on an object serves as its \emph{identifier}.  In certain well-specified circumstances, other SBML objects can refer to the component using this identifier.  The data type of \token{id} on \SBase is \primtype{SId} (Section~\ref{sec:sid}).  Subclasses of \SBase may refine this by using a derived type such as \primtype{UnitSId} (Section~\ref{sec:unitsid}), or \primtype{LocalSId} (Section~\ref{sec:localsid}); likewise, when SBML Level~3 packages define new classes that inherit from \SBase, they may also refine the type of the \token{id} attribute on those classes.  In addition, although \token{id} is optional on \SBase, other object classes derived from \SBase may stipulate that \token{id} is a required attribute for those classes.
+The \token{id} attribute is an optional attribute on the \SBase class.  The \token{id} attribute value on an object serves as its \emph{identifier}.  The data type of \token{id} on \SBase is \primtype{SId} (Section~\ref{sec:sid}).  Every \primtype{SId} attribute value in a \Model object must be unique within that \Model object.  In certain well-specified circumstances, other SBML objects can refer to the object using its identifier.
 
-In SBML Level~3 Version~2, unlike the case in lower Levels and Versions of SBML, the attributes \token{id} and \token{name} are both defined on \SBase itself rather than on individual object subclasses.  This is a notable change in the internal SBML class hierarchy, although it has no practical effect for any class that has mathematical meaning---all the same objects with meaning (e.g., species, parameters, etc.) have exactly the same \token{id} attributes as in SBML Level~3 Version~1.  This topic is discussed further in Section~\ref{sec:idnameattribs}.
+Subclasses of \SBase may refine type \primtype{SId} by using a derived type (e.g., \primtype{UnitSId}, Section~\ref{sec:unitsid}); likewise, when SBML Level~3 packages define new classes that inherit from \SBase, they may also refine the type of the \token{id} attribute on those classes.  In addition, although \token{id} is optional on \SBase, other object classes derived from \SBase may stipulate that \token{id} is a required attribute for those classes.  Outside of the specializations of \primtype{SId}, the set of \primtype{SId} values in a model is informally referred to as the ``\primtype{SId} namespace of the model''.
+
+In lower Level/Version combinations of SBML, the attributes \token{id} and \token{name} are defined on individual object subclasses.  The placement of these attributes on \SBase in SBML Level~3 Version~2 is a notable change in the internal SBML class hierarchy, although it has no practical effect for any class that has mathematical meaning---all the same objects with meaning (e.g., species, parameters, etc.)\ have exactly the same \token{id} attributes as in SBML Level~3 Version~1.  This topic is discussed further in Section~\ref{sec:idnameattribs}.
 
 
 %-----------------------------------------------------------------------------
@@ -439,7 +424,7 @@ The attribute \token{name} is another optional attribute on \SBase.
 In contrast to the \token{id} attribute, the \token{name} attribute
 is not intended to be used for cross-referencing
 purposes within a model.  Its purpose instead is to provide a
-human-readable label for the component.  The data type of 
+human-readable label for a component.  The data type of 
 \token{name} is the type \primtype{string} defined in XML
 Schema~\citep{biron:2000,thompson:2000} and discussed further in
 Section~\ref{sec:primitive-types}.  SBML imposes no restrictions
@@ -555,8 +540,7 @@ Another approach is to declare the XHTML namespace within the
 <notes>
   <body xmlns="http://www.w3.org/1999/xhtml">
     <center><h2>A Simple Mitotic Oscillator</h2></center>
-    <p>A minimal cascade model for the mitotic oscillator
-    involving cyclin and cdc2 kinase</p>
+    <p>A minimal cascade model for the mitotic oscillator involving cyclin and cdc2 kinase</p>
   </body>
 </notes>
 ...
@@ -788,7 +772,7 @@ given in Section~\ref{sec:bp:annotations}.
 \label{sec:idnameattribs}
 %-----------------------------------------------------------------------------
 
-As mentioned above, in contrast to lower Levels and Versions of SBML, Level~3 Version~2 puts \token{id} and \token{name} attributes directly on the \SBase abstract class rather than on individual SBML component classes.  This means that every object whose class is derived from \SBase may have values for these attributes.  In this section, we elaborate on the use of \token{id} and \token{name} and discuss some of the implications of this change to \SBase.
+Every object whose class is derived from \SBase may have values for the \token{id} and \token{name} attributes.  In this section, we elaborate on the use of \token{id} and \token{name} and discuss some of the implications.
 
 \end{blockChanged}
 
@@ -834,13 +818,11 @@ support both scenarios:
   represented by objects of class \LocalParameter.  Within the
   definition of that reaction, local parameter identifiers
   override (shadow) identical identifiers \changed{from the \primtype{SId} namespace of the model}
-  outside of that reaction.  Of course, the corollary of this is
-  that local parameters inside a \Reaction object instance are not
-  visible to other objects outside of that reaction. \changed{This is indicated by defining the data type of the \token{id} attribute of a \LocalParameter to be \primtype{LocalSId} (Section~\ref{sec:localsid}) rather than \primtype{SId}.}
+  outside of that reaction.  \changed{Conversely, local parameters in a given \Reaction object are not visible outside of that reaction.  To support this, \LocalParameter's \token{id} attribute has type \primtype{LocalSId} (Section~\ref{sec:localsid}) rather than \primtype{SId}.}  
 
 \begin{blockChanged}
 
-\item The identifier of every \SBase-derived class defined by an SBML Level~3 package will be part of the  \primtype{SId} namespace of the model by default.  However, the package may declare the \token{id} attribute to have a derived type, whether one defined in SBML Level~3 Core or one defined by that Level~3 package; in that case, any element with an \token{id} of any particular type follows the rules of uniqueness defined for that type.  For example, the SBML Level~3 Hierarchical Model Composition package defines a \primtype{PortSId} type, and \Port objects have an \token{id} attribute of that type.  The Level~3 Hierarchical Model Composition package stipulates that all \Port element \token{id} values in a given \Model must be unique only among the other \Port objects in that \Model.
+\item The identifier of every \SBase-derived class defined by an SBML Level~3 package is part of the  \primtype{SId} namespace of the model by default.  However, a package may declare the \token{id} attribute to have a derived type, whether it is defined in SBML Level~3 Core or one defined by that Level~3 package; then, elements with an \token{id} of that type follow the rules of uniqueness defined for the type.  For example, the SBML Level~3 Hierarchical Model Composition package defines a \primtype{PortSId} type, and \Port objects have an \token{id} attribute of that type.  The Level~3 Hierarchical Model Composition package stipulates that all \Port element \token{id} values in a given \Model must be unique only among the other \Port objects in that \Model.
 
 \end{blockChanged}
 
@@ -869,16 +851,16 @@ of \token{name} values in a model (unlike the restrictions on
 \subsubsection{Motivations for defining \token{id} and \token{name} on \class{SBase}}
 \label{sec:why-on-sbase}
 
-In lower Level/Version combinations of SBML, the attributes \token{id} and \token{name} are defined only for particular components rather than on \SBase itself.  In this Version of SBML Level~3, they have been elevated to \SBase as a result of lengthy experiences with the previous structure.  The following are the motivations:
+As already mentioned, SBML Level~3 Version~2 puts the \token{id} and \token{name} attributes directly on the \SBase abstract class. This is a departure from previous Level/Version combinations of SBML, in which \token{id} and \token{name} were defined on individual SBML component classes.  The following were the motivations for this change.
 \begin{itemize}
   
-\item Object classes in SBML originally were given \token{id} attributes only if they had meaning for mathematical expressions.  (E.g., the concentrations of species, the sizes of compartments, etc.)  As SBML evolved, more objects were given \token{id} attributes but not always with associated mathematical meaning.  When SBML Level~3 packages were introduced, not only did further potentially uses of \token{id} become apparent: it also became possible for Level~3 packages to add nuances of meanings that Level~3 Core did not, and thus while Level~3 Core may not define a use for an \token{id} attribute on a given object, a Level~3 package might.  Examples of the latter are the SBML Level~3 Graphical Layout and Hierarchical Model Composition packages.
+\item Object classes in SBML originally were given \token{id} attributes only if they had meaning for mathematical expressions.  (E.g., the concentrations of species, the sizes of compartments, etc.)\  As SBML evolved, more objects were given \token{id} attributes but not always with associated mathematical meaning.  When SBML Level~3 packages were introduced, not only did further uses of \token{id} become apparent: it also became possible for Level~3 packages to add nuances of meanings that Level~3 Core did not.  Thus, while Level~3 Core may not define a use for an \token{id} attribute on a given object, a Level~3 package might.  Examples exist in the SBML Level~3 Graphical Layout and Hierarchical Model Composition packages.
 
-\item The \token{metaid} attribute on \SBase was can fulfill a similar role as an identifier for every object in an SBML document.  However, for several reasons it is unsuitable for use as a substitute for \token{id}.  First, owing to the fact that its data type is the XML type \primtype{ID}, it has a less restricted syntax (for instance, allowing Unicode characters).  Second, its scope cannot be ammended as needed for elements such as the \UnitDefinition or \LocalParameter, because XML \primtype{ID} is defined to have document-wide uniqueness properties.  Finally, having a \emph{model}-wide scope instead of a \emph{document}-wide scope has been found desirable for the SBML Level~3 Hierarchical Model Composition package.
+\item The \token{metaid} attribute on \SBase may seem to fulfill a similar role as an identifier for every object in an SBML document.  However, for several reasons it is unsuitable for use as a substitute for \token{id}.  First, owing to the fact that its data type is the XML type \primtype{ID}, it has a less restricted syntax (for instance, allowing Unicode characters).  Second, its scope cannot be ammended as needed for elements such as the \UnitDefinition or \LocalParameter, because XML \primtype{ID} is defined to have document-wide uniqueness properties.  Finally, having a \emph{model}-wide scope instead of a \emph{document}-wide scope has been found desirable for the SBML Level~3 Hierarchical Model Composition package.
 
 \item Because SBML Level~3 Version~2 Core objects may reference objects in  SBML Level~3 packages directly, and because package objects themselves may reference Core objects as well as objects from other packages, the simplest means of achieving this is to put the \token{id}  attribute on \SBase directly.
 
-\item The \token{name} attribute has traditionally been paired with the \token{id} attribute, in order to provide the option of a user-readable moniker for any object with an \token{id} attribute.  With \token{id} on \SBase, it makes sense to put \token{name} on \SBase too.
+\item The \token{name} attribute is logically paired with \token{id}, to provide the option of a user-readable moniker for any object with an \token{id} attribute.  With \token{id} on \SBase, it makes sense to put \token{name} on \SBase too.
 
 \end{itemize}
 
@@ -889,8 +871,8 @@ This design change (moving \token{id} and \token{name}) does not have an impact 
 \label{sec:version-1-packages-implications}
 
 Packages created and designed for use with \sbmlthree Version~1 may be used in \sbmlthree Version~2 documents, and be interpreted in exactly the same manner as they were for Version~1.  They may not, however, take advantage of the new features and constructs in Version~2.  This means the following:
-
 \begin{itemize}
+
 \item Any object class in an SBML Level~3 Version~1 package that inherits from \SBase will not inherit the new \token{id} and \token{name} attributes on \SBase.
 
 \item An object identifier from a Version~1 package may not be used in \Math constructs in SBML Level~3 Version~2 Core, nor as the value of any \primtype{SIdRef} type attribute in a Core construct.

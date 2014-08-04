@@ -1406,35 +1406,29 @@ following URIs defined by SBML:
   this existing version.)
 
 \begin{blockChanged}
-\item \uri{http://www.sbml.org/sbml/symbols/rateOf}.  This represents the derivative with respect to time of an SBML \primtype{SId}.  It represents a function that takes a single argument which must be a \token{ci} element, and returns the current rate of change of that referenced symbol with respect to time.
+\item \uri{http://www.sbml.org/sbml/symbols/rateOf}.  This represents the instantaneous rate of change, with respect to time, of an entity in the model.  It is a function that takes a single argument, an identifier of type \primtype{SId}.  The allowable identifiers for use with \emph{rateOf} in SBML \thisLVNC are those of \Compartment, \LocalParameter, \Parameter, \Species, and \SpeciesReference objects in the enclosing model; in addition, SBML Level~3 packages may define entities with mathematical meaning whose \emph{rateOf}'s can be referenced.  Note that \emph{rateOf} is not needed for \Reaction objects, because their identifiers already represent the rate of change of the reaction; conversely, there is no sensible meaning to be given to the \emph{rateOf} of a \FunctionDefinition, \Event, \Priority, \Delay, or other SBML entities.
 
-  The \emph{rateOf} of a symbol can be calculated from other model elements:
+  The intent of this \token{csymbol} is to provide a means for models to refer to quantities that must be naturally be computed as part of doing a dynamical analysis of a model.  The \emph{rateOf} \token{csymbol} is not intended to provide full numerical differentiation capabilities.  The value of \emph{rateOf} of a symbol can be determined more straightforwardly as follows:
+  \begin{enumerate}
 
-  \begin{itemize}
+  \item The \emph{rateOf} for any symbol declared constant is zero.  Note that in SBML \thisLVNC, \LocalParameter objects must always be constant; therefore, their \emph{rateOf} value is always zero.
 
-    \item The \emph{rateOf} for any constant symbol will be zero.
+  \item The \emph{rateOf} for a symbol whose \primtype{SId} appears as the \token{variable} of a \RateRule is the numerical value of that \RateRule, using the current values of all symbols referenced in the rule's formula.
 
-    \item The \emph{rateOf} for a symbol whose \primtype{SId} appears as the \token{variable} of a \RateRule will always take the calculated value of that \RateRule, using the current values of all symbols.
-
-    \item The \emph{rateOf} for the \emph{amount} of a non-boundary \Species which appears in one or more reactions will be calculable from the stoichimetries and \KineticLaw \Math of every \Reaction in which it appears, plus any appropriate \token{conversionFactor} values (see Section \ref{sec:about-kinetic-laws}).  If the \emph{species quantity} is in terms of its \emph{concentration}, this will need to be converted by the \token{size} of the \Compartment in which it appears, which may itself be changing in time.  This could then be calculated as follows, where $[X]$ is the concentration of X, $X$ the amount, and $V$ the size of its compartment:
+  \item The \emph{rateOf} for the \emph{amount} of a non-boundary \Species that appears in one or more reactions can be calculated from the  stoichimetries and \KineticLaw \Math of every \Reaction in which the species appears, plus any appropriate \token{conversionFactor} values (see Section \ref{sec:about-kinetic-laws}).  If the \emph{species quantity} is in terms of its \emph{concentration}, the rate must be converted by the \token{size} of the \Compartment in which it appears, which may itself be changing in time.  This can be calculated as follows, where $[x]$ is the concentration of species X, $x$ the amount of species X, and $V$ the size of the compartment in which species X is located:
     % From Stefan Hoops, https://groups.google.com/forum/#!msg/sbml-interoperability/m6ALOUxhl8I/7u6d2UJ5FjYJ
-    \begin{linenomath}
-      \begin{larray*}
-        \frac{d[X]}{dt} &=& \frac{d(X/V)}{dt} \\
-                        &=& \frac{1}{V} \cdot \frac{dX}{dt} + X \cdot \frac{d(1/V)}{dt} \\
-                        &=& \frac{1}{V} \cdot \frac{dX}{dt} - \frac{X}{V^2} \cdot \frac{dV}{dt}
-      \end{larray*}
-    \end{linenomath}
-    When $dV/dt$ is equal to zero, the final term drops out.
+    \begin{larray*}
+      \frac{d[x]}{dt} &=& \frac{d(x/V)}{dt} \\
+      &=& \frac{1}{V} \cdot \frac{dx}{dt} + x \cdot \frac{d(1/V)}{dt} \\
+      &=& \frac{1}{V} \cdot \frac{dx}{dt} - \frac{x}{V^2} \cdot \frac{dV}{dt}
+    \end{larray*}
+    When $dV/dt$ is equal to zero, the final term in the last line is zero.
 
-  \end{itemize}
+  \end{enumerate}
+
+  The \emph{rateOf} for a symbol whose \primtype{SId} appears as the \token{variable} of an \AssignmentRule, or which is calculated from an \AlgebraicRule, may not be referenced by the \emph{rateOf} \token{csymbol}.  Similarly, it is also not valid to use the \emph{rateOf} \token{csymbol} to reference a \Species with a \token{hasOnlySubstanceUnits} attribute value of \val{false} and whose \token{compartment} appears as the \token{variable} of an \AssignmentRule or whose \token{size} is calculated from an \AlgebraicRule.  In other words, anything whose value is directly or indirectly determined by an algebraic rule or an assignment rule is excluded.
 
   In the event of a discontinuity, such as might happen due to an \Event, a \token{piecewise} function, or at the beginning of a time course simulation (i.e. at $t=0$), the rate of change is defined as the right-handed \emph{rateOf} for the symbol, that is, the derivative with respect to time of the symbol moving forward in time from the current time, and not the derivative with respect to time from the recent past up until the current time.  Thus, the \emph{rateOf} of a symbol will always be calculable from the set of current values of symbols in the model.  No \Event can affect the \emph{rateOf} for a symbol except indirectly.
-
-The \emph{rateOf} for a symbol whose \primtype{SId} appears as the \token{variable} of an \AssignmentRule or which is calculated from an \AlgebraicRule may not be referenced by the \emph{rateOf} \token{csymbol}.  It is not the intention of this csymbol to introduce full symbolic differentiation into core SBML:  this is reserved for a possible SBML package.  Rather, the intent of this \token{csymbol} is intended to allow the modeler access to variables that must be explicitly calculated by a simulator already.
-
-Similarly, it is also not valid to use the \emph{rateOf} \token{csymbol} to reference a \Species with a \token{hasOnlySubstanceUnits} attribute value of \val{false}, whose \token{compartment} appears as the \token{variable} of an \AssignmentRule or whose \token{size} is calculated from an \AlgebraicRule.
-
 
 \end{blockChanged}
 

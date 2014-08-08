@@ -8,7 +8,7 @@ In this section, we define the syntax and semantics of the Dynamic Structures pa
 \subsection{Overview of dyn extension}
 \label{subsec:overview}
 
-The primary mechanism this package uses to support dynamic cellular behavior are the \Event and \EventAssignment constructs. The Dynamic Structures package extends these components not only to allow modelers to indicate at which point during simulation (i.e., under what cellular conditions), but how certain SBML structural components (compartments or submodels) are affected in response to dynamic cellular processes. To fully enable this, dyn also extends the \Compartment object class to facilitate the representation of spatial rearrangements that follow dynamic cellular processes. Though such representations vary across tools based on the chosen modeling paradigm, this language extension defines the necessary constructs to enable tools to encode dynamic cellular behavior regardless of mathematical method or spatial representation framework.
+The primary mechanism this package uses to support dynamic cellular behavior are the \Event constructs. The Dynamic Structures package extends this component not only to allow modelers to indicate at which point during simulation (i.e., under what cellular conditions), but which modeling components are affected in response to a particular cellular process. To fully enable this, dyn also extends the \Compartment object class to facilitate the representation of spatial rearrangements that follow dynamic cellular processes. Though such representations vary across tools based on the chosen modeling paradigm, this language extension defines the necessary constructs to enable tools to encode dynamic cellular behavior regardless of mathematical method or spatial representation framework.
 
 {\color{red} Harold: \notice Out of the types of off-lattice frameworks, our proposed approach only covers center-based (objects spatially identified by the coordinates of their center of mass) and doesn't support vertix-based (where each object has several vertices that together uniquely describe its position)}
 
@@ -37,83 +37,80 @@ using \sbmlthreecore and this version of the dyn package:
 \begin{example}
 <?xml version="1.0" encoding="UTF-8"?>
 <sbml xmlns="http://www.sbml.org/sbml/level3/version2/core" level="3" version="2"
-      xmlns:fbc="http://www.sbml.org/sbml/level3/version2/dyn/version1" arrays:required="true">
+     xmlns:dyn="http://www.sbml.org/sbml/level3/version2/dyn/version1" dyn:required="true">
 \end{example}
 
 \subsection{Primitive data types}
 \label{subsec:primitives}
-The Dynamic Structure package uses a number of the primitive data types described in Section 3.1 of the \sbmlthreecore specification as well as a number of XML Schema 1.0 data types~\citep{biron:2000}. More specifically, we make use of \primtype{SId}, \primtype{int}, and \primtype{SIdRef}. This package also adds additional primitive data types described below.
+The Dynamic Structure package uses a number of the primitive data types described in Section 3.1 of the \sbmlthreecore specification as well as a number of XML Schema 1.0 data types~\citep{biron:2000}. More specifically, we make use of \primtype{boolean} and \primtype{SIdRef}. This package also adds additional primitive data types described below.
 
 \subsubsection{\emph{Type} \primtype{CBOTerm}}
 \label{dat:CBOTerm}
 
 The type \primtype{CBOTerm} is used as the data type of the attribute \token{cboTerm} on the \Event object class. \primtype{CBOTerm} follows the syntax defined for the \primtype{anyURI} data type, which considers it a character string data type whose values are interpretable as URIs~(Universal Resource Identifiers; \citep{Means:2001}; \citep{w3c:2000b}) as described by the W3C document RFC 3986 \citep{Berners-Lee:2005}. Examples of valid string values of type CBOTerm are:  
 \begin{center}
-\url{http://cbo.biocomplexity.indiana.edu/svn/cbo/trunk/CBO_1_0.owl#Apoptosis} \url{http://cbo.biocomplexity.indiana.edu/svn/cbo/trunk/CBO_1_0.owl#Movement}
+\url{http://cbo.biocomplexity.indiana.edu/svn/cbo/trunk/CBO_1_0.owl#CellDeath} \url{http://cbo.biocomplexity.indiana.edu/svn/cbo/trunk/CBO_1_0.owl#Movement}
 \end{center}
 These values are meant to be the identifiers of terms from the Cell Behavior Ontology (CBO) whose curated vocabulary describes cellular entities and processes in computational models. \sec{sec:CBO} provides more information about the ontology, supported ontological terms and general principles for their use in SBML models.
 
-\subsubsection{\emph{Type} \primtype{CoordinateSystemKind}}
-\label{dat:CoordSystemKind}
-
-Type \primtype{CoordinateSystemKind} is a primitive data type that is used in extending the \Compartment object to indicate the coordinate system in which the position of modeling elements is to be specified. \primtype{CoordinateSystemKind} is derived from the basic \primtype{XML} type \primtype{string}, but with restrictions about the sequences in which characters may appear. Values for attributes of this data type can only include: \val{cartesian}. The meaning of each of these values is discussed in the context of the extended \Compartment object in \sec{subsec:extCompartment}.
-
-{\color{red} Harold: \notice  If we indicate a coordinateSystem such as cartesian, we should also support other such as "cylindrical", "spherical", and "polar" (which the spatial package also supports). It would make for a more 
-	
-If SED-ML is used, using more coordinate systems would mean that not only would we need to worry about translating how dynamic processes are represented across spatial frameworks, but coordinate systems! (Another layer of complexity)}
+%\subsubsection{\emph{Type} \primtype{CoordinateSystemKind}}
+%\label{dat:CoordSystemKind}
+%
+%Type \primtype{CoordinateSystemKind} is a primitive data type that is used in extending the \Compartment object to indicate the coordinate system in which the position of modeling elements is to be specified. \primtype{CoordinateSystemKind} is derived from the basic \primtype{XML} type \primtype{string}, but with restrictions about the sequences in which characters may appear. Values for attributes of this data type can only include: \val{cartesian}. The meaning of each of these values is discussed in the context of the extended \Compartment object in \sec{subsec:extCompartment}.
+%
+%{\color{red} Harold: \notice  If we indicate a coordinateSystem such as cartesian, we should also support other such as "cylindrical", "spherical", and "polar" (which the spatial package also supports). It would make for a more }
 
 \subsubsection{\emph{Type} \primtype{CoordinateKind}}
 \label{dat:CoordKind}
 
-The \primtype{CoordinateKind} primitive data type is used in the definition of the \CoordinateComponent class. \primtype{CoordinateKind} is derived from the basic \primtype{XML} type \primtype{string} though it restricts possible values attributes of this data type can take. Supported values include: \val{cartesianX}, \val{cartesianY}, \val{cartesianZ}. Attributes of \primtype{CoordinateKind} type are discussed in the context of the extended \Compartment object in \sec{subsec:extCompartment}.
+The \primtype{CoordinateKind} primitive data type is used in the definition of the \CoordinateComponent class. \primtype{CoordinateKind} is derived from the basic \primtype{XML} type \primtype{string} though it restricts possible values attributes of this data type. Supported values for attributes of this type are bound to a Cartesian coordinate system and include: \val{cartesianX}, \val{cartesianY}, \val{cartesianZ}. Attributes of \primtype{CoordinateKind} type are discussed in the context of the extended \Compartment object in \sec{subsec:extCompartment}.
 
-{\color{red} Harold: \notice If cylindrical, spherical and polar coordinate systems are used, the list of possible values for this data type would need to be extended to include: "sphericalRadius", "sphericalAzimuth", "sphericalElevation", "cylindrical-Radius", "cylindricalAzimuth", "cylindricalHeight", "polarRadius", and "polarAzimuth". }
+%{\color{red} Harold: \notice If cylindrical, spherical and polar coordinate systems are used, the list of possible values for this data type would need to be extended to include: "sphericalRadius", "sphericalAzimuth", "sphericalElevation", "cylindrical-Radius", "cylindricalAzimuth", "cylindricalHeight", "polarRadius", and "polarAzimuth". }
 
 \subsection{The extended \class{Event} object}
 \label{subsec:extEvent}
 
-The \Event class is extended in the Dynamic Structure package. The addition of a \token{cboTerm} attribute is designed to allow a modeler or a software package to attach semantical information to events triggered in response to dynamic cellular processes in an SBML model. \ref{fig:UMLExtendedEvent} provides the corresponding UML diagram. 
+The \Event class is extended in the Dynamic Structure package. The addition of a \token{cboTerm} attribute is designed to allow a modeler or a software package to attach semantical information to events triggered to model dynamic cellular processes. The \token{applyToAll} attribute and subobjects \ListOfElements and \Element allow modelers to indicate which SBML components are involved in an \Event triggered to model dynamic cellular behavior.\ref{fig:UMLExtendedEvent} provides the corresponding UML diagram. 
 
 \begin{figure}[tbhp]
   \centering
   %\usepackage{graphicx}
-  \includegraphics[width=0.25\textwidth]{images/UMLExtendedEvent.pdf}\\
-  \caption{A UML representation of the extended \Event class. See \ref{subsec:conventions}} for conventions related to this figure. \label{fig:UMLExtendedEvent}
+  \includegraphics[width=0.70\textwidth]{images/UMLExtendedEvent.pdf}\\
+  \caption{A UML representation of the extended \Event class and newly defined \ListOfElements and \Element objects. See \ref{subsec:conventions} for conventions related to this figure.} \label{fig:UMLExtendedEvent}
 \end{figure}
 
 \subsubsection{The \token{cboTerm} attribute}
 \label{attr:cboTerm}
 
-The attribute called \token{cboTerm} on the \Event class supports the use of Cell Behavior Ontology(CBO) terms to provide semantic encoding of dynamic cellular events in SBML models. By adding CBO terms, modelers can semantically annotate event constructs to explicitly indicate which cellular processes are being modeled in each \Event instance. The relationship is of the form "the Event is-a X", where X is the CBO term. The term chosen should be the most precise one that captures the role of the Event in the model. The value of \token{cboTerm} must conform to the syntax permitted by the \primtype{CBOTerm} data type previously described in \sec{dat:CBOTerm} of the current specification. The scope of the \token{cboTerm} attribute is local to the enclosing object definition and is not visible outside the object definition. For a discussion on supported values for \token{cboTerm} and CBO in general see \sec{sec:CBO}
+The attribute called \token{cboTerm} on the \Event class supports the use of Cell Behavior Ontology(CBO) terms to provide semantic encoding of dynamic cellular events in SBML models. By adding CBO terms, modelers can semantically annotate event constructs to explicitly indicate which cellular process is being modeled by each \Event instance. The relationship is of the form "the Event is-a X", where X is the CBO term. The term chosen should be the most precise one that captures the role of the Event in the model. The value of \token{cboTerm} must conform to the syntax permitted by the \primtype{CBOTerm} data type previously described in \sec{dat:CBOTerm} of the current specification. The scope of the \token{cboTerm} attribute is local to the enclosing object definition and is not visible outside the object definition. For a discussion on supported values for \token{cboTerm} and CBO in general see \sec{sec:CBO}
 
-\subsection{The extended \class{EventAssignment} object}
-\label{subsec:extEventAssignment}
+\subsubsection{The \token{applyToAll} attribute}
+\label{attr:applyToAll}
+The \token{applyToAll} attribute is used as a mechanism for indicating which SBML model components are impacted by the execution of the current dynamic \Event. If the value of this attribute is \val{true}, then all SBML elements in the model are involved in the \Event. If \val{false}, modelers must list the specific components that are affected by means of the \ListOfElements class, which must not be empty if present. For instance, if the value of the \token{cboTerm} attribute semantically annotates the current \Event as modeling cell death, the \token{applyToAll} attribute allows modelers to chose whether only some or all of the model components are to be removed from the simulation. 
 
-In every instance of an event definition in a model, the subobject \ListOfEventAssignments element must have a non-empty list of one or more elements of class \EventAssignment. This package extends the \EventAssignment class to add a \token{component} attribute to allow modelers to indicate which cellular structures are involved in an event executed to model dynamic cellular behavior. The definition for the extension of the \EventAssignment element is shown in \ref{fig:UMLExtendedEventAssignment}.
- 
-\begin{figure}[tbhp]
-	\centering
-	%\usepackage{graphicx}
-	\includegraphics[width=0.25\textwidth]{images/UMLExtendedEventAssignment.pdf}\\
-	\caption{A UML representation of the extended \EventAssignment class. See \ref{subsec:conventions}} for conventions related to this figure. \label{fig:UMLExtendedEventAssignment}
-\end{figure}
+\subsubsection{The \class{ListOfElements} class}
+\label{subsec:ListOfElements}
+An extended \Event component with \val{false} as value for its \token{applyToAll} attribute must define a non-empty object of class \ListOfElements. This object contains a list of \Element references that uniquely identify the set of SBML components involved in the execution of a given dynamic \Event.
 
-\subsubsection{The \token{component} attribute}
-\label{attr:component}
+\subsection{The \class{Element} class}
+\label{subsec:Element}
+An \Element object contains unique references to SBML components defined within a model. These references are pooled by a \ListOfElements construct and modified characteristically depending on the cellular process that is modeled. This construct defines an \token{element} attribute which stores a single reference to a given SBML model component.
 
-\token{Component} is a mandatory attribute of the type \primtype{SidRef} that is used to uniquely identify the cellular structure (either compartment or submodels) to be dynamically altered when a dynamic event is executed. When this attribute points to \Compartment elements, they must have a child \ListOfCoordinateComponents as seen in \ref{subsec:extCompartment}. This ensures that when an extended event is executed, referenced cellular compartments will have an assigned spatial location, which is necessary when modeling cellular behavior. If this is not the case, the \EventAssignment is not considered to be part of the dynamic representation of the model.
+\subsubsection{The \token{element} attribute}
+\label{attr:element}
 
-{\color{red} Harold: \notice How do we exactly indicate what happens to all the compartments within? Do we have separate EventAssignments-one for each contained element?}
+\token{Element} is a mandatory attribute of the type \primtype{SIdRef} that is used to reference single anatomical structures (compartments or submodels) or additional SBML components that are altered following the execution of a given dynamic event. Only model elements having identifiers of type \primtype{SId} can be referenced by this attribute. 
+
+When \token{element} points to \Compartment element, it is advisable to define a \ListOfCoordinateComponents as seen in \ref{subsec:extCompartment}. This ensures that when an extended \Event is executed, referenced cellular compartments will have an assigned spatial location, which is important in representing dynamic behavior. On the other hand, if this attribute points to the identifier of a group from the SBML Groups extension, an \Element references not a single component, but a set of SBML objects instead. For a complete description of how \Element class instances are affected by different behaviors modeled in an extended \Event, refer to \sec{subsubsec:supportedCBO}.
+
+{\color{red} Harold: \notice Are there any SBML components that won't be able to be referenced given the SIdRef type restriction?}
 
 \subsection{The extended \class{Compartment} object}
 \label{subsec:extCompartment}
 
-The \Compartment class must be extended to represent the spatial location and subsequent rearrangement that follows dynamic cellular processes emulated by extended \Event constructs. Refer to \sec{sec:CBO} for a list of supported dynamic cellular processes and associated ontological terms. This package adds the mandatory attribute \token{coordinateSystem} and subobjects \ListOfCoordinateComponents and \CoordinateComponent to describe the spatial location of modeling objects. \ref{fig:UMLExtendedCompartment} provides the corresponding UML diagram of the various features of the extended \Compartment class. 
+The \Compartment class may be extended to represent the spatial location and subsequent rearrangement that follows dynamic cellular processes emulated by extended \Event constructs. Refer to \sec{sec:CBO} for a list of supported dynamic cellular processes and associated ontological terms. This SBML extension adds to \Compartment the subobjects \ListOfCoordinateComponents and \CoordinateComponent to describe the spatial location of cellular components. \ref{fig:UMLExtendedCompartment} provides the corresponding UML diagram of the various features of the extended \Compartment class. 
 
-{\color{red} Harold: \notice If we add a rotation attribute here to support 2D representations (bacterial growth) where rotation is important in spatially describing objects, how exactly do we do it? Rotation would be measured in what units (radians, degrees)? Would rotation be relative to a given coordinate component? 
-
-Also, should the CoordinateSystem attribute reside in Compartment? If we only have one allowed value (cartesian) it doesn't matter. However, if we allow several possible coordinate systems (spherical,cylindrical, etc) users may indicate different ones for extended Compartments in the same model, which would be an error. As we cannot use defaults, I think this attribute should be more general so it applies to all Compartments at once.
-}
+{\color{red} Harold: \notice If we add a rotation attribute here to support representations (bacterial growth) where rotation is important in spatially describing objects, it should be as 3 optional params of type SIdRef corresponding to rotations along the x, y, and z axes.}
 
 \begin{figure}[tbhp]
 	\centering
@@ -122,19 +119,12 @@ Also, should the CoordinateSystem attribute reside in Compartment? If we only ha
 	\caption{UML diagram for the extension of the \Compartment object and the definition of \ListOfCoordinateComponents and \CoordinateComponent classes. See \ref{subsec:conventions} for conventions related to this figure.} \label{fig:UMLExtendedCompartment}
 \end{figure}
 
-\subsubsection{The \token{coordinateSystem} attribute}
-\label{attr:coordSystem}
-
-The \token{coordinateSystem} attribute is a required attribute of type \primtype{CoordinateSystemKind}. It represents the coordinate system used by a \Compartment to indicate its spatial location. A value of \val{cartesian} indicates that the \Compartment is in a cartesian coordinate system (1, 2 or 3D) and that the coordinate components correspond to the x, y, and z cartesian components.
-
-%The CoordinateComponent class 3-dimensional). A value of “cylindrical” indicates that the geometry is a three-dimensional cylendrical coordinate system, with coordinate components corresponding to radial distance, azimuth angle, and axial position. A value of “spherical” indicates that the geometry is a three-dimensional spherical coordinate system, with coordinate components corresponding to radial distance, polar angle, and azimuth angle. A value of “polar” indicates that the geometry is a two-dimensional polar coordinate system, with coordinate components corresponding to radial distance and angle (the two-dimensional equivalent of the cylendrical coordinate system). 
-
-{\color{red} Harold: \notice  Do we expect to model something of higher dimensions than 3D cartesian coordinate system? Specifying how the actual dynamic events are carried out in SED-ML is not only dependent on translating between spatial frameworks (off-lattice vs lattice-based), but on the dimension of the spaces indicated. We need to be careful!}
+{\color{red} Harold: \notice  Do we expect to model something of higher dimensions than 3D cartesian coordinate system?}
 
 \subsubsection{The \class{ListOfCoordinateComponents} class}
 \label{subsec:listCoordComp}
 
-\Compartments mapped by an \EventAssignment construct must contain an element called listOfCoordinateComponents, of class \ListOfCoordinateComponents. This object contains a list of \CoordinateComponent objects that define the coordinate system in which the component is modeled. If mapped, a \Compartment cannot have an empty \ListOfCoordinateComponents list.
+\Compartments mapped by an \Element construct may contain a listOfCoordinateComponents element, of class \ListOfCoordinateComponents. Each list contains \CoordinateComponent objects that together describe the spatial location (center of mass along a Cartesian coordinate system) of an individual \Compartment. If mapped, a \Compartment cannot have an empty \ListOfCoordinateComponents list.
 
 \subsection{The \class{CoordinateComponent} class}
 \label{subsec:coordComp}
@@ -152,5 +142,4 @@ The attribute \token{coordinateIndex} of type \primtype{CoordinateKind} is added
 \subsubsection{The \token{variable} attribute}
 \label{attr:variable}
 
-The \token{variable} attribute of type \primtype{SidRef} contains the identifier of a \Parameter defined in the model to explicitly specify an object's position. The scope of the referenced \Parameter component must be global to the whole model and its \token{constant} attribute must be set to \val{false} as spatial location of the associated \Compartment may change in response to dynamic processes.
-
+The \token{variable} attribute of type \primtype{SIdRef} contains the identifier of a \Parameter defined in the model to explicitly specify an object's position. The scope of the referenced \Parameter component must be global to the whole model and its \token{constant} attribute must be set to \val{false} as spatial location of the associated \Compartment may change in response to dynamic processes.

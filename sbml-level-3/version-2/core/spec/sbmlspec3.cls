@@ -37,7 +37,7 @@
 %% It would be so nice to be able to put the CVS/RCS 'Date' tag in the
 %% \filedate below.  Unfortunately, LaTeX will barf on the resulting string.
 
-\def\filedate{2014/04/17}
+\def\filedate{2014/08/10}
 
 \NeedsTeXFormat{LaTeX2e}
 

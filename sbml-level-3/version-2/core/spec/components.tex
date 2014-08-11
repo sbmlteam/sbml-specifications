@@ -536,7 +536,7 @@ function called in subsequent MathML \token{apply} elements.
     \token{lambda} expression (or a \token{lambda} surrounded by a
     \token{semantics} element).  A function definition \changed{may}
     contain \changed{no more than} one \token{math} element defined by the
-    \class{Lambda} class, \changed{plus a boolean \token{isRecursive} attribute}.  Note also that \class{Lambda} is not
+    \class{Lambda} class.  Note also that \class{Lambda} is not
     derived from \SBaseUpright, which means that the attributes defined
     on \SBaseUpright are \emph{not} available on the \token{math}
     element.  A sequence of \changed{zero} or more instances of
@@ -552,7 +552,7 @@ Function definitions in SBML (also informally known as
 As is made clearer below, a function cannot reference
 parameters or other model quantities outside of itself; values
 must be passed as parameters to the function.  Moreover, recursive
-and mutually-recursive functions are \changed{permitted only if the value of the \token{isRecursive} attribute is set to \val{true}}.  The purpose
+and mutually-recursive functions are not permitted.  The purpose
 of these limitations is to balance power against complexity of
 implementation.  With the restrictions as they are, function
 definitions could, if desired, be implemented as textual substitutions.
@@ -564,16 +564,7 @@ programming languages.
 \subsubsection{The \token{id} attribute}
 
 \begin{blockChanged}
-\FunctionDefinition inherits the \token{id} attribute from \SBase, but defines \token{id} as being required rather than optional.  The \token{id} attribute otherwise obeys the behavior described in \sec{sec:idnameattribs}.  A function's identifier can be used in \token{math} elements as the first target of an \token{apply} element, but has no value associated with it, and may not be the target of an \InitialAssignment, \EventAssignment, or \Rule.
-\end{blockChanged}
-
-
-\begin{blockChanged}
-\subsubsectionChanged{The \token{isRecursive} attribute}
-
-The \token{isRecursive} attribute is of type \primtype{boolean}, and indicates whether the \FunctionDefinition is recursive or not.  If the \FunctionDefinition's child \class{Lambda} element refers to itself, either directly or indirectly, this attribute must be set \val{true}.  Otherwise, it may be set \val{false}.
-
-Recursive functions must terminate, as through the use of a \token{piecewise} function.  However, it is not always possible to determine this through a validation analysis.  A simulator may therefore need to break a cascade of recursive functions arbitrarily in the middle of a simulation.  If this happens, the simulator should indicate that this has occurred, and may proceed, or not, as seems fit.  It is incorrect for a simulator to break recusion arbitrarily and continue without at least indicating that the infinite recursion occurred.
+\FunctionDefinition inherits the \token{id} attribute from \SBase, but defines \token{id} as being required rather than optional.  The \token{id} attribute otherwise obeys the behavior described in \sec{sec:idnameattribs}.  A function's identifier can be used in \token{math} elements as the first target of an \token{apply} element, but has no value associated with it, and may not be the target of an \InitialAssignment, \EventAssignment, or \Rule object in the model.
 \end{blockChanged}
 
 
@@ -598,16 +589,15 @@ contain references to identifiers other than the
 is, the contents of MathML \token{ci} elements inside the body of
 the \token{lambda} can only be one of three kinds of
   identifiers: (i) the \changed{symbols} declared by its \token{bvar}
-  elements, (ii) the identifiers of other
-\FunctionDefinition objects defined in the same model,
-\changed{or (iii) its own identifier (if the \token{isRecursive} attribute is set to \val{true}).}
+  elements, or (ii) the identifiers of other
+\FunctionDefinition objects defined in the same model.
 This
 restriction also applies to the \token{csymbol} elements for
-\quantity{time}, \quantity{avogadro}, \quantity{delay}, \changed{ and \quantity{rateOf}}.
+\quantity{time}, \quantity{avogadro}, \quantity{delay}, \changed{and \quantity{rateOf}}.
 Functions must be written so that all model \changed{symbols} they use are
 passed to them via their parameters.
 
-\changed{If the \token{math} element is not present in the \FunctionDefinition, the function has no mathematical meaning defined in SBML Level~3 Core.  A meaning may be provided by means of a package or custom annotation, but any interpreter that only understands SBML Level~3 Core will not be able to derive that meaning.}
+\changed{If the \token{math} element is not present in the \FunctionDefinition, the function has no mathematical meaning defined in SBML Level~3 Core.  This situation may arise when models are incomplete, or when additional meanings are provided by an SBML Level~3 package.  (However, an interpreter that only understands SBML Level~3 Core will naturally not recognize meanings introduced by a Level~3 package.)}
 
 
 \subsubsectionChanged{The \token{sboTerm} attribute}
@@ -638,7 +628,7 @@ function defined by a \FunctionDefinition must use the same number
 of arguments as specified in the function's definition.  The
 number of arguments is equal to the number of \token{bvar}
 elements inside the \token{lambda} element of the function
-definition.  \changed{If the \FunctionDefinition has no \token{math} child, no restriction is placed, in SBML Level~3 Core, on the number of arguments the function may take when used in MathML elsewhere in the model.  Without further information (such as might be supplied by a package), however, the call will be mathematically meaningless.}
+definition.  \changed{If the \FunctionDefinition has no \token{math} child, no restriction is placed, in SBML Level~3 Core, on the number of arguments the function may take when used in MathML elsewhere in a model.  However, without further information (such as might be supplied by an SBML Level~3 package), the call will be mathematically meaningless.}
 
 Note that \FunctionDefinition does not have a separate attribute
 for defining the unit of measurement associated with the value
@@ -665,7 +655,11 @@ law.  Note how the invocation of the function uses its identifier.
                  xmlns:sbml="http://www.sbml.org/sbml/level3/version2/core">
                <lambda>
                    <bvar><ci> x </ci></bvar>
-                   <apply> <power/> <ci> x </ci> <cn sbml:units="dimensionless"> 3 </cn> </apply>
+                   <apply>
+                       <power/>
+                       <ci> x </ci>
+                       <cn sbml:units="dimensionless"> 3 </cn> 
+                   </apply>
                </lambda>
            </math>
        </functionDefinition>
@@ -676,7 +670,10 @@ law.  Note how the invocation of the function uses its identifier.
            ...
            <kineticLaw>
                <math xmlns="http://www.w3.org/1998/Math/MathML">
-                   <apply> <ci> pow3 </ci> <ci> S1 </ci> </apply>
+                   <apply> 
+                       <ci> pow3 </ci>
+                       <ci> S1 </ci> 
+                   </apply>
                </math>
            </kineticLaw>
            ...
@@ -751,8 +748,9 @@ from elsewhere in a model.
 
 \begin{figure}[htb]
   \centering
-  \vspace*{1ex}
+  \vspace*{1.5ex}
   \includegraphics[scale=0.78]{figs/unitdefinition-uml}
+  \vspace*{0.5ex}
   \caption{The definition of classes \UnitDefinition and
       \Unit.  A sequence of \changed{zero} or more instances of
       \UnitDefinition can be located in an instance of
@@ -770,10 +768,12 @@ from elsewhere in a model.
 \end{figure}
 
 
+\begin{blockChanged}
+
 \paragraphChanged{The \token{id} attribute}
 
-\begin{blockChanged}
 \UnitDefinition inherits the \token{id} attribute from \SBase, but defines \token{id} as being required rather than optional, and in addition, refines the data type of \token{id} to be \primtype{UnitSId} instead of \primtype{SId}.  This is done to provide each unit definition with a unique identifier by which other components of a model may refer to it.  (See \sec{sec:idnameattribs} for more details.)
+
 \end{blockChanged}
 
 There is one important restriction about the use of unit
@@ -843,19 +843,16 @@ the value space of the data type \primtype{UnitSId}
 (\sec{sec:unitsid}).
 
 \begin{table}[bht]
-  \vspace*{1em}
   \centering
   \ttfamily
   \small
   \setlength{\arraycolsep}{8pt}
-  \begin{edtable}{tabular}{@{}llllll@{}}
+  \begin{edtable}{tabular}{@{}lllllllll@{}}
     \toprule
-    ampere                    & farad            & joule    & lux      & radian    & volt  \\
-    \underline{avogadro}      & gram             & katal    & metre    & second    & watt  \\
-    becquerel                 & gray             & kelvin   & mole     & siemens   & weber \\
-    candela                   & henry            & kilogram & newton   & sievert           \\
-    coulomb                   & hertz            & litre    & ohm      & steradian         \\
-    \underline{dimensionless} & \underline{item} & lumen    & pascal   & tesla             \\
+    ampere               & coulomb                   & gray             & joule    & litre & mole   & radian  & steradian & weber\\
+    \underline{avogadro} & \underline{dimensionless} & henry            & katal    & lumen & newton & second  & tesla \\
+    becquerel            & farad                     & hertz            & kelvin   & lux   & ohm    & siemens & volt \\
+    candela              & gram                      & \underline{item} & kilogram & metre & pascal & sievert & watt \\
     \bottomrule
   \end{edtable}
   \caption{Base units defined in SBML.  These symbols are
@@ -955,7 +952,6 @@ is the following:
 \label{eq:unit-semantics}
 \end{equation}
 \end{linenomath}
-
 This formula defines a new unit, \unew, in terms of another unit,
 \ukind.  The unit \ukind is one of the units listed in
 \tab{tab:unitkind}; in a given \Unit object, it is
@@ -1157,6 +1153,7 @@ Finally, as mentioned above, unit definitions in SBML \thisLV may have empty \Li
 
 \end{blockChanged}
 
+\clearpage
 
 %-----------------------------------------------------------------------------
 \subsection{Compartments}
@@ -1170,11 +1167,10 @@ system, although models are often designed that way.  The definition
 of \Compartment is shown in \fig{fig:compartment}.
 
 \begin{figure}[htb]
-  \vspace*{-1.5ex}
   \centering
   \small
   \begin{tikzpicture}
-    \node[above=0.575in] (a) {
+    \node[above=0.7in] (a) {
       \emptyClassbox{\textsl{SBase}}
     };
     \node (b) {
@@ -1190,7 +1186,6 @@ of \Compartment is shown in \fig{fig:compartment}.
     };
     \draw[open triangle 60-] (a) -- (b);
   \end{tikzpicture}
-  \vspace*{-1ex}
   \caption{The definition of class \Compartment.  A
       sequence of \changed{zero} or more instances of \Compartment objects
       can be located in an instance of \ListOfCompartments in
@@ -1328,6 +1323,7 @@ compartment sizes.  A discussion of recommended units is given in
 \sec{sec:bp:unitdefinitions:recommendedunits}.
   
 \begin{table}[tbh]
+  \vspace*{2ex}
   \small
   \centering
   \begin{edtable}{tabular}{cll}
@@ -1341,6 +1337,7 @@ compartment sizes.  A discussion of recommended units is given in
    other   & \emph{no units inherited} & \emph{no specific recommendations}\\
     \bottomrule
   \end{edtable}
+  \vspace*{0.5ex}
   \caption{When a \Compartment object instance does not specify a
     value for the attribute \token{units}, but \emph{does} specify
     a value for \token{spatialDimensions}, a value for
@@ -1354,7 +1351,7 @@ compartment sizes.  A discussion of recommended units is given in
   \label{tab:comp-size-units}
 \end{table}
 
-%\clearpage
+\clearpage
 
 The unit of measurement associated with a compartment's size, as
 defined by the \token{units} attribute or (if \token{units} is not
@@ -2114,7 +2111,6 @@ constant or the initial value of a variable from the values of
 \InitialAssignment is shown in \fig{fig:initialAssignment}.
 
 \begin{figure}[htb]
-  \vspace*{-1.5ex}
   \centering
   \small
   \begin{tikzpicture}
@@ -2136,7 +2132,6 @@ constant or the initial value of a variable from the values of
     \draw[diamond-,shorten <=-4pt,shorten >=-6pt] (b) -- (c)
         node[above=6pt,left=1.75in] {\textsf{math}};
   \end{tikzpicture}
-  \vspace*{-1.5ex}
   \caption{The definition of class \InitialAssignment.  The
     contents of the \Math class can be any \mathml
     permitted in SBML; see
@@ -2353,7 +2348,8 @@ identifier defined elsewhere in the model:
 \begin{example}
 <listOfSpecies>
     <species id="x" compartment="C" substanceUnits="mole"
-             hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+             hasOnlySubstanceUnits="true" boundaryCondition="false" 
+             constant="false"/>
 </listOfSpecies>
 ...
 <listOfInitialAssignments>
@@ -2361,7 +2357,9 @@ identifier defined elsewhere in the model:
         <math xmlns="http://www.w3.org/1998/Math/MathML"
               xmlns:sbml="http://www.sbml.org/sbml/level3/version2/core">
             <apply>
-                <times/> <ci> y </ci> <cn sbml:units="dimensionless"> 2 </cn>
+                <times/> 
+                <ci> y </ci> 
+                <cn sbml:units="dimensionless"> 2 </cn>
             </apply>
         </math>
     </initialAssignment>
@@ -2390,7 +2388,9 @@ there also exists an \InitialAssignment for it \emph{and} another
         <math xmlns="http://www.w3.org/1998/Math/MathML"
               xmlns:sbml="http://www.sbml.org/sbml/level3/version2/core">
             <apply>
-                <times/> <ci> x </ci> <cn sbml:units="dimensionless"> 2 </cn>
+                <times/>
+                <ci> x </ci>
+                <cn sbml:units="dimensionless"> 2 </cn>
             </apply>
         </math>
     </initialAssignment>
@@ -2897,21 +2897,37 @@ the model and not shown in this abbreviated example):
 <listOfRules>
     <assignmentRule variable="k">
         <math xmlns="http://www.w3.org/1998/Math/MathML">
-            <apply> <divide/> <ci> k3 </ci> <ci> k2 </ci> </apply>
+            <apply>
+                <divide/>
+                <ci> k3 </ci>
+                <ci> k2 </ci>
+            </apply>
         </math>
     </assignmentRule>
     <assignmentRule variable="s2">
         <math xmlns="http://www.w3.org/1998/Math/MathML">
             <apply>
                 <divide/>
-                    <apply> <times/> <ci> k </ci> <ci> x </ci> </apply>
-                    <apply> <plus/> <cn> 1 </cn> <ci> k2 </ci> </apply>
+                    <apply> 
+                        <times/>
+                        <ci> k </ci>
+                        <ci> x </ci>
+                    </apply>
+                    <apply> 
+                        <plus/>
+                        <cn> 1 </cn>
+                        <ci> k2 </ci>
+                    </apply>
             </apply>
         </math>
     </assignmentRule>
     <assignmentRule variable="A">
         <math xmlns="http://www.w3.org/1998/Math/MathML">
-            <apply> <times/> <cn> 0.10 </cn> <ci> x </ci> </apply>
+            <apply> 
+                <times/>
+                <cn> 0.10 </cn>
+                <ci> x </ci>
+            </apply>
         </math>
     </assignmentRule>
 </listOfRules>
@@ -3001,7 +3017,7 @@ constraint.  This formula must return a boolean value of
 can be an arbitrary expression referencing the variables and other
 entities in an SBML model.  The evaluation of \token{math} and
 behavior of constraints are described in more detail in
-\sec{sec:constraint-semantics} below.
+\sec*{sec:constraint-semantics} below.
 
 
 \subsubsection{\class{Message}}
@@ -3075,8 +3091,16 @@ and~100:
                   xmlns:sbml="http://www.sbml.org/sbml/level3/version2/core">
                 <apply>
                     <and/>
-                        <apply> <lt/> <cn sbml:units="mole"> 1 </cn> <ci> S1 </ci> </apply>
-                        <apply> <lt/> <ci> S1 </ci> <cn sbml:units="mole"> 100 </cn> </apply>
+                        <apply> 
+                            <lt/>
+                            <cn sbml:units="mole"> 1 </cn> 
+                            <ci> S1 </ci>
+                        </apply>
+                        <apply>
+                            <lt/>
+                            <ci> S1 </ci> 
+                            <cn sbml:units="mole"> 100 </cn> 
+                        </apply>
                 </apply>
             </math>
             <message>
@@ -3103,6 +3127,21 @@ thus, a reaction in SBML does not necessarily have to be a
 biochemical reaction---a biochemical reaction is just one possible
 kind of process.
 
+\begin{figure}[b]
+  \vspace*{-2.5ex}
+  \centering
+  \includegraphics[scale=0.74]{figs/reaction-uml-v2}
+  \vspace*{-1ex}
+  \caption{The definitions of \Reaction, \KineticLaw,
+    \textls[-30]{\SpeciesReference}, \textls[-30]{\ModifierSpeciesReference}, \LocalParameter,
+    as well as the container classes \textls[-30]{\ListOfSpeciesReferences},
+    \textls[-30]{\ListOfModifierSpeciesReferences}, and \textls[-30]{\ListOfLocalParameters}.
+    Note: \textls[-30]{\SimpleSpeciesReferenceUpright} is an abstract class only used
+    to provide some common attributes to derived
+    classes.}
+  \label{fig:reaction}
+\end{figure}
+
 At minimum, to describe a reaction in SBML, it is necessary to
 define its \emph{structural} properties, specifically the
 participating reactants and/or products (and their corresponding
@@ -3115,19 +3154,6 @@ modifier species and parameters influencing the reaction rate.
 The various parts of a reaction are recorded in the SBML \Reaction
 object class and other supporting data classes, defined in
 \fig{fig:reaction}.
-
-\begin{figure}[b]
-  \centering
-  \includegraphics[scale=0.78]{figs/reaction-uml-v2}
-  \caption{The definitions of \Reaction, \KineticLaw,
-    \SpeciesReference, \ModifierSpeciesReference, \LocalParameter,
-    as well as the container classes \ListOfSpeciesReferences,
-    \ListOfModifierSpeciesReferences, and \ListOfLocalParameters.
-    Note that \SimpleSpeciesReferenceUpright is an abstract class used
-    only to provide some common attributes to its derived
-    classes.}
-  \label{fig:reaction}
-\end{figure}
 
 
 \subsubsection{\class{Reaction}}
@@ -3665,7 +3691,7 @@ products and modifiers in the \Reaction object (see
 \sec*{subsec:simplespeciesreference},
 \sec*{subsec:speciesreference} and \sec*{subsec:modifierreference}).
 
-\sec{sec:about-kinetic-laws} provides important
+\sec*{sec:about-kinetic-laws} provides important
 discussions about the meaning and interpretation of SBML ``kinetic
 laws''.
 
@@ -3946,7 +3972,6 @@ solution and thus that the activity of $S_1$ can be taken to be
 equal to its concentration $[S_1]$.  The rate expression will
 therefore be $k \cdot [S_1]$, with $k$ having the unit
 $1/\emph{time}$.  Then:
-
 \begin{linenomath}
   \begin{equation*}
     \frac{d[S_2]}{dt} = -\frac{d[S_1]}{dt} = k \cdot [S_1]
@@ -4595,7 +4620,7 @@ The following \Event example fragment helps illustrate this:
     ...
 </model>
 \end{example}
-\vspace*{0.5ex}
+\vspace*{1ex}
 
 Note that the \val{<cn> 10 </cn>} within the mathematical formula
 has no specified unit attached to it.  The model is not invalid
@@ -4606,7 +4631,7 @@ to milliseconds?  Would the modeler remember to change \val{10} to
 \val{10$\;$000}?)  A better approach would be to declare the unit
 explicitly, as in the following example:
 
-\vspace*{0.5ex}
+\vspace*{1ex}
 \begin{example}
 <model timeUnits="second" ...>
     ...
@@ -4625,7 +4650,7 @@ explicitly, as in the following example:
     ...
 </model>
 \end{example}
-\vspace*{0.5ex}
+\vspace*{1ex}
 
 While this approach will not solve the problem of updating the
 value if the model's global of unit of time is changed, it will at

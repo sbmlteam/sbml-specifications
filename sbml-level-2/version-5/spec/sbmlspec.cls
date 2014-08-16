@@ -273,7 +273,7 @@
 
 \definecolor{normaltextcolor}{gray}{0.27} % Synonym for 'almostblack'
 \definecolor{normalliteralcolor}{gray}{0}
-\definecolor{linenumbercolor}{gray}{0.75}
+\definecolor{linenumbercolor}{gray}{0.65}
 \definecolor{sbmlchangedcolor}{rgb}{0.69,0.19,0.376}
 
 % Macros and settings for making consistent font, color, and other

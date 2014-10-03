@@ -1,0 +1,269 @@
+% -*- TeX-master: "main"; fill-column: 72 -*-
+%
+\section{Examples}
+\label{sec:examples}
+
+This section contains a variety of examples on how to employ the constructs and extensions provided by the \sbmlthreedynamic.
+
+\subsection{Example of using dynamic events}
+
+This example depicts a model of single-cell population dynamics using the extended \Event construct introduced in \sec{subsec:extEvent}.
+
+\begin{example}
+<?xml version="1.0" encoding="UTF-8"?>
+<sbml xmlns="http://www.sbml.org/sbml/level3/version1/core" level="3" version="1"
+	  xmlns:dyn="http://www.sbml.org/sbml/level3/version1/dyn/version1" dyn:required="true">
+
+	<model id="singleCell">
+		<listOfCompartments>
+			<compartment id="Extracellular" spatialDimensions="3" size= "8000000" constant= "true" />
+			<compartment id="PlasmaMembrane" spatialDimensions="2" size= "314" constant= "true"/>
+			<compartment id="Cytosol" spatialDimensions="3" size= "523" constant= "true"/>
+		</listOfCompartments>
+		<listOfSpecies>
+			<species id="C_EC" compartment="Extracellular" hasOnlySubstanceUnits="false" 
+							  boundaryCondition="false" constant="false"/>
+			<species id="RTR_M" compartment="PlasmaMembrane" hasOnlySubstanceUnits="false" 
+								boundaryCondition="false" constant="false"/>
+			<species id="RCC_M" compartment="PlasmaMembrane" hasOnlySubstanceUnits="false" 
+								boundaryCondition="false" constant="false"/>
+			<species id="A_C" compartment="Cytosol" hasOnlySubstanceUnits="false" 
+								boundaryCondition="false" constant="false"/>
+			<species id="AA_C" compartment="Cytosol" hasOnlySubstanceUnits="false" 
+								boundaryCondition="false" constant="false"/>
+			<species id="T" compartment="Cytosol" initialConcentration="10" hasOnlySubstanceUnits="false" 
+								boundaryCondition="false" constant="false"/>
+			<species id="S" compartment="Cytosol" initialConcentration="5" hasOnlySubstanceUnits="false" 
+								boundaryCondition="false" constant="false"/>
+		</listOfSpecies>
+		<listOfReactions>
+			<reaction id="r1" reversible="true" fast="false" compartment="Extracellular">
+				<listOfReactants>
+					<speciesReference species="RTR_M" stoichiometry="1" constant="true"/>
+					<speciesReference species="C_EC" stoichiometry="1" constant="true"/>
+				</listOfReactants>
+				<listOfProducts>
+					<speciesReference species="RCC_M" stoichiometry="1" constant="true"/>
+				</listOfProducts>
+			</reaction>
+			<reaction id="r2" reversible="true" fast="false" compartment="Cytosol">
+				<listOfReactants>
+					<speciesReference species="A_C" stoichiometry="1" constant="true"/>
+				</listOfReactants>
+				<listOfProducts>
+					<speciesReference species="AA_C" stoichiometry="1" constant="true"/>
+				</listOfProducts>
+				<listOfModifiers>
+					<modifierSpeciesReference species="RCC_M"/>
+				</listOfModifiers>
+			</reaction>
+		</listOfReactions>
+		<listOfEvents>
+			<event useValuesFromTriggerTime="true" dyn:applyToAll= "true"
+			       dyn:cboTerm="http://cbo.biocomplexity.indiana.edu/svn/cbo/trunk/CBO_1_0.owl#CellDeath">
+				<trigger initialValue="false" persistent="true">
+					<math xmlns="http://www.w3.org/1998/Math/MathML">
+						<apply> <lt/> <ci> AA_C </ci> <ci> T </ci> </apply>
+					</math>
+				</trigger>
+			</event>
+			<event useValuesFromTriggerTime="true" dyn:applyToAll= "true"
+			     dyn:cboTerm="http://cbo.biocomplexity.indiana.edu/svn/cbo/trunk/CBO_1_0.owl#CellDivision">
+				<trigger initialValue="false" persistent="true">
+					<math xmlns="http://www.w3.org/1998/Math/MathML">
+						<apply> <lt/> <ci> AA_C </ci> <ci> S </ci> </apply>
+					</math>
+				</trigger>
+			</event>	
+		</listOfEvents>
+	</model>
+</sbml>
+\end{example}
+
+In the model above, a single cell was defined with with species \val{C \textunderscore EC} and \val{RTR\textunderscore M} forming the complex \val{RCC\textunderscore M} on the membrane. The intracellular domain of this complex then catalyzes the activation of the \val{A \textunderscore C} into \val{AA \textunderscore C}, which later returns to \val{A \textunderscore C}. Each of the extended \Event structures supports the modeling of a different dynamic behavior and are triggered when the concentration of \val{AA \textunderscore C} goes below a threshold value of \val{T} or \val{S}. When executed, each \Event will impact all model components as the \token{applyToAll} attribute is set to \val{true}.
+
+\subsection{Example for using \token{dyn} in a lattice-based model}
+
+This example illustrates a multicellular grid-based model using the extended \SBase, \Event and \Compartment constructs introduced in \sec{sec:syntax}. To accurately encode the model aggregation shown below, several elements from the \token{Hierarchical Model Composition} package were also used.
+
+\begin{example}
+<?xml version="1.0" encoding="UTF-8"?>
+	<sbml xmlns="http://www.sbml.org/sbml/level3/version1/core" 
+		  xmlns:comp="http://www.sbml.org/sbml/level3/version1/comp/version1"
+		  xmlns:dyn="http://www.sbml.org/sbml/level3/version1/dyn/version1"
+		  comp:required="true" dyn:required="true" level="3" version="1">
+
+	<model id="grid2x2">
+		<listOfCompartments>
+			<compartment id="Loc1" spatialDimensions="2" size="1" constant="false">
+				<dyn:listOfSpatialComponents>
+					<dyn:spatialComponent dyn:spatialIndex="cartesianX" dyn:variable="q1_X" />
+					<dyn:spatialComponent dyn:spatialIndex="cartesianY" dyn:variable="q1_Y" />
+				</dyn:listOfSpatialComponents>
+				<comp:listOfReplacedElements>
+					<comp:replacedElement comp:idRef="C" comp:submodelRef="GRID_1_1_cell"/>
+				</comp:listOfReplacedElements>
+			</compartment>	
+			<compartment id="Loc2" spatialDimensions="2" size="1" constant="false">
+				<dyn:listOfSpatialComponents>
+					<dyn:spatialComponent dyn:spatialIndex="cartesianX" dyn:variable="q2_X" />
+					<dyn:spatialComponent dyn:spatialIndex="cartesianY" dyn:variable="q2_Y" />
+				</dyn:listOfSpatialComponents>
+				<comp:listOfReplacedElements>
+					<comp:replacedElement comp:idRef="C" comp:submodelRef="GRID_1_2_cell"/>
+				</comp:listOfReplacedElements>
+			</compartment>	
+			<compartment id="Loc3" spatialDimensions="2" size="1" constant="false">
+				<dyn:listOfSpatialComponents>
+					<dyn:spatialComponent dyn:spatialIndex="cartesianX" dyn:variable="q3_X" />
+					<dyn:spatialComponent dyn:spatialIndex="cartesianY" dyn:variable="q3_Y" />
+				</dyn:listOfSpatialComponents>
+				<comp:listOfReplacedElements>
+					<comp:replacedElement comp:idRef="C" comp:submodelRef="GRID_2_1_cell"/>
+				</comp:listOfReplacedElements>
+			</compartment>	
+			<compartment id="Loc4" spatialDimensions="2" size="1" constant="false">
+				<dyn:listOfSpatialComponents>
+					<dyn:spatialComponent dyn:spatialIndex="cartesianX" dyn:variable="q4_X" />
+					<dyn:spatialComponent dyn:spatialIndex="cartesianY" dyn:variable="q4_Y" />
+				</dyn:listOfSpatialComponents>
+				<comp:listOfReplacedElements>
+					<comp:replacedElement comp:idRef="C" comp:submodelRef="GRID_2_2_cell"/>
+				</comp:listOfReplacedElements>
+			</compartment>	
+		</listOfCompartments>
+		<listOfParameters>
+			<parameter id="q1_X" value="1" constant="false"/>
+			<parameter id="q1_Y"  value="1" constant="false"/>
+			<parameter id="q2_X" value="2" constant="false"/>
+			<parameter id="q2_Y"  value="1" constant="false"/>
+			<parameter id="q3_X" value="1" constant="false"/>
+			<parameter id="q3_Y"  value="2" constant="false"/>
+			<parameter id="q4_X" value="2" constant="false"/>
+			<parameter id="q4_Y"  value="2" constant="false"/>
+		</listOfParameters>
+		<comp:listOfSubmodels>
+			<comp:submodel comp:id="GRID_1_1_cell" comp:modelRef="Cell"/>
+			<comp:submodel comp:id="GRID_1_2_cell" comp:modelRef="Cell"/>
+			<comp:submodel comp:id="GRID_2_1_cell" comp:modelRef="Cell"/>
+			<comp:submodel comp:id="GRID_2_2_cell" comp:modelRef="Cell"/>
+		</comp:listOfSubmodels>
+	</model>
+
+	<comp:listOfModelDefinitions>
+		<comp:modelDefinition id="Cell">
+			<listOfCompartments>
+				<compartment id="C" spatialDimensions="2" size="1" constant="false"/>
+			</listOfCompartments>
+			<listOfSpecies>
+				<species id="R" compartment="C" hasOnlySubstanceUnits="false" 
+				         boundaryCondition="false" constant="false"/>
+				<species id="S" compartment="C" hasOnlySubstanceUnits="false" 
+				         boundaryCondition="false" constant="false"/>
+			</listOfSpecies>
+			<listOfReactions>
+				<reaction id="Degradation_R" reversible="false" fast="false" compartment="C">
+					<listOfReactants>
+						<speciesReference species="R" stoichiometry="1" constant="true"/>
+					</listOfReactants>
+				</reaction>
+				<reaction id="Degradation_S" reversible="false" fast="false" compartment="C">
+					<listOfReactants>
+						<speciesReference species="S" stoichiometry="1" constant="true"/>
+					</listOfReactants>
+				</reaction>
+			</listOfReactions>
+			<listOfEvents>
+				<event id="event0" useValuesFromTriggerTime="false" dyn:applyToAll= "true"
+				  dyn:cboTerm="http://cbo.biocomplexity.indiana.edu/svn/cbo/trunk/CBO_1_0.owl#CellDivision">
+					<trigger initialValue="false" persistent="false">
+						<math xmlns="http://www.w3.org/1998/Math/MathML">
+							<true/>
+						</math>
+					</trigger>
+				</event>
+			</listOfEvents>
+		</comp:modelDefinition>
+	</comp:listOfModelDefinitions>
+</sbml>
+
+
+\end{example}
+
+In the model above, we defined a cell with a degradation reaction for species \val{R} and species \val{S}. This model also contains an extended \Event structure to indicate when the cell divides. Given that the \token{applyToAll} attribute is set to \val{true}, all of the cell components will be affected as a result of this \Event. The \val{Cell} model is instantiated 4 times within the \val{grid2x2} model to define a grid of 2 by 2. This model contains 4 \Compartment elements each extending a \ListOfSpatialComponents which positions them within the grid.
+
+\subsection{Example for using \token{dyn} with the SBML \token{Groups} package}
+
+This example shows a multicellular lattice-free model using the extended \Event construct introduced in \sec{sec:syntax} and provides a use case for data objects defined in the \token{Groups} package.
+
+\begin{example}
+<?xml version="1.0" encoding="UTF-8"?>
+<sbml xmlns="http://www.sbml.org/sbml/level3/version1/core" 
+      xmlns:dyn="http://www.sbml.org/sbml/level3/version1/dyn/version1" 
+      xmlns:groups="http://www.sbml.org/sbml/level3/version1/groups/version1"
+      level="3" version="1" groups:required="false" dyn:required="true" >
+
+	<model id="Cell">
+		<listOfCompartments>
+			<compartment id="C" spatialDimensions="3" constant="false" />
+		</listOfCompartments>
+		<listOfSpecies>
+			<species id="E" compartment="C" hasOnlySubstanceUnits="false" 
+			         boundaryCondition="false" constant="false"/>
+			<species id="P" compartment="C" hasOnlySubstanceUnits="false" 
+			         boundaryCondition="false" constant="false"/>
+			<species id="EP" compartment="C" hasOnlySubstanceUnits="false" 
+			         boundaryCondition="false" constant="false"/>
+			<species id="T" compartment="C" initialConcentration="5" hasOnlySubstanceUnits="false" 
+                boundaryCondition="false" constant="false"/>
+		</listOfSpecies>
+		<listOfReactions>
+			<reaction id="Association" compartment="C" reversible="false" fast="false">
+				<listOfReactants>
+					<speciesReference species="E" stoichiometry="1" constant="true"/>
+					<speciesReference species="P" stoichiometry="1" constant="true"/>
+				</listOfReactants>
+				<listOfProducts>
+					<speciesReference species="EP" stoichiometry="1" constant="true"/>
+				</listOfProducts>
+			</reaction>
+			<reaction id="Dissociation" compartment="C" reversible="false" fast="false">
+				<listOfReactants>
+					<speciesReference species="EP" stoichiometry="1" constant="true"/>
+				</listOfReactants>
+				<listOfProducts>
+					<speciesReference species="E" stoichiometry="1" constant="true"/>
+					<speciesReference species="P" stoichiometry="1" constant="true"/>
+				</listOfProducts>
+			</reaction>
+		</listOfReactions>
+		<groups:listOfGroups>
+			<groups:group groups:id="cellGroup" groups:kind="partonomy">
+				<groups:listOfMembers>
+					<groups:member groups:idRef="C"/>
+					<groups:member groups:idRef="E"/>
+					<groups:member groups:idRef="P"/>
+					<groups:member groups:idRef="EP"/>
+					<groups:member groups:idRef="Association"/>
+					<groups:member groups:idRef="Dissociation"/>
+				</groups:listOfMembers>
+			</groups:group>	
+		</groups:listOfGroups>
+		<listOfEvents>
+			<event useValuesFromTriggerTime="true" dyn:applyToAll= "false" 
+			dyn:cboTerm="http://cbo.biocomplexity.indiana.edu/svn/cbo/trunk/CBO_1_0.owl#CellDeath">
+				<trigger initialValue="false" persistent="true">
+					<math xmlns="http://www.w3.org/1998/Math/MathML">
+						<apply> <lt/> <ci> EP </ci> <ci> T </ci> </apply>
+					</math>
+				</trigger>
+				<dyn:listOfDynElements>
+					<dyn:dynElement dyn:idRef="cellGroup"/>
+				</dyn:listOfDynElements>
+			</event>
+		</listOfEvents>
+	</model>
+</sbml>
+\end{example}
+
+The previous example portrays a simple model containing both an association reaction that produces the complex \val{EP} from \val{E} and \val{P} and a dissociation reaction. This cell model also contains an extended \Event structure to signal that death only occurs when the concentration of \val{EP} is less than a given threshold \val{T}. This example illustrates a different way to indicate which SBML components are affected during a cellular event. While the \token{applyToAll} attribute provides the means to specify whether all or some SBML elements are impacted, modelers can also use the \ListofGroups construct from the \token{Groups} package, which allows them to specify the nature of the relationship between elements.

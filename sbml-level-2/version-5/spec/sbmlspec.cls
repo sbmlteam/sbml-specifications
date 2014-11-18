@@ -271,7 +271,7 @@
 \definecolor{darkblue}{rgb}{0.1,0.4,0.55}
 \definecolor{mediumgreen}{rgb}{0.1,0.6,0.3}
 
-\definecolor{normaltextcolor}{gray}{0.27} % Synonym for 'almostblack'
+\definecolor{normaltextcolor}{gray}{0.25} % Synonym for 'almostblack'
 \definecolor{normalliteralcolor}{gray}{0}
 \definecolor{linenumbercolor}{gray}{0.65}
 \definecolor{sbmlchangedcolor}{rgb}{0.69,0.19,0.376}

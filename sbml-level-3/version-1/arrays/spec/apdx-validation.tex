@@ -308,14 +308,53 @@ namespace   \textls[-25]{\uri {http://www.w3.org/1998/Math/MathML”}}.
 
 \section{Example algorithm for producing a ``flattened'' model}
 \label{flatten}
-\fig{flattening-algo} presents a possible algorithm for interpreting the
-Arrays constructs and creating a ``flattened''
-SBML Level~3 Version~1 core document. After performing the steps of the
-flattening algorithm, the result should be evaluated for validity
-according to the normal rules of SBML Level~3 Version~1 Core and (if
-applicable) the rules defined by any other Level~3 packages used in the
-model.  However, it is our belief that a valid SBML document with
-arrays will always flatten into an valid SBML document without arrays.
+The algorithms below provide a method for interpreting the Arrays constructs and creating a ``flattened'' SBML Level~3 Version~1 Core document.  Algorithm~\ref{flattenArrays} considers each \SBase object in a \Model.  If this object has dimensions, then it calls Algorithm~\ref{expandDimension} recursively to expand each dimension.  Algorithm~\ref{expandDimension} creates a clone of the object for each member of the array within the current dimension in which the id is given a unique value based on its position in that array dimension.  It also replaces the current dimension id with this value, as well.  Finally, it recursively calls Algorithm~\ref{expandDimension} to expand the next dimension.  Once all dimensions have been expanded, this algorithm evaluates the indices.  It considers each attribute being indexed in turn.  For each index dimension in reverse order, it updates the id being referenced by that attribute.  Finally, it adds the final flattened object to the document.  Once Algorithm~\ref{expandDimension} completes, the original object is removed from the document.  Finally, once all arrayed objects are flattened, Algorithm~\ref{flattenArrays} evaluates all selectors and replaces them with the corresponding flattened ids.
+
+\begin{algorithm}[ht]
+\label{flattenArrays}
+  \caption{flattenArrays(SBMLDocument document)}
+\ForEach{sBase in Model(document)}
+{
+        \If{dimensionCount(sBase)>0} 
+        {
+          expandDimension(document, sBase, dimensionCount(sBase) - 1)\;
+          remove(document, sBase)\;
+        }
+}
+Evaluate all selectors and replace with new ids\;
+\end{algorithm}
+
+\begin{algorithm}[ht]
+\label{expandDimension}
+  \caption{expandDimension(SBMLDocument document, SBase sBase, int currentDimension)}
+%\ForEach{SBase sbase}
+%{
+       \If{currentDimension $\geq 0$}
+       {
+         	\For{$i := 0; i < \textup{size(sBase, currentDimension)}; i++$}
+                {
+                        sBase':=clone(sBase)\;
+                        id(sBase', id(sBase) + ``\_'' + i)\;
+                        replace(sBase', dimensionId(currentDimension), i)\;
+                        expandDimension(document,sBase',currentDimension-1)\;
+               }
+     }
+     \Else
+     {
+       	\ForEach{attribute with an index for sBase}
+                {
+                 	\For{$i := indexCount(sBase,attribute)-1; i>=0; i--$}
+                        {
+                           attribute(sBase) := attribute(sBase) + ``\_'' + evaluate(indexMath(sBase,attribute,i))\;
+                        }
+                }
+                add(document, sBase)\;
+     }
+%}
+\end{algorithm}
+
+After performing the steps of the flattening algorithm, the result should be evaluated for validity according to the normal rules of SBML Level~3 Version~1 Core and (if applicable) the rules defined by any other Level~3 packages used in the model.  However, it is our belief that a valid SBML document with arrays will always flatten into an valid SBML document without arrays.
+
 
 %\begin{figure}[thb]
 %  \renewcommand{\arraystretch}{0.85}
@@ -439,43 +478,3 @@ arrays will always flatten into an valid SBML document without arrays.
 %    Arrays package constructs.}
 %  \label{flattening-algo}
 %\end{figure}
-
-\begin{algorithm}[ht]
-  \caption{flattenArrays(SBMLDocument document)}
-\ForEach{sbase in Model(document)}
-{
-        expandDimension(sbase, dimCount - 1)\;
-        remove(sbase)\;
-}
-Evaluate all selectors and replace with new ids\;
-\end{algorithm}
-
-\begin{algorithm}[ht]
-  \caption{expandDimension(SBase sbase, int dimension)}
-\ForEach{SBase sbase}
-{
-       \If{$dim \geq 0$}
-       {
-         	\For{$i := 0; i < size(dim); i++$}
-                {
-                        sbase':=clone(sbase)\;
-                        id(sbase', id(sbase') + ``\_'' + i)\;
-                        replace(dimId(dim), i)\;
-                        expandDimension(sbase',dim-1)\;
-               }
-     }
-     \Else
-     {
-       	\ForEach{IndexAttribute attribute}
-                {
-                  temp:=id(attribute)\;
-                  	\For{$i := 0; i < indexCount(attribute); i++$}
-                        {
-                          temp := temp + ``\_'' + indexMath(index(i))\;
-                        }
-                   updateAttribute(sbase, temp)\;
-                   add(sbase)\;
-                }
-     }
-}
-\end{algorithm}

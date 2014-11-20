@@ -21,7 +21,7 @@ SBML_TEXINPUTS    = .:$(SBML_TEX)//:$(TEXINPUTS)
 SBML_BIBINPUTS    = .:$(SBML_BIB)/:$(BIBINPUTS)
 
 MAIN_FILE = sbml-level-2-version-5
-MATHML_SCHEMA = ../../sbml-mathml/sbml-mathml.xsd
+# MATHML_SCHEMA = ../../sbml-mathml/sbml-mathml.xsd
 
 default: pdf
 
@@ -58,8 +58,8 @@ ps:	dvi
 # Stupid \input{...} in LaTeX can't handle dashes in file names!
 # Argh!  So we have to do this bletcherous hack.
 
-mathml.xsd: $(MATHML_SCHEMA)
-	ln -s $(MATHML_SCHEMA) mathml.xsd
+# mathml.xsd: $(MATHML_SCHEMA)
+# 	ln -s $(MATHML_SCHEMA) mathml.xsd
 
 clean:
 	-rm -f mathml.xsd *.aux *.bbl *.blg *.log *.out *.toc

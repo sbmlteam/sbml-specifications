@@ -106,7 +106,7 @@ namespace   \textls[-25]{\uri {http://www.w3.org/1998/Math/MathML”}}.
   (Reference: SBML Level~3 Package Specification for Arrays,
   Version~1, \sec{math-formulas}.) }
 
-\printValid{The arguments of a MathML \token{vector} must all have the same number of dimensions and agree in their size. (Reference: SBML Level~3 Package Specification for Arrays,
+\printValid{{\color{red} Deprecate?}The arguments of a MathML \token{vector} must all have the same number of dimensions and agree in their size. (Reference: SBML Level~3 Package Specification for Arrays,
   Version~1, \sec{math-formulas}.)}
 
 \printValid{The first argument of a MathML \token{selector} must be a MathML \token{vector} object or a valid identifier to an \SBase object extended with a list of \Dimension objects. (Reference: SBML Level~3 Package Specification for Arrays,
@@ -114,7 +114,15 @@ namespace   \textls[-25]{\uri {http://www.w3.org/1998/Math/MathML”}}.
 
 \printValid{The first argument of a MathML \token{selector} must have a number of dimensions equal to the number of arguments to the \token{selector} minus 1. (Reference: SBML Level~3 Package Specification for Arrays, Version~1, \sec{math-formulas}.)}
 
-\printValid{The arguments of a MathML \token{selector} other than the first argument must be statically computable.  In other words, any identifier that appears in an argument, other than a \Dimension \primtype{id} for the corresponding object, must be a constant. (Reference: SBML Level~3 Package Specification for Arrays, Version~1, \sec{math-formulas}.)}
+\printValid{The arguments of a MathML \token{selector} other than the
+  first argument must be statically computable.  In other words, any
+  identifier that appears in an argument, other than a \Dimension
+  \primtype{id} for the corresponding object, must be a
+  constant. (Reference: SBML Level~3 Package Specification for Arrays,
+  Version~1, \sec{math-formulas}.)}
+
+\printValid{The arguments of a MathML \token{selector} other than the
+  first argument must be evaluated to a scalar value. (Reference: SBML Level~3 Package Specification for Arrays, Version~1, \sec{math-formulas}.)}
 
 \printValid{For each possible value of each \Dimension \primtype{id} (i.e., 0 to size-1 of the \Dimension referred to) that appears in the second and later arguments of the \token{selector},  there should be no array out-of-bounds problems.  Namely, it must evaluate to a non-negative integer that is less than the size of the corresponding \Dimension for the object being indexed where the last argument refers to dimension 0, next to last to dimension 1, etc.  (Reference: SBML Level~3 Package Specification for Arrays, Version~1, \sec{math-formulas}.)}  
 
@@ -207,11 +215,13 @@ namespace   \textls[-25]{\uri {http://www.w3.org/1998/Math/MathML”}}.
 \printValid{The \ListOfIndices associated with an \SBase object must have a
     \Index object with \\ \token{arrays:arrayDimension} attribute set
     to $0,1, \dots, n-1$ before adding a \Index object with \\ \token{arrays:arrayDimension} attribute set
-    to $n$. (Reference:
+    to $n$ for every \token{arrays:referencedAttribute} that are being
+    indexed. (Reference:
   \sbmlthreearrays, \sec{sec:dimension}.)} 
 
 \printValid{The \ListOfIndices in an \SBase object must not have multiple
-    \Index objects with the same \token{arrays:arrayDimension} attribute. (Reference:
+    \Index objects with the same pair of values
+    \token{arrays:arrayDimension} and \token{arrays:referencedAttribute} attributes. (Reference:
   \sbmlthreearrays, \sec{sec:index}.) }
 
 \printValid{A \ListOfIndices object may have the optional SBML core attributes \token{metaid} and \token{sboTerm}.  No other attributes from the SBML Level~3 Core namespace or the Arrays namespace are permitted on a \ListOfIndices object.  (Reference: \sbmlthreearrays, \sec{sec:index}.) }
@@ -293,7 +303,7 @@ namespace   \textls[-25]{\uri {http://www.w3.org/1998/Math/MathML”}}.
 
 \printValid{The value of the
  \token{arrays:arrayDimension} attribute on a given
- \Index object, must be either a non-negative integer value.  (Reference:
+ \Index object, must be a non-negative integer value.  (Reference:
  \sbmlthreearrays, \sec{sec:index}.) }
 
 \printValid{The object referenced by the \token{SIdRef} indicated by the \token{arrays:referencedAttribute} attribute must include an \token{arrays:arrayDimension} matching the \token{arrays:arrayDimension} for the \Index. (Reference:
@@ -308,7 +318,16 @@ namespace   \textls[-25]{\uri {http://www.w3.org/1998/Math/MathML”}}.
 
 \section{Example algorithm for producing a ``flattened'' model}
 \label{flatten}
-The algorithms below provide a method for interpreting the Arrays constructs and creating a ``flattened'' SBML Level~3 Version~1 Core document.  Algorithm~\ref{flattenArrays} considers each \SBase object in a \Model.  If this object has dimensions, then it calls Algorithm~\ref{expandDimension} recursively to expand each dimension.  Algorithm~\ref{expandDimension} creates a clone of the object for each member of the array within the current dimension in which the id is given a unique value based on its position in that array dimension.  It also replaces the current dimension id with this value, as well.  Finally, it recursively calls Algorithm~\ref{expandDimension} to expand the next dimension.  Once all dimensions have been expanded, this algorithm evaluates the indices.  It considers each attribute being indexed in turn.  For each index dimension in reverse order, it updates the id being referenced by that attribute.  Finally, it adds the final flattened object to the document.  Once Algorithm~\ref{expandDimension} completes, the original object is removed from the document.  Finally, once all arrayed objects are flattened, Algorithm~\ref{flattenArrays} evaluates all selectors and replaces them with the corresponding flattened ids.
+The algorithms below provide a method for interpreting the Arrays
+constructs and creating a ``flattened'' SBML Level~3 Version~1 Core
+document.  Algorithm~\ref{flattenArrays} considers each \SBase object
+in a \Model.  If this object has dimensions, then it calls
+Algorithm~\ref{expandDimension} recursively to expand each dimension.
+Algorithm~\ref{expandDimension} creates a clone of the object for each
+member of the array within the current dimension in which the id is
+given a unique value based on its position in that array dimension.
+It also replaces the current dimension id with this value, as
+well. The metaid of the SBase is also updated and given a unique value.  Finally, it recursively calls Algorithm~\ref{expandDimension} to expand the next dimension.  Once all dimensions have been expanded, this algorithm evaluates the indices.  It considers each attribute being indexed in turn.  For each index dimension in reverse order, it updates the id being referenced by that attribute.  Finally, it adds the final flattened object to the document.  Once Algorithm~\ref{expandDimension} completes, the original object is removed from the document.  Finally, once all arrayed objects are flattened, Algorithm~\ref{flattenArrays} evaluates all selectors and replaces them with the corresponding flattened ids.
 
 \begin{algorithm}[ht]
 \label{flattenArrays}
@@ -335,6 +354,7 @@ Evaluate all selectors and replace with new ids\;
                 {
                         sBase':=clone(sBase)\;
                         id(sBase', id(sBase) + ``\_'' + i)\;
+                        metaid(sBase', metaid(sBase) + ``\_'' + i)\;
                         replace(sBase', dimensionId(currentDimension), i)\;
                         expandDimension(document,sBase',currentDimension-1)\;
                }

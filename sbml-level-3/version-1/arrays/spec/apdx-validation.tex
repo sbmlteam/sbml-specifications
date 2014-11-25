@@ -106,8 +106,8 @@ namespace   \textls[-25]{\uri {http://www.w3.org/1998/Math/MathML”}}.
   (Reference: SBML Level~3 Package Specification for Arrays,
   Version~1, \sec{math-formulas}.) }
 
-\printValid{{\color{red} Deprecate?}The arguments of a MathML \token{vector} must all have the same number of dimensions and agree in their size. (Reference: SBML Level~3 Package Specification for Arrays,
-  Version~1, \sec{math-formulas}.)}
+% \printValid{{\color{red} Deprecate?}The arguments of a MathML \token{vector} must all have the same number of dimensions and agree in their size. (Reference: SBML Level~3 Package Specification for Arrays,
+%   Version~1, \sec{math-formulas}.)}
 
 \printValid{The first argument of a MathML \token{selector} must be a MathML \token{vector} object or a valid identifier to an \SBase object extended with a list of \Dimension objects. (Reference: SBML Level~3 Package Specification for Arrays,
   Version~1, \sec{math-formulas}.)}
@@ -126,8 +126,7 @@ namespace   \textls[-25]{\uri {http://www.w3.org/1998/Math/MathML”}}.
 
 \printValid{For each possible value of each \Dimension \primtype{id} (i.e., 0 to size-1 of the \Dimension referred to) that appears in the second and later arguments of the \token{selector},  there should be no array out-of-bounds problems.  Namely, it must evaluate to a non-negative integer that is less than the size of the corresponding \Dimension for the object being indexed where the last argument refers to dimension 0, next to last to dimension 1, etc.  (Reference: SBML Level~3 Package Specification for Arrays, Version~1, \sec{math-formulas}.)}  
 
-\printModeling{It is strongly advised to perform mathematical
-  operations on scalar values rather than vectors. (Reference: SBML Level~3 Package Specification for Arrays, Version~1, \sec{math-formulas}.)}
+\printValid{All mathematical operations must be performed on scalar values rather than vectors. (Reference: SBML Level~3 Package Specification for Arrays, Version~1, \sec{math-formulas}.)}
 
 %% QUESTION: Is this a validation rule?
 % \printValid{For MathML unary operations involving a MathML \token{vector} or an \SBase object with a list of \Dimension objects, the operator is performed element-wise on each entry of the array.}
@@ -321,31 +320,29 @@ namespace   \textls[-25]{\uri {http://www.w3.org/1998/Math/MathML”}}.
 The algorithms below provide a method for interpreting the Arrays
 constructs and creating a ``flattened'' SBML Level~3 Version~1 Core
 document.  Algorithm~\ref{flattenArrays} considers each \SBase object
-in a \Model.  If this object has dimensions, then it calls
+in a SBMLDocument.  First, it removes the \SBase object from the
+document.  Then, it calls
 Algorithm~\ref{expandDimension} recursively to expand each dimension.
-Algorithm~\ref{expandDimension} creates a clone of the object for each
+If the \emph{currentDimension} is greater than or equal to 0, Algorithm~\ref{expandDimension} creates a clone of the object for each
 member of the array within the current dimension in which the id is
 given a unique value based on its position in that array dimension.
 It also replaces the current dimension id with this value, as
-well. The metaid of the SBase is also updated and given a unique value.  Finally, it recursively calls Algorithm~\ref{expandDimension} to expand the next dimension.  Once all dimensions have been expanded, this algorithm evaluates the indices.  It considers each attribute being indexed in turn.  For each index dimension in reverse order, it updates the id being referenced by that attribute.  Finally, it adds the final flattened object to the document.  Once Algorithm~\ref{expandDimension} completes, the original object is removed from the document.  Finally, once all arrayed objects are flattened, Algorithm~\ref{flattenArrays} evaluates all selectors and replaces them with the corresponding flattened ids.
+well. The metaid of the SBase is also updated and given a unique value.  Finally, it recursively calls Algorithm~\ref{expandDimension} to expand the next dimension.  Once all dimensions have been expanded, this algorithm evaluates the indices.  It considers each attribute being indexed in turn.  For each index dimension in reverse order, it updates the id being referenced by that attribute.  After expanding the indices, it adds the final flattened object to the document.  Finally, once all arrayed objects are flattened, Algorithm~\ref{flattenArrays} evaluates all selectors and replaces them with the corresponding flattened ids.
 
 \begin{algorithm}[ht]
 \label{flattenArrays}
   \caption{flattenArrays(SBMLDocument document)}
-\ForEach{sBase in Model(document)}
+\ForEach{sBase in document}
 {
-        \If{dimensionCount(sBase)>0} 
-        {
-          expandDimension(document, sBase, dimensionCount(sBase) - 1)\;
-          remove(document, sBase)\;
-        }
+       remove(document, sBase)\;
+       expandDimensions(document, sBase, dimensionCount(sBase) - 1)\;
 }
 Evaluate all selectors and replace with new ids\;
 \end{algorithm}
 
 \begin{algorithm}[ht]
 \label{expandDimension}
-  \caption{expandDimension(SBMLDocument document, SBase sBase, int currentDimension)}
+  \caption{expandDimensions(SBMLDocument document, SBase sBase, int currentDimension)}
 %\ForEach{SBase sbase}
 %{
        \If{currentDimension $\geq 0$}
@@ -354,16 +351,16 @@ Evaluate all selectors and replace with new ids\;
                 {
                         sBase':=clone(sBase)\;
                         id(sBase', id(sBase) + ``\_'' + i)\;
-                        metaid(sBase', metaid(sBase) + ``\_'' + i)\;
                         replace(sBase', dimensionId(currentDimension), i)\;
-                        expandDimension(document,sBase',currentDimension-1)\;
+                        metaid(sBase', metaid(sBase) + ``\_'' + i)\;
+                        expandDimensions(document,sBase',currentDimension-1)\;
                }
      }
      \Else
      {
        	\ForEach{attribute with an index for sBase}
                 {
-                 	\For{$i := indexCount(sBase,attribute)-1; i>=0; i--$}
+                 	\For{$i :=$ indexCount(sBase,attribute)$-1; i>=0; i--$}
                         {
                            attribute(sBase) := attribute(sBase) + ``\_'' + evaluate(indexMath(sBase,attribute,i))\;
                         }
@@ -375,6 +372,9 @@ Evaluate all selectors and replace with new ids\;
 
 After performing the steps of the flattening algorithm, the result should be evaluated for validity according to the normal rules of SBML Level~3 Version~1 Core and (if applicable) the rules defined by any other Level~3 packages used in the model.  However, it is our belief that a valid SBML document with arrays will always flatten into an valid SBML document without arrays.
 
+It should be noted that the algorithm above assumes for simplicity that the new id's generated are unique.  If there are id's already that end with ``\_'' and a number, this may not be the case.  In that situation, the algorithm will need to add additional underscores until it finds a unique id.  It should also be noted that the algorithm above is further complicated when objects with dimensions have children which can also have dimensions.  In SBML Level 3 Version 1 Core, the two types of objects that need special consideration are \Event and \Reaction.  For an \Event, it is necessary to expand its dimensions before expanding the dimensions of the \EventAssignment objects that are its children.  For a \Reaction, it is necessary to expand its dimensions before expanding the dimensions of the \SpeciesReference objects that are its children.  Furthermore, since the \SpeciesReference ids are in the global namespace, they must be given unique ids as the \Reaction dimensions are expanded.  
+
+TODO: SpeciesReferences in the global name space really complicate flatten.  Is this really necessary?
 
 %\begin{figure}[thb]
 %  \renewcommand{\arraystretch}{0.85}

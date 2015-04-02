@@ -1,5 +1,6 @@
 \documentclass[draftspec]{sbmlpkgspec}
 \usepackage{tabularx}
+\usepackage{tabu}
 \usepackage{longtable}
 \usepackage{booktabs}
 \usepackage{microtype}
@@ -42,8 +43,8 @@
 \begin{document}
 
 \packageTitle{The Distributions Package\\for SBML Level 3}
-\packageVersion{Version 0.15 (Draft)}
-\packageVersionDate{March, 2015}
+\packageVersion{Version \changed{0.16} (Draft)}
+\packageVersionDate{April, 2015}
 %\packageGeneralURL{http://sbml.org/Community/Wiki/SBML_Level_3_Proposals/Distributions_and_Ranges}
 %\packageThisVersionURL{}
 
@@ -108,7 +109,9 @@ from MS.\\ \midrule
 0.12 (Draft) & June 2013 & Lucian Smith and Stuart Moodie & Modified based on HARMONY 2013 discussion.\\ \midrule
 0.13 (Draft) & July 2013 & Lucian Smith and Stuart Moodie & Modified based PWG discussion, particularly with respect to UncertML.\\ \midrule
 0.14 (Draft) & March 2015 & Lucian Smith  & Modified to match UncertML 3.0.\\\midrule
-0.15 (Draft) & March 2015 & Lucian Smith and Sarah Keating & Modified to match UncertML 3.0 for real this time.\\
+0.15 (Draft) & March 2015 & Lucian Smith and Sarah Keating & Modified to match UncertML 3.0 for real this time.\\ \midrule
+0.16 (Draft) & March 2015 & Lucian Smith & Added information about UncertML 3.0 distributions, and the distributions custom annotations.\\
+%\midrule
 \bottomrule
 \end{edtable}
 
@@ -573,14 +576,14 @@ can be seen in the UML representation in \fig{fig:funcdef}. The redefined \Funct
 contains a single \token{drawFromDistribution} child.
 
 The \FunctionDefinition class must still contain the
-\mathml block containing the standard SBML function definition, \changed{because that element is required in SBML Level~3 Version~1 (in SBML Level~3 Version~2, this requirement has been dropped).  This also}
+\mathml block containing the standard SBML function definition, because that element is required in SBML Level~3 Version~1 (in SBML Level~3 Version~2, this requirement has been dropped).  This also
 ensures a degree
 of backwards compatibility for SBML readers and validators that do not
 understand the \distribshort package.
 
 \begin{figure}[htb]
 \includegraphics[width=0.75\linewidth]{distrib-functionDefinition.pdf}
-\caption{The definition of the extended \FunctionDefinition class, plus the \DrawFromDistribution, \ListOfDistribInputs, \DistribInput, and \Distribution classes.  A \DrawFromDistribution element must have exactly one \Distribution child.  Together, these classes provide a way to transform a \FunctionDefinition to sample from a \changed{distribution}.}
+\caption{The definition of the extended \FunctionDefinition class, plus the \DrawFromDistribution, \ListOfDistribInputs, \DistribInput, and \Distribution classes.  A \DrawFromDistribution element must have exactly one \Distribution child.  Together, these classes provide a way to transform a \FunctionDefinition to sample from a distribution.}
 \label{fig:funcdef}
 \end{figure}
 
@@ -619,7 +622,7 @@ Each \token{index} attribute on a \DistribInput within a \ListOfDistribInputs el
 \subsection{The \class{Distribution} class}
 \label{distributionOrSample-class}
 
-The \Distribution class is \changed{an \token{UncertML} element that contains a single element from} the \token{Distributions} branch of UncertML.  There are 29 'Distribution' elements derived from this class defined at \url{http://uncertml.org/dictionary}, with the namespace \val{http://uncertml.org/3.0}.  Note that as of this writing, UncertML \changed{3.0 is only defined with an XML schema.}  However, the \distribshort Package Working Group has been in communication with the developers of UncertML, and feel certain that the change needed in UncertML to accomodate its use in this package (namely, the possible substitution of IDs for numbers) will be made for UncertML 3.0.  The actual name of this element within an SBML document will be identical to the name of the derived class itself, i.e. \val{NormalDistribution}, \val{LogisticDistribution}, etc.
+The \Distribution class is an \token{UncertML} element that contains a single element from the \token{Distributions} branch of UncertML.  There are 29 'Distribution' elements derived from this class defined at \url{http://uncertml.org/dictionary}, with the namespace \val{http://uncertml.org/3.0}.  Note that as of this writing, UncertML 3.0 is only defined with an XML schema.  However, the \distribshort Package Working Group has been in communication with the developers of UncertML, and feel certain that the change needed in UncertML to accomodate its use in this package (namely, the possible substitution of IDs for numbers) will be made for UncertML 3.0.  The actual name of this element within an SBML document will be identical to the name of the derived class itself, i.e. \val{NormalDistribution}, \val{LogisticDistribution}, etc.
 
 When a \Distribution is encountered, its parent \FunctionDefinition is defined as sampling from the defined distribution, and returning that sample.  It may contain any number of \token{UncertIdRef} strings, each of which must correspond to an \token{UncertId} defined in a \DistribInput in the same function.
 
@@ -651,10 +654,11 @@ The \primtype{SId}s of \FunctionDefinition elements can be used in \sbmlthreecor
 
 Any other package that defines new contexts for MathML will also either be discrete or continuous.  Discrete situations (such as those defined in the Qualitative Models package) are, as above, well-defined.  Continuous situations (as might arise within the Spatial Processes package, over space instead of over time) will most likely be ill-defined.  Those packages must therefore either define for themselves how to handle \distribshort-extended \FunctionDefinition elements, or leave it to some other package/annotation scheme to define how to handle the situation.
 
+
 \subsection{Truncation}
 \label{truncation}
 
-In order to perform truncation, one or both ends of the distribution are cut off, and the remaining function is re-scaled so the area under the curve is once again 1.0.  \changed{This capability is provided in UncertML directly, through the use of the \val{truncationLowerInclusiveBound} and \val{truncationUpperInclusiveBound} elements.  As those element names imply, the first is used to truncate the distribution at a lower bound, and the second at an upper bound.  The fact that both are inclusive mean that the value at that boundary may possibly be returned by the function.  Care should thus be taken to ensure that (for example) if zero is a \emph{non-inclusive} bound for one's model, that a value slightly larger than zero be used as the distribution's inclusive lower bound.}
+In order to perform truncation, one or both ends of the distribution are cut off, and the remaining function is re-scaled so the area under the curve is once again 1.0.  This capability is provided in UncertML directly, through the use of the \val{truncationLowerInclusiveBound} and \val{truncationUpperInclusiveBound} elements.  As those element names imply, the first is used to truncate the distribution at a lower bound, and the second at an upper bound.  The fact that both are inclusive mean that the value at that boundary may possibly be returned by the function.  Care should thus be taken to ensure that (for example) if zero is a \emph{non-inclusive} bound for one's model, that a value slightly larger than zero be used as the distribution's inclusive lower bound.
 
 
 \subsection{Examples using the extended \FunctionDefinition}
@@ -864,7 +868,7 @@ In this example, the function 'pickone' is defined, with four arguments, \val{A}
 \label{sec:fallbackfunc}
 
 The \mathml definition directly contained by the
-\class{functionDefinition} is not used, \changed{but is required by \sbmlthreecore.  To ensure the continued validity of the model, the following rules must be followed:}
+\class{functionDefinition} is not used, but is required by \sbmlthreecore.  To ensure the continued validity of the model, the following rules must be followed:
 
 \begin{itemize}
 \item the lambda function should have the same number of arguments as
@@ -927,7 +931,7 @@ A few SBML elements can interact in interesting ways that can confuse the semant
 
 Other elements not listed above should probably not be given an \Uncertainty child, as it would normally not make sense to talk about the uncertainty of something that doesn't have a corresponding mathematical meaning.  However, because packages or annotations can theoretically give new meaning (including mathematical meaning) to elements that previously did not have them, this is not a requirement.
 
-\changed{It is important to note that the uncertainty described by the \Uncertainty class is defined as being the uncertainty at the moment the element's mathematical meaning is calculated, and does not describe the uncertainty of how that element changes over time.  For a \Species, \Parameter, \Compartment, and \SpeciesReference, this means that it is the uncertainty of their initial values, and does not describe the uncertainty in how those values evolve in time.  The reason for this is that other SBML constructs all describe how (or if) the values change in time, and it is those other constructs that should be used to describe a symbol's time-based uncertainty.  For example, a \Species whose initial value had uncertainty due to instrument precision could have an \Uncertainty child describing this.  A \Species whose value was known to change over time due to unknown processes, but which had a known average and standard deviation could be given an \AssignmentRule that set that \Species amount to the known average, and the \AssignmentRule itself could be given an \Uncertainty child describing the standard deviation of the variability.}
+It is important to note that the uncertainty described by the \Uncertainty class is defined as being the uncertainty at the moment the element's mathematical meaning is calculated, and does not describe the uncertainty of how that element changes over time.  For a \Species, \Parameter, \Compartment, and \SpeciesReference, this means that it is the uncertainty of their initial values, and does not describe the uncertainty in how those values evolve in time.  The reason for this is that other SBML constructs all describe how (or if) the values change in time, and it is those other constructs that should be used to describe a symbol's time-based uncertainty.  For example, a \Species whose initial value had uncertainty due to instrument precision could have an \Uncertainty child describing this.  A \Species whose value was known to change over time due to unknown processes, but which had a known average and standard deviation could be given an \AssignmentRule that set that \Species amount to the known average, and the \AssignmentRule itself could be given an \Uncertainty child describing the standard deviation of the variability.
 
 
 \subsection{The \class{Uncertainty} class}
@@ -982,9 +986,9 @@ In this examples, a species is given an \Uncertainty child to describe its stand
 ...
 \end{example}
 
-\changed{Here, the species with an initial amount of 3.22 is described as having a standard deviation of 0.3, a value that might be written as \val{3.22 $\pm$ 0.3}.  This is probably the simplest way to use the package to introduce facts about the uncertainty of the measurements of the values present in the model.}
+Here, the species with an initial amount of 3.22 is described as having a standard deviation of 0.3, a value that might be written as \val{3.22 $\pm$ 0.3}.  This is probably the simplest way to use the package to introduce facts about the uncertainty of the measurements of the values present in the model.
 
-\changed{It is also possible to include additional information about the species, should more be known:}
+It is also possible to include additional information about the species, should more be known:
 
 \begin{example}
 ...
@@ -1015,7 +1019,7 @@ In this examples, a species is given an \Uncertainty child to describe its stand
 ...
 \end{example}
 
-In this example, the initial amount of 3.22 is noted as \changed{having a mean of 3.2, a standard deviation of 0.3, and a variance of 0.09.  Since there is more than one piece of information included, a \token{StatisticsCollection} \uncertml element is used.  Note that the standard deviation can be calculated from the variance (or visa versa), but the modeler has chosen to include both here for convenience.  Note too that this use of the \Uncertainty element does not imply that the species amount comes from a normal distribution with a mean of 3.2 and standard deviation of 0.3, but rather that the species amount comes from an unknown distribution with those qualities.  If it is known that the value was drawn from a particular distribution, that distribution should be used, rather than the \token{Mean} and \token{StandardDeviation} statistical values.}
+In this example, the initial amount of 3.22 is noted as having a mean of 3.2, a standard deviation of 0.3, and a variance of 0.09.  Since there is more than one piece of information included, a \token{StatisticsCollection} \uncertml element is used.  Note that the standard deviation can be calculated from the variance (or visa versa), but the modeler has chosen to include both here for convenience.  Note too that this use of the \Uncertainty element does not imply that the species amount comes from a normal distribution with a mean of 3.2 and standard deviation of 0.3, but rather that the species amount comes from an unknown distribution with those qualities.  If it is known that the value was drawn from a particular distribution, that distribution should be used, rather than the \token{Mean} and \token{StandardDeviation} statistical values.
 
 Note also that 3.22 (the \token{initialAmount}) is different from 3.2 (the \token{Mean}):  evidently, this model was constructed as a realization of the underlying uncertainty, instead of trying to capture the single most likely model of the underlying process.
 
@@ -1136,11 +1140,55 @@ $var\_Z$.
 
 \section{Interaction with other packages}
 
+\begin{blockChanged}
+\subsection{Custom annotations for function definitions}
+Before this package was available, a collection of SBML simulator authors developed an \emph{ad-hoc} convention for exchanging annotated \FunctionDefinition objects that represented draws from distributions.  This convention is described by Frank T. Bergmann at \url{https://docs.google.com/file/d/0B_wMqVOQLkZ3TVZHblNNRWgzNTg/}, and represents a basic starting point for any modeler interested in exchanging SBML models containing draws from distributions.
+
+When implementing \distrib support, it would be possible to include 'backwards' support for this annotation convention by annotating any \FunctionDefinition using UncertML to also include these annotations, where appropriate.
+
+The following table is taken from the above document by Frank Bergmann, and can be used to annotate \FunctionDefinition elements that have been extended by \distrib to perform the same functions, providing the arguments are presented in the same order.  The suggested fallback function returns the mean of the distribution.
+
+\begin{longtabu} to \linewidth {
+    X[2,c]
+    X[3,c]
+    X[12,c]
+    X[4,l]}
+\textbf{Id} & \textbf{Name} & \textbf{URL} & \textbf{Fallback} \\ \midrule
+uniform & Uniform distribution & \footnotesize{\url{http://en.wikipedia.org/wiki/Uniform_distribution_(continuous)}} &\small{$lambda(a,b,\frac{a+b}{2})$}
+\\ \midrule
+normal & Normal distribution & \footnotesize{\url{http://en.wikipedia.org/wiki/Normal_distribution}} &\small{$lambda(m,s,m)$}
+\\ \midrule
+exponential & Exponential distribution & \footnotesize{\url{http://en.wikipedia.org/wiki/Exponential_distribution}} &\small{$lambda(l,\frac{1}{l})$}
+\\ \midrule
+gamma & Gamma distribution & \footnotesize{\url{http://en.wikipedia.org/wiki/Gamma_distribution}} &\small{$lambda(a,b,a*b)$}
+\\ \midrule
+poisson & Poisson distribution & \footnotesize{\url{http://en.wikipedia.org/wiki/Poisson_distribution}} &\small{$lambda(mu,mu)$}
+\\ \midrule
+lognormal & Lognormal distribution & \footnotesize{\url{http://en.wikipedia.org/wiki/Log-normal_distribution}} &\small{$lambda(z,s,e^{z+\frac{s^2}{2}})$}
+\\ \midrule
+chisq & Chi-squared distribution & \footnotesize{\url{http://en.wikipedia.org/wiki/Chi-squared_distribution}} &\small{$lambda(nu,nu)$}
+\\ \midrule
+laplace & Laplace distribution & \footnotesize{\url{http://en.wikipedia.org/wiki/Laplace_distribution}} &\small{$lambda(a,0)$}
+\\ \midrule
+cauchy & Cauchy distribution & \footnotesize{\url{http://en.wikipedia.org/wiki/Cauchy_distribution}} &\small{$lambda(a,a)$}
+\\ \midrule
+rayleigh & Rayleigh distribution & \footnotesize{\url{http://en.wikipedia.org/wiki/Rayleigh_distribution}} &\small{$lambda(s,s*\sqrt{\pi/2})$}
+\\ \midrule
+binomial & Binomial distribution & \footnotesize{\url{http://en.wikipedia.org/wiki/Binomial_distribution}} &\small{$lambda(p,n,p*n)$}
+\\ \midrule
+bernoulli & Bernoulli distribution & \footnotesize{\url{http://en.wikipedia.org/wiki/Bernoulli_distribution}} &\small{$lambda(p,p)$}
+\\
+\bottomrule
+\end{longtabu}
+
+\end{blockChanged}
+
+\subsection{The \arrays package}
 This package is dependent on no other package, but relies on the \arrays package
 to provide vector and matrix structures if those are desired/used.
 
-If the \req package is used, any \FunctionDefinition that has been given an \DrawFromDistribution child must be given a \ChangedMath child referencing this package's namespace.  If the fallback function provides a complete \LambdaClass function, its \token{viableWithoutChange} atribute \emph{may} be set \val{true} if the modeler considers that function an acceptable alternative to the draw from the distribution, otherwise it must be set \val{false}.  \changed{The \Uncertainty class does not affect the mathematics of any element, so no other element may be given a \ChangedMath child referencing this package's namespace.} 
-
+\subsection{The \req package}
+If the \req package is used, any \FunctionDefinition that has been given an \DrawFromDistribution child must be given a \ChangedMath child referencing this package's namespace.  If the fallback function provides a complete \LambdaClass function, its \token{viableWithoutChange} atribute \emph{may} be set \val{true} if the modeler considers that function an acceptable alternative to the draw from the distribution, otherwise it must be set \val{false}.  The \Uncertainty class does not affect the mathematics of any element, so no other element may be given a \ChangedMath child referencing this package's namespace.
 
 
 \section{Use-cases and examples}
@@ -1166,7 +1214,7 @@ consistent with current SBML semantics.
 \subsection{Truncated distribution}
 \label{sec: truncated-eg}
 
-To encode a truncated distribution we may use \changed{the optional \token{truncationLowerInclusiveBound} as well as the \token{truncationUpperInclusiveBound} child elements of the \token{NormalDistribution} element.  Many other \uncertml distributions have these optional child elements as well.}  Note that the values for truncation are here provided as arguments to the function definition, but could instead be hard-coded.
+To encode a truncated distribution we may use the optional \token{truncationLowerInclusiveBound} as well as the \token{truncationUpperInclusiveBound} child elements of the \token{NormalDistribution} element.  Many other \uncertml distributions have these optional child elements as well.  Note that the values for truncation are here provided as arguments to the function definition, but could instead be hard-coded.
 
 \exampleFile{examples/truncated_distn.xml}
 
@@ -1198,7 +1246,7 @@ values, and assigned to the variable \val{correlated\_params}.  This vector is t
 
 \section{Prototype implementations}
 
-\changed{As of this writing (March 2015), libsbml has full support for elements defined by \distrib, as well as limited support for \uncertml.  Antimony (\url{http://antimony.sf.net/}) has support for a limited number of \uncertml function (normal, uniform, exponential, gamma, poisson, and truncated versions of these) for model creation only (no simulation).  LibRoadRunner (\url{http://libroadrunner.org}) also supports the normal and uniform functions (though not their truncated forms), and is a full simulator.  Neither Antimony nor LibRoadRunner support the \token{uncertainty} child of \SBase, and support the extended \FunctionDefinition only.}
+As of this writing (March 2015), libsbml has full support for elements defined by \distrib, as well as limited support for \uncertml.  Antimony (\url{http://antimony.sf.net/}) has support for a limited number of \uncertml function (normal, uniform, exponential, gamma, poisson, and truncated versions of these) for model creation only (no simulation).  LibRoadRunner (\url{http://libroadrunner.org}) also supports the normal and uniform functions (though not their truncated forms), and is a full simulator.  Neither Antimony nor LibRoadRunner support the \token{uncertainty} child of \SBase, and support the extended \FunctionDefinition only.
 
 %\section{Unresolved issues}
 %\label{sec:unresolved}
@@ -1231,8 +1279,101 @@ document is based.
 \section{UncertML Distributions}
 \label{sec:uncertml-distributions}
 
-{\color{red}Lucian:\controversial I think it would be helpful to still have that table of UncertML distributions, even if it doesn't serve the same purpose that the original table served.  This would be to describe the different distributions and what each meant.}
+\begin{blockChanged}
+In this table, all UncertML 3.0 distributions are listed, along with their types (Continuous, Categorical, or Discrete), whether they're univariate or multivariate, and a brief description.  The UncertML element name is the name of the distribution with spaces removed and \val{Distribution} appended, so, for example, the \val{Exponential} distribution becomes \val{<ExponentialDistribution>}, and the \val{Student T} distribution becomes \val{<StudentTDistribution>}.  The exception is that all of the mixture models (ones that end with \val{Mixture Model}), only have spaces removed but nothing appended:  the Continuous Univariate Mixture Model becomes \val{<ContinuousUnivariateMixtureModel>}, etc.
 
+All of these distributions inherit from the abstract UncertML \emph{AbstractDistribution} class.  Additionally, the appropriate distributions inherit from the \emph{AbstractContinuousDistribution}, \emph{AbstractCategoricalDistribution}, and \emph{AbstractDiscreteDistribution} abstract classes, and further from the \emph{AbstractContinuousUnivariateDistribution}, \emph{AbstractContinuousMultivariateDistribution}, etc. classes, which are related to one another as one would expect.
+
+All descriptions are copied from \url{http://www.uncertml.org/}, where more information can be found.  Do note that any XML content there based on UncertML 2.0 will not be applicable to the \distrib package, which uses UncertML 3.0 instead.  The arguments and definitions will, however, still be relevant.
+
+Distributions are listed grouped by category (type and univarite/multivariate), and alphabetical within those categories.
+
+\begin{longtabu} to \linewidth {
+    X[2,c]
+    X[2,c]
+    X[2,c]
+    X[10,l]}
+\textbf{Distribution} & \textbf{Type} & \textbf{Variables} & \textbf{Description} \\ \midrule
+Beta & Continuous & Univariate 
+  & A random variable x is Beta distributed if the probability density function (pdf) is of the form $\frac{1}{B\left(\alpha,\beta\right)}x^{\alpha-1}\left(1-x\right)^{\beta-1}$, where $B\left(\alpha,\beta\right)$ = $\frac{\Gamma\left(\alpha\right)\Gamma\left(\beta\right)}{\Gamma\left(\alpha+\beta\right)}$. The distribution is usually denoted as $x\sim Be\left(\alpha,\beta\right)$ with parameters $\alpha$ and $\beta$, both positive real values. As the domain of the random variable is defined to be $[0,1]$ the Beta distribution is normally used to describe the distribution of a probability value. \\ \midrule
+Cauchy & Continuous & Univariate 
+  & A random variable x follows a Cauchy distribution if the probability density function (pdf) is of the form $\frac{1}{\pi\gamma}\left[1+\left(\frac{x-\theta}{\gamma}\right)^2\right]^{-1}$. The Cauchy distribution is equivalent to a Student-T distribution with 1 degree of freedom. It is widely used in physics, optics and astronomy. It is also known as the Lorenz or the Breit-Wigner distribution.\\ \midrule
+Chi Square & Continuous & Univariate 
+  & A random variable x is Chi-square distributed if the probability density function (pdf) is of the form $\frac{1}{\Gamma(\nu/2)2^{\nu/2}}x^{\nu/2-1}exp(-x/2)$. The distribution is usually denoted as $x\sim\chi_\nu$ where $\nu$ is known as the degrees of freedom parameter. $\nu$ has to be positive and $x$ has to be non-negative for the density to be defined. The Chi-square distribution is a special case of the Gamma distribution where $\chi \sim\Gamma(k=\nu/2,\theta=2)$. \\ \midrule
+Continuous Univariate Mixture Model & Continuous & Univariate 
+  & A mixture model is a linear combination of base distributions. A widely used case is where the base distributions are Gaussian in which case the model is known as the Gaussian Mixture Model. \\ \midrule
+Dirac Delta & Continuous & Univariate 
+  & [New to UncertML 3.0--no definition yet.] \\ \midrule
+Exponential & Continuous & Univariate
+  & A random variable x follows an exponential distribution if the probability density function (pdf) is of the form $\lambda e^{-\lambda x}$. It is often represented as $x \sim$ Exp$(\lambda)$. It is used to model the time between events for a Poisson process and is used in simulation of stochastic systems. \\ \midrule
+F & Continuous & Univariate 
+  & A random variable x follows an F distribution if the probability density function (pdf) is of the form $\frac{ 1 } {B(\nu_1/2, \nu_2/2)} \left( \frac{\nu_1}{\nu_2}\right)^{\nu_1/2} x^{\nu_1/2 - 1} \left(1 + \frac{\nu_1}{\nu_2}x \right)^{-\frac{\nu_1+\nu_2}{2} }$ where $B(.)$ is the Beta function. It often arises as the ratio of two random variables that are identically Chi-Square distributed. \\ \midrule
+Gamma & Continuous & Univariate 
+  & A random variable x is Gamma distributed if the probability density function (pdf) is of the form $\frac{1}{\gamma(k)\theta^{k}}x^{k-1}$. The distribution is usually denoted as $x \sim \mathcal{N}(\mu, \sigma^2)$ where $k$ is known as the shape parameter and $\theta$ the scale parameter. Both parameters have be positive and x has to be non-negative for the density to be defined. In practice the Gamma distribution is often use to model the distribution of non-negative quantities such as variances. \\ \midrule
+Inverse Gamma & Continuous & Univariate 
+  & A random variable x is Inverse Gamma distributed if the probability density function (pdf) is of the form $\frac{\beta^\alpha}{\gamma(\alpha)}x^{-\alpha-1}exp(-\beta/x)$. If variable $x$ is Inverse Gamma distributed, 1/$x$ is gamma distributed. The Inverse Gamma distribution function can be obtained from the Gamma distribution by a transformation of variables. \\ \midrule
+Laplace & Continuous & Univariate 
+  & A random variable x is Laplace distributed if the probability density function (pdf) is of the form $\frac{1}{2b}exp(-\frac{abs(x-\mu)}{b})$ where $abs$ denotes the absolute value. It can be thought of as a combination of two exponential distributions. \\ \midrule
+Log Normal & Continuous & Univariate 
+  & A random variable x is Log Normal distributed if the probability density function (pdf) is of the form $\frac{1}{x\sqrt{2\pi\sigma^2}}exp(-\frac{(ln(x)-\mu)^2}{2\mu^2})$. If variable x is normally distributed, exp(x) is Log Normal distributed. The Log Normal distribution function can be obtained from the normal distribution by a transformation of variables. It is often used for variables that must be positive. \\ \midrule
+Logistic & Continuous & Univariate 
+  &  A random variable x is Logistic distributed if the probability density function (pdf) is of the form $\frac{exp(-(x-\mu)/s)}{s(1+exp(-(x-\mu)/s))^2}$.\\ \midrule
+Normal & Continuous & Univariate
+  & A random variable x is normally distributed if the probability density function (pdf) is of the form $\frac{1}{\sqrt{2\pi\sigma^2}}exp(-\frac{(x-\mu)^2}{2\sigma^2})$. The distribution is usually denoted as $x\sim \mathcal{N}(\mu,\sigma^2)$ where $\mu$ is known as the mean parameter and $\sigma^2$ the variance parameter. If the random variable x is a vector of length greater than one, the normal distribution can be generalised to the Multivariate normal.  A reason for the widespread usage of the normal distribution is the Central limit theorem which states that the distribution of the mean of a large number of independent identically distributed random variables tends to a normal distributions as the number of random variables increases.\\ \midrule
+Pareto & Continuous & Univariate 
+  & A random variable x follows a Pareto distribution if the probability density function is of the form $\frac{\alpha x_m^\alpha}{x^{\alpha+1}}$. The distribution allows for the specification of a minimum value below which the density is 0. It is a skewed heavy-tailed distribution. \\ \midrule
+Student T & Continuous & Univariate 
+  & A random variable x follows a Student-t distribution if the probability density function (pdf) is of the form $\frac{\Gamma(\nu/2+1/2)}{\Gamma(\nu/2)(\pi\nu\sigma^2)^{1/2}}[1+\frac{(x-\mu)^2}{\nu\sigma^2}]^{-\nu/2-1/2}$. The distribution is usually denoted as $x\sim St(\mu,\lambda,\nu)$. This distribution corresponds to integrating out the variance of a normal distribution using a inverse Gamma prior. It can therefore be interpreted as an infinite mixture of normal distributions having the same mean but different variances. The three parameters are the mean ($\mu$), degrees of freedom ($\nu$) and variance ($\sigma^2$). Setting the variance to 1 and the mean to 0 we obtain the Student-t form found in standard statistics references such as Wikipedia. Setting the d.f. to 1 the Cauchy distribution is obtained. Setting the d.f. to infinity the normal distribution is obtained. The student-t distribution is commonly used in likelihood inference as the maximum likelihood parameter estimates are more robust to outlier observations compared to the normal distribution. \\ \midrule
+Uniform & Continuous & Univariate 
+  & A random variable x follows a uniform distribution if the probability density function (pdf) is of the form $\frac{1}{b-a}$. The distribution assigns equal probability to all events within the chosen domain between the minimum ($a$) and the maximum ($b$). \\ \midrule
+Weibull & Continuous & Univariate 
+  & A random variable x follows an Weibull distribution if the probability density function (pdf) is of the form $\frac{k}{\lambda}\left(\frac{x}{\lambda}\right)^{k-1}exp(-x/\lambda)^k$. It includes the exponential distribution as a special case. It is often used in engineering and finance. \\ \midrule
+\midrule
+Continuous Multivariate Mixture Model & Continuous & Multivariate 
+  & A mixture model is a linear combination of base distributions. A widely used case is where the base distributions are Gaussian in which case the model is known as the Gaussian Mixture Model. \\ \midrule
+Dirichlet & Continuous & Multivariate 
+  & A $K$ dimensional random variable x follows a Dirichlet distribution if the probability density function (pdf) is of the form $\frac{1}{B(\mathbf{a})} \prod_{i=1}^K x_i^{\alpha_i - 1}$ where $B(\mathbf{a}) = \frac{ \prod^k_{i=1} \Gamma(\alpha_i) } { \Gamma( \sum_{i=1}^K \alpha_i ) }$ and $\Gamma(.)$ is the Gamma function. It is the multivariate extension of the beta distribution to higher dimensions with K a positive integer greater than or equal to 2. \\ \midrule
+Multivariate Normal & Continuous & Multivariate 
+  & The Multivariate Normal is an extension of the univariate normal distribution to higher dimensional vector spaces. A random vector variable of dimension $ k $  denoted $ \mathbf{x} $ is normally distributed if the probability density function (pdf) is of the form $(2 \pi)^{-k/2} \mathrm{det}(\Sigma)^{-1/2} exp (-\frac{1}{2} (\mathbf{x} - \mathbf{\mu})^T \Sigma^{-1} (\mathbf{x} - \mathbf{\mu}) ) $ where $ \mathrm{det}(.) $ denotes the determinant and $ (.)^T $ the matrix transpose. The distribution is usually denoted as $ \mathbf{x} \sim \mathcal{N}(\mathbf{\mu}, \Sigma) $ where $ \mathbf{\mu} $ is known as the mean vector parameter and $ \Sigma $ the covariance matrix parameter. \\ \midrule
+Multivariate Student T & Continuous & Multivariate 
+  & A random variable $ \mathbf{x} $ follows a multivariate Student-t distribution if the probability density function (pdf) is of the form $\frac{ \Gamma(\nu/2 + k/2)} {\Gamma(\nu/2) (\pi \nu)^{k/2} \mathrm{det} (\Sigma)^{1/2} } \left[1 + \frac{ \Delta^2 } { \nu } \right]^{-\nu/2 - k/2}  $ where $ \Delta^2 = (\mathbf{x} - \mathbf{\mu})^T \Sigma^{-1}  (\mathbf{x} - \mathbf{\mu}) $ is the squared Mahalanobis distance. The distribution is usually denoted as $ x \sim St(\mathbf{\mu},\Sigma,\nu) $. It is the extension of the univariate student-t distribution to higher dimensions. Student-t distributions are often used when tails are expected to be heavier than Gaussian or Normal, and can result from applying Bayesian inference. \\ \midrule
+Normal Inverse Gamma & Continuous & Multivariate 
+  & A Normal Inverse Gamma distribution is the conjugate prior of a normal distribution with unknown mean and variance. It is the coupled product of an Inverse Gamma distribution and a normal distribution. In particular if $p(\mathbf{X} ; \mu, \sigma^2) $ is the likelihood function of a Normally distributed set of random variables with mean $ \mu $ and variance $ \sigma^2 $ and if both the mean and variance are considered unknown, the conjugate prior is $  p(\mu,\sigma^2) = p(\mu ; \sigma^2) p(\sigma^2) $ where $  p(\mu ; \sigma^2) = \mathcal{N}(\mu ; \mu_0, \sigma^2/\nu) $ a Normal prior on the mean and $ p(\sigma^2) = \mathrm{IG}(\sigma^2 ; \alpha, \beta) $ an Inverse Gamma prior on the variance. Note that the priors are not independent as the prior variance of the mean is a linear function of of the variance $ \sigma^2 $. It is also common to use a Normal-Gamma distribution where a conjugate prior is placed on the unknown mean and precision (i.e. inverse variance) of the Normal likelihood in which case the prior is a product of a Normal and Gamma distributions. In the case of a Multivariate normal likelihood, the corresponding conjugate prior is a Normal-Wishart distribution. \\ \midrule
+\midrule
+Bernoulli & Categorical & Univariate 
+  & A random variable $ x $ follows a Bernoulli distribution if the probability mass function (pmf) is of the form $\mu^x (1-\mu)^{1-x} $. It describes the distribution of a single binary variable $ x $. \\ \midrule
+Categorial Univariate Mixture Model & Categorical & Univariate 
+  & A mixture model is a linear combination of base distributions. A widely used case is where the base distributions are Gaussian in which case the model is known as the Gaussian Mixture Model. \\ \midrule
+\midrule
+Categorical & Categorical & Multivariate 
+  & A Categorical distribution is a generalisation of the Bernoulli distribution to $ K $ discrete outcomes, giving the $ K $ probabilities $ p_i $, $ i=1,..,K $ for each outcome. There is no ordering in the $ K $ outcomes. \\ \midrule
+Categorial Multivariate Mixture Model & Categorical & Multivariate 
+  & A mixture model is a linear combination of base distributions. A widely used case is where the base distributions are Gaussian in which case the model is known as the Gaussian Mixture Model. \\ \midrule
+\midrule
+Binomial & Discrete & Univariate 
+  & A random variable $ x $ follows a Binomial distribution if the probability mass function (pmf) is of the form ${n \choose x} \theta^x (1-\theta)^{n-x} $, where $ {n \choose x} $ denotes $ n $ choose $ x $. The distribution is usually denoted as $ x \sim b(n,\theta) $. The distribution describes the probability of getting $ x $ successes in $n$ trials of independent experiments that have the same probability of success. \\ \midrule
+Discrete Univariate Mixture Model & Discrete & Univariate 
+  & A mixture model is a linear combination of base distributions. A widely used case is where the base distributions are Gaussian in which case the model is known as the Gaussian Mixture Model. \\ \midrule
+Geometric & Discrete & Univariate 
+  & A random variable $ x $ follows a geometric distribution if the probability mass function (pmf) is of the form $(1-p)^{x-1} p$. It is often represented as $x \sim \mathrm{Geom}(p)$. It is the discrete analogue of the exponential distribution. It is used to model distribution of the number of binary (Bernoulli) trials needed to get one success, with parameter, probability $p$. \\ \midrule
+Hypergeometric & Discrete & Univariate 
+  & A random variable $ x $ follows a hypergeometric distribution if the probability mass function (pmf) is of the form $\frac{ {m \choose k} { N-m \choose n-k } } { {N \choose n}}$, probability of getting $x$ successes.  It describes the number of successes in a sequence of draws without replacement. \\ \midrule
+Negative Binomial & Discrete & Univariate 
+  & A random variable $ x $ follows a Negative Binomial distribution if the probability mass function (pmf) is of the form ${x + r - 1 \choose x} p^x (1-p)^r $. The distribution describes the probability of getting $ x $ successes in trials of independent experiments that have the same probability of success, and are run until we observe $ r $ failures. \\ \midrule
+Poisson & Discrete & Univariate 
+  & A random variable $ x $ follows a Poisson distribution if the probability mass function (pmf) is of the form $\frac{\lambda^x}{x!} \mathrm{exp}(-\lambda)$. The Poisson distribution can be used to model the number of events occurring within fixed time period of time. \\ \midrule
+\midrule
+Discrete Multivariate Mixture Model & Discrete & Multivariate 
+  & A mixture model is a linear combination of base distributions. A widely used case is where the base distributions are Gaussian in which case the model is known as the Gaussian Mixture Model. \\ \midrule
+Multinomial & Discrete & Multivariate 
+  & A random variable $ x $ follows a Multinomial distribution if the probability mass function (pmf) is of the form $\frac{N!}{x_1! \dots x_k!} \prod_{i=1}^K p_i^{x_i}$. The Multinomial distribution is a multivariate generalisation of the Binomial distribution for a $ K $ state variable to be in state $ k $ given $N$ observations. This can be confused with the Categorical distribution (added at version 3.0 of UncertML) which can be considered a Multinomial distribution when a 1 of K encoding is used. \\ \midrule
+Wishart & Discrete & Multivariate 
+  & A random matrix variable $ \mathbf{X} $ of size $ D \times D $ follows a Wishart distribution if the probability density function is of the form $\mathrm{det}(\mathbf{W})^{-\nu/2} \left( 2^{\nu D/2} \pi^{D(D-1)/4} \prod_{i=1}^D \Gamma\left(\frac{\nu+1-i}{2}\right) \right)^{-1}$ $\mathrm{det}(\mathbf{X})^{(\nu-D-1)/2} \exp\left(-\frac{1}{2} \mathrm{Tr} (\mathbf{W}^{-1} \mathbf{X}) \right)$ where $ \mathrm{det} $ denotes the determinant, $ \mathrm{Tr} $ the matrix trace. The Wishart distributon is the conjugate prior for the inverse of a covariance matrix of a Multivariate Normal distribution. It is a generalistion of the gamma distribution to higher dimensions. In one dimesion the Wishart distribution is equivalent to a gamma distribution with parameters $ k=\nu/2 $ and $ \theta = 1/2\mathbf{W} $. \\ \midrule
+
+\bottomrule
+\end{longtabu}
+
+\end{blockChanged}
 
 \bibliography{sbml-level-3-distrib-package-proposal}
 

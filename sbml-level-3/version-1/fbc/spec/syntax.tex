@@ -38,7 +38,7 @@ Constraints package:
    xmlns:fbc="http://www.sbml.org/sbml/level3/version1/fbc/version2" fbc:required="false">
 \end{example}
 
-\begin{figure}[h!]
+\begin{figure}[ht!]
   \centering
   % Requires \usepackage{graphicx}
   \includegraphics[width=0.85\textwidth]{images/v3harmony_fbc_uml.pdf}\\
@@ -61,7 +61,7 @@ for the interrelation between
 these entities.
 
 The \primtype{SId} type is used as the data type for the identifiers of
-\GeneProduct (\ref{geneproduct-class}) \FluxBound (\ref{fluxbound-class}), 
+\GeneProduct (\ref{geneproduct-class}),% \FluxBound (\ref{fluxbound-class}), 
 \FluxObjective (\ref{fluxobjective-class}) and \Objective (\ref{objective-class}) 
 classes. In the FBC package the
 \ListOfObjectives has an attribute of type \primtype{SIdRef} that is used to
@@ -98,11 +98,12 @@ of the following two values \val{maximize} or \val{minimize}.
 \label{listofobjectives-class}
 \label{listofgeneproducts-class}
 
-The \SBML \Model class is extended by adding an optional \token{listOfFluxBounds},
+The \SBML \Model class is extended by adding a mandatory boolean attribute \token{strict}
+and an optional %\token{listOfFluxBounds},
  \token{listOfObjectives} as well as a \token{listOfGeneProducts}.  A \Model may contain at most one of
 each of these lists.
 
-\begin{figure}[h]
+\begin{figure}[ht]
   \centering
   % Requires \usepackage{graphicx}
   \includegraphics[width=6cm]{images/v3harmony_fbc_model.pdf}\\
@@ -113,14 +114,20 @@ each of these lists.
 \end{figure}
 
 
-\begin{deprecated}
-\subsubsection{The \FBC \class{listOfFluxBounds}}
+%\begin{deprecated}
+%\subsubsection{The \FBC \class{listOfFluxBounds}}
+%
+%As shown in \ref{fig:fbc_uml} the \ListOfFluxBounds is derived from \SBase
+%and inherits the attributes \token{metaid} and \token{sboTerm}, as well as
+%the subcomponents for \Annotation and \Notes. \ListOfFluxBounds must contain
+%at least one \FluxBound (defined in \ref{fluxbound-class}).
+%\end{deprecated}
 
-As shown in \ref{fig:fbc_uml} the \ListOfFluxBounds is derived from \SBase
-and inherits the attributes \token{metaid} and \token{sboTerm}, as well as
-the subcomponents for \Annotation and \Notes. \ListOfFluxBounds must contain
-at least one \FluxBound (defined in \ref{fluxbound-class}).
-\end{deprecated}
+\paragraph{The attribute \token{strict}}
+\newtxt{
+The mandatory attribute \token{strict} of type \primtype{boolean} is used to apply 
+additional restrictions to the model. 
+}
 
 \subsubsection{The \FBC \class{listOfObjectives}}
 
@@ -154,7 +161,8 @@ contain at least one \GeneProduct (defined in \ref{geneproduct-class}).
 \label{fbcunits}
 The main unit definitions that should be considered when using the \FBCPackage
 are the global model definitions of ``extent''  and ``time'' as all \FBC flux
-related classes (i.e., \FluxBound and \FluxObjective implicitly attain the same
+related classes (i.e., %\FluxBound and 
+\FluxObjective implicitly attain the same
 unit as the \Reaction that they reference). More details on units can be found
 in their respective class definitions.
 
@@ -262,68 +270,68 @@ model.
 
 \end{newsection}
 
-\begin{deprecated}
-\subsection{The \FBC \class{FluxBound} class}
-\label{fluxbound-class}
-
-\FluxBound is a new \FBC class derived from \SBML \SBase that inherits
-\token{metaid} and \token{sboTerm}, as well as the subcomponents for
-\Annotation and \Notes. The purpose of this class is to hold a single
-(in)equality that provides the maximum or minimum value that a reaction flux
-can obtain at steady state. It implements three attributes.
-
-\newtxt{ Starting with Version~2 of the Flux Balance Constraints package the 
-\FluxBound construct is deprecated. This is done to ease adoption and ensure that 
-not all tools have to immediately implement support for changing flux bounds the 
-attributes may also refer to the an existing \FluxBound in the model. However, 
-that construct is deprecated and will be removed in a future version of this 
-package. }
-
-
-\begin{figure}[h!]
-  \centering
-  % Requires \usepackage{graphicx}
-  \includegraphics[width=5cm]{images/v2harmony_fbc_fluxbound.pdf}\\
-  \caption{A UML representation of the \FBCPackage \FluxBound class. See
-  \ref{conventions} for conventions related to this figure.}
-  \label{fig:fbc_uml_fbnd}
-\end{figure}
-
-\paragraph{The \token{id} and \token{name} attributes}
-A \FluxBound has the required attributes: \token{id} an attribute of type
-\primtype{SId} and an optional attribute \token{name} an attribute of type
-\primtype{string}.
-
-\paragraph{The \token{value} attribute}
-The \token{value} attribute holds a \primtype{double} value representing the
-numerical value of the flux bound. This may include an explicitly defined
-$\pm\infty$ encoded as a value, e.g., \val{INF}.
-
-For an example of the how the \FluxBound relates to the description of the
-underlying mathematical model please see \ref{examples1:fluxbound}.
-
-\paragraph{Units}
-The \token{value} defined by the \FluxBound has the units of the \token{reaction}
-that it refers to i.e.,~the globally defined unit of ``extent per time.''
-
-\paragraph{Reactions with undefined flux bounds}
-In the spirit of \sbmlthreecore the \FBCPackage does not define any default
-values for any element. However, in the case of a reaction with no defined
-flux bounds it is possible to infer this information from the reaction
-reversibility. In this case: irreversible reactions should be considered to
-be positive, $0 <= J <= \infty$ and reversible ones free/unbound,
-$-\infty <= J <= \infty$.
-
-Similarly, there is also the potential for a bound to ``seemingly'' conflict
-with the reaction that it bounds' reversibility, e.g., a reaction is
-irreversible but has bounds $-\infty <= J <= \infty$. In the context of
-this package, flux bounds should be considered authoritative. This follows
-from the fact that a \FluxBound can enforce an irreversible reaction, by
-restricting the flux ($0 <= J <= \infty$), as well as a reversible
-reaction ($-\infty <= J <= \infty$). It is left to the software
-implementation to deal with any obvious inconsistencies.
-
-\end{deprecated}
+%\begin{deprecated}
+%\subsection{The \FBC \class{FluxBound} class}
+%\label{fluxbound-class}
+%
+%\FluxBound is a new \FBC class derived from \SBML \SBase that inherits
+%\token{metaid} and \token{sboTerm}, as well as the subcomponents for
+%\Annotation and \Notes. The purpose of this class is to hold a single
+%(in)equality that provides the maximum or minimum value that a reaction flux
+%can obtain at steady state. It implements three attributes.
+%
+%\newtxt{ Starting with Version~2 of the Flux Balance Constraints package the 
+%\FluxBound construct is deprecated. This is done to ease adoption and ensure that 
+%not all tools have to immediately implement support for changing flux bounds the 
+%attributes may also refer to the an existing \FluxBound in the model. However, 
+%that construct is deprecated and will be removed in a future version of this 
+%package. }
+%
+%
+%\begin{figure}[h!]
+  %\centering
+  %% Requires \usepackage{graphicx}
+  %\includegraphics[width=5cm]{images/v2harmony_fbc_fluxbound.pdf}\\
+  %\caption{A UML representation of the \FBCPackage \FluxBound class. See
+  %\ref{conventions} for conventions related to this figure.}
+  %\label{fig:fbc_uml_fbnd}
+%\end{figure}
+%
+%\paragraph{The \token{id} and \token{name} attributes}
+%A \FluxBound has the required attributes: \token{id} an attribute of type
+%\primtype{SId} and an optional attribute \token{name} an attribute of type
+%\primtype{string}.
+%
+%\paragraph{The \token{value} attribute}
+%The \token{value} attribute holds a \primtype{double} value representing the
+%numerical value of the flux bound. This may include an explicitly defined
+%$\pm\infty$ encoded as a value, e.g., \val{INF}.
+%
+%For an example of the how the \FluxBound relates to the description of the
+%underlying mathematical model please see \ref{examples1:fluxbound}.
+%
+%\paragraph{Units}
+%The \token{value} defined by the \FluxBound has the units of the \token{reaction}
+%that it refers to i.e.,~the globally defined unit of ``extent per time.''
+%
+%\paragraph{Reactions with undefined flux bounds}
+%In the spirit of \sbmlthreecore the \FBCPackage does not define any default
+%values for any element. However, in the case of a reaction with no defined
+%flux bounds it is possible to infer this information from the reaction
+%reversibility. In this case: irreversible reactions should be considered to
+%be positive, $0 <= J <= \infty$ and reversible ones free/unbound,
+%$-\infty <= J <= \infty$.
+%
+%Similarly, there is also the potential for a bound to ``seemingly'' conflict
+%with the reaction that it bounds' reversibility, e.g., a reaction is
+%irreversible but has bounds $-\infty <= J <= \infty$. In the context of
+%this package, flux bounds should be considered authoritative. This follows
+%from the fact that a \FluxBound can enforce an irreversible reaction, by
+%restricting the flux ($0 <= J <= \infty$), as well as a reversible
+%reaction ($-\infty <= J <= \infty$). It is left to the software
+%implementation to deal with any obvious inconsistencies.
+%
+%\end{deprecated}
 
 %\newpage
 
@@ -364,7 +372,7 @@ This implies that if an \Objective is defined there should be at least
 one \FluxObjective contained in a \ListOfFluxObjectives.
 % bgoli: to me this makes sense but are there other examples of this in SBML or is everything always optional
 
-\begin{figure}[h]
+\begin{figure}[ht]
   \centering
   % Requires \usepackage{graphicx}
   \includegraphics[width=5cm]{images/v2harmony_fbc_objective.pdf}\\
@@ -397,7 +405,7 @@ The \FluxObjective class is a relatively simple container for a model
 variable weighted by a signed linear coefficient.
 
 %
-\begin{figure}[h]
+\begin{figure}[ht]
   \centering
   % Requires \usepackage{graphicx}
   \includegraphics[width=5cm]{images/v2harmony_fbc_fluxobjective.pdf}\\

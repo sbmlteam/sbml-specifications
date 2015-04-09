@@ -1,6 +1,6 @@
 % -*- TeX-master: "main"; fill-column: 72 -*-
 
-\section{Proposed syntax and semantics}
+\section{Package syntax and semantics}
 \label{syntax}
 
 In this section, we define the syntax and semantics of the Render package for SBML Level~3 
@@ -80,6 +80,8 @@ an example on how to use the render extension in this context would look like th
 
 \subsection{Primitive data types}
 \label{primtypes}
+\label{primitive-types}
+
 
 Section~3.1 of the \sbmlthreecore specification defines a number of primitive
 data types and also uses a number of XML Schema 1.0 data types~\citep{biron:2000}.
@@ -271,6 +273,39 @@ drawn italic or normal. Thus the only allowed values are:
  \item \token{normal} 
 \end{itemize}
 
+\subsubsection{Type \fixttspace\primtypeNC{RelAbsVector}}
+\label{relabsvector}
+Positions and sizes for render elements can be specified as a combination 
+of absolute values where the default unit is pt (1/72 inch) and relative values 
+in \% where the \% symbol has to be added to the value. Each coordinate can 
+have zero or one relative component and zero or one absolute component.
+For example to specify a coordinate that is 5 points left of the right edge 
+of the current view port the user could specify $-5+100\%$. 
+
+In order to make parsing of coordinate information easier, the absolute 
+component has to be specified before the relative component. If the absolute 
+component is 0.0, only the relative part has to be specified.
+All values are relative to the bounding box of the corresponding 
+element in the layout. This bounding box basically specifies a canvas for the 
+render elements to be drawn on.
+
+When applying transformations to elements with relative values, the relative 
+values have to be converted to absolute values first.
+
+Formally the \RenderPackage encodes this information in the \RelAbsVector class with 
+the two attributes \token{abs} and \token{rel} by extending the \primtype{string}
+such that it encodes optionally an absolute number first followed by an optional 
+relative number. 
+
+\paragraph{The \fixttspace\token{abs} attribute}
+The optional attribute \token{abs} of type \primtype{double} represents the absolute
+number, if present it will always be the first of two elements present.
+
+\paragraph{The \fixttspace\token{rel} attribute}
+The optional attribute \token{rel} of type \primtype{double} represents the 
+relative element relative to the elements \BoundingBox. 
+
+
 \subsection{General features}
 
 The render extension provides two locations where styles can be defined. First 
@@ -287,24 +322,6 @@ styles that are based on other styles. In contrast to local styles, the global s
 reference individual layout elements by an id, they can only define role based or 
 type based styles.
 
-\subsubsection{Positions and sizes}
-
-Positions and sizes for render elements can be specified as a combination of absolute 
-values where the default unit is pt (1/72 inch) 
-and relative values in \% where the \% symbol has to be added to 
-the value. Each coordinate can have zero or one relative component and zero or one absolute component.
-For example to specify a coordinate that is 5 points left of the right edge of the current view port the
-user could specify $-5+100\%$. 
-
-In order to make parsing of coordinate information easier, the absolute 
-component has to be specified before the relative component. If the absolute component is 0.0, only the relative part has to be specified.
-All values are relative to the bounding box of the corresponding 
-element in the layout. This bounding box basically specifies a canvas for the 
-render elements to be drawn on.
-
-When applying transformations to elements with relative values, the relative values have to be converted to absolute values first.
-
-
 
 \subsubsection{Uniqueness of ids}
 Since local and global render information objects can reference other render information objects, programs creating
@@ -316,6 +333,11 @@ An exception to this rule is to create e.g. a color definition with the same id 
 in this case interpreting programs can assume that this color definition is supposed to override the color definition  with the
 same name in the referenced render information object. Likewise it is also possible to override a color definition with a 
 gradient and vice versa. Line ending definitions on the other hand can only be replaced by other line ending definitions.
+
+\subsection{The extended \GraphicalObject class}
+The \Render Package extends the Layout \GraphicalObject class by an 
+additional attribute \token{objectRole}. This attribute specifies with 
+which \Style the object should be rendered.
 
 \subsection{The extended \ListOfLayouts class}
 The \ListOfLayouts class of the Layout package is extended by an optional element \token{listOf\-Global\-Render\-Information} of 
@@ -385,10 +407,7 @@ Major version do not have to be backwards compatible to any lower major version 
 The \token{versionMinor} attribute of type \primtype{int} specifies the minor version of the render information. 
 All minor versions within a major version have to be compatible.
 
-\subsection{The extended \GraphicalObject class}
-The \Render Package extends the Layout \GraphicalObject class by an 
-additional attribute \token{objectRole}. This attribute specifies with 
-which \Style the object should be rendered.
+
 
 \subsection{Render Information}
 \label{renderinformation-class}
@@ -1347,8 +1366,8 @@ example:
      <element xsi:type="RenderPoint" x="0%" y="50%" />
      <element xsi:type="RenderPoint" x="100%" y="50%" />
      <element xsi:type="RenderCubicBezier" x="0%" y="50%"
-              basepoint1_x="50%" basepoint1_y="90%"
-              basepoint2_x="50%" basepoint2_y="90%" />
+              basepoint1\_x="50%" basepoint1\_y="90%"
+              basepoint2\_x="50%" basepoint2\_y="90%" />
    </listOfElements>
   </curve>
     ...

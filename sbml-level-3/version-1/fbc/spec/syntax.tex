@@ -61,8 +61,10 @@ for the interrelation between
 these entities.
 
 The \primtype{SId} type is used as the data type for the identifiers of
-\GeneProduct (\ref{geneproduct-class}),% \FluxBound (\ref{fluxbound-class}), 
-\FluxObjective (\ref{fluxobjective-class}) and \Objective (\ref{objective-class}) 
+\GeneProduct (\ref{geneproduct-class}),
+\bgoli{\GeneProductRef (\ref{geneproductref-class})}, 
+\GeneProteinAssociation (\ref{geneproteinassociation-class}),  
+\FluxObjective (\ref{fluxobjective-class}) and \Objective (\ref{objective-class})
 classes. In the FBC package the
 \ListOfObjectives has an attribute of type \primtype{SIdRef} that is used to
 refer to an `active' \Objective.
@@ -98,10 +100,8 @@ of the following two values \val{maximize} or \val{minimize}.
 \label{listofobjectives-class}
 \label{listofgeneproducts-class}
 
-The \SBML \Model class is extended by adding a mandatory boolean attribute \token{strict}
-and an optional %\token{listOfFluxBounds},
- \token{listOfObjectives} as well as a \token{listOfGeneProducts}.  A \Model may contain at most one of
-each of these lists.
+The \SBML \Model class is extended by adding a mandatory boolean attribute \token{strict} and an optional %\token{listOfFluxBounds},
+ \token{listOfObjectives} as well as a \token{listOfGeneProducts}.  A \Model may contain at most one of each of these lists.
 
 \begin{figure}[ht]
   \centering
@@ -124,46 +124,31 @@ each of these lists.
 %\end{deprecated}
 
 \paragraph{The attribute \token{strict}}
-\newtxt{
-The mandatory attribute \token{strict} of type \primtype{boolean} is used to apply 
-additional restrictions to the model in order to make it easier for software to 
-ensure that the models are complete.  If set to \val{true} the following 
-restrictions apply to the model:}
-
 \begin{newsection}
+
+The mandatory attribute \token{strict} of type \primtype{boolean} is used to apply an additional set of restrictions to the model. The \token{strict} attribute ensures that the \FBCPackage can be used to encode legacy FBA models expressible as Linear Programs (LP's) with software that is unable to analyse arbitrary mathematical expressions. In addition it ensures that a `strict' model is fully described and mathematically consistent, for example, all fluxes have a valid upper or lower bound.
+
+This is accomplished by defining a set of restrictions which come into effect if \token{strict} is set to \val{true}:
+%
 \begin{itemize}
-	\item { All Reactions must have the attributes \token{lowerFluxBound} and
-	        \token{upperFluxBound} defined and they need to point to \Parameter
-					objects in the model.}
-	\item { These \Parameter objects must have their \token{constant} attribute
-	        set to \val{true} and have its \token{value} attribute set to a value
-					other than \val{NaN}.
+	\item { Each \Reaction in a \Model must define attributes \token{lowerFluxBound} and \token{upperFluxBound} with each pointing to a valid \Parameter object defined in the current \Model.}
+	\item {Each \Parameter object referred to by the \Reaction attributes \token{lowerFluxBound} and \token{upperFluxBound} must have their \token{constant} attribute set to \val{true} and its \token{value} attribute set to a \primtype{double} value which may not be \val{NaN}.
 	}
-	\item { \SpeciesReference elements of {\Reaction}s must have their \token{stoichiometry} 
-	        attribute set to a value that is neither \val{NaN}
-	        nor \val{-INF} nor \val{INF}. Additionally their \token{constant} attribute
-					needs to be set to \val{true}.
+	\item { \SpeciesReference elements of {\Reaction}s must have their \token{stoichiometry} attribute set to a \primtype{double} value that is neither \val{NaN} nor \val{-INF} nor \val{INF}. In addition their \token{constant} attribute must be set to \val{true}.
 	}
-	\item { \InitialAssignment elements may not target the {\Parameter} elements
-	         referenced by the attributes \token{lowerFluxBound} and
-	        \token{upperFluxBound} of reactions, as well as any \SpeciesReference.
+	\item { \InitialAssignment elements may neither target the {\Parameter} elements referenced by the \Reaction attributes \token{lowerFluxBound} and
+	        \token{upperFluxBound} nor any \SpeciesReference.
 	}
-	\item { All defined \FluxObjective elements must have their \token{coefficient}
-	        attribute set to a value that is neither \val{NaN}
-	        nor \val{-INF} nor \val{INF}. 
+	\item { All defined \FluxObjective elements must have their \token{coefficient} attribute set to a \primtype{double} value that is neither \val{NaN} nor \val{-INF} nor \val{INF}.
 	}
-	\item { A \token{lowerFluxBound} attribute may not have a value of \val{INF}.}
-	\item { A \token{upperFluxBound} attribute may not have a value of \val{-INF}.}
+	\item { A \Reaction \token{lowerFluxBound} attribute may not have a value of \val{INF}.}
+	\item { A \Reaction \token{upperFluxBound} attribute may not have a value of \val{-INF}.}
+    \item {For all reactions, the value of a \token{lowerFluxBound} must be less than or equal to the value of the \token{upperFluxBound}.}
 
 \end{itemize}
 
-If the value of the \token{strict} attribute is \val{false} these restrictions do 
-not apply. That means that for example the \InitialAssignment construct may be used
-to determine the value of the \Parameter elements used as flux bounds. It could 
-also mean that the bounds are updated dynamically and will require re-evaluation. 
-
+If the value of the \token{strict} attribute is \val{false} then none of these restrictions apply. That means that, for example, the \InitialAssignment construct may be used to determine the value of the \Parameter elements used as flux bounds. It also means that, if so desired, flux bounds can be updated dynamically.
 \end{newsection}
-
 
 
 \subsubsection{The \FBC \class{listOfObjectives}}
@@ -198,7 +183,7 @@ contain at least one \GeneProduct (defined in \ref{geneproduct-class}).
 \label{fbcunits}
 The main unit definitions that should be considered when using the \FBCPackage
 are the global model definitions of ``extent''  and ``time'' as all \FBC flux
-related classes (i.e., %\FluxBound and 
+related classes (i.e., %\FluxBound and
 \FluxObjective implicitly attain the same
 unit as the \Reaction that they reference). More details on units can be found
 in their respective class definitions.
@@ -279,17 +264,13 @@ well as two optional attributes \token{name} and \token{associatedSpecies}.
 \end{figure}
 
 \paragraph{The \token{id} and \token{name} attributes}
-A \GeneProduct has a required attribute \token{id} of type \primtype{SId} and an
-optional attribute \token{name} of type \primtype{string}. The \token{id}
-attribute is used to uniquely identify a \GeneProduct from a \GeneProductRef.
+A \GeneProduct has a required attribute \token{id} of type \primtype{SId} and an optional attribute \token{name} of type \primtype{string}. The unique \token{id} attribute is required to enable a \GeneProduct to be referenced from a \GeneProductRef used in a \GeneProteinAssociation.
 
 \paragraph{The \token{label} attribute}
-The primary purpose of a \GeneProduct is to reference a gene product uniquely.
-As these constructs do not follow the SId syntax, the required attribute
-\token{label} of type \primtype{string} is to be used to refer to them.
+The primary purpose of a \GeneProduct is to uniquely reference a gene or implied gene product (e.g. a peptide). As there is, currently, no restriction on the format of these these references they cannot be assumed to conform to an \SBML SId syntax. Therefore the \FBCPackage defines the required attribute \token{label}, of type \primtype{string}, for this purpose.
 
 %as seen in the example shown in \ref{intro-ga}
-There is no set format for this identifier e.g.~\verb+Rv0649+, \verb+3074.1+ or \verb+CRv4_Au5.s2.g9153.t1+. While ideally some form of restriction should be placed on the value of \token{label}, at this point it is left as a best practice suggestion that this attribute's value conform to the definition of an \primtype{SId}. As an example take an existing GPR annotation:
+As can be seen from the following examples, taken from existing models: \verb+Rv0649+, \verb+3074.1+ and \verb+CRv4_Au5.s2.g9153.t1+ there is currently no defined format for this gene identifier. While ideally some form of restriction should be placed on the value of \token{label}, at this point it is only possible to suggest that this attribute's value should conform to the definition of an \primtype{SId}. For example, take an existing GPR annotation:
 \begin{verbatim}
  <p>GENE_ASSOCIATION: (Rv0649)</p>
 \end{verbatim}
@@ -298,12 +279,10 @@ this can now be formally (and unambiguously) encoded as:
 %
 \exampleFile{examples/v2harmony-spec-example1-gene.txt}
 
+Furthermore, it is a highly recommended `best practice' suggestion that a \GeneProduct be annotated using the inherited MIRIAM compliant \SBML \Annotation mechanism. Doing so will help reduce the dependence and ambiguity of using an overloaded, semantically meaningful \token{label} attribute and enhance interoperability. For an example of this approach see \ref{best-practices-cobraV2}.
 
 \paragraph{The \token{associatedSpecies} attribute}
-A \GeneProduct may optionally refer to a \Species as used for example in the
-Manchester encoding. In that case the attribute \token{associatedSpecies} of
-type \primtype{SIdRef} is to be used to point to an existing \Species in the
-model.
+A \GeneProduct may, optionally, refer to a \Species so as to provide compatibility with the Manchester style encoding of gene-protein associations. In this case the attribute \token{associatedSpecies} is of type \primtype{SIdRef} and, if defined, should point to an existing \Species in the model.
 
 \end{newsection}
 
@@ -317,11 +296,11 @@ model.
 %(in)equality that provides the maximum or minimum value that a reaction flux
 %can obtain at steady state. It implements three attributes.
 %
-%\newtxt{ Starting with Version~2 of the Flux Balance Constraints package the 
-%\FluxBound construct is deprecated. This is done to ease adoption and ensure that 
-%not all tools have to immediately implement support for changing flux bounds the 
-%attributes may also refer to the an existing \FluxBound in the model. However, 
-%that construct is deprecated and will be removed in a future version of this 
+%\newtxt{ Starting with Version~2 of the Flux Balance Constraints package the
+%\FluxBound construct is deprecated. This is done to ease adoption and ensure that
+%not all tools have to immediately implement support for changing flux bounds the
+%attributes may also refer to the an existing \FluxBound in the model. However,
+%that construct is deprecated and will be removed in a future version of this
 %package. }
 %
 %

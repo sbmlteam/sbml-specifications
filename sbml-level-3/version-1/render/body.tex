@@ -146,7 +146,7 @@ points on a \Polygon are to be filled when rendered. Allowed values for a valid 
  \item \token{evenodd}
 \end{itemize}
 
-For a detailed description on how those attributes work in detail, we would like to refer you to the corresponding documentation in the \needref{SVG specification}. 
+For a detailed description on how those attributes work in detail, we would like to refer you to the corresponding documentation in the SVG specification  \footnote{ \url{http://www.w3.org/TR/SVG/painting.html\#FillRuleProperty} }. 
 \TODO{which attributes does this sentence mean}
 
 %-----------------------------------------------
@@ -222,22 +222,22 @@ Examples illustration the use of the different \HTextAnchor values are given in 
 The position and size of render elements can be specified as a combination of an absolute value and a relative value. The absolute value is a numerical value in units of \val{pt} (1/72 inch) indicating the position of the object. The relative value is a percentage indicating the size of the object. All values are relative to the bounding box of the corresponding element in the layout. This bounding box basically specifies a canvas for the render elements to be drawn on.
 
 In order to avoid populating the resulting XML with numerous attributes the \RenderPackage encodes this information in the \RelAbsVector class with the two attributes \token{abs} and \token{rel} by extending the \primtype{string} such that it encodes optionally an absolute number first followed by an optional 
-relative number followed by a \% sign. 
+relative number followed by a \token{\%} sign. Adding spaces between the coordinates is encouraged, but not required.
 
-Examples of the \RelAbsVector construct are shown in the table below.
+Examples of the \RelAbsVector construct for the \token{x} coordinate are shown in the table below.
 \smallskip
 \begin{center}
 \begin{tabular}{ | l | p{5cm} |}
 \hline
 \primtype{string} & Coordinate \\ \hline
-$-5+100\%$ & 5 points left of the right edge of the current view \\ \hline
-$50\%$ & FILL IN \\ \hline
-$2$ & FILL IN \\ 
+$-5+100\%$ & 5 points left of the right edge of the current bounding box.\\ \hline
+$50\%$ & 50\% from the left edge of the current bounding box. \\ \hline
+$2$ & 2 points from the left edge of the bounding box. \\ 
 \hline
 \end{tabular}
 \end{center}
 \smallskip
-\TODO{Should there be a space between abs and rel value if both are used}
+
 
 It should be noted that when applying transformations to elements with relative values, the relative 
 values have to be converted to absolute values first.
@@ -283,7 +283,7 @@ render information object that references another render information object must
 to an id in any of the directly or indirectly referenced render information objects. 
 
 An exception to this rule is that a \ColorDefinition may have the same \token{id} as a \ColorDefinition in a referenced style. In this case interpreting programs can assume that this \ColorDefinition is supposed to override the \ColorDefinition with the
-same \token{id} in the referenced render information object. Likewise it is also possible to override a \ColorDefinition with a  gradient \need{does this mean either a \LinearGradient or a \RadialGradient or is it more open} and vice versa. \LineEnding definitions on the other hand can only be replaced by other \LineEnding definitions.
+same \token{id} in the referenced render information object. Likewise it is also possible to override a \ColorDefinition with a  gradient ( that is either a \LinearGradient or a \RadialGradient) and vice versa. \LineEnding definitions on the other hand can only be replaced by other \LineEnding definitions.
 
 %----------------------------------------------------------
 %----------------------------------------------------------
@@ -302,9 +302,13 @@ the \token{objectRole} attributes.
 
 
 A \GraphicalObject has an optional attribute \token{objectRole} of type
-\primtype{string}.  This attribute specifies with which \Style the object should be rendered.
+\primtype{string}.  This attribute specifies with which \Style the object should be rendered. 
+In the example below a \SpeciesGlyph is tagged with the role \val{SBO-0000285-clone}
+later on a style in a \GlobalRenderInformation element includes that role in its 
+\token{roleList} attribute and will be applied.
 
-\need{some sort of example here} 
+\exampleFile{examples/graphicalObjectExample.txt}
+
 
 % ---------------------------------------------------------
 \subsubsection{The extended \class{ListOfLayouts} class}
@@ -334,7 +338,11 @@ A \ListOfGlobalRenderInformation has a required attribute
 A \ListOfGlobalRenderInformation has a required attribute
 \token{versionMinor} of type \primtype{unsigned integer} which specifies the minor version of the render information.  All minor versions within a major version have to be compatible.
 
-\need{to explain how or indeed if these version numbers relate to sbml levels/versions}
+The \token{versionMajor} and \token{versionMinor} have been introduced so that 
+applications, that will likely go through quicker iterations than the \SBML standard
+can encode that version information there is no relation to the \SBML attributes 
+\token{level} and \token{version}. 
+
 
 % ---------------------------------------------------------
 \subsubsection{The extended \class{Layout} class}
@@ -384,9 +392,9 @@ information objects. It  derives from the \SBase class and thus
 inherits any attributes and elements that are present on this class. In addition the \RenderInformationBase has the required attribute \token{id} and the 
 optional attributes \token{name}, \token{programName}, \token{programVersion}, 
 \token{referenceRenderInformation} and \token{backgroundColor}. Additionally it may
-contain a \ListOfColorDefinitions, \ListOfGradientDefinitions and / or a \ListOfLineEndings.
-
-\need{are the listOf optional or required}
+contain a \ListOfColorDefinitions, \ListOfGradientDefinitions and / or a \ListOfLineEndings. 
+These lists are optional, however if present may not be empty. There may only be one 
+of each of those lists. 
 
 \paragraph{The \fixttspace\token{id} attribute}
 
@@ -406,17 +414,23 @@ of type \primtype{string} which can be used to store the name of the program tha
 \paragraph{The \fixttspace\token{programVersion} attribute}
 
 A \RenderInformationBase has an optional attribute
-\token{programVersion} of type \primtype{string} which can be used to store the version number of teh program used to create the render information.
+\token{programVersion} of type \primtype{string} which can be used to store the version number of the program used to create the render information.
 
 \paragraph{The \fixttspace\token{refenceRenderInformation} attribute}
 
 A \RenderInformationBase has an optional attribute
-\token{refenceRenderInformation} of type \primtype{string} which can be used to specify the id of another local or global render information object 
-that complements the current render information object. A program reading and interpreting the render infromation can use this information to  access another render information object, should the current object contain unsuitable information. In order to avoid loops, only render information objects that have 
-already been defined may be referenced. Thus a \LocalRenderInformation object may reference any \GlobalRenderInformation object but may only reference \LocalRenderInformation objects that have already been defined with the parent \class{Layout} object. A \GlobalRenderInformation object may only reference \GlobalRenderInformation objects that have already been defined in the parent \class{ListOfLayouts} object.  
- 
+\token{refenceRenderInformation} of type \primtype{SIdRef} which can be used to 
+specify the \token{id} of another local or global render information object 
+that complements the current render information object. A program reading and 
+interpreting the render information can use this information to access another 
+render information object, should the current object contain unsuitable information. 
+In order to avoid loops, only render information objects that have already been 
+defined may be referenced. Thus a \LocalRenderInformation object may reference any 
+\GlobalRenderInformation object but may only reference \LocalRenderInformation objects 
+that have already been defined with the parent \class{Layout} object. 
+A \GlobalRenderInformation object may only reference \GlobalRenderInformation objects 
+that have already been defined in the parent \class{ListOfLayouts} object.
 
-\TODO{should this attribute not be an SIdRef}
 
 \paragraph{The \fixttspace\token{backgroundColor} attribute}
 
@@ -448,20 +462,22 @@ class. It contains one or more objects of type \LineEnding which can be used to 
 % ---------------------------------------------------------
 \subsubsection{The \class{LocalRenderInformation} class}
 \label{localrenderinformation-class}
-The \RenderInformation element of type \LocalRenderInformation is the primary container that holds the render information for a \class{Layout} instance. 
+The \RenderInformation element of type \LocalRenderInformation is the primary 
+container that holds the render information for a \class{Layout} instance. 
 
 
 The \LocalRenderInformation object derives from the
 \RenderInformationBase class and thus inherits any attributes and
 elements that are present on this class.
-A \LocalRenderInformation contains exactly one element named \token{listOfStyles} of type \ListOfLocalStyles.\need{is optional ?}
+A \LocalRenderInformation may contain exactly one element named \token{listOfStyles} 
+of type \ListOfLocalStyles.
 
 \paragraph{The \class{ListOfLocalStyles} class}
 \label{listoflocalstyles-class}
 
 The \ListOfLocalStyles object derives from the \class{ListOf} classand inherits
-the core attributes and subobjects from the \class{SBase} class. It
-contains one or more objects of type \LocalStyle.
+the core attributes and subobjects from the \class{SBase} class. It is optional but 
+if present has to contain one or more objects of type \LocalStyle.
 
 
 % ---------------------------------------------------------
@@ -519,7 +535,8 @@ The following snippet shows the general outline of a \ListOfGlobalRenderInformat
 \begin{figure}[h!]
   \centering
   \includegraphics[width=\textwidth]{images/render-style-uml}\\
-  \caption{A UML representation of the \Style object for the \RenderPackage.  See \ref{conventions} for conventions related to this figure. }
+  \caption{A UML representation of the \Style object for the \RenderPackage.
+	See \ref{conventions} for conventions related to this figure. }
   \label{fig:style_render_uml}
 \end{figure}
 % ---------------------------------------------------------
@@ -548,16 +565,16 @@ A \Style has an optional attribute \token{roleList} of type
 \primtype{string}. The string value of the \token{roleList} attribute lists all the roles to which this \Style should be applied.
 
 This attribute can be  used in conjunction with the \token{objectRole} attribute that is used to extend the \GraphicalObject class from the \LayoutPackage. If the string given as an \token{objectRole} value appears in the \token{roleList} attribute of some render information object, then that render information object
-applies to the graphical object as shown in the snippet below. Note this relationship is only valid if there is no render information object that is more specific. \need{clarify this}
+applies to the graphical object as shown in the snippet below. Note this relationship is only valid if there is no render information object that is more specific. For example another \LocalStyle could be defined with \token{idList} that references the \token{layout:id="go1"} explicitly, in which case that style would be  chosen. For more information see also \sec{style-res}. 
 
 {\footnotesize
 \begin{example}
 <layout:layout>
-   <layout:listOfGraphicalObjects>
+   <layout:listOfAdditionalGraphicalObjects>
       <layout:graphicalObject layout:id="go1" render:objectRole="Parameter">
          ...
       </layout:graphicalObject>
-   </layout:listOfGraphicalObjects>
+   </layout:listOfAdditionalGraphicalObjects>
    <render:listOfLocalRenderInformation>
       <render:renderInformation render:id="FancyRenderer_GlobalDefault">
              ...
@@ -567,12 +584,10 @@ applies to the graphical object as shown in the snippet below. Note this relatio
              </render:style> 
         </render:listOfStyles>
       </render:renderInformation>
-   </render:listOfGlobalRenderInformation>
-</layout:listOfLayouts>
+   </render:listOfLocalRenderInformation>
+</layout:layout>
 \end{example}
 }
-
-\TODO{check xml for layout is valid}
 
 
 \paragraph{The \fixttspace\token{typeList} attribute}
@@ -618,7 +633,7 @@ The \LocalStyle class is used for objects in the \ListOfStyles element of a \Loc
 \paragraph{The \fixttspace\token{idList} attribute}
 
 A \LocalStyle has an optional attribute \token{idList} of type
-\primtype{string} which is a list of ids of layout objects to which this \Style should be applied. \need{are they space seperated ??}
+\primtype{string} which is a space separated list of ids of layout objects to which this \Style should be applied.
 
 
 % ---------------------------------------------------------
@@ -650,13 +665,16 @@ A \ColorDefinition has an optional attribute \token{id} of type
 \paragraph{The \fixttspace\token{value} attribute}
 
 A \ColorDefinition has an optional attribute \token{value} of type
-\primtype{string}. Color values are specified as a 6 to 8 digit hex string which defines the RGBA 
-value of the color. If only the first six digits for the RGB value are given, 
-the alpha value \need{what is alpha value} is assumed to be 0xFF which means that the color is totally 
-opaque. Instead of specifying a color value, the value \val{none} can be given which is equivalent to 
+\primtype{string}. Color values are specified as a 6 to 8 digit hex string which 
+defines the RGBA value of the color. If only the first six digits for the RGB value 
+are given, the alpha value (also known as transparency or opacity of the color) 
+is assumed to be 0xFF which means that the color is totally opaque. Instead of 
+specifying a color value, the value \val{none} can be given which is equivalent to 
 no drawing at all.
 
-\TODO{explain example - which has 6 digits and a \#}
+The example snippet defines a dark red color, with a red component of 0x20, green 
+component of 0x00, and blue component of 0x00. Since it is not specifying the alpha 
+component, it will have the value of 0xff. 
 
 {\footnotesize
 \begin{example}
@@ -682,7 +700,7 @@ no drawing at all.
 
 \GradientBase is an abstract class that holds all the information that is common to both \RadialGradient and \LinearGradient objects (\ref{fig:style_render_uml}).The \GradientBase object derives from the \SBase class and thus inherits
 any attributes and elements that are present on this class.
-A \GradientBase may contain one \ListOfGradientStops element.
+A \GradientBase may contain one or more GradientStop elements.
 In addition the \GradientBase object has a required \token{id} attribute and an optional \token{spreadMethod} attribute.
 
 \paragraph{The \fixttspace\token{id} attribute}
@@ -698,31 +716,33 @@ used to continue the gradient pattern if the vector points do not span the whole
 bounding box of the object to which the gradient is applied. 
 
 % ---------------------------------------------------------
-\paragraph{The \class{ListOfGradientStops} class}
-\label{listofgradientstops-class}
-
-The \ListOfGradientStops object derives from the \class{ListOf} and
-inherits the core attributes and subobjects from the \class{SBase}
-class. It contains one or more objects of type \GradientStop.
-
-\TODO{is this really a class - the uml suggests not but the deviser code has a listOf}
+%\paragraph{The \GradientStop elements}
+%\label{listofgradientstops-class}
+%
+%The \ListOfGradientStops object derives from the \class{ListOf} and
+%inherits the core attributes and subobjects from the \class{SBase}
+%class. It contains one or more objects of type \GradientStop.
+%
 
 % ---------------------------------------------------------
 \subsubsection{The \class{GradientStop} class}
 \label{gradientstop-class}
 
-As the name suggests the \GradientStop object is used to define "gradient stops" which are used in line with the SVG specification.
+As the name suggests the \GradientStop object is used to define "gradient stops" 
+which are used in line with the SVG specification.
 The \GradientStop object derives from the \SBase class and thus inherits
 any attributes and elements that are present on this class.
-In addition the \GradientStop object has the required attributes \token{offset} and \token{stop-color}.
+In addition the \GradientStop object has the required attributes \token{offset}
+and \token{stop-color}.
 
 \paragraph{The \fixttspace\token{offset} attribute}
 
 A \GradientStop has a required attribute \token{offset} of type
-\RelAbsVector which represents the relative distance from the starting point of the
-gradient. Depending on the type of gradient, this is either the point defined by the
-\token{x1},\token{y1} and \token{z1} attributes (\LinearGradient) or the \token{fx},
-\token{fy} and \token{fz} attributes (\RadialGradient). This value is given as a positive percentage value.
+\RelAbsVector which represents the relative distance from the starting point of 
+the gradient. Depending on the type of gradient, this is either the point 
+defined by the \token{x1},\token{y1} and \token{z1} attributes (\LinearGradient) 
+or the \token{fx}, \token{fy} and \token{fz} attributes (\RadialGradient). 
+This value is given as a positive percentage value.
 
 \paragraph{The \fixttspace\token{stop-color} attribute}
 
@@ -1032,9 +1052,15 @@ A \RenderCurve has an optional attribute \token{endHead} of type
 
 The \ListOfElements object derives from the \class{ListOf} and inherits
 the core attributes and subobjects from the \class{SBase} class. It
-contains one or more objects of type \RenderPoint or of the derived type \RenderCubicBezier. The only restriction is that the first element must be a \RenderPoint.
+contains one or more objects of type \RenderPoint or of the derived type \RenderCubicBezier. 
+The only restriction is that the first element must be a \RenderPoint.
 
-\need{not sure how this fits into a curve - are you liertally specifying every point in the curve}
+Thus the first point specifies the start point of the curve. If the next element 
+is another \RenderPoint, we have a straight line segment, going from the start point 
+to the second point. Should the second point be a \RenderCubicBezier a cubic bezier curve 
+will be added from the start point with its values. Thus the \ListOfElements holds a concise
+definition of the curve specifying start and end points for all line segments. 
+
 
 % ---------------------------------------------------------
 \subsubsection{The \class{RenderPoint} class}
@@ -1087,7 +1113,13 @@ For a \RenderCubicBezier object this attribute will always have the value \val{R
 
 
 
-The example snippet illustrates the definition of a \RenderCurve that \need{fill in what it actually represents cos I'm not sure}
+The example snippet illustrates the definition of a \RenderCurve with two line segments 
+that are to be painted using a black stroke with width 2.0.
+The first line segment is a straight segment going from the objects left middle (0\%, 50\%) 
+to the right middle(100\%, 50\%). The second segment represents a cubic bezier, that 
+continues from the right middle(100\%, 50\%) back to the left middle(0\%, 50\%) with 
+two control points at (50\%, 90\%).
+
 
 {\footnotesize
 \begin{example}
@@ -1110,7 +1142,8 @@ The example snippet illustrates the definition of a \RenderCurve that \need{fill
 \subsection{Geometric Shapes}
 \label{shapes}
 
-This section details the classes of geometric objects that can be defined using the transformations and graphical primitives described (see \ref{fig:group_render_uml}).
+This section details the classes of geometric objects that can be defined using 
+the transformations and graphical primitives described (see \ref{fig:group_render_uml}).
 
 \begin{figure}[h!]
   \centering
@@ -1128,23 +1161,22 @@ A \Polygon object is made up of a \texttt{polygon} element which contains a
 \ListOfElements that defines the edge of the polygon.
 
 The major difference to the \RenderCurve 
-object is that the individual curve segments can only be straight lines and the last point
- of the curve is connected to the first, so the polygon is always closed. 
+object is that the object is always closed. 
+That is the last point of the curve is connected to the first.
 Therefore, the polygon can have a fill style 
 that determines how the inside of the polygon is to be rendered.
 
-The example snippet shows the render specification of a \Polygon.
+The example snippet shows the render specification of a \Polygon. It uses a 
+black pen with width 3, and a red fill brush.
 
 {\footnotesize
 \begin{example}
 <g ...>
   <polygon stroke="#000000" stroke-width="3" fill="#FF0000">
     <listOfElements>
-      <element xsi:type="RenderPoint" x="100%" y="33%"/>
-      <element xsi:type="RenderPoint" x="20%" y="100%"/>
-      <element xsi:type="RenderPoint" x="50%" y="0"/>
-      <element xsi:type="RenderPoint" x="80%" y="100%"/>
-      <element xsi:type="RenderPoint" x="0" y="33%"/>
+      <element xsi:type="RenderPoint" x="0%" y="0%"/>
+      <element xsi:type="RenderPoint" x="100%" y="0%"/>
+      <element xsi:type="RenderPoint" x="0%" y="100%"/>
     </listOfElements>
   </polygon>
      ...
@@ -1152,8 +1184,6 @@ The example snippet shows the render specification of a \Polygon.
 
 \end{example}
 }
-
-\need{it would be better if the xml snippet encoded the figure}
 
 \begin{figure}[!ht]
 \begin{center}

@@ -1118,6 +1118,8 @@ definition of the curve specifying start and end points for all line segments.
 
 The \LayoutPackage defines a similar \class{Curve} that has identical specification except it is restricted to using absolute values.  The classes involved have thus been redefined for the \RenderPackage which facilitates the use of relative values. However it is perfectly valid to use the \class{ListOfLineSegments} object from the \LayoutPackage either in place of the \ListOfElements or in addition to it. 
 
+The example in \sec{rendercubicbezier-class} illustrates both the \ListOfElements and \class{ListOfCurveSegments} objects.
+
 % ---------------------------------------------------------
 \subsubsection{The \class{RenderPoint} class}
 \label{renderpoint-class}
@@ -1244,8 +1246,8 @@ the transformations and graphical primitives described (see \ref{fig:group_rende
 \subsubsection{The \class{Polygon} class}
 \label{polygon-class}
 
-A \Polygon object is made up of a \texttt{polygon} element which contains a 
-\ListOfElements that defines the edge of the polygon.
+A \Polygon object is made up of a \texttt{polygon} element which contains at most one 
+\ListOfElements and/or one \class{ListOfCurveSegments} used to define the edges of the polygon.
 
 The major difference to the \RenderCurve 
 object is that the object is always closed. 
@@ -1253,22 +1255,31 @@ That is the last point of the curve is connected to the first.
 Therefore, the polygon can have a fill style 
 that determines how the inside of the polygon is to be rendered.
 
-The example snippet shows the render specification of a \Polygon. It uses a 
-black pen with width 3, and a red fill brush.
+The example snippet shows the render specification of a \Polygon and of an unclosed path. It uses a 
+black pen with width 3, and a red fill brush. \ref{PathVsPolygon} illustrates these shapes (without the red fill!).
 
 {\footnotesize
 \begin{example}
 <g ...>
-  <polygon stroke="#000000" stroke-width="3" fill="#FF0000">
-    <listOfElements>
-      <element xsi:type="RenderPoint" x="0%" y="0%"/>
-      <element xsi:type="RenderPoint" x="100%" y="0%"/>
-      <element xsi:type="RenderPoint" x="0%" y="100%"/>
-    </listOfElements>
-  </polygon>
-     ...
-</g>
+   <!-- define a path with three points -->
+   <curve stroke="#000000" stroke-width="3">
+     <listOfElements>
+       <element xsi:type="RenderPoint" x="0%" y="0%"/>
+       <element xsi:type="RenderPoint" x="100%" y="0%"/>
+       <element xsi:type="RenderPoint" x="0%" y="100%"/>
+     </listOfElements>
+   </curve>
 
+   <!-- the same points defined as a polygon
+          so the last point draws a line to the first point -->
+   <polygon stroke="#000000" stroke-width="3" fill="#FF0000">
+     <listOfElements>
+       <element xsi:type="RenderPoint" x="0%" y="0%"/>
+       <element xsi:type="RenderPoint" x="100%" y="0%"/>
+       <element xsi:type="RenderPoint" x="0%" y="100%"/>
+     </listOfElements>
+   </polygon>
+</g>
 \end{example}
 }
 
@@ -1325,8 +1336,7 @@ the corner is $10\%$ of the width of the rectangle.
 If the optional \token{ratio} attribute of \primtype{double} is set, the biggest 
 rectangle with the desired ratio of width to height is to be drawn centered in the 
 objects bounding box. Using this approach makes it possible to always encode a 
-square (by specifying \token{ratio="1"}), even if used with relative radii and 
-rectangular bounding box. 
+square (by specifying \token{ratio="1"}), even if used with relative radii and a rectangular bounding box. 
 
 
 % ---------------------------------------------------------
@@ -1360,7 +1370,7 @@ attribute below.
 If the optional \token{ratio} attribute of \primtype{double} is set, the biggest 
 ellipse with the desired ratio of width to height is to be drawn centered in the 
 objects bounding box. Using this approach makes it possible to always encode a 
-circle (by specifying \token{ratio="1"}), even if used with relative radii and 
+circle (by specifying \token{ratio="1"}), even if used with relative radii and a
 rectangular bounding box. 
 
 % ---------------------------------------------------------
@@ -1420,12 +1430,12 @@ A \Text has an optional attribute \token{font-style} of type \FontStyle which sp
 \paragraph{The \fixttspace\token{text-anchor} attribute}
 
 A \Text has an optional attribute \token{text-anchor} of type
-\HTextAnchor which specifies the horizontal alignment of the text (see \ref{apdx-text-anchor}).
+\HTextAnchor which specifies the horizontal alignment of the text (see \apdx{apdx:text-anchor}).
 
 \paragraph{The \fixttspace\token{vtext-anchor} attribute}
 
 A \Text has an optional attribute \token{vtext-anchor} of type
-\VTextAnchor which specifes the vertical alignment of the text (see \ref{apdx-text-anchor}).
+\VTextAnchor which specifes the vertical alignment of the text (see \apdx{apdx:text-anchor}).
 
 Note that since the way text is drawn is completely determined by the font specification, text elements should ignore the stroke-width attribute that they inherit from \GraphicalPrimitiveOneD.
 
@@ -1492,7 +1502,7 @@ element to generate more complex render information.
 The \RenderGroup object derives from the \GraphicalPrimitiveTwoD class
 and thus inherits any attributes and elements that are present on this
 class.
-A \RenderGroup contains exactly one \ListOfElements element.
+A \RenderGroup contains one or more child elements that can be any class derived from the \TransformationTwoD class.
 In addition the \RenderGroup object has the following attributes.
 
 \paragraph{The \fixttspace\token{startHead} and \fixttspace\token{endHead} attributes}
@@ -1517,7 +1527,7 @@ more of those attributes, the newly defined values take effect.
 In many graphs the relations between nodes are depicted by lines and often the 
 type of relation is encoded in the line ending. For this reason, the render
 extension provides ways to specify a set of arbitrary line endings and means to
-apply those to other objects. Appendix C provides more information (\ref{mapping}).
+apply those to other objects. More information is provide in \ref{mapping}.
 
 \begin{figure}[h!]
   \centering
@@ -1553,7 +1563,7 @@ drawn just the way it was specified (if \val{false}).
 \label{EnableRotationalMapping}
 \end{figure}
 
-It should be noted that the top level \RenderGroup in a \LineEnding differs from top level groups in normal graphical elements in one respect. The top level \RenderGroup of a \LineEnding inherits all attributes from the line it is applied to save for the attributes for the line endings themselves. This way a style sheet can define one line ending which can be applied to lines of different colors and it inherits the color from the line.
+It should be noted that the top level \RenderGroup in a \LineEnding differs from top level groups in normal graphical elements in one respect; that is, the top level \RenderGroup of a \LineEnding inherits all attributes from the line it is applied to except for the attributes for the line endings themselves. This way a style sheet can define one line ending which can be applied to lines of different colors and it inherits the color from the line.
 If the group also inherited the attributes for the line endings and it contained a \texttt{curve} element itself, we would have generated an endless loop.
 
 The example snippet shows the definition of an arrow head.

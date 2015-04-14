@@ -146,8 +146,7 @@ points on a \Polygon are to be filled when rendered. Allowed values for a valid 
  \item \token{evenodd}
 \end{itemize}
 
-For a detailed description on how those attributes work in detail, we would like to refer you to the corresponding documentation in the SVG specification  \footnote{ \url{http://www.w3.org/TR/SVG/painting.html\#FillRuleProperty} }. 
-\TODO{which attributes does this sentence mean}
+For a detailed description on how these values should be applied, we would like to refer you to the corresponding documentation in the SVG specification  \footnote{ \url{http://www.w3.org/TR/SVG/painting.html\#FillRuleProperty} }. 
 
 %-----------------------------------------------
 \subsubsection{Type \fixttspace\primtypeNC{FontFamily}}
@@ -196,7 +195,7 @@ vertically aligned within their bounding box. This enumeration has the following
  \item \token{baseline}
 \end{itemize}
 
-Examples illustration the use of the different \VTextAnchor values are given in Appendix \ref{apdx-text-anchor}.
+Examples illustration the use of the different \VTextAnchor values are given in \apdx{apdx:text-anchor}.
 
 
 
@@ -212,7 +211,7 @@ The type \HTextAnchor defines the horizontal alignment of text elements. This en
  \item \token{end}
 \end{itemize}
 
-Examples illustration the use of the different \HTextAnchor values are given in Appendix \ref{apdx-text-anchor}.
+Examples illustration the use of the different \HTextAnchor values are given in \apdx{apdx:text-anchor}.
 
 
 
@@ -877,7 +876,7 @@ Example of specifying the \LinearGradient shown in \ref{fig:lingrad}:
 
 The \RadialGradient object derives from the \GradientBase class and thus
 inherits any attributes and elements that are present on this class.
-In addition the \RadialGradient object has the seven attributes (each of type \RelAbsVector) that are used to define the center, radius and focal point of the gradient.
+In addition the \RadialGradient object has seven attributes (each of type \RelAbsVector) that are used to define the center, radius and focal point of the gradient.
 
 
 
@@ -950,7 +949,7 @@ other options, allows the user to specify a 3x3 matrix transformation matrix:
 \hspace*{0.4cm}
 
 Since the last row of the matrix is always 0 0 1, the matrix is specified as a 
-six value vector. Therefore, in the render extension each group or graphical 
+six value vector. In the render extension each group or graphical 
 primitive is derived from the class \TransformationTwoD and can have a \token{transform} attribute just as in SVG.
 
 \begin{figure}[h!]
@@ -991,7 +990,7 @@ value for the attribute has the form: \token{a, b, c, d, e, f}.
 
 The values for \token{a},\token{b},\token{c},\token{d},\token{e} and \token{f} depend on the transformation operation components and the order in which those transformation components are executed.
 
-There are four basic transformation operations that can be combined in a affine transformation matrix.  Details of these are given in Appendix \ref{apdx-transformations}.
+There are four basic transformation operations that can be combined in a affine transformation matrix.  Details of these are given in \apdx{apdx-transformations}.
 
 All objects that are derived from \TransformationTwoD can have a transformation, this includes group elements. In contrast to other attributes on groups and children of groups, the transformation is not overwritten if it is specified in a child, but rather all transformations that are defined in an object hierarchy accumulate. Thus when a group specifies a transformation and a child of the group also sets a transformation, the transformation for the child has to be applied to the child only and the transformation that is set on the group has to be applied to the whole group, i.e. to all children of the group.
 
@@ -1087,7 +1086,7 @@ Simple lines and complex curves are represented by a \RenderCurve element.
 The \RenderCurve object derives from the \GraphicalPrimitiveOneD class (see \ref{fig:curve_render_uml})
 and thus inherits any attributes and elements that are present on this
 class.
-A \RenderCurve contains at most one \ListOfElements element.
+A \RenderCurve contains at most one \ListOfElements element and at most one \class{ListOfCurveSegments} form the \LayoutPackage.
 In addition the \RenderCurve object has the optional attributes \token{startHead} and \token{endHead}.
 
 \paragraph{The \fixttspace\token{startHead} attribute}
@@ -1115,6 +1114,9 @@ to the second point. Should the second point be a \RenderCubicBezier a cubic bez
 will be added from the start point with its values. Thus the \ListOfElements holds a concise
 definition of the curve specifying start and end points for all line segments. 
 
+\paragraph{The \class{ListOfCurveSegments}}
+
+The \LayoutPackage defines a similar \class{Curve} that has identical specification except it is restricted to using absolute values.  The classes involved have thus been redefined for the \RenderPackage which facilitates the use of relative values. However it is perfectly valid to use the \class{ListOfLineSegments} object from the \LayoutPackage either in place of the \ListOfElements or in addition to it. 
 
 % ---------------------------------------------------------
 \subsubsection{The \class{RenderPoint} class}
@@ -1172,25 +1174,56 @@ that are to be painted using a black stroke with width 2.0.
 The first line segment is a straight segment going from the objects left middle (0\%, 50\%) 
 to the right middle(100\%, 50\%). The second segment represents a cubic bezier, that 
 continues from the right middle(100\%, 50\%) back to the left middle(0\%, 50\%) with 
-two control points at (50\%, 90\%).
+two control points at (50\%, 90\%).  The equivalent curve defined using the \class{ListOfLineSegments} from the \LayoutPackage is also included (assuming a $100 x 100$ square object).
 
 
 {\footnotesize
 \begin{example}
- <g ...>
-  <curve stroke-width="2.0" stroke="#000000" >
-   <listOfElements>
-     <element xsi:type="RenderPoint" x="0%" y="50%" />
-     <element xsi:type="RenderPoint" x="100%" y="50%" />
-     <element xsi:type="RenderCubicBezier" x="0%" y="50%"
-              basepoint1\_x="50%" basepoint1\_y="90%"
-              basepoint2\_x="50%" basepoint2\_y="90%" />
-   </listOfElements>
-  </curve>
-    ...
-</g> 
+<render:g ...>
+
+  <!-- the curve is defined in the render namespace -->
+  <render:curve render:stroke-width="2.0" render:stroke="#000000" >
+
+    <!-- using the listOfElements from the render namespace -->
+    <render:listOfElements>
+      <!-- define the first point -->
+      <render:element xsi:type="RenderPoint" render:x="0%" render:y="50%" />
+
+      <!-- The next item starts at the previous point -->
+      <!-- It is also a point so draw a straight line from the start point to here -->
+      <render:element xsi:type="RenderPoint" render:x="100%" render:y="50%" />
+
+      <!-- The next item starts at the previous point -->
+      <!-- It is a cubic bezier so draw a curve using the basepoints from the start point to here -->
+      <render:element xsi:type="RenderCubicBezier" render:x="0%" render:y="50%"
+              render:basepoint1\_x="50%" render:basepoint1\_y="90%"
+              render:basepoint2\_x="50%" render:basepoint2\_y="90%" />
+    </render:listOfElements>
+
+    <!-- using the listOfCurveSegments from the layout namespace -->
+    <layout:listOfCurveSegments>
+
+      <!-- the first segment is a line from start to end point
+      <layout:curveSegment xsi:type="LineSegment">
+        <layout:start layout:x="0" layout:y="50" />
+        <layout:end layout:x="100" layout:y="50"/>
+      </layout:curveSegment>
+
+      <!-- the second segment is a curve from start to end with given basepoints -->
+      <layout:curveSegment xsi:type="CubicBezier">
+        <layout:start layout:x="100" layout:y="50" />
+        <layout:end layout:x="0" layout:y="50"/>
+        <layout:basePoint1 layout:x="50" layout:y="90"/>
+        <layout:basePoint2 layout:x="50" layout:y="90"/>
+      </layout:curveSegment>
+    </layout:listOfCurveSegments>
+  
+  </render:curve>
+  ...
+</render:g>
 \end{example}
 } 
+
 %---------------------------------------------------------
 %---------------------------------------------------------
 \subsection{Geometric Shapes}

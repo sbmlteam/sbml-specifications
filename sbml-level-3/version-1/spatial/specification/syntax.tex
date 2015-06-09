@@ -593,7 +593,7 @@ The \token{sampledField} attribute is of type SpIdRef, and must reference a \Sam
 
 \subsection{The \class{SampledVolume} class}
 \label{SampledVolume-class}
-A \SampledVolume represents an interval of the sampled field that constitutes one or more contiguous regions. A \SampledVolume is defined for each volumetric (3-dimensional) \Domain in the \Geometry. It has the following attributes.
+A \SampledVolume represents an interval of the sampled field that constitutes one or more contiguous regions. A \SampledVolume is defined for each volumetric (3-dimensional) \Domain in the \Geometry. \changed{Volumes are defined as regions within the referenced image that match a particular pixel value (\token{sampledValue}) or that match a range of pixel values (\token{minValue} and \token{maxValue}).  A given \SampledVolume must define for itself either a single value or a range of values to which it applies, but not both.  Within a \ListOfSampledVolumes, there must be at most one \SampledVolume that corresponds to any given pixel value.  That is, any given pixel value may only appear as the \token{sampledVolume} of a single \SampledVolume, or be between the \token{minValue} and \token{maxValue} (inclusive) of a single \SampledVolume.}  It has the following attributes.
 
 \subsubsection{The \token{id} attribute}
 The \token{id} attribute identifies a \SampledVolume object. The attribute is of type \primtype{SpId} and is required when specifying a \SampledVolume.  It has no mathematical meaning, and cannot be connected to a \Parameter via a \SpatialSymbolReference element.
@@ -602,13 +602,13 @@ The \token{id} attribute identifies a \SampledVolume object. The attribute is of
 The required \token{domainType} attribute is of type \primtype{SpIdRef}. It is the \primtype{SpId} of the \DomainType that represents this class of anatomical features. If there are more than one contiguous regions, then more than one domain will be defined corresponding to each \SampledVolume.
 
 \subsubsection{The \token{sampledValue} attribute}
-The required \token{sampledValue} attribute is of type \primtype{double}. It represents the pixel value of a \SampledVolume.
+The optional \token{sampledValue} attribute is of type \primtype{double}. It represents the pixel value of a \SampledVolume.  \changed{When used, all pixels with this particular value are to be assigned to this \SampledVolume, and no pixel without this value is assigned to the \SampledVolume.  It is illegal to define a \token{sampledValue} attribute for a \SampledVolume that also has a \token{minValue} and \token{maxValue} defined.}
 
 \subsubsection{The \token{minValue} attribute}
-The optional \token{minValue} attribute is of type \primtype{double}. It represents the minimum of the pixel value (\token{sampledValue}) range.
+The optional \token{minValue} attribute is of type \primtype{double}. It represents the minimum of the pixel value (\token{sampledValue}) range \changed{to be assigned to this \SampledVolume.  If a \token{minValue} attribute is defined, a \token{maxValue} attribute must also be defined, and the \token{sampledValue} attribute must not be defined}
 
 \subsubsection{The \token{maxValue} attribute}
-The optional \token{maxValue} attribute is of type \primtype{double}. It represents the maximum of the pixel value (\token{sampledValue}) range.
+The optional \token{maxValue} attribute is of type \primtype{double}. It represents the maximum of the pixel value (\token{sampledValue}) range \changed{to be assigned to this \SampledVolume.  If a \token{maxValue} attribute is defined, a \token{minValue} attribute must also be defined, and the \token{sampledValue} attribute must not be defined.}
 
 
 \subsection{The \class{CSGeometry} class}
@@ -840,15 +840,15 @@ The required \token{compression} attribute is of type \primtype{CompressionKind}
 
 %{\color{red} Lucian: \notice Based on our discussion on the list about compression, the above is a compromise/temporary position so that existing implementations can continue to work for now, but we are moving towards using base64 in the future. Eventually, if base64 turns out to work great, we should be able to drop 'deflated' as an option entirely, and only use 'uncompressed' and 'base64'.}
 
-\subsubsection{The \token{\changed{arrayDataLength}} attribute}
-The \token{\changed{arrayDataLength}} attribute is of type \primtype{int} and is required. It represents the array length of the \primtype{arrayData} text child of this node.  If uncompressed, this will equal the total number of coordinates, but if compressed, this will equal the new compressed length of the array, not including any added whitespace.  \changed{It is included for convenience and validation purposes.}
+\subsubsection{The \token{arrayDataLength} attribute}
+The \token{arrayDataLength} attribute is of type \primtype{int} and is required. It represents the array length of the \primtype{arrayData} text child of this node.  If uncompressed, this will equal the total number of coordinates, but if compressed, this will equal the new compressed length of the array, not including any added whitespace.  It is included for convenience and validation purposes.
 
 
 \subsubsection{The \token{dataType} attribute}
 The \token{dataType} attribute is of type \primtype{DataKind} and is required if the value of the \token{compression} attribute is \val{base64}, and is optional otherwise.  It is used to specify the type of the data being stored.  The value \val{double} is used to indicate double-precision (64-bit) floating point values; \val{float} to indicate single-precision (32-bit) floating point values, and \val{uint8}, \val{uint16}, and \val{uint32} to indicate 8-bit, 16-bit, and 32-bit unsigned integer values, respectively.  This attribute is required so that the compressed data can be properly uncompressed.
 
-\subsubsection{The \changed{\token{ArrayData} text child}}
-\changed{The \token{ArrayData} text child of the \SpatialPoints is in \token{arrayData} format}, and represents an ordered list of sets of coordinates that will be used as the vertices of \ParametricObject elements in this \ParametricGeometry, with \val{0} representing the first such coordinate, \val{1} the second, etc.  The list will define vertexes with as many values as there are \CoordinateComponent children of the parent \Geometry:  three values for representing the X, Y, and Z coordinates (respectively) of 3-dimensional geometries, or two values for representing the X and Y coordinates (respectively) of 2-dimensional geometries.  (\ParametricGeometry elements cannot be created in 1-dimensional geometries.)  It is suggested, but not required, that if the data is uncompressed, that the grouped points be separated from each other with the use of a semicolon.  If the data is compressed, a semicolon is not to be used.
+\subsubsection{The \token{ArrayData} text child}
+The \token{ArrayData} text child of the \SpatialPoints is in \token{arrayData} format, and represents an ordered list of sets of coordinates that will be used as the vertices of \ParametricObject elements in this \ParametricGeometry, with \val{0} representing the first such coordinate, \val{1} the second, etc.  The list will define vertexes with as many values as there are \CoordinateComponent children of the parent \Geometry:  three values for representing the X, Y, and Z coordinates (respectively) of 3-dimensional geometries, or two values for representing the X and Y coordinates (respectively) of 2-dimensional geometries.  (\ParametricGeometry elements cannot be created in 1-dimensional geometries.)  It is suggested, but not required, that if the data is uncompressed, that the grouped points be separated from each other with the use of a semicolon.  If the data is compressed, a semicolon is not to be used.
 
 
 \subsection{The \class{ParametricObject} class}
@@ -869,20 +869,17 @@ The required \token{compression} attribute is of type \primtype{CompressionKind}
 
 %{\color{red} Lucian: \notice Based on our discussion on the list about compression, the above is a compromise/temporary position so that existing implementations can continue to work for now, but we are moving towards using base64 in the future. Eventually, if base64 turns out to work great, we should be able to drop 'deflated' as an option entirely, and only use 'uncompressed' and 'base64'.}
 
-\subsubsection{The \token{\changed{pointIndexLength}} attribute}
-The \token{\changed{pointIndexLength}} attribute is of type \primtype{int} and is required. It represents the array length of the \primtype{arrayData} text child of this node.  If uncompressed, this will equal the number of referenced indices, but if compressed, this will equal the new compressed length of the array, not including any added whitespace.  \changed{It is included for convenience and validation purposes.}
+\subsubsection{The \token{pointIndexLength} attribute}
+The \token{pointIndexLength} attribute is of type \primtype{int} and is required. It represents the array length of the \primtype{arrayData} text child of this node.  If uncompressed, this will equal the number of referenced indices, but if compressed, this will equal the new compressed length of the array, not including any added whitespace.  It is included for convenience and validation purposes.
 
 \subsubsection{The \token{dataType} attribute}
-The \token{dataType} attribute is of type \primtype{DataKind} and is required if the value of the \token{compression} attribute is \val{base64}, and is optional otherwise.  It is used to specify the type of the data being stored.  \changed{Because all of the data will be indexes into the \token{ArrayData} of the \SpatialPoints element, the allowed formats are \val{uint8}, \val{uint16}, and \val{uint32} to indicate 8-bit, 16-bit, and 32-bit unsigned integer values, respectively.  The values \val{double} and \val{float} are not to be used.}  This attribute is required so that the compressed data can be properly uncompressed.
+The \token{dataType} attribute is of type \primtype{DataKind} and is required if the value of the \token{compression} attribute is \val{base64}, and is optional otherwise.  It is used to specify the type of the data being stored.  Because all of the data will be indexes into the \token{ArrayData} of the \SpatialPoints element, the allowed formats are \val{uint8}, \val{uint16}, and \val{uint32} to indicate 8-bit, 16-bit, and 32-bit unsigned integer values, respectively.  The values \val{double} and \val{float} are not to be used.  This attribute is required so that the compressed data can be properly uncompressed.
 
-\subsubsection{The \changed{\token{PointIndex} text child}}
-\changed{The \token{PointIndex} text child of the \ParametricObject is in \token{arrayData} format}, and represents an ordered list of indices that refer to elements in the \SpatialPoints array and are interpreted by considering the \token{polygonType} attribute of the \ParametricObject with a value of \val{triangle} indicating that the data is to be grouped in sets of three, and a value of \val{quadrilateral} indicating that the data is to be grouped in sets of four.  The data must follow VTK polydata conventions for shapes and vertex orderings, defined at \url{http://www.vtk.org/VTK/img/file-formats.pdf}.  It is suggested, but not required, that if the data is uncompressed, that the grouped points be separated from each other with the use of a semicolon.  If the data is compressed, a semicolon is not to be used.
-
-{\color{red} Lucian: \notice We still need a more explicit definition of what VTK ordering restrictions are instead of just an external reference.  Also, I need to know if I happened to follow them with the following example:}
+\subsubsection{The \token{PointIndex} text child}
+The \token{PointIndex text child of the \ParametricObject is in \token{arrayData} format}, and represents an ordered list of indices that refer to elements in the \SpatialPoints array and are interpreted by considering the \token{polygonType} attribute of the \ParametricObject with a value of \val{triangle} indicating that the data is to be grouped in sets of three, and a value of \val{quadrilateral} indicating that the data is to be grouped in sets of four.  \changed{The sequence of indices must follow adjacent edges, with an implied edge between the first and last vertex.  Additionally, the order of that sequence should be consistently clockwise or counter-clockwise for any contiguous surface.  This can be accomplished by ensuring that when an edge is used for two different faces, the order of that edge is reversed for the second face.}.  It is suggested, but not required, that if the data is uncompressed, that the grouped points be separated from each other with the use of a semicolon.  If the data is compressed, a semicolon is not to be used.
 
 \subsection{A \class{ParametricGeometry} example}
 
-\begin{blockChanged}
 As an example, if the \SpatialPoints element in a three-dimensional \Geometry is:
 
 \begin{example}
@@ -896,12 +893,11 @@ This defines eight points, with point '0' at coordinates [0, 0, 0], point '1' at
 \begin{example}
     <parametricObject id="pyramid" polygonType="triangle" domainType="dt1"
                       compression="uncompressed" pointIndexLength="12">
-        0 2 5; 0 2 6; 0 5 6; 2 5 6
+        0 2 5; 0 6 2; 0 5 6; 2 6 5
     </parametricObject>
 \end{example}
 
-This defines a pyramid with four triangular faces.  The first triangle is defined by points [0,0,0], [0,1,0], and [0,1,1]; the second triangle by points [0,0,0], [0,1,0], and [1,1,0]; the third by [0,0,0], [0,1,1], and [1,1,0]; and the fourth by [0,1,0], [0,1,1], and [1,1,0].
-\end{blockChanged}
+This defines a pyramid with four triangular faces.  The first triangle is defined by points [0,0,0], [0,1,0], and [0,1,1]; the second triangle by points [0,0,0], [1,1,0], and [0,1,0]; the third by [0,0,0], [0,1,1], and [1,1,0]; and the fourth by [0,1,0], [1,1,0], and [0,1,1].  \changed{Note also that the order of the faces is consistent, defining each face in a counter-clockwise order, as observed from 'outside' the pyramid.  This can be seen, for example, in the last two faces defined, where the shared edge is defined in the order '5 6' in the first face, but '6 5' in the secod.}
 
 
 \subsection{The \class{MixedGeometry} class}
@@ -974,13 +970,13 @@ The required \token{compression} attribute is of type \primtype{CompressionKind}
 %{\color{red} Lucian: \notice Based on our discussion on the list about compression, the above is a compromise/temporary position so that existing implementations can continue to work for now, but we are moving towards using base64 in the future. Eventually, if base64 turns out to work great, we should be able to drop 'deflated' as an option entirely, and only use 'uncompressed' and 'base64'.}
 
 \subsubsection{The \token{samplesLength} attribute}
-The \token{samplesLength} attribute is of type \primtype{int} and is required. It represents the array length of the \primtype{arrayData} text child of this node.  If uncompressed, this will equal the product of the \token{numSamples*} attributes, but if compressed, this will equal the new compressed length of the array, not including any added whitespace.  \changed{It is included for convenience and validation purposes.}
+The \token{samplesLength} attribute is of type \primtype{int} and is required. It represents the array length of the \primtype{arrayData} text child of this node.  If uncompressed, this will equal the product of the \token{numSamples*} attributes, but if compressed, this will equal the new compressed length of the array, not including any added whitespace.  It is included for convenience and validation purposes.
 
 \subsubsection{The \token{dataType} attribute}
 The \token{dataType} attribute is of type \primtype{DataKind} and is required if the value of the \token{compression} attribute is \val{base64}, and is optional otherwise.  It is used to specify the type of the data being stored.  The value \val{double} is used to indicate double-precision (64-bit) floating point values; \val{float} to indicate single-precision (32-bit) floating point values, and \val{uint8}, \val{uint16}, and \val{uint32} to indicate 8-bit, 16-bit, and 32-bit unsigned integer values, respectively.
 
-\subsubsection{The \changed{\token{Samples} text child}}
-\changed{The \token{Samples} text child of the \SampledField} is where the data for the \SampledField resides.  It is of type \primtype{arrayData}, which is defined as whitespace-delimited, possibly-compressed numerical values.  Whether or not the data is compressed (and how, if so) is stated with the \token{compression} attribute, and the type of numerical values included is stated in the \token{dataType} attribute.  The total number of entries in the array can be derived from the \token{numSamples} attributes, by multiplying them together (if present).  It is suggested, but not required, that if the data is uncompressed, that the grouped points be separated from each other with the use of a semicolon.  If the data is compressed, a semicolon is not to be used.
+\subsubsection{The \token{Samples} text child}
+The \token{Samples} text child of the \SampledField is where the data for the \SampledField resides.  It is of type \primtype{arrayData}, which is defined as whitespace-delimited, possibly-compressed numerical values.  Whether or not the data is compressed (and how, if so) is stated with the \token{compression} attribute, and the type of numerical values included is stated in the \token{dataType} attribute.  The total number of entries in the array can be derived from the \token{numSamples} attributes, by multiplying them together (if present).  It is suggested, but not required, that if the data is uncompressed, that the grouped points be separated from each other with the use of a semicolon.  If the data is compressed, a semicolon is not to be used.
 
 
 {\color{red} Lucian: \notice Merged the \SampledField class with its child class, to make things simpler.  Does this work for people?}

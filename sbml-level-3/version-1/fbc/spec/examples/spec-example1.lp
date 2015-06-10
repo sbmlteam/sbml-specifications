@@ -8,7 +8,7 @@ Subject To
  B: - R2 + X1 + X2 = 0.0
 
 Bounds
-R1 <= 1.0
+0.0 <= R1 <= 1.0
 0.0 <= R2 <= +inf
 0.0 <= X1 <= +inf
 0.0 <= X2 <= +inf

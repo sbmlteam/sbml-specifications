@@ -46,7 +46,7 @@ The \SBML class defines the structure and content of the
 \token{sbml} outermost element in an SBML file.  The following is
 an abbreviated example of an \SBML class object translated into
 XML form for an SBML Level~3 \changed{Version~2} Core document (and here,
-ellipses are used to indicate content elided from this example):
+ellipses \changed{(\val{...})} are used to indicate content elided from this example):
 
 \begin{example}
 <?xml version="1.0" encoding="UTF-8"?>
@@ -142,9 +142,9 @@ declare in this namespace.
   \changed{<model />}
 </sbml>   \end{example}
 
-\changed{Because the SBML Level~3 Multistate and Multicomponent Species (\val{multi}) package can change the mathematical interpretation of a model, the \token{multi:required} attribute must always be set to \val{true}, even if the model is completely empty.  The Graphical Layout (\val{layout})) package, by contrast, cannot ever change the mathematical interpretation of any model (empty or not), and thus its \token{required} attribute must be set to \val{false}.}
+\changed{For example:  because the SBML Level~3 Hierarchical Model Composition (\val{comp}) package can change the mathematical interpretation of a model, the \token{comp:required} attribute must always be set to \val{true}, even if the model is completely empty.  The Graphical Layout (\val{layout})) package, by contrast, cannot ever change the mathematical interpretation of any model (empty or not), and thus its \token{required} attribute must be set to \val{false}.}
 
-  If a package is declared optional \changed{(its \token{required} is set to \val{false})}, it means the
+  If a package is declared optional \changed{(its \token{required} flag is set to \val{false})}, it means the
   time-course dynamics of the model can be correctly
   inferred even if the elements and attributes added by that
   particular SBML package are ignored.
@@ -152,6 +152,16 @@ declare in this namespace.
   reader could either skip those elements or attributes altogether
   during parsing, or read them but not interpret them, or do
   something similar.
+
+\begin{blockChanged}
+Some ways in which packages which are marked \token{required} = \val{true} may actually change (instead of merely augment) the time-course dynamics of a package include:
+\begin{itemize}
+  \item An element with mathematical meaning may have a value defined by a package which was left undefined in core.
+  \item An element with mathematical meaning may have a value defined by a package that overrides the value it had in core.
+  \item The definition of how an element changes in time may be added, changed, or augmented by a package.
+  \item An element may be defined within a package to have mathematical meaning, and its ID may be used to determine one or more mathematical functions in core.
+\end{itemize}
+\end{blockChanged}
 
 \end{enumerate}
 
@@ -223,8 +233,7 @@ Instances of the classes are placed inside instances of classes
 \ListOfCompartments, \ListOfSpecies, \ListOfParameters, \ListOfInitialAssignments,
 \ListOfRules, \ListOfConstraints, \ListOfReactions, and
 \ListOfEvents.  The ``list'' classes are defined in
-\fig{fig:model}.  All of the lists are optional. \changed{If a
-given container \emph{is} present within the model, the list may
+\fig{fig:model}.  All of the lists are optional, \changed{and, if present, may
 be empty; this is semantically equivalent to omitting the list.}  The
 resulting XML data object for a full model containing every
 possible list would have the following form:
@@ -847,14 +856,6 @@ the value space of the data type \primtype{UnitSId}
   \ttfamily
   \small
   \setlength{\arraycolsep}{8pt}
-  \begin{edtable}{tabular}{@{}lllllllll@{}}
-    \toprule
-    ampere               & coulomb                   & gray             & joule    & litre & mole   & radian  & steradian & weber\\
-    \underline{avogadro} & \underline{dimensionless} & henry            & katal    & lumen & newton & second  & tesla \\
-    becquerel            & farad                     & hertz            & kelvin   & lux   & ohm    & siemens & volt \\
-    candela              & gram                      & \underline{item} & kilogram & metre & pascal & sievert & watt \\
-    \bottomrule
-  \end{edtable}
   \caption{Base units defined in SBML.  These symbols are
     predefined values of type \primtype{UnitSId}
     (\sec{sec:unitsid}).  All are names of base or derived
@@ -874,6 +875,15 @@ the value space of the data type \primtype{UnitSId}
     terms of cubic metres.)  Comparisons of these values, like all
     values of type \primtype{UnitSId}, must be performed in a
     case-sensitive manner.}
+  \begin{edtable}{tabular}{@{}lllllllll@{}}
+    \\[0.5pt]
+    \toprule
+    ampere               & coulomb                   & gray             & joule    & litre & mole   & radian  & steradian & weber\\
+    \underline{avogadro} & \underline{dimensionless} & henry            & katal    & lumen & newton & second  & tesla \\
+    becquerel            & farad                     & hertz            & kelvin   & lux   & ohm    & siemens & volt \\
+    candela              & gram                      & \underline{item} & kilogram & metre & pascal & sievert & watt \\
+    \bottomrule
+  \end{edtable}
   \label{tab:unitkind}
 \end{table}
 
@@ -934,7 +944,7 @@ constant for both the base unit \token{mole} and the unit \token{avogadro}.
 \newcommand{\ynew}{\ensuremath{y}\xspace}
 \newcommand{\ybase}{\ensuremath{y_b}\xspace}
 \newcommand{\udef}{\ensuremath{u}\xspace}
-\newcommand{\unew}{\ensuremath{u_\text{new}}\xspace}
+\newcommand{\unew}{\ensuremath{u\sub{new}}\xspace}
 \newcommand{\ubase}{\ensuremath{u_b}\xspace}
 \newcommand{\ukind}{\ensuremath{u_\tokenNC{\,kind}}\xspace}
 \newcommand{\uone}{\ensuremath{u_{b_1}}\xspace}
@@ -1061,8 +1071,8 @@ represented in XML:
 \end{example}
 
 To give another example, the following illustrates the definition
-of an abbreviation \val{mmls} for the unit $millimoles\ l^{-1}\
-s^{-1}$:
+of an abbreviation \val{mmls} for the unit $\mathrm{millimoles}\ \mathrm{l}^{-1}\
+\mathrm{s}^{-1}$:
 
 \begin{example}
 <listOfUnitDefinitions>
@@ -1097,7 +1107,7 @@ An example may help make this more clear.  We know that one metre
 equals 1000 millimetres:
 \begin{linenomath}
   \begin{equation*}
-    1\, m = 1000\, mm
+    1\, \mathrm{m} = 1000\, \mathrm{mm}
   \end{equation*}
 \end{linenomath}
 However, the equality above relies on interpreting the units on
@@ -1122,7 +1132,7 @@ indicate they are annotations that do not enter into the
 mathematics):
 \begin{linenomath}
   \begin{equation}\label{eq:factor}
-    1 \, \{m\} = 1000 \cdot \frac{1 \, \{m\}}{1000 \, \{mm\}} \, \{mm\}
+    1 \, \{\mathrm{m}\} = 1000 \cdot \frac{1 \, \{\mathrm{m}\}}{1000 \, \{\mathrm{mm}\}} \, \{\mathrm{mm}\}
   \end{equation}
 \end{linenomath}
 This is despite the fact that a unit definition for millimetres in SBML
@@ -1149,7 +1159,7 @@ the outputs of simulations, and so on.
 
 \begin{blockChanged}
 
-Finally, as mentioned above, unit definitions in SBML \thisLV may have empty \ListOfUnits substructures.  Such units are not fully defined, and a model component that references such an empty unit is taken to have \emph{no} defined unit.  A model with an empty unit definition may indicate an incomplete model or a model that needs external information.
+Finally, as mentioned above, unit definitions in SBML \thisLV may have empty \ListOfUnits substructures.  A \UnitDefinition with no child \Unit elements is not fully defined, and a model component that references this \UnitDefinition is taken to have \emph{no} defined unit.  A model with an empty unit definition may indicate an incomplete model or a model that needs external information.
 
 \end{blockChanged}
 
@@ -1205,7 +1215,7 @@ represent the \emph{somewhere}.
 \begin{blockChanged}
 \subsubsection{The \token{id} attribute}
 
-Like other classes in SBML \thisLVNC, \Compartment inherits the \token{id} attribute from \SBase; however, \Compartment defines \token{id} as being required rather than optional.  The attribute otherwise behaves as described in \sec{sec:idnameattribs}.
+\Compartment inherits the \token{id} attribute from \SBase; however, \Compartment defines \token{id} as being required rather than optional.  The attribute otherwise behaves as described in \sec{sec:idnameattribs}.
 
 The identifier (the \token{id} attribute value) of a \Compartment object may be used in a model's mathematical expressions.  The identifier stands for the value of the compartment's \token{size} attribute, with a unit of measurement as defined in \sec*{sec:compartment-units}.  A compartment's identifier may be the target of an \InitialAssignment, \EventAssignment, or \Rule in the model, to set or redefine the value of the compartment size.
 
@@ -1323,10 +1333,21 @@ compartment sizes.  A discussion of recommended units is given in
 \sec{sec:bp:unitdefinitions:recommendedunits}.
   
 \begin{table}[tbh]
-  \vspace*{2ex}
+  \vspace*{-4ex}
   \small
   \centering
+  \caption{When a \Compartment object instance does not specify a
+    value for the attribute \token{units}, but \emph{does} specify
+    a value for \token{spatialDimensions}, a value for
+    \token{units} is inherited from the enclosing \Model instance
+    according to the rules listed above. The left-hand column
+    indicates the value of the compartment's
+    \token{spatialDimensions} attribute, and the middle column
+    indicates the attribute on \Model whose value should be used
+    in that case.  The right-hand column lists the kinds of units
+    recommended for use in each case.}
   \begin{edtable}{tabular}{cll}
+    \\[0.5pt]
     \toprule
     \textbf{Value of attribute} & \textbf{Attribute of} \class{Model} \textbf{used} \\[-2pt]
     \token{spatialDimensions}   & \textbf{for inheriting the unit} & \textbf{Recommended candidate units}\\
@@ -1338,16 +1359,6 @@ compartment sizes.  A discussion of recommended units is given in
     \bottomrule
   \end{edtable}
   \vspace*{0.5ex}
-  \caption{When a \Compartment object instance does not specify a
-    value for the attribute \token{units}, but \emph{does} specify
-    a value for \token{spatialDimensions}, a value for
-    \token{units} is inherited from the enclosing \Model instance
-    according to the rules listed above. The left-hand column
-    indicates the value of the compartment's
-    \token{spatialDimensions} attribute, and the middle column
-    indicates the attribute on \Model whose value should be used
-    in that case.  The right-hand column lists the kinds of units
-    recommended for use in each case.}
   \label{tab:comp-size-units}
 \end{table}
 
@@ -1500,7 +1511,7 @@ intended to represent these pools.  Its definition is shown in
 \subsubsectionChanged{The \token{id} attribute}
 
 \begin{blockChanged}
-Like other classes in SBML \thisLVNC, \Species inherits the \token{id} attribute from \SBase; however, \Species defines \token{id} as being required rather than optional.  The attribute otherwise behaves as described in \sec{sec:idnameattribs}.
+\Species inherits the \token{id} attribute from \SBase; however, \Species defines \token{id} as being required rather than optional.  The attribute otherwise behaves as described in \sec{sec:idnameattribs}.
 
 The identifier (the \token{id} attribute value) of a \Species object may be used in a model's mathematical expressions.  The identifier stands for the given species' amount or concentration, depending on the value of its \token{hasOnlySubstanceUnits} attribute as described below, with units of measurement as described in \sec{sec:species-substanceunits}.  A species' identifier may be the target of \InitialAssignment, \EventAssignment, or \Rule objects in a model, to set or redefine the value of the species amount or concentration.
 \end{blockChanged}
@@ -1564,7 +1575,7 @@ A species' initial quantity is set by the \token{initialAmount} or
 species' quantity is fixed and cannot be changed except by an
 \InitialAssignment.  These methods differ in that the
 \token{initialAmount} and \token{initialConcentration} attributes
-can only be used to set the species quantity to a literal
+can only be used to set the species' quantity to a literal
 floating-point number, whereas the use of an \InitialAssignment
 object allows the value to be set using an arbitrary mathematical
 expression (which, thanks to MathML's expressiveness, may evaluate
@@ -1693,10 +1704,16 @@ interpret the combined values of the \token{boundaryCondition} and
 \token{constant} attributes.
 
 \begin{table}[ht]
-  \vspace*{3ex}
+  \vspace*{-3ex}
   \centering
   \small
+  \caption{How to interpret the values of the \token{constant} and
+      \token{boundaryCondition} attributes on \Species.
+      Note that column four is specifically about reactants and
+      products and \emph{not} also about species acting as
+      modifiers; the latter are by definition unchanged by reactions.}
   \begin{edtable}{tabular}{lllll}
+    \\[0.5pt]
     \toprule
                               &                                    & \textbf{Can have}     & \textbf{Can be} \\
     \textbf{\token{constant}} & \textbf{\token{boundaryCondition}} & \textbf{assignment}   & \textbf{reactant or} & \textbf{What can change} \\
@@ -1708,11 +1725,6 @@ interpret the combined values of the \token{boundaryCondition} and
     false & false & yes & yes & reactions \emph{or} rules (but not both), and events \\
     \bottomrule
   \end{edtable}
-  \caption{How to interpret the values of the \token{constant} and
-      \token{boundaryCondition} attributes on \Species.
-      Note that column four is specifically about reactants and
-      products and \emph{not} also about species acting as
-      modifiers; the latter are by definition unchanged by reactions.}
   \label{tab:specieattrib}
 \end{table}
 
@@ -1951,7 +1963,7 @@ target audience.
 
 A parameter's identifier (its \token{id} attribute value) may be used in a model's mathematical expressions.  The identifier stands for the value of the parameter, with a unit of measurement as described in \sec{sec:parameter-units}.  It may be the target of \InitialAssignment, \EventAssignment, or \Rule objects elsewhere in a model, to set or redefine the value of the parameter.
 
-The type of a \Parameter is considered to be a \primtype{double}, but the identifier may be used in other contexts, most notably as a \primtype{boolean} (see \sec{sec:handling-booleans}).  In fact, it is possible to have an essentially Boolean \Parameter which is only assigned Boolean values, and only used in Boolean contexts.  The units of such a \Parameter should be \token{dimensionless}.  It would also be appropriate to set the \token{sboTerm} for such a \Parameter to be `logical parameter' (\val{SBO:0000602}).
+A \Parameter \token{id} will most often represent a \primtype{double} value, but the identifier may be used in other contexts, most notably as a \primtype{boolean} (see \sec{sec:handling-booleans}).  In fact, it is possible to have an essentially Boolean \Parameter which is only assigned Boolean values, and only used in Boolean contexts.  The units of such a \Parameter should be \token{dimensionless}.  It would also be appropriate to set the \token{sboTerm} for such a \Parameter to be `logical parameter' (\val{SBO:0000602}).
 \end{blockChanged}
 
 
@@ -2166,18 +2178,17 @@ an \InitialAssignment can set the value of a constant whereas an
 \subsubsection{The \token{id} attribute}
 \label{sec:initialassignment-id}
 
-\InitialAssignment inherits an optional \token{id} attribute of type \primtype{SId} from \SBase.  The identifier of an \InitialAssignment has no mathematical meaning in a model.
+\InitialAssignment inherits an optional \token{id} attribute of type \primtype{SId} from \SBase.  The identifier of an \InitialAssignment has no mathematical meaning in an SBML \thisLV model.
 
 \end{blockChanged}
 
 
 \subsubsectionChanged{The \token{symbol} attribute}
 
-\begin{blockChanged}
-
 \InitialAssignment contains the mandatory attribute \token{symbol}, of type \primtype{SIdRef}.  The purpose of \InitialAssignment is to define the initial value of the constant or variable referred to by the \token{symbol} attribute.  (The attribute's name is \token{symbol} rather than \token{variable} because it may assign values to constants as well as variables in a model; see \sec{sec:initial-assignment-semantics}.)
 
-The value of the \token{symbol} attribute must be the identifier of an object in the \primtype{SId} namespace of the model; moreover, the object must be of a class that is defined to have mathematical meaning in SBML.  In SBML Level~3 Core, the types of objects whose identifiers are permitted as the values of \InitialAssignment \token{symbol} attributes are \Compartment, \Species, \SpeciesReference and (global) \Parameter objects in the model.  In addition, classes of objects defined by SBML Level~3 packages to have mathematical meaning may also be defined by those packages to be permissible targets of \InitialAssignment objects; in other words, \InitialAssignment \token{symbol} attributes may also reference identifiers in the \primtype{SId} namespace defined by SBML Level~3 packages.  An initial assignment cannot be made to reaction identifiers; that is, the \token{symbol} attribute value of an \InitialAssignment cannot be an identifier that is the \token{id} attribute value of a \Reaction object in the model.  This is identical to a restriction placed on rules (see \sec{sec:ruleconstraints}).
+\begin{blockChanged}
+The value of the \token{symbol} attribute must be the identifier of an object in the \primtype{SId} namespace of the model; moreover, the object must be of a class that is defined to have mathematical meaning in SBML.  In SBML Level~3 Core, the types of objects whose identifiers are permitted as the values of \InitialAssignment \token{symbol} attributes are \Compartment, \Species, \SpeciesReference and (global) \Parameter objects in the model.  In addition, classes of objects defined by SBML Level~3 packages to have mathematical meaning may also be defined by those packages to be permissible targets of \InitialAssignment objects; in other words, \InitialAssignment \token{symbol} attributes may also reference identifiers in the \primtype{SId} namespace defined by SBML Level~3 packages.  An initial assignment cannot be made to reaction identifiers; that is, the \token{symbol} attribute value of an \InitialAssignment cannot be an identifier that is the \token{id} attribute value of a \Reaction object in the model.  This is identical to a restriction placed on rules (see \sec{sec:ruleconstraints}).  It may also not reference the \token{id} of a \FunctionDefinition.
 
 If the \token{symbol} attribute of an \InitialAssignment object references an object in an SBML namespace that is not understood by the interpreter reading a given SBML document (that is, if the object is defined by an SBML Level~3 package that the software does not support), the assignment must be ignored---the object's initial value will not need to be set, as the interpreter could not understand that package.  If an interpreter cannot establish whether a referenced object is missing from the model or instead is defined in an SBML namespace not understood by the interpreter, it may produce a warning to the user.  (The latter situation may only arise if an SBML package is present in the SBML document with a \token{package:required} attribute of \val{true}.)
 
@@ -2191,6 +2202,8 @@ calculate the value of the entity referenced by \token{symbol}.
 The unit of measurement associated with the value should match the
 unit associated with the identifier given in the \token{symbol}
 attribute.
+
+\changed{An \InitialAssignment with no \token{math} child leaves undefined what assignment is to be made to the corresponding \token{symbol}.  A package may define how to include extra information that would define how to apply this \InitialAssignment; otherwise, no assignment is carried out.}
 
 
 \subsubsectionChanged{The \token{sboTerm} attribute}
@@ -2487,14 +2500,14 @@ above, respectively.
 \subsubsection{Common attributes in \abstractclass{Rule}}
 \label{sec:rule-math}\label{sec:rule-fields}\label{sec:rule-sboterm}
 
-The classes derived from \Rule inherit \token{math} and the attributes and elements \changed{that \Rule itself inherits from \SBase, including \token{sboTerm} and \token{id}}.
+The classes derived from \Rule inherit \token{math} and the attributes and elements \changed{that \Rule itself inherits from \SBase, including \token{id}, \token{name}, and \token{sboTerm}}.
 
 
 \begin{blockChanged}
 \paragraph{The \token{id} attribute}
 \label{sec:rule-id}
 
-\Rule inherits an optional \token{id} attribute from \SBase, of type \primtype{SId}.  The identifier of a \Rule-derived object has no mathematical meaning in a model.
+\Rule inherits an optional \token{id} attribute from \SBase, of type \primtype{SId}.  The identifier of a \Rule-derived object has no mathematical meaning in \changed{an \thisLV} model.
 
 \end{blockChanged}
 
@@ -2510,6 +2523,7 @@ of \token{math} and its associated unit of measurement are
 described in more detail in \sec*{sec:algebraicrule},
 \sec*{sec:assignmentrule} and \sec*{sec:raterule}.
 
+\changed{A \Rule with no \token{math} child leaves undefined how the rule behaves mathematically.  A package may define how to include extra information that would define how to apply the \Rule; otherwise, no change to the model is carried out.}
 
 \paragraphChanged{The \token{sboTerm} attribute}
 
@@ -2588,7 +2602,7 @@ set the values of variables.  The left-hand side (the \changed{required}
 \token{variable} attribute) of an assignment rule \changed{is of type \primtype{SIdRef}, and can refer to any SBML object in the \primtype{SId} namespace with mathematical meaning and the ability to be assigned.  In SBML Level~3 Core, this consists of}
 \Species, \SpeciesReference, \Compartment, 
 \changed{and} global \Parameter objects in
-the model (but not reactions).  The entity identified must
+the model (but not reactions \changed{nor function definitions}).  The entity identified must
 %NB:  changed to make this text match that for RateRule:
 \changed{have its \token{constant} attribute set to the value \val{false}}.  The effects of
 an \AssignmentRule are in general terms the same, but differ in
@@ -2702,7 +2716,7 @@ determine the rates of change of variables.  The left-hand side
 (the \changed{required} \token{variable} attribute) of a rate rule  \changed{has type \primtype{SIdRef}, and can refer to any SBML object in the \primtype{SId} namespace with mathematical meaning and the ability to be assigned.  In Level~3 Core, this consists of}
 \Species, \SpeciesReference, \Compartment, 
 \changed{and} global \Parameter objects in
-the model (but not reactions).  The
+the model (but not reactions \changed{nor function definitions}).  The
 entity identified must have its \token{constant} attribute set to
 \val{false}.  The effects of a \RateRule are in general terms the
 same, but differ in the precise details depending on which
@@ -2754,9 +2768,11 @@ variable is being set:
 \begin{blockChanged}
 \item \emph{In the case of an object from an SBML Level~3 package}, a \RateRule sets the rate of change of the referenced object's value (as defined by that package) to the value of the formula in \token{math}.    The unit of measurement associated with the value produced by
   the formula should be the same as that object's \token{units}
-  attribute value (if it has such an attribute), or be equal to
+  attribute value (if it has such an attribute) divided by the model-wide unit
+  of \quantity{time}, or be equal to
   the units of model components of that type (if objects of that class
-  are defined by the package as having the same units).
+  are defined by the package as having the same units) divided by the model-wide unit
+  of \quantity{time}.
 \end{blockChanged}
 
 \end{itemize}
@@ -2904,17 +2920,17 @@ the model and not shown in this abbreviated example):
 <listOfRules>
     <assignmentRule variable="k">
         <math xmlns="http://www.w3.org/1998/Math/MathML">
-            <apply>
+            <apply>\begin{blockChanged}
                 <divide/>
                 <ci> k3 </ci>
-                <ci> k2 </ci>
+                <ci> k2 </ci>\end{blockChanged}
             </apply>
         </math>
     </assignmentRule>
     <assignmentRule variable="s2">
         <math xmlns="http://www.w3.org/1998/Math/MathML">
             <apply>
-                <divide/>
+                <divide/>\begin{blockChanged}
                     <apply> 
                         <times/>
                         <ci> k </ci>
@@ -2924,16 +2940,16 @@ the model and not shown in this abbreviated example):
                         <plus/>
                         <cn> 1 </cn>
                         <ci> k2 </ci>
-                    </apply>
+                    </apply>\end{blockChanged}
             </apply>
         </math>
     </assignmentRule>
     <assignmentRule variable="A">
         <math xmlns="http://www.w3.org/1998/Math/MathML">
-            <apply> 
+            <apply>\begin{blockChanged}
                 <times/>
                 <cn> 0.10 </cn>
-                <ci> x </ci>
+                <ci> x </ci>\end{blockChanged}
             </apply>
         </math>
     </assignmentRule>
@@ -3026,6 +3042,7 @@ entities in an SBML model.  The evaluation of \token{math} and
 behavior of constraints are described in more detail in
 \sec*{sec:constraint-semantics} below.
 
+\changed{A \Constraint with no \token{math} child does not define a mathematical constraint.  A package may define how to include extra information that would define how to apply the \Constraint; otherwise, no restriction on the model's behavior is implied.}
 
 \subsubsection{\class{Message}}
 \label{sec:constraint-message}
@@ -3042,7 +3059,7 @@ The XHTML content within a \Message object must follow the same
 restrictions as for \Notes objects described in
 \sec{sec:notes}.  In particular, the element must declare
 the use of the XHTML XML namespace, and must not contain an XML
-declaration or a DOCTYPE declaration.
+declaration \changed{nor} a DOCTYPE declaration.
 
 
 \subsubsection{Semantics of constraints}
@@ -3265,7 +3282,7 @@ these cases.
 
 Mathematically, the \token{reversible} attribute on \Reaction has
 no impact on the construction of the equations for change of the
-species quantities.  However, labeling a reaction as irreversible
+species' quantities.  However, labeling a reaction as irreversible
 is interpreted as an assertion that the rate expression will not
 have negative values during a simulation.  Software developers may
 wish to provide their software systems with a means of testing
@@ -3278,7 +3295,7 @@ contradictory information, but this would be considered to be an
 error of the encoded model, rather than an invalid SBML encoding.
 
 
-\paragraph{The \token{fast} attribute}
+\paragraph{The \token{fast} attribute \changed{(deprecated)}}
 \label{sec:fast}
 
 The \primtype{boolean} attribute \token{fast} is another required \primtype{boolean}
@@ -3390,9 +3407,9 @@ latter two objects.
 
 \paragraph{The \token{species} attribute}
 
-The \SimpleSpeciesReference object class has \changed{a required attribute,
+The \SimpleSpeciesReference object class has a required attribute,
 \token{species}, of data type \primtype{SIdRef},
-inherited by \SpeciesReference and
+\changed{inherited by \SpeciesReference and
 \ModifierSpeciesReference.}  The value of \token{species} must be
 the identifier of a species defined in the enclosing \Model; the
 referenced species is thereby declared as participating in the
@@ -3652,7 +3669,7 @@ This is the purpose of the list of modifiers available in
 \changed{Because its sibling class \SpeciesReference has mathematical meaning, it is probably worth noting that} no meaning is
 assigned to the identifier of \ModifierSpeciesReference object
 instances in SBML \thisLV, but the identifiers are available for
-possible use by SBML Level~3 packages.  Note also that modifiers
+possible use by SBML Level~3 packages.  Note that modifiers
 in reactions also have no stoichiometries and therefore do not
 possess a \token{stoichiometry} attribute.
 
@@ -3701,6 +3718,8 @@ products and modifiers in the \Reaction object (see
 \sec*{sec:about-kinetic-laws} provides important
 discussions about the meaning and interpretation of SBML ``kinetic
 laws''.
+
+\changed{A \KineticLaw with no \token{math} child leaves undefined the mathematics of the corresponding \Reaction.  A package may define how to include extra information that would define how to apply the \KineticLaw; otherwise, the model behaves mathematically as if no \KineticLaw was defined at all.  This is sometimes useful when the modeler desires to define one or more \LocalParameter objects, which live in the \KineticLaw.}
 
 
 \paragraph{The list of local parameters}
@@ -3765,7 +3784,7 @@ law.  The definition of \LocalParameter is shown in
 \begin{blockChanged}
 \paragraph{The \token{id} attribute}
 
-Like other classes in SBML \thisLVNC, \LocalParameter inherits the \token{id} attribute from \SBase; however, \LocalParameter defines \token{id} as being required rather than optional, and in addition, its type is defined to be the derived type of \primtype{LocalSId} instead of \primtype{SId}.  It otherwise behaves as described in \sec{sec:idnameattribs}.
+\LocalParameter inherits the \token{id} attribute from \SBase; however, \LocalParameter defines \token{id} as being required rather than optional, and in addition, its type is defined to be the derived type of \primtype{LocalSId} instead of \primtype{SId}.  It otherwise behaves as described in \sec{sec:idnameattribs}.
 
 The identifier (the \token{id} attribute value) of a \LocalParameter may be used in the mathematical expression within the enclosing \KineticLaw object.  The identifier stands for the value of the parameter's \token{value} attribute, and within the scope of a \KineticLaw object, a local parameter's identifier shadows any identical identifiers from the \primtype{SId} namespace of the model.  Because of its limited local scope, the identifier also cannot be the target of an \InitialAssignment, \EventAssignment, or \Rule object in the model.  The units of measurement associated with the identifier are described in \sec{subsec:localparameter-units}.
 
@@ -3932,7 +3951,11 @@ entail.
 
 \begin{table}[tbh]
   \centering
+  \vspace*{-2ex}
+  \caption{Assumptions behind ``traditional'' rate laws, and the
+    problems they imply for general multicompartmental modeling.}
   \begin{edtable}{tabular}{p{2.8in}p{3.26in}}
+    \\[0.5pt]
     \toprule
     \textbf{Assumption} & \textbf{Problem}\\
     \midrule
@@ -3954,8 +3977,6 @@ entail.
     size over time \\
     \bottomrule
   \end{edtable}
-  \caption{Assumptions behind ``traditional'' rate laws, and the
-    problems they imply for general multicompartmental modeling.}
   \label{tab:rate-law-problems}
 \end{table}
 
@@ -4216,8 +4237,8 @@ is given in \sec{sec:examples}.
 \subsubsection{\class{Event}}
 
 \changed{In addition to the attributes and children it inherits from \SBase,}
-an \Event definition has one required attribute, \token{useValuesFromTriggerTime}
-\changed{, and five optional subobjects, \Trigger, \Delay, \Priority, \ListOfEventAssignments, and \EventAssignment.}
+an \Event definition has one required attribute, \token{useValuesFromTriggerTime},
+\changed{and five optional subobjects, \Trigger, \Delay, \Priority, \ListOfEventAssignments, and \EventAssignment.}
 These various features of \Event are described below.
 
 
@@ -4296,6 +4317,8 @@ determined in part by the \primtype{boolean} flag
 
 \begin{blockChanged}
 If an instance of an \Event contains no \Trigger child, that \Event has no way of being triggered or executed in a model according to the SBML \thisLV specification.  The \Event may nevertheless be present in a model as part of (e.g.)\ a partially unknown system, for annotation purposes, or as part of constructs defined by an SBML Level~3 package.
+
+Similarly, a \Trigger with no \token{math} child leaves undefined when the corresponding \Event will trigger.  A package may define how to include extra information that would define how to apply this \Trigger; otherwise, the event is never triggered.
 \end{blockChanged}
 
 
@@ -4421,6 +4444,9 @@ or negative number, or zero), with positive numbers taken to
 signifying a higher priority than zero or negative numbers.  If no
 \Priority object is present on a given \Event object, no priority
 is defined for that event.
+
+\changed{Similarly, a \Priority with no \token{math} child leaves the priority of the event undefined.  A package may define how to include extra information that would define how to apply this \Priority; otherwise, the event behaves as if it did not have a priority.}
+
 
 \begin{blockChanged}
 \paragraph{The \token{id} attribute on \class{Priority}}
@@ -4575,6 +4601,8 @@ event has \emph{triggered} and when the event's assignments (see
 below) are actually \emph{executed}.  If no delay is present on a
 given \Event, no delay is defined for that event.
 
+\changed{Similarly, a \Delay with no \token{math} child leaves the priority of the event undefined.  A package may define how to include extra information that would define how to apply this \Delay; otherwise, the event is considered to execute as if it had no \Delay.}
+
 The expression in the \Delay object's \token{math} element must be
 evaluated at the time the event is \emph{triggered}.  The expression
 must always evaluate to a nonnegative number (otherwise, a
@@ -4717,7 +4745,7 @@ more information about events and event assignments.
 
 \paragraph{The \token{variable} attribute}
 
-The \changed{\EventAssignment required} attribute \token{variable} has type \primtype{SIdRef}. \changed{The value of the attribute must be the identifier of an object in the \primtype{SId} namespace of the model with mathematical meaning and the ability to be assigned.  In SBML Level~3 Core, the permitted objects classes are \Compartment, \Species, \SpeciesReference and \Parameter.  The set also includes SBML Level~3 package objects with identifiers in the \primtype{SId} namespace of the model and mathematical meaning defined to allow assignment.}
+The \changed{\EventAssignment required} attribute \token{variable} has type \primtype{SIdRef}. \changed{The value of the attribute must be the identifier of an object in the \primtype{SId} namespace of the model with mathematical meaning and the ability to be assigned.  In SBML Level~3 Core, the permitted objects classes are \Compartment, \Species, \SpeciesReference, and \Parameter.  The set also includes SBML Level~3 package objects with identifiers in the \primtype{SId} namespace of the model and mathematical meaning defined to allow assignment.}
 
 When the event is executed, the value of
 the model component identified by \token{variable} is changed by
@@ -4824,6 +4852,8 @@ values of identifiers occurring in MathML \token{ci} attributes in
 the \EventAssignment's \token{math} expression are the values they
 have at the point when the event \emph{executed}.
 
+\changed{An \EventAssignment with no \token{math} child leaves undefined what assignment is to be made to the corresponding \token{symbol}.  A package may define how to include extra information that would define how to apply this \EventAssignment; otherwise, no assignment is carried out.}
+
 
 \paragraph{Units of the \token{math} formula in \class{EventAssignment}}
 
@@ -4831,7 +4861,7 @@ In all cases, as would be expected, the unit of measurement
 associated with value of the formula contained in the \token{math}
 element of an \EventAssignment object should be consistent with
 the unit associated with the object identified by the
-\token{variable} attribute value.  More precisely\changed{, for classes of objects defined by SBML Level~3 Core:}:
+\token{variable} attribute value.  More precisely\changed{, for classes of objects defined by SBML Level~3 Core:}
 \begin{itemize}
   
 \item \emph{In the case of a species}, an \EventAssignment sets

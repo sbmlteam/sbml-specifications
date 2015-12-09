@@ -90,6 +90,8 @@
 \RequirePackage[pagewise,mathlines,edtable]{lineno}
 \RequirePackage{accsupp}
 \RequirePackage{suffix}
+\RequirePackage{nicefrac}
+\RequirePackage{upgreek}
 
 % We use the "optional" package to indicate whether to generate a grayscale
 % vs a color version of the document without having to alter the .tex file

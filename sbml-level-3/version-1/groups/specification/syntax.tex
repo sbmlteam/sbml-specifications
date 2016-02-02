@@ -125,13 +125,13 @@ Note that even if used in conjunction with the Hierarchical Model Composition pa
 \subsubsection{Members referencing other Groups and Members}
 \label{nested-groups}
 
-If a \Member references a \Group, \ListOfMembers, or some other \Member element, it is that referencing element itself that is considered to be a member of the \Group, not the corresponding referenced element (or elements).  This is also true for elements from other packages that point to other elements, such as \SBaseRef elements from the Hierarchical Model Composition package.
+If a \Member references a \Group, it is \changed{the \Group itself} that is considered to be a member of the \changed{parent} \Group, not the corresponding referenced element (or elements).  This is also true for elements from other packages that point to other elements, such as \SBaseRef elements from the Hierarchical Model Composition package.  \changed{However, if a \Member references another \Member or a \ListOfMembers object, it is the elements that those references point to that are considered to be part of the parent \Group.}
 
 %VERSION2
 % The implication of this is that all the rules in this specification that apply to members of a group (such as how the \token{kind} attribute functions, the application of \token{sboterm} attributes on a \ListOfMembers, and the \ListOfMemberConstraints restrictions, described below) apply to the child group itself, and not to its members.  If a parent group includes two species plus a child group which itself contains three other species, if the parent group's \ListOfMembers is given an \token{sboterm}, that term applies to the two species and the group, \emph{not} to the three child species members of the second group.  That parent group's \token{kind} would also almost certainly be \val{collection} or \val{partonomy}, and not \val{classification}, as two species and a group are very unlikely to be classified as the same thing. 
-The implication of this is that all the rules in this specification that apply to members of a group (such as how the \token{kind} attribute functions, and the application of \token{sboterm} attributes on a \ListOfMembers restrictions, described below) apply to the child group itself, and not to its members.  If a parent group includes two species plus a child group which itself contains three other species, if the parent group's \ListOfMembers is given an \token{sboterm}, that term applies to the two species \emph{and the group, not} to the three child species members of the second group.  Note that the parent group's \token{kind} would also almost certainly be \val{collection} or \val{partonomy}, and not \val{classification}, as two species and a group are very unlikely to be classified as the same thing.
+The implication of this is that all the rules in this specification that apply to members of a group (such as how the \token{kind} attribute functions, and the application of \token{sboterm} attributes on a \ListOfMembers restrictions, described below) apply to the child group \changed{when referenced by the \Group id, but to the members of the child group if referenced by the \ListOfMembers id}.  \changed{In the situation where} a parent group includes two \Species plus a \Group which itself contains three other \Species, if the parent group's \ListOfMembers is given an \token{sboterm}, that term applies to the two species \emph{and the group, not} to the three child species members of the second group.  Note that the parent group's \token{kind} would also almost certainly be \val{collection} or \val{partonomy}, and not \val{classification}, as two species and a group are very unlikely to be classified as the same thing.  \changed{In contrast, in the situation where a parent group includes two \Species plus a \ListOfMembers which contains three other \Species, the parent group's \ListOfMembers \token{sboterm} would apply to the five \Species, and could be more reasonably marked as a \val{classification}.}
 
-In a future version of this specifiation, it may be possible to perform set operations on groups.  At that point, it may be possible to create set unions, which might then be further manipulated, analyzed, or annotated.  However, that capability is not defined in the current specification.
+In a future version of this specifiation, it may be possible to perform set operations on groups, \changed{but for now, this type of union is the only set operation that is possible.  For more detail, see \sec{semantics}}
 
 Finally, groups are not permitted to be circular:  no \Member may reference itself, its parent \ListOfMembers, nor its parent \Group.  If a \Member references a \Group, the same restrictions apply to that subgroup's children:  they may not reference the \Member, its parent \ListOfMembers, nor its parent \Group, and if any of those children reference a \Group, the same restrictions apply to them, etc.
 
@@ -321,7 +321,7 @@ An entity \emph{X} in the model is declared to be part of group \emph{G} by list
 
 For any given group, the meaning of group membership is determined by the value of the attribute \token{kind} on the \Group object instance.  Examples of possible meanings are given in \sec{kind-attribute}.
 
-The meaning of a group can be further refined by using annotations (either SBO terms or the \Annotation element) on the group, or the list of members. The following are the interpretations.  This possibility raises the question of how the annotations should be interpreted across the group members.  The following are the possibilities defined by the Groups package:
+The meaning of a group can be further refined by using annotations (either SBO terms or the \Annotation element) on the group, or the list of members. This possibility raises the question of how the annotations should be interpreted across the group members.  The following are the possibilities defined by the Groups package:
 
 \begin{itemize}
 
@@ -333,23 +333,37 @@ The meaning of a group can be further refined by using annotations (either SBO t
 
 \end{itemize}
 
-Finally, as mentioned in \sec{nested-groups}, groups can refer to other groups, leading to the possibility of group hierarchies. To indicate a group is part of another group, one simply needs to include the first group's identifier as a member of the second group, as in the following example:
+\begin{blockChanged}
+Similar rules apply to nested groups:
 
-\clearpage
+\begin{itemize}
+
+\item If a \Group object is referenced by a \Member, it is the group itself that is included in that \Member's parent \Group, not its individual members.
+
+\item If a \Member object is referenced by a \Member, it is equivalent to referencing the child \Member's referent directly.  (No particular advantage is gained from this technique in a static SBML file, but it does provide a slightly simpler method for changing a lot of references to the same thing at once.)
+
+\item If a \ListOfMembers object is refenced by a \Member, it is equivalent to referencing all of those \ListOfMembers' referents directly.
+
+\end{itemize}
+
+The most convenient way to nest groups is therefore to use the \ListOfMembers id, as in the following example:
+
+\end{blockChanged}
+
 
 \begin{example}
 <model id="model_2"> 
   ... 
   <listOfGroups xmlns="http://www.sbml.org/sbml/level3/version1/groups/version1"> 
     <group id="group1"> 
-      <listOfMembers> 
+      <listOfMembers id="group1_list"> 
         <member idRef="..."/> 
         <member idRef="..."/> 
       </listOfMembers> 
     </group> 
     <group id="group2"> 
       <listOfMembers> 
-        <member idRef="group1"/> 
+        <member idRef="group1_list"/> 
         <member idRef="..."/> 
         <member idRef="..."/> 
       </listOfMembers> 

@@ -5,30 +5,103 @@
 % Organization      : California Institute of Technology
 % -----------------------------------------------------------------------------
 
-% Which level/version/release is this?
+% Set up a system where we can create different specs with different text being
+% colored and/or created.
 
+% We use the "optional" package to indicate whether to generate L3v1r2, or
+% L3v2, without having to alter the .tex file
+% itself.  Unfortunately, the "optional" package doesn't offer an "or" type
+% switch or a way to set a default, so we have to go through some
+% contortions here.  Also, it needs *something* in the optional argument
+% to RequirePackage or UsePackage, hence the "dummyoption" thing below.
+%
+% To produce L3v1r2 output without modifying the source file, invoke
+% latex with a command of the following form:
+%
+%  pdflatex "\newcommand\UseOption{l3v1r2}\input{sbml-level-3-version-2-core}"
+
+\newif\ifrevtwospec
+\global\let\ifrevtwospec\iffalse
+\RequirePackage[dummyoption]{optional}
+\opt{l3v1r2}{\global\let\ifrevtwospec\iftrue}
+
+
+% Here's how to use these macros:
+%  * \relchange:  text that should be marked as 'changed' in l3v1r2, but not in l3v2
+%  * \relverdiff: command with two arguments: first argument used in l3v1r2; second in l3v2.  Second marked as 'changed' automatically, first not so marked (if need that marked, mark it by hand).
+%  * \relverdiffNC:  Same as \relverdiff, but nothing marked as being changed.
+%  * \vertwoonly: Text that will not appear in l3v1r2 at all, and will be marked 'changed' in l3v2.
+%
+%  Examples:
+%   \relchange{Here is some new explanatory text that is appropriate for all levels and versions of SBML.}
+%   as well as \relverdiff{a}{an optional} model.
+%   Version \relverdiffNC{1}{2} of the SBML specification
+%   \vertwo{When an \Event has no \Trigger, this means...}
+
+\ifrevtwospec
+  \newcommand{\relchange}[1]{\changed{#1}}
+  \newcommand{\relverdiff}[2]{#1}
+  \newcommand{\relverdiffNC}[2]{#1}
+  \newcommand{\vertwo}[1]{}
+  \newcommand{\reltwo}[1]{#1}
+  \newenvironment{blockRelChange}{\begin{blockChanged}}{\end{blockChanged}}
+  \newenvironment{blockVerChange}{}{}
+  \newcommand{\subsubsectionVerChange}[1]{\subsubsection{#1}}
+  \newcommand{\subsubsectionVerOnly}[1]{}
+  \newcommand{\paragraphVerOnly}[1]{}
+  \newcommand{\clearpagevertwo}{}
+  \newcommand{\itemvertwo}[1]{}
+\else
+  \newcommand{\relchange}[1]{#1}
+  \newcommand{\relverdiff}[2]{\changed{#2}}
+  \newcommand{\relverdiffNC}[2]{#2}
+  \newcommand{\vertwo}[1]{\changed{#1}}
+  \newcommand{\reltwo}[1]{}
+  \newenvironment{blockRelChange}{}{}
+  \newenvironment{blockVerChange}{\begin{blockChanged}}{\end{blockChanged}}
+  \newcommand{\subsubsectionVerChange}[1]{%
+    \colorlet{@currentsectionnumcolor}{@sectionnumcolor}%
+    \colorlet{@sectionnumcolor}{sbmlchangedcolor}%
+    \subsubsection{#1}%
+    \colorlet{@sectionnumcolor}{@currentsectionnumcolor}}
+  \newcommand{\subsubsectionVerOnly}[1]{%
+    \colorlet{@currentsectionnumcolor}{@sectionnumcolor}%
+    \colorlet{@sectionnumcolor}{sbmlchangedcolor}%
+    \subsubsection{\changed{#1}}%
+    \colorlet{@sectionnumcolor}{@currentsectionnumcolor}}
+  \newcommand{\paragraphVerOnly}[1]{\paragraph{\changed{#1}}}
+  \newcommand{\clearpagevertwo}{\clearpage}
+  \newcommand{\itemvertwo}[1]{\item \changed{#1}}
+\fi
+
+%\newcommand{\changed}[1]{\textcolor{\changedColor}{#1}}
+%\newenvironment{blockChanged}{\color{\changedColor}}{\color{Black}}
+
+
+% Which level/version/release is this?
 \newcommand{\sbmllevel}    {3}
-\newcommand{\sbmlversion}  {\changed{2} Core}
-\newcommand{\sbmlversionNC}{2 Core}
-\newcommand{\sbmlversionnum}{\changed{2}}
-\newcommand{\sbmlrelease}  {1 \changed{(Draft)}}
-\newcommand{\sbmlreleaseNC}{1 (Draft)}
-\newcommand{\sbmldate}     {\changed{XX December 2015}}
+\newcommand{\sbmlversion}  {\relverdiff{1}{2} Core}
+\newcommand{\sbmlversionNC}{\relverdiffNC{1}{2} Core}
+\newcommand{\sbmlversionnum}{\relverdiff{1}{2}}
+\newcommand{\sbmlrelease}  {\relverdiff{2}{1} \changed{(Draft)}}
+\newcommand{\sbmlreleaseNC}{\relverdiffNC{2}{1} (Draft)}
+\newcommand{\sbmldate}     {\changed{XX May 2016}}
 
 \newcommand{\thisRelease}  {Release~\sbmlrelease{}\xspace}
 \newcommand{\thisL}	   {Level~\sbmllevel\xspace}
-\newcommand{\thisV}	   {\changed{Version}~\sbmlversion}
-\newcommand{\thisVnum}	   {\changed{Version}~\sbmlversionnum\xspace}
+\newcommand{\thisV}	   {\relverdiff{Version}{Version}~\sbmlversion}
+\newcommand{\thisvlc}	   {\relverdiff{version1}{version2}}
+\newcommand{\thisVnum}	   {\relverdiff{Version}{Version}~\sbmlversionnum\xspace}
 \newcommand{\thisLV}       {Level~\sbmllevel{} \thisV\xspace}
 \newcommand{\thisLVNC}     {Level~\sbmllevel{} Version~\sbmlversionNC\xspace}
 \newcommand{\thisLVnum}    {Level~\sbmllevel{} \thisVnum}
 \newcommand{\thisLVR}      {\thisLV \thisRelease}
 
-\newcommand{\previousLVR}  {Level~3 Version~1 Release~1}
+\newcommand{\previousLVR}  {\relverdiff{Level~3 Version~1 Release~1}{Level~3 Version~1 Release~2}}
 
 % Special commands for web addresses:
 
-\newcommand{\sbmlSchemasURL}{\url{http://sbml.org/specifications/sbml-level-\sbmllevel/version-2/schemas/}}
+\newcommand{\sbmlSchemasURL}{\url{http://sbml.org/specifications/sbml-level-\sbmllevel/version-\sbmlversionNC/schemas/}}
 
 % Special commands for linking the SBML component classes in this document.
 % The following defines a special command of the form \Foo for any SBML
@@ -128,3 +201,4 @@
 
 \vspace*{-0.5ex}
 \input{examples/#1}\end{example}}
+

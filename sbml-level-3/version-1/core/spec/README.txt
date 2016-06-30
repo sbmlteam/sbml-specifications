@@ -24,6 +24,12 @@
 Notes about producing output files
 ----------------------------------
 
+Version 2 of this specification document is not produced from the files in
+this folder.  Instead, it is generated with special options from the files
+in sbml-level-3/version-2/core/spec/ by using the command:
+
+pdflatex "\newcommand\UseOption{l3v1r2}\input{sbml-level-3-version-2-core}"
+
 To produce grayscale output without modifying the source file, invoke
 latex with a command of the following form:
 

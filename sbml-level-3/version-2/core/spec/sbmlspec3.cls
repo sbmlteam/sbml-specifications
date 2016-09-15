@@ -75,7 +75,7 @@
 \RequirePackage{multicol}
 \RequirePackage{array}
 \RequirePackage[round]{natbib}
-\RequirePackage{html}
+%\RequirePackage{html}
 \RequirePackage{xspace}
 \RequirePackage{amsmath}
 \RequirePackage{amssymb}
@@ -113,13 +113,13 @@
 % Load varioref only if not generating HTML, because on HTML
 % pages it doesn't make sense to use varioref.
 
-\latexhtml{
+% \latexhtml{
 %begin{latexonly}
   \RequirePackage[american]{varioref}
 %end{latexonly}
-}{
-  \newcommand{\vref}[1]{\ref{#1}}
-}
+% }{
+%   \newcommand{\vref}[1]{\ref{#1}}
+% }
 
 % Hyperref, xcolor, graphicx and possibly others have a flag "pdftex"
 % that needs to be used if pdflatex is being used.  The following puts
@@ -156,13 +156,13 @@
 
   \RequirePackage{graphicx}
   % Test whether we're being run from latex or latex2html
-  \latexhtml{
+%  \latexhtml{
     % For latex.
     \RequirePackage[breaklinks]{hyperref}
-  }{
-    % For latex2html.
-    \RequirePackage[latex2html,breaklinks]{hyperref}
-  }
+  % }{
+  %   % For latex2html.
+  %   \RequirePackage[latex2html,breaklinks]{hyperref}
+  % }
   \RequirePackage[rgb,dvipsnames,svgnames,hyperref,table]{xcolor}
 \fi
 
@@ -432,7 +432,7 @@
       \small%
       % Tighten spacing between lines within an entry.
       % This assumes 10 pt font!
-      \setlength{\baselineskip}{9.75pt}%
+      \setlength{\baselineskip}{9.7pt}%
       % Now adjust inter-entry spacing.
       \addtolength{\parskip}{-1.35 ex}%
       \if@twocolumntoc
@@ -571,7 +571,7 @@
   \color{@sectionnumcolor}{\csname the#1\endcsname}\hspace{0.5em}}
 
 \renewcommand{\section}{%
-  \@startsection{section}{1}{0pt}{-1.8ex \@plus -1ex \@minus -.2ex}%
+  \@startsection{section}{1}{0pt}{-2ex \@plus 2ex \@minus -2ex}%
   {0.8ex}{\clearpage\normalfont\Large\bfseries\sffamily}}
 
 \newcommand{\sectionChanged}[1]{%
@@ -581,7 +581,7 @@
   \colorlet{@sectionnumcolor}{@currentsectionnumcolor}}
 
 \renewcommand{\subsection}{%
-  \@startsection{subsection}{2}{0pt}{-2ex \@plus 1ex \@minus -.2ex}%
+  \@startsection{subsection}{2}{0pt}{-2ex \@plus 4ex \@minus -1.5ex}%
   {0.8ex}{\large\bfseries\sffamily}}
 
 \newcommand{\subsectionChanged}[1]{%
@@ -591,7 +591,7 @@
   \colorlet{@sectionnumcolor}{@currentsectionnumcolor}}
 
 \renewcommand{\subsubsection}{%
-  \@startsection{subsubsection}{3}{0pt}{-1.5ex \@plus 1ex \@minus -.2ex}%
+  \@startsection{subsubsection}{3}{0pt}{-2ex \@plus 4ex \@minus -1ex}%
   {0.5ex}{\slshape\normalsize\bfseries\sffamily}}
 
 \newcommand{\subsubsectionChanged}[1]{%
@@ -601,13 +601,13 @@
   \colorlet{@sectionnumcolor}{@currentsectionnumcolor}}
 
 \renewcommand{\paragraph}{%
-  \@startsection{paragraph}{4}{0pt}{-1.25ex \@plus 1ex \@minus -.2ex}%
+  \@startsection{paragraph}{4}{0pt}{-2ex \@plus 4ex \@minus -1ex}%
   {0.5ex}{\slshape\normalsize\sffamily}}
 
 \newcommand{\paragraphChanged}[1]{%
   \colorlet{@currentsectionnumcolor}{@sectionnumcolor}%
   \colorlet{@sectionnumcolor}{sbmlchangedcolor}%
-  \paragraph{#1}%
+  \paragraph{\changed{#1}}%
   \colorlet{@sectionnumcolor}{@currentsectionnumcolor}}
 
 % The following is a modified version of the macro from article.cls.

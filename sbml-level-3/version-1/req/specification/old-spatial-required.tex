@@ -1,0 +1,29 @@
+% -*- TeX-master: "main" -*-
+
+\section{Interaction with the Required Elements package}
+\label{required-elements-interaction}
+
+The Required Elements package is designed to create a way for a modeler to denote which specific elements of an SBML model have changed due to interactions with a package.  The Spatial Processes package can change the mathematical meaning of the SBML core elements \Compartment, \Species, \Reaction, and \Parameter.  If the Required Elements namespace and the Spatial Processes namespace are declared in the same SBML document, the following restrictions apply.  Note that these do not apply in a document without the Required Elements namespace declared.
+
+\subsection{Compartments}
+When a spatial geometry is defined in the SBML model, the \Compartment element may be extended for the spatial package to represent a spatially-defined area with particular boundaries whose mathematical value is defined as its \token{unitSize} multiplied by the size of the \DomainType to which it maps.  Any \Compartment with a child \CompartmentMapping element must therefore have a \ChangedMath child pointing to the Spatial Processes namespace.  Its \token{viableWithoutChange} attribute may be set to \val{true} if the compartment's size is set with the \token{size} attribute (setting it through a \Rule or \InitialAssignment is illegal for the purposes of the spatial package).  For example, the modeling package may precalculate the compartment size and store it in the Compartment size attribute.  However, due to slight differences in mesh generation between simulators, the domain size actually used within computations may vary slightly from simulator to simulator, and will thus introduce small errors that may break mass conservation.
+
+A \Compartment without a child \CompartmentMapping element remains unaffected by the Spatial package, and must therefore not have a \ChangedMath child that points to the Spatial Processes namespace.
+
+\subsection{Species}
+Any \Species with the \token{isSpatial} attribute set to \val{true} must have a \ChangedMath child that points to the Spatial Processes namespace, as the model assumes a spatially-distributed level of that \Species, instead of considering it to be a well-mixed pool.  Its \token{viableWithoutChange} attribute may be set to \val{true} if the model specifies the initialAmount or initialConcentration attributes of the Species or if the initial condition is specified by a Rule or an InitialAssignment.
+
+A \Species with the \token{isSpatial} attribute set to \val{false} remains unaffected by the Spatial package, and must therefore not have a \ChangedMath child that points to the Spatial Processes namespace.
+
+\subsection{Reactions}
+Any \Reaction with an \token{isLocal} attribute set to \val{true} must have a \ChangedMath child that points to the Spatial Processes namespace, as the model treats such a \Reaction as defining a change in local substrate concentrations over time, instead of as a change in global substrate amounts over time.  Its \token{viableWithoutChange} attribute will therefore almost always be set to \val{false}, as the units of the \KineticLaw have been changed.  However, concentration over time can be numerically identical to amount over time in \Compartments of unit volume; in this situation, the value of that attribute may be set to \val{true}.  However, this practice is discouraged.
+
+A \Reaction with the \token{isLocal} attribute set to \val{false} remains unaffected by the Spatial package, and must therefore not have a \ChangedMath child that points to the Spatial Processes namespace.
+
+\subsection{Parameters}
+A \Parameter object with a \SpatialSymbolReference child does not take its value from its \token{value} attribute, but rather from the Spatial object with which it is linked.  Therefore, all \Parameter objects with a \SpatialSymbolReference child must have a \ChangedMath child that points to the Spatial Processes namespace.  Its \token{viableWithoutChange} attribute may be set to \val{true} if the \Parameter's \token{value} is set, and/or if there is an \InitialAssignment or \Rule that sets that value.
+
+\Parameter objects with \DiffusionCoefficient, \AdvectionCoefficient, or \BoundaryCondition children, on the other hand, still take their values from the \token{value} attribute and/or other \sbmlthreecore elements, and remain unchanged by any Spatial construct.  Therefore, these and any other \Parameter elements without \SpatialSymbolReference children may not be given a \ChangedMath child that points to the Spatial Processes namespace.
+
+\subsection{General}
+No other \sbmlthreecore element is affected by the Spatial Processes package, and none may therefore have a \ChangedMath child that points to the Spatial Processes namespace.

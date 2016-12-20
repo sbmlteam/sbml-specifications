@@ -731,6 +731,8 @@ The \ListOfCSGNodes must contain one or more \token{csgNode} children that are t
 \label{csgtransformation-class}
 The \CSGTransformation represents a generalization for the type of transformation that can be performed on a primitive geometric shape (\CSGPrimitive) or on a \CSGNode (a transformation or set operation on one or a set of \CSGPrimitives). The types of possible transformations are 'rotation', 'translation', 'scaling', and 'homogeneous transformation', defined below. The \CSGTransformation element contains a \CSGNode element upon which the transformation is performed.
 
+\changed{Each transformation is performed directly on its child \CSGNode, with any transformation or set operation from that node already performed.  This essentially defines a 'bottom-up' approach, where the tips of the XML tree children of a \CSGObject are all \CSGPrimitive objects, that are progressively transformed or combined with other \CSGPrimitive objects by each successive node moving rootward through the XML.  For an example, see \sec{csgobject-example}.}
+
 \begin{figure}[ht]
   \includegraphics{figs/CSGTransformation-uml}
   \caption{The definition of the abstract base class \CSGTransformation, its subclasses, \CSGRotation, \CSGScale, and \CSGHomogeneousTransformation, and the \TransformationComponent class.}
@@ -796,7 +798,7 @@ The amount of scaling for all three attributes is relative to the original size 
 \label{csghomogeneoustransformation-class}
 The \CSGHomogeneousTransformation element represents a homogeneous transformation on a \CSGNode: a transformation or set operation on one or more \CSGPrimitives. This element contains two \TransformationComponent elements : a \token{forwardTransformation} and a \token{reverseTransformation}, both of type \TransformationComponent.
 
-{\color{red} Lucian: \notice We probably don't need both a forwardTransformation and a reverseTransformation:  if it turns out to be difficult to implement both, just implement 'forwardTransformation'.  If nobody ever implements 'reverseTransformation', we'll remove it from the spec.}
+{\color{red} Lucian: \notice Still trying to track down whether anyone has implemented 'reverseTransformation'.  If not, we'll remove it from the spec as unnecessary, and just leave 'forwardTransformation'.}
 
 
 \subsection{The \class{TransformationComponent} class}
@@ -816,26 +818,27 @@ The \token{componentsLength} attribute is of type \primtype{int} and is required
 
 
 \subsection{CSGObject example}
+\label{csgobject-example}
 The following is an example of a \CSGObject which has been scaled, rotated, and translated:
 
 \begin{example}
-  <spatial:csgObject spatial:id="vesicle" spatial:domainType="vesicle"
+  <spatial:csgObject spatial:id="vesicleObj" spatial:domainType="vesicle"
                      spatial:ordinal="2">
-    <spatial:csgTranslation spatial:id="translation" spatial:translateX="5.439"
+    <spatial:csgTranslation spatial:id="translation1" spatial:translateX="5.439"
                             spatial:translateY="5.88" spatial:translateZ="1.078">
-      <spatial:csgRotation  spatial:id="rotation" spatial:rotateX="2.4391"
+      <spatial:csgRotation  spatial:id="rotation1" spatial:rotateX="2.4391"
                             spatial:rotateY="1.5373" spatial:rotateZ="0.58404"
                             spatial:rotateAngleInRadians="0.9104">
-        <spatial:csgScale   spatial:id="scale" spatial:scaleX="0.075833"
+        <spatial:csgScale   spatial:id="scale1" spatial:scaleX="0.075833"
                             spatial:scaleY="0.080451" spatial:scaleZ="0.029583">
-          <spatial:csgPrimitive spatial:id="sphere" spatial:primitiveType="sphere"/>
+          <spatial:csgPrimitive spatial:id="sphere1" spatial:primitiveType="sphere"/>
        </spatial:csgScale>
       </spatial:csgRotation>
     </spatial:csgTranslation>
   </spatial:csgObject>
 \end{example}
 
-The manipulations can be read from the inside out: at the base level, we have the \CSGPrimitive sphere: a sphere with radius 1.0, centered at the origin.  It's then scaled such that it is compressed along each axis by different amounts: along the X axis to 7.5833\%, along the Y axis to 8.0451\%, and along the Z axis to 2.9583\%.  Then the scaled figure is rotated around a vector with its origin at (0,0,0) and its point at (2.4391, 1.5373, 0.58404), by 0.9104 radians.  Finally, the csgTranslation moves it by 5.439 along the X axis, 5.88 along the Y axis, and 1.078 along the Z axis.
+The manipulations can be read from the inside out: at the base level, we have the \CSGPrimitive sphere: a sphere with radius 1.0, centered at the origin.  It's then scaled such that it is compressed along each axis by different amounts: along the X axis to 7.5833\%, along the Y axis to 8.0451\%, and along the Z axis to 2.9583\%.  Then the scaled figure is rotated around a vector with its origin at (0,0,0) and its point at (2.4391, 1.5373, 0.58404), by 0.9104 radians.  Finally, it is translated by 5.439 along the X axis, 5.88 along the Y axis, and 1.078 along the Z axis.
 
 \subsection{The \class{ParametricGeometry} class}
 \label{parametricgeometry-class}
@@ -901,6 +904,7 @@ The \token{dataType} attribute is of type \primtype{DataKind} and is \changed{op
 The \token{PointIndex text child of the \ParametricObject is in \token{arrayData} format}, and represents an ordered list of indices that refer to elements in the \SpatialPoints array and are interpreted by considering the \token{polygonType} attribute of the \ParametricObject with a value of \val{triangle} indicating that the data is to be grouped in sets of three, and a value of \val{quadrilateral} indicating that the data is to be grouped in sets of four.  \changed{The sequence of indices must follow adjacent edges, with an implied edge between the first and last vertex.  Additionally, the order of that sequence should be consistently clockwise or counter-clockwise for any contiguous surface.  This can be accomplished by ensuring that when an edge is used for two different faces, the order of that edge is reversed for the second face.}.  It is suggested, but not required, that if the data is uncompressed, that the grouped points be separated from each other with the use of a semicolon.  If the data is compressed, a semicolon is not to be used.
 
 \subsection{A \class{ParametricGeometry} example}
+\label{parametricgeometry-example}
 
 As an example, if the \SpatialPoints element in a three-dimensional \Geometry is:
 
@@ -920,6 +924,37 @@ This defines eight points, with point '0' at coordinates [0, 0, 0], point '1' at
 \end{example}
 
 This defines a pyramid with four triangular faces.  The first triangle is defined by points [0,0,0], [0,1,0], and [0,1,1]; the second triangle by points [0,0,0], [1,1,0], and [0,1,0]; the third by [0,0,0], [0,1,1], and [1,1,0]; and the fourth by [0,1,0], [1,1,0], and [0,1,1].  \changed{Note also that the order of the faces is consistent, defining each face in a counter-clockwise order, as observed from 'outside' the pyramid.  This can be seen, for example, in the last two faces defined, where the shared edge is defined in the order '5 6' in the first face, but '6 5' in the second.}
+
+\begin{blockChanged}
+A more realistic example can be found below, though most of the values are elided for reasons of space:
+
+\begin{example}
+  <spatial:parametricGeometry spatial:id="id051101043048054" spatial:isActive="true">
+    <spatial:spatialPoints spatial:compression="uncompressed" spatial:arrayDataLength="179901">
+          -0.472894296 -0.4420042305 -0.457890447 [...]
+          0.830988196507629 0.857225748552666 0.827138489800772
+    </spatial:spatialPoints>
+    <spatial:listOfParametricObjects>
+      <spatial:parametricObject spatial:id="nucObj" spatial:polygonType="triangle"
+                                spatial:domainType="nuc" spatial:pointIndexLength="24414"
+                                spatial:compression="uncompressed">
+          69 225 253 247 217 24 181 451 452 [...] 732 2417 3925
+      </spatial:parametricObject>
+      <spatial:parametricObject spatial:id="cellObj" spatial:polygonType="triangle"
+                                spatial:domainType="cell" spatial:pointIndexLength="46242"
+                                spatial:compression="uncompressed">
+          423 8 418 2240 439 180 187 97 299 [...] 8197 1262 3043
+      </spatial:parametricObject>
+    </spatial:listOfParametricObjects>
+  </spatial:parametricGeometry>
+\end{example}
+
+Here, an array of 179901 values is defined in the \SpatialPoints object.  Because this is a model with 3D geometry (described elsewhere in the model), the points are grouped in threes, with the first value representing the X value for the first point, the second value the Y of the first point, and the third the Z value of the first point.  The next value (elided) would be the X value of the second point, etc., until the final three values encode the final point, for a total of 59967 points (179901/3).  The first point (-0.472894296, -0.4420042305, -0.457890447) is referenced by its index of \val{0}, the second by its index of \val{1}, etc., through (0.830988196507629, 0.857225748552666, 0.827138489800772) for the point with index 59966.
+
+These points are then used as in two meshes: one for the nucObj, and one for the cellObj.  Because both have the \token{polygonType} \val{triangle}, the list of points are intrepreted in groups of three:  (69, 225, 253) being the three vertices of the first triangle of \val{nucObj}, (245, 217, 24) the vertices of the second, etc.  Similarly, (423, 8, 418) is the first defined triangle for \val{cellObj}, and (8197, 1262, 3043) the last.
+
+Because so many values were included, a decision was made to omit the optional \val{;} characters, which would have principally served to increase the file size.
+\end{blockChanged}
 
 
 \subsection{The \class{MixedGeometry} class}

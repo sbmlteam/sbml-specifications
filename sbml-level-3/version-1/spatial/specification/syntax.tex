@@ -232,7 +232,7 @@ A \Parameter that has been extended for the Spatial package can have only one of
 
 \begin{figure}[ht]
   \includegraphics{figs/extended-parameter-uml}
-  \caption{The \Parameter element extension for spatial package. The \sbmlthreecore attributes for \Parameter are not displayed in this figure.}
+  \caption{The \Parameter element extension for spatial package, and the definitions of the \SpatialSymbolReference, \AdvectionCoefficient, \BoundaryCondition, and \DiffusionCoefficient classes. The \sbmlthreecore attributes for \Parameter are not displayed in this figure.}
   \label{parameter-uml}
 \end{figure}
 
@@ -360,9 +360,11 @@ The \token{coordinateSystem} attribute is a required attribute and is of type \p
 %A value of \val{cylindrical} indicates that the geometry is a three-dimensional cylendrical coordinate system, with coordinate components corresponding to radial distance, azimuth angle, and axial position.  A value of \val{spherical} indicates that the geometry is a three-dimensional spherical coordinate system, with coordinate components corresponding to radial distance, polar angle, and azimuth angle.  A value of \val{polar} indicates that the geometry is a two-dimensional polar coordinate system, with coordinate components corresponding to radial distance and angle (the two-dimensional equivalent of the cylendrical coordinate system).
 
 \subsubsection{The listOf container classes}
-The \Geometry has listOfCoordinateComponents, listOfDomainTypes, listOfDomains, listOfAdjacentDomains, listOfGeometryDefinitions, and listOfSampledFields that help define the geometry.  The \ListOfCoordinateComponents is a list of \CoordinateComponent objects, the \ListOfDomainTypes is a list of \DomainType objects, the \ListOfDomains is a list of \Domain objects, \ListOfAdjacentDomains is a list of \AdjacentDomains objects, the \ListOfGeometryDefinitions is a list of alternative \GeometryDefinitions (\ParametricGeometry,\CSGeometry, \SampledFieldGeometry, \AnalyticGeometry), and the \ListOfSampledFields is a list of \SampledField objects.  None of these lists are technically required, but, if present, none of them may be empty.
+The \Geometry has listOfCoordinateComponents, listOfDomainTypes, listOfDomains, listOfAdjacentDomains, listOfGeometryDefinitions, and listOfSampledFields that help define the geometry.  The \ListOfCoordinateComponents is a list of \CoordinateComponent objects, the \ListOfDomainTypes is a list of \DomainType objects, the \ListOfDomains is a list of \Domain objects, \ListOfAdjacentDomains is a list of \AdjacentDomains objects, the \ListOfGeometryDefinitions is a list of alternative \GeometryDefinitions (\ParametricGeometry, \CSGeometry, \SampledFieldGeometry, \AnalyticGeometry, \changed{and \MixedGeometry}), and the \ListOfSampledFields is a list of \SampledField objects.  \changed{Of these, only the \ListOfCoordinateComponents is required, but, if present, none of them may be empty.}
 
-Note that the children of the \ListOfGeometryDefinitions object are not called \token{geometryDefinition} but rather take the name of the derived class, decapitalized.  Thus, they may be called \token{analyticGeometry}, \token{csGeometry}, \token{parametricGeometry}, or \token{sampledFieldGeometry}.
+Note that the children of the \ListOfGeometryDefinitions object are not called \token{geometryDefinition} but rather take the name of the derived class, decapitalized.  Thus, they may be called \token{analyticGeometry}, \token{csGeometry}, \token{parametricGeometry}, \token{sampledFieldGeometry}, \changed{or \token{mixedGeometry}}.
+
+\changed{The \ListOfCoordinateComponents is unique in that it defines the dimensions of the \Geometry.  Thus, every \Geometry must have a child \ListOfCoordinateComponents with exactly one, two, or three children.  When there is one child, it must be of type \token{cartesianX}; when there are two, they must be of type \token{cartesianX} and \token{cartesianY}, and when there are three, they must be of types \token{cartesianX}, \token{cartesianY}, and \token{cartesianZ}.}
 
 
 \subsection{The \class{CoordinateComponent} class}
@@ -371,7 +373,7 @@ A \CoordinateComponent object explicitly defines a coordinate component of the c
  
 \begin{figure}[ht]
   \includegraphics{figs/CoordinateComponent-uml}
-  \caption{The \CoordinateComponent object definition. One or more instances of \CoordinateComponent objects in a \ListOfCoordinateComponents can be present in \Geometry.}
+  \caption{The \CoordinateComponent and \Boundary object definitions. One or more instances of \CoordinateComponent objects in a \ListOfCoordinateComponents can be present in \Geometry.}
   \label{CoordinateComponent-uml}
 \end{figure}
 
@@ -384,7 +386,7 @@ Because a \CoordinateComponent represents an entire axis, it is not appropriate,
 \subsubsection{The \fixttspace\tokenNC{type} attribute}
 The \token{type} attibute of type \primtype{CoordinateKind} represents the type of the coordinate component, and may take one of a subset of all possible \primtype{CoordinateKind} values depending on its parent \Geometry, as defined in \tab{CoordinateComponent-Geometry-relation}.
 %For all \primtype{GeometryKind} values except \val{cartesian}, exactly one \CoordinateComponent must exist with each of the allowed \primtype{CoordinateKind} values:  in other words, a \val{cylendrical} \Geometry must have exactly three \CoordinateComponent children, each one having a different allowed value for its \token{type} attribute.
-For Cartesian geometries, one-dimensional geometries may be defined by having a single \val{cartesianX} \CoordinateComponent; two-dimensional geometries may be defined by having two \CoordinateComponent children with \token{type} values of \val{cartesianX} and \val{cartesianY}, and three-dimensional geometries may be defined by having three \CoordinateComponent children with \token{type} values of \val{cartesianX}, \val{cartesianY}, and \val{cartesianZ}.
+For Cartesian geometries, one-dimensional geometries \changed{must} be defined by having a single \val{cartesianX} \CoordinateComponent; two-dimensional geometries \changed{must} be defined by having \changed{exactly} two \CoordinateComponent children with \token{type} values of \val{cartesianX} and \val{cartesianY}, and three-dimensional geometries \changed{must} be defined by having \changed{exactly} three \CoordinateComponent children with \token{type} values of \val{cartesianX}, \val{cartesianY}, and \val{cartesianZ}.  \changed{No \Geometry may have two \CoordinateComponent children with the same \token{type}.}
 
 \begin{table}[thb]
   \begin{edtable}{tabular}{>{\centering\arraybackslash}m{0.9in} >{\centering\arraybackslash}m{0.7in} >{\raggedright\arraybackslash}m{4.4in}}
@@ -448,7 +450,7 @@ Each SBML \Compartment maps to a single \DomainType, meaning that the initial co
 
 \begin{figure}[ht]
   \includegraphics{figs/DomainType-uml}
-  \caption{The \DomainType object. One or more instances of \DomainType in a \ListOfDomainTypes instance can be present in a \Geometry object.}
+  \caption{The definition of the \DomainType class. One or more instances of \DomainType in a \ListOfDomainTypes instance can be present in a \Geometry object.}
   \label{DomainType-uml}
 \end{figure}
 
@@ -524,7 +526,7 @@ A \Geometry can specify a list of \GeometryDefinitions. The \GeometryDefinition 
 
 \begin{figure}[ht]
   \includegraphics{figs/GeometryDefinition-uml}
-  \caption{The \GeometryDefinition element. \Geometry contains one instance of listOfGeometryDefinitions that can contain one or more instances of \GeometryDefinition (one of \AnalyticGeometry, \SampledFieldGeometry, \CSGeometry, \ParametricGeometry, defined below).}
+  \caption{The \GeometryDefinition element. \Geometry contains one instance of listOfGeometryDefinitions that can contain one or more instances of \GeometryDefinition (one of \AnalyticGeometry, \SampledFieldGeometry, \CSGeometry, \ParametricGeometry, \changed{or \MixedGeometry}defined below).}
   \label{GeometryDefinition-uml}
 \end{figure}
 
@@ -735,7 +737,7 @@ Each transformation is performed directly on its child \CSGNode, with any transf
 
 \begin{figure}[ht]
   \includegraphics{figs/CSGTransformation-uml}
-  \caption{The definition of the abstract base class \CSGTransformation, its subclasses, \CSGRotation, \CSGScale, and \CSGHomogeneousTransformation, and the \TransformationComponent class.}
+  \caption{The definition of the abstract base class \CSGTransformation, its subclasses (\CSGTranslation, \CSGRotation, \CSGScale, and \CSGHomogeneousTransformation), and the \TransformationComponent class.}
   \label{CSGTransformation-uml}
   \label{CSGRotation-uml}
   \label{CSGScale-uml}
@@ -1015,7 +1017,7 @@ The required \token{interpolationType} attribute is type \primtype{Interpolation
 %If the attribute is not defined, then no interpolation strategy is to be inferred or implied for this \SampleData element.  Simulators may use one of the above strategies or some other strategy, as befits their situation.
 
 \subsubsection{The \fixttspace\tokenNC{numSamples1}, \tokenNC{numSamples2}, \tokenNC{numSamples3} attributes}
-The \token{numSamples1}, \token{numSamples2}, and \token{numSamples3} attributes represent the number of samples in each of the coordinate components. (e.g. numX, numY, numZ) in an image dataset.  These attributes are of type \primtype{int} and are required to specify the \SampledField. The samples are assumed to be uniformly sampled.  It is required to have as many \token{numSamples} attributes as there are dimensions in the field (thus, at least \token{numSamples1} must be defined).
+The \token{numSamples1}, \token{numSamples2}, and \token{numSamples3} attributes represent the number of samples in each of the coordinate components. (e.g. numX, numY, numZ) in an image dataset.  These attributes are of type \primtype{int} and are required to specify the \SampledField. The samples are assumed to be uniformly sampled.  \changed{It is required to have as many \token{numSamples} attributes as there are \CoordinateComponent elements in the \Geometry, with \token{numSamples1} defined if there is a \token{cartesianX} element; \token{numSamples2} defined if there is a \token{cartesianY} element, and \token{numSamples3} defined if there is a \token{cartesianZ} element, each attribute corresponding to the \CoordinateComponent with the respective \token{type}.}
 
 \subsubsection{The \fixttspace\tokenNC{compression} attribute}
 The required \token{compression} attribute is of type \primtype{CompressionKind}. It is used to specify the compression used when encoding the data, and can have the value \val{uncompressed} if no compression was used, or \val{deflated} if the deflation algorithm was used to compress the text version of the data.

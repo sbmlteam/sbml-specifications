@@ -14,7 +14,7 @@ The SBML \Compartment, \Reaction and \Species, and molecular transport mechanism
 The \Geometry object within a model is completely modular and does not reference the rest of the model, promoting reuse of the same geometry in different models.  The geometry separately defines a coordinate system, a list of domain types, a list of domains and their adjacency relationships, and a list of alternate geometric representations.
 
 \subsubsection{Alternative \GeometryDefinitions}
-Modeling and simulation tools will each natively support some subset (often just one) of the possible \GeometryDefinitions (analytic, sampled field, constructive solid geometry, and parametric shapes ).  Interoperability will be enhanced if tools write as many geometry definitions as they are able.  Upon reading the model, a tool will typically choose the most convenient geometry definition, i.e. the one that it natively supports.  If a tool does not edit the geometry, it has the ability to preserve the alternate representations during model editing (because the mapping of the model to the geometry is not stored in the geometry).
+Modeling and simulation tools will each natively support some subset (often just one) of the possible \GeometryDefinitions (analytic, sampled field, constructive solid geometry, parametric, or mixed shapes).  Interoperability will be enhanced if tools write as many geometry definitions as they are able.  Upon reading the model, a tool will typically choose the most convenient geometry definition, i.e. the one that it natively supports.  If a tool does not edit the geometry, it has the ability to preserve the alternate representations during model editing (because the mapping of the model to the geometry is not stored in the geometry).
 
 There are two general classes of geometric representation specification: those that explicitly specify surfaces and those that implicitly specify surfaces.  For example, a level set is a field where a specific isosurface of the field specifies a geometric surface.  A geometry described using constructive solid geometry of geometric primitives (e.g. spheres, cylinders) specifies directly which points are "inside" an object.  Alternatively, explicit surface representations explicitly declare the set of points belonging to surfaces (e.g. polygonal tessellations).
 
@@ -200,6 +200,15 @@ If connected to a \Parameter via a \SpatialSymbolReference, an \InitialAssignmen
 
 Any bound \Parameter's units should be equivalent to the units of the parent \Compartment divided by the units of the referenced \DomainType. 
 
+\changed{Here is an example of a \Compartment element extended to have spatial information:}
+
+\begin{example}
+  <compartment id="Extracellular" spatialDimensions="3" constant="true">
+    <spatial:compartmentMapping spatial:id="spatialExtracellular"
+        spatial:domainType="Extracellular" spatial:unitSize="1"/>
+  </compartment>
+\end{example}
+
 
 
 \subsection{The extended \Species object}
@@ -310,6 +319,30 @@ The \token{coordinateBoundary} attribute is of type \primtype{SpIdRef} and refer
 \subsubsection{The \fixttspace\tokenNC{boundaryDomainType} attribute}
 The \token{boundaryDomainType} attribute is of type \primtype{SpIdRef} and refers to the \primtype{SpId} of the \DomainType of the location of the species whose boundary condition is being defined. A \Parameter that is extended with a \BoundaryCondition object can only define the \token{coordinateBoundary} attribute or the \token{boundaryDomainType} attribute, but not both. 
 
+
+\begin{blockChanged}
+\subsection{Extended \Parameter examples}
+
+As an example, here are four examples of parameters that have been extended with spatial information.  These four parameters are extended with the four different possible spatial extensions: the \SpatialSymbolReference to allow the model to refer to the spatial id \val{x} as the SBML core id \val{x}; a \BoundaryCondition to define the boundary condition for \val{s1\_nuc} to be zero; a \DiffusionCoefficient to define the diffusion coefficient for \val{s1\_nuc} to be \val{0.1}; and an \AdvectionCoefficient to define the advection coefficient for \val{s2\_nuc} to be \val{0.13}.
+
+\begin{example}
+  <listOfParameters>
+    <parameter id="x" constant="false">
+      <spatial:spatialSymbolReference spatial:spatialRef="x"/>
+    </parameter>
+    <parameter id="s1_nuc_BC_Xm" value="0" constant="true">
+      <spatial:boundaryCondition spatial:variable="s1_nuc" spatial:type="Dirichlet"
+                                 spatial:coordinateBoundary="Xmin"/>
+    </parameter>
+    <parameter id="s1_nuc_diff" value="0.1" constant="true">
+      <spatial:diffusionCoefficient spatial:variable="s1_nuc" spatial:type="isotropic"/>
+    </parameter>
+    <parameter id="s2_nuc_advec" value="0.13" constant="true">
+      <spatial:advectionCoefficient spatial:variable="s2_nuc" spatial:coordinate="cartesianX"/>
+    </parameter>
+  </listOfParameters>
+\end{example}
+\end{blockChanged}
 
 \subsection{The extended \Reaction object}
 \label{extended-reaction-class}
@@ -442,6 +475,19 @@ The \token{value} attribute is of type \primtype{double}. In a \token{boundaryMi
 If connected to a \Parameter via a \SpatialSymbolReference, this \token{value} may be overridden by an \InitialAssignment.  However, the \Parameter must be set \token{constant}=\val{true}, because it may not change over the course of the simulation.
 
 
+\begin{blockChanged}
+\subsubsection{A \CoordinateComponent example}
+In this example, a \CoordinateComponent is used to define an X axis that goes from 0 to 10 um.
+
+\begin{example}
+  <spatial:coordinateComponent spatial:id="x" spatial:type="cartesianX" spatial:unit="um">
+    <spatial:boundaryMin spatial:id="Xmin" spatial:value="0"/>
+    <spatial:boundaryMax spatial:id="Xmax" spatial:value="10"/>
+  </spatial:coordinateComponent>
+\end{example}
+\end{blockChanged}
+
+
 \subsection{The \class{DomainType} class}
 \label{domaintype-class}
 A \DomainType is a class of domains that are identified as being anatomically and physiologically similar.  For example, a \DomainType "cytosol" may be defined in a \Geometry as identifying the structure and function of the cell interior.  If there is one cell, then there is one domain, if there are multiple cells, then there are multiple disjoint domains ("cytosol1","cytosol2", etc.) identified with the \DomainType "cytosol".  \CompartmentMappings, defined as an extension to an SBML core \Compartment, map compartments to domain types such that each corresponding domain is assigned the same biological and mathematical function. \fig{DomainType-uml} shows the \DomainType object.
@@ -519,6 +565,35 @@ This attribute identifies an \AdjacentDomains object. The attribute is of type \
 \subsubsection{The \fixttspace\tokenNC{domain1} and \tokenNC{domain2} attributes}
 The \token{domain1} and \token{domain2} attributes, of type \primtype{SpIdRef}, are required attributes. They are the \primtype{SpId}'s of two domains that touch each other (spatially adjacent).  These are typically surface-volume contacts.
 
+\begin{blockChanged}
+\subsection{Domain example}
+\label{domain-example}
+The following is an example of a set of \Domain, \DomainType, and \AdjacentDomains objects.
+
+\begin{example}
+  <spatial:listOfDomainTypes>
+    <spatial:domainType spatial:id="Cytosol" spatial:spatialDimensions="3"/>
+    <spatial:domainType spatial:id="Nucleus" spatial:spatialDimensions="3"/>
+  </spatial:listOfDomainTypes>
+  <spatial:listOfDomains>
+    <spatial:domain spatial:id="Cytosol0" spatial:domainType="Cytosol">
+      <spatial:listOfInteriorPoints>
+        <spatial:interiorPoint spatial:coord1="2.4" spatial:coord2="2.4" spatial:coord3="0.5"/>
+      </spatial:listOfInteriorPoints>
+    </spatial:domain>
+    <spatial:domain spatial:id="Nucleus0" spatial:domainType="Nucleus">
+      <spatial:listOfInteriorPoints>
+        <spatial:interiorPoint spatial:coord1="4.8" spatial:coord2="4.8" spatial:coord3="0.5"/>
+      </spatial:listOfInteriorPoints>
+    </spatial:domain>
+  </spatial:listOfDomains>
+  <spatial:listOfAdjacentDomains>
+    <spatial:adjacentDomains spatial:domain1="Cytosol0" spatial:domain2="Nucleus0"
+                             spatial:id="Nucleus_Cytosol"/>
+  </spatial:listOfAdjacentDomains>
+\end{example}
+\end{blockChanged}
+
 
 \subsection{The \class{GeometryDefinition} class}
 \label{geometrydefinition-class}
@@ -579,6 +654,31 @@ No two \AnalyticVolume elements should have the same \token{ordinal} value, even
 The Math element is a required element for an \AnalyticVolume. The Math element contains a MathML expression that defines the analytic expression for the \AnalyticVolume referencing the coordinate components that are specified in the \ListOfCoordinateComponents in the \Geometry, according to the \token{functionType}. 
 
 
+
+\begin{blockChanged}
+\subsection{\AnalyticGeometry example}
+\label{analyticvolume-example}
+The following is an example of an analytic geometry, with a single volume described by the formula \val{$8*(x-1)^2 + 8*(y-1)^2 + 8*(z-1)^2 < 1$} (the formula for a sphere).
+
+\begin{example}
+ <spatial:analyticGeometry spatial:id="spatial3d_spheres" spatial:isActive="true">
+   <spatial:listOfAnalyticVolumes>
+     <spatial:analyticVolume spatial:id="Nucleus1" spatial:functionType="layered" spatial:ordinal="2"
+                             spatial:domainType="Nucleus">
+       <math xmlns="http://www.w3.org/1998/Math/MathML">
+         <apply> <lt/> <apply> <plus/> <apply> <times/> <cn>8</cn> <apply> <power/> <apply> <minus/>
+             <ci>x</ci> <cn>1</cn> </apply> <cn>2</cn> </apply> </apply> <apply> <times/>
+             <cn>8</cn> <apply> <power/> <apply> <minus/> <ci>y</ci> <cn>1</cn> </apply> <cn>2</cn>
+             </apply> </apply> <apply> <times/> <cn>8</cn> <apply> <power/> <apply> <minus/>
+             <ci>z</ci> <cn>1</cn> </apply> <cn>2</cn> </apply> </apply> </apply> <cn>1</cn>
+         </apply>
+       </math>
+     </spatial:analyticVolume>
+   </spatial:listOfAnalyticVolumes>
+ </spatial:analyticGeometry>
+\end{example}
+\end{blockChanged}
+
 \subsection{The \class{SampledFieldGeometry} class}
 \label{sampledfieldgeometry-class}
 \label{listofsampledvolumes-class}
@@ -597,7 +697,7 @@ The \token{sampledField} attribute is of type SpIdRef, and must reference a \Sam
 
 \subsection{The \class{SampledVolume} class}
 \label{sampledvolume-class}
-A \SampledVolume represents an interval of the sampled field that constitutes one or more contiguous regions. A \SampledVolume is defined for each volumetric (3-dimensional) \Domain in the \Geometry. Volumes are defined as regions within the referenced image that match a particular pixel value (\token{sampledValue}) or that match a range of pixel values (\token{minValue} and \token{maxValue}).  A given \SampledVolume must define for itself either a single value or a range of values to which it applies, but not both.  Within a \ListOfSampledVolumes, there must be at most one \SampledVolume that corresponds to any given pixel value.  That is, any given pixel value may only appear as the \token{sampledVolume} of a single \SampledVolume, or be between the \token{minValue} and \token{maxValue} (inclusive) of a single \SampledVolume.  It has the following attributes.
+A \SampledVolume represents an interval of the sampled field that constitutes one or more contiguous regions. A \SampledVolume is defined for each volumetric (3-dimensional) \Domain in the \Geometry. Volumes are defined as regions within the referenced image that match a particular pixel value (\token{sampledValue}) or that match a range of pixel values (\token{minValue} and \token{maxValue}).  A given \SampledVolume must define for itself either a single value or a range of values to which it applies, but not both.  Within a \ListOfSampledVolumes, there must be at most one \SampledVolume that corresponds to any given pixel value.  That is, any given pixel value may only appear as the \token{sampledVolume} of a single \SampledVolume, or be between the \token{minValue} and \token{maxValue} (inclusive) of a single \SampledVolume.  It has the following attributes:
 
 \subsubsection{The \fixttspace\tokenNC{id} attribute}
 The \token{id} attribute identifies a \SampledVolume object. The attribute is of type \primtype{SpId} and is required when specifying a \SampledVolume.  It has no mathematical meaning, and cannot be connected to a \Parameter via a \SpatialSymbolReference element.
@@ -609,11 +709,42 @@ The required \token{domainType} attribute is of type \primtype{SpIdRef}. It is t
 The optional \token{sampledValue} attribute is of type \primtype{double}. It represents the pixel value of a \SampledVolume.  When used, all pixels with this particular value are to be assigned to this \SampledVolume, and no pixel without this value is assigned to the \SampledVolume.  It is illegal to define a \token{sampledValue} attribute for a \SampledVolume that also has a \token{minValue} and \token{maxValue} defined.
 
 \subsubsection{The \fixttspace\tokenNC{minValue} attribute}
-The optional \token{minValue} attribute is of type \primtype{double}. It represents the minimum of the pixel value (\token{sampledValue}) range to be assigned to this \SampledVolume.  If a \token{minValue} attribute is defined, a \token{maxValue} attribute must also be defined, and the \token{sampledValue} attribute must not be defined.
+The optional \token{minValue} attribute is of type \primtype{double}. It represents the minimum of the pixel value (\token{sampledValue}) range to be assigned to this \SampledVolume.  If a \token{minValue} attribute is defined, a \token{maxValue} attribute must also be defined, and the \token{sampledValue} attribute must not be defined.  \changed{Areas in the \SampledField with \emph{exactly} this value are to be included in this \SampledVolume.}
 
 \subsubsection{The \fixttspace\tokenNC{maxValue} attribute}
-The optional \token{maxValue} attribute is of type \primtype{double}. It represents the maximum of the pixel value (\token{sampledValue}) range to be assigned to this \SampledVolume.  If a \token{maxValue} attribute is defined, a \token{minValue} attribute must also be defined, and the \token{sampledValue} attribute must not be defined.
+The optional \token{maxValue} attribute is of type \primtype{double}. It represents the maximum of the pixel value (\token{sampledValue}) range to be assigned to this \SampledVolume.  If a \token{maxValue} attribute is defined, a \token{minValue} attribute must also be defined, and the \token{sampledValue} attribute must not be defined.  \changed{Areas in the \SampledField with \emph{exactly} this value are to be excluded from this \SampledVolume.}
 
+\changed{Having the \token{minValue} be included and the \token{maxValue} be excluded allows modelers to define adjacent volumes without ambiguity at the boundaries.  One \SampledVolume may be defined from 0 to 100, and a second volume defined from 100 to 200, and any location with a \SampledField value of exactly 100 is only assigned to the first \SampledVolume, and every location with a value close to 100 is included in exactly one \SampledVolume.}
+
+
+\begin{blockChanged}
+\subsection{\SampledFieldGeometry example}
+\label{sampledfieldgeometry-example}
+The following is an example of a sampled field geometry with three volumes.  The referenced \SampledField (defined in \sec{sampledfield-class}) is also included (though truncated).
+
+\begin{example}
+  <spatial:listOfGeometryDefinitions>
+    <spatial:sampledFieldGeometry spatial:isActive="true" spatial:sampledField="imgtest">
+      <spatial:listOfSampledVolumes>
+        <spatial:sampledVolume spatial:id="Extracellular2" spatial:domainType="Extracellular"
+                               spatial:minValue="0" spatial:maxValue="64"/>
+        <spatial:sampledVolume spatial:id="Cytosol2" spatial:domainType="Cytosol2"
+                               spatial:minValue="64" spatial:maxValue="192"/>
+        <spatial:sampledVolume spatial:id="Nucleus2" spatial:domainType="Nucleus"
+                               spatial:minValue="192" spatial:maxValue="256"/>
+      </spatial:listOfSampledVolumes>
+    </spatial:sampledFieldGeometry>
+  </spatial:listOfGeometryDefinitions>
+  <spatial:listOfSampledFields>
+    <spatial:sampledField spatial:id="imgtest" spatial:dataType="uint8" spatial:numSamples1="51"
+                          spatial:numSamples2="59" spatial:numSamples3="23"
+                          spatial:interpolationType="linear" spatial:compression="uncompressed"
+                          spatial:samplesLength="1255">
+                                120 218 237 [...] 131 28 215
+    </spatial:sampledField>
+  </spatial:listOfSampledFields>
+\end{example}
+\end{blockChanged}
 
 \subsection{The \class{CSGeometry} class}
 \label{csgeometry-class}
@@ -819,7 +950,7 @@ An affine transformation is essentially a method to transform a shape's scale, r
 The \token{componentsLength} attribute is of type \primtype{int} and is required. It represents the array length of the \token{components} attribute (number of values in the \token{components} array).
 
 
-\subsection{CSGObject example}
+\subsection{CSGObject examples}
 \label{csgobject-example}
 The following is an example of a \CSGObject which has been scaled, rotated, and translated:
 
@@ -842,10 +973,27 @@ The following is an example of a \CSGObject which has been scaled, rotated, and 
 
 The manipulations can be read from the inside out: at the base level, we have the \CSGPrimitive sphere: a sphere with radius 1.0, centered at the origin.  It's then scaled such that it is compressed along each axis by different amounts: along the X axis to 7.5833\%, along the Y axis to 8.0451\%, and along the Z axis to 2.9583\%.  Then the scaled figure is rotated around a vector with its origin at (0,0,0) and its point at (2.4391, 1.5373, 0.58404), by 0.9104 radians.  Finally, it is translated by 5.439 along the X axis, 5.88 along the Y axis, and 1.078 along the Z axis.
 
+In this second example, a hemisphere is created through the intersection of a primitive sphere and translated cube:
+
+\begin{example}
+  <spatial:csgObject spatial:id="hemisphere" spatial:domainType="Nucleus">
+    <spatial:csgSetOperator spatial:operationType="intersection">
+      <spatial:listOfCSGNodes>
+        <spatial:csgPrimitive spatial:primitiveType="sphere"/>
+        <spatial:csgTranslation spatial:translateX="1" spatial:translateY="0"
+                                spatial:translateZ="0">
+          <spatial:csgPrimitive spatial:primitiveType="cube"/>
+        </spatial:csgTranslation>
+      </spatial:listOfCSGNodes>
+    </spatial:csgSetOperator>
+  </spatial:csgObject>
+\end{example}
+
+
 \subsection{The \class{ParametricGeometry} class}
 \label{parametricgeometry-class}
 \label{listofparametricobjects-class}
-\ParametricGeometry is a type of \GeometryDefinition that parametrically defines geometric strucutures/domains. The \ParametricGeometry element is defined with a \SpatialPoints object and a \token{listOfParametricObjects} that is a collection of \ParametricObjects. \fig{ParametricGeometry-uml} shows the definition of the \ParametricGeometry object.
+\ParametricGeometry is a type of \GeometryDefinition that parametrically defines geometric strucutures/domains. The \ParametricGeometry element is defined with a \SpatialPoints object and a \token{listOfParametricObjects} that is a collection of \ParametricObjects. \changed{Each point in the \SpatialPoints list is given an index, and those indices are used in the creation of each \ParametricObject.  There may be points whose indices are never used; this does not affect the \ParametricGeometry.}  \fig{ParametricGeometry-uml} shows the definition of the \ParametricGeometry object.
 
 \begin{figure}[ht]
   \includegraphics{figs/ParametricGeometry-uml}
@@ -860,7 +1008,7 @@ The manipulations can be read from the inside out: at the base level, we have th
 
 \subsection{The \class{SpatialPoints} class}
 \label{spatialpoints-class}
-The \SpatialPoints element represents the set of points to be used as vertices in the \ParametricGeometry.
+The \SpatialPoints element represents the set of points to be used as vertices in the \ParametricGeometry.  \changed{In essence, the \SpatialPoints defines a lattice on which each \ParametricObject is to be drawn.  There may be unused points in the list if no \ParametricObject ever uses that index to draw its shape.}
 
 \subsubsection{The \fixttspace\tokenNC{compression} attribute}
 The required \token{compression} attribute is of type \primtype{CompressionKind}. It is used to specify the compression used when encoding the data, and can have the value \val{uncompressed} if no compression was used, or \val{deflated} if the deflation algorithm was used to compress the text version of the data.
@@ -880,7 +1028,7 @@ The \token{ArrayData} text child of the \SpatialPoints is in \token{arrayData} f
 
 \subsection{The \class{ParametricObject} class}
 \label{parametricobject-class}
-The \ParametricObject element represents a parametric geometry object. 
+The \ParametricObject element represents a single parametric geometry object.  \changed{It contains a list of point indices from the parent \ParametricGeometry's \SpatialPoints, which collectively define the faces of the object.}
 
 \subsubsection{The \fixttspace\tokenNC{id} attribute}
 The \token{id} attribute is a required attribute of type \primtype{SpId}. It uniquely identifies the \ParametricObject element.  It has no mathematical meaning, and cannot be connected to a \Parameter via a \SpatialSymbolReference element.
@@ -903,7 +1051,7 @@ The \token{pointIndexLength} attribute is of type \primtype{int} and is required
 The \token{dataType} attribute is of type \primtype{DataKind} and is optional.  It is used to specify the type of the data being stored.  Because all of the data will be indexes into the \token{ArrayData} of the \SpatialPoints element, the allowed formats are \val{uint8}, \val{uint16}, and \val{uint32} to indicate 8-bit, 16-bit, and 32-bit unsigned integer values, respectively.  The values \val{double} and \val{float} are not to be used.  This attribute is required so that the compressed data can be properly uncompressed.
 
 \subsubsection{The \fixttspace\tokenNC{PointIndex} text child}
-The \token{PointIndex text child of the \ParametricObject is in \token{arrayData} format}, and represents an ordered list of indices that refer to elements in the \SpatialPoints array and are interpreted by considering the \token{polygonType} attribute of the \ParametricObject with a value of \val{triangle} indicating that the data is to be grouped in sets of three, and a value of \val{quadrilateral} indicating that the data is to be grouped in sets of four.  The sequence of indices must follow adjacent edges, with an implied edge between the first and last vertex.  Additionally, the order of that sequence should be consistently clockwise or counter-clockwise for any contiguous surface.  This can be accomplished by ensuring that when an edge is used for two different faces, the order of that edge is reversed for the second face.  It is suggested, but not required, that if the data is uncompressed, that the grouped points be separated from each other with the use of a semicolon.  If the data is compressed, a semicolon is not to be used.
+The \token{PointIndex} text child of the \ParametricObject is in \token{arrayData} format, and represents an ordered list of indices that refer to elements in the \SpatialPoints array and are interpreted by considering the \token{polygonType} attribute of the \ParametricObject with a value of \val{triangle} indicating that the data is to be grouped in sets of three, and a value of \val{quadrilateral} indicating that the data is to be grouped in sets of four.  The sequence of indices must follow adjacent edges, with an implied edge between the first and last vertex.  Additionally, the order of that sequence should be consistently clockwise or counter-clockwise for any contiguous surface.  This can be accomplished by ensuring that when an edge is used for two different faces, the order of that edge is reversed for the second face.  It is suggested, but not required, that if the data is uncompressed, that the grouped points be separated from each other with the use of a semicolon.  If the data is compressed, a semicolon is not to be used.  \changed{Each set of indices that define a polygon face should each refer to a different location.  This means that one should not re-use index values with a single polygon face, nor should one use two index values in the same face that are mapped to the same location.}
 
 \subsection{A \class{ParametricGeometry} example}
 \label{parametricgeometry-example}
@@ -994,7 +1142,7 @@ Note that these ordinals only apply at the level of the immediate parent \MixedG
 
 \subsection{The \class{SampledField} class}
 \label{sampledfield-class}
-A \SampledField is a sampled scalar field such as an image or samples from a level set. The attributes of \SampledField represent the specification of a sample dataset (the number of samples in x, y, z coordinates, data type of the sample representation, etc.) and the text child of the \SampledField is the actual sampled data, defined in \fig{sampledfield-uml}.
+A \SampledField is a sampled scalar field such as an image or samples from a level set. The attributes of \SampledField represent the specification of a sample dataset (the number of samples in x, y, z coordinates, data type of the sample representation, etc.) and the text child of the \SampledField is the actual sampled data, defined in \fig{sampledfield-uml}.  \changed{The purpose of a \SampledField is to fill the \Geometry with values that can be used in math and/or in \SampledFieldGeometry elements.  Values are defined at lattice points within the \Geometry, and are interpolated to fill the remainder of all off-lattice locations.}
 
 \begin{figure}[ht]
   \includegraphics{figs/SampledField-uml}
@@ -1009,6 +1157,8 @@ The size of the field is assumed to match the axes (the \CoordinateComponent chi
 
 When tied to a \SpatialSymbolReference, regardless of its useage, each \SampledField still must represent values across the entire \Geometry.  If used in an \InitialAssignment to assign values to a \Species that only exists in a particular \DomainType within the \Geometry, entries in the \SampledField that correspond to areas of space not covered by that \DomainType will simply be ignored.  Those values may be set to zero, or could be used in other contexts.  For example, a \SampledField could represent 'the concentration of ATP in the Geometry', and one \InitialAssignment could be used to apply the field to the species 'ATP in the cytosol' and a second \InitialAssignment could be used to apply the same field to the species 'ATP in the nucleus', with different values being examined and used in each case.
 
+\changed{When used in a \SampledFieldGeometry, again, the values of the field are interpolated to all off-lattice points to determine whether or not any arbitrary location within the \Geometry is part of a given \SampledVolume or not.}
+
 %{\color{red} Lucian: \notice Is the above description reasonable?}
 
 \subsubsection{The \fixttspace\tokenNC{interpolationType} attribute}
@@ -1017,7 +1167,7 @@ The required \token{interpolationType} attribute is type \primtype{Interpolation
 %If the attribute is not defined, then no interpolation strategy is to be inferred or implied for this \SampleData element.  Simulators may use one of the above strategies or some other strategy, as befits their situation.
 
 \subsubsection{The \fixttspace\tokenNC{numSamples1}, \tokenNC{numSamples2}, \tokenNC{numSamples3} attributes}
-The \token{numSamples1}, \token{numSamples2}, and \token{numSamples3} attributes represent the number of samples in each of the coordinate components. (e.g. numX, numY, numZ) in an image dataset.  These attributes are of type \primtype{int} and are required to specify the \SampledField. The samples are assumed to be uniformly sampled.  \changed{It is required to have as many \token{numSamples} attributes as there are \CoordinateComponent elements in the \Geometry, with \token{numSamples1} defined if there is a \token{cartesianX} element; \token{numSamples2} defined if there is a \token{cartesianY} element, and \token{numSamples3} defined if there is a \token{cartesianZ} element, each attribute corresponding to the \CoordinateComponent with the respective \token{type}.}
+The \token{numSamples1}, \token{numSamples2}, and \token{numSamples3} attributes represent the number of samples in each of the coordinate components. (e.g. numX, numY, numZ) in an image dataset.  These attributes are of type \primtype{\changed{positive} int} and are required to specify the \SampledField. The samples are assumed to be uniformly sampled.  \changed{It is required to have as many \token{numSamples} attributes as there are \CoordinateComponent elements in the \Geometry, with \token{numSamples1} defined if there is a \token{cartesianX} element; \token{numSamples2} defined if there is a \token{cartesianY} element, and \token{numSamples3} defined if there is a \token{cartesianZ} element, each attribute corresponding to the \CoordinateComponent with the respective \token{type}.}
 
 \subsubsection{The \fixttspace\tokenNC{compression} attribute}
 The required \token{compression} attribute is of type \primtype{CompressionKind}. It is used to specify the compression used when encoding the data, and can have the value \val{uncompressed} if no compression was used, or \val{deflated} if the deflation algorithm was used to compress the text version of the data.
@@ -1025,7 +1175,7 @@ The required \token{compression} attribute is of type \primtype{CompressionKind}
 %{\color{red} Lucian: \notice Based on our discussion on the list about compression, the above is a compromise/temporary position so that existing implementations can continue to work for now, but we are moving towards using base64 in the future. Eventually, if base64 turns out to work great, we should be able to drop 'deflated' as an option entirely, and only use 'uncompressed' and 'base64'.}
 
 \subsubsection{The \fixttspace\tokenNC{samplesLength} attribute}
-The \token{samplesLength} attribute is of type \primtype{int} and is required. It represents the array length of the \primtype{arrayData} text child of this node.  If uncompressed, this will equal the product of the \token{numSamples*} attributes, but if compressed, this will equal the new compressed length of the array, not including any added whitespace.  It is included for convenience and validation purposes.
+The \token{samplesLength} attribute is of type \primtype{\changed{positive} int} and is required. It represents the array length of the \primtype{arrayData} text child of this node.  If uncompressed, this will equal the product of the \token{numSamples*} attributes, but if compressed, this will equal the new compressed length of the array, not including any added whitespace.  It is included for convenience and validation purposes.
 
 \subsubsection{The \fixttspace\tokenNC{dataType} attribute}
 The \token{dataType} attribute is of type \primtype{DataKind} and is optional.  It is used to specify the type of the data being stored.  The value \val{double} is used to indicate double-precision (64-bit) floating point values; \val{float} to indicate single-precision (32-bit) floating point values, and \val{uint8}, \val{uint16}, and \val{uint32} to indicate 8-bit, 16-bit, and 32-bit unsigned integer values, respectively.

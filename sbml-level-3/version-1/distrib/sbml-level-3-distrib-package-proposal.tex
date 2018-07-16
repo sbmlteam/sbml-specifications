@@ -82,8 +82,8 @@
 \begin{document}
 
 \packageTitle{The Distributions Package\\for SBML Level 3}
-\packageVersion{Version \changed{0.19} (Draft)}
-\packageVersionDate{\changed{June XX, 2018}}
+\packageVersion{Version \changed{0.20} (Draft)}
+\packageVersionDate{\changed{July XX, 2018}}
 %\packageGeneralURL{http://sbml.org/Community/Wiki/SBML_Level_3_Proposals/Distributions_and_Ranges}
 %\packageThisVersionURL{}
 
@@ -148,7 +148,8 @@ from MS.\\ \midrule
 0.16 (Draft) & March 2015 & Lucian Smith & Added information about UncertML 3.0 distributions, and the distributions custom annotations.\\\midrule
 0.17 (Draft) & June 2017 & Lucian Smith & Extensive update to reflect demise of UncertML 3.0, and appearance of ProbOnto.\\\midrule
 0.18 (Draft) & June 2017 & Lucian Smith & Fixes to reflect feedback on version 0.17.\\\midrule
-0.19 (Draft) & June 2018 & Lucian Smith & \changed{Resolved id/name issues with SBML core l3v1 vs. l3v2.}\\
+0.19 (Draft) & June 2018 & Lucian Smith & Resolved id/name issues with SBML core l3v1 vs. l3v2.\\\midrule
+0.19 (Draft) & June 2018 & Lucian Smith & \changed{Updates to allow distributions as new MathML csymbols.}\\
 %\midrule
 \bottomrule
 \end{edtable}
@@ -454,6 +455,12 @@ be reintroduced.
 
 In early 2017, it became clear that UncertML was no longer being worked on; the web page had lapsed, and its authors had moved on to other things.  At the same time, the ProbOnto ontology (\citealt{swat:2016}; \url{http://probonto.org/}) was developed that included all the distributions from UncertML as well as a huge number of other distributions.  On the mailing list, it was discussed whether to create essentially our own version of UncertML, or to implement a generic 'reference' format that used ProbOnto.  The v0.17 draft specification was developed as a compromise 'hybrid' system that did parts of both, so that basic distributions would be hard-coded, but the ability to reference any ProbOnto ontology would also be present.  The hope is that with working examples of both approaches, either the hybrid approach will be approved, or if one is preferred, the other approach may be removed.  This version of the specification was created for presentation at HARMONY 2017 in Seattle.
 
+\begin{blockChanged}
+\subsubsection{Early 2018 and HARMONY: Oxford}
+
+At HARMONY in Oxford, for the first time since the change from UncertML, a libsbml implementation of the specification was available.  This let people experiment with the package, and conclude that a simpler method of defining calls to distributions was desired.  It was proposed to define new MathML 'csymbol' definitions for the common distributions.  It was unclear whether the other methods for everything would be useful or not; for now, we are leaving them in, and if people develop support for them, they can stay.
+\end{blockChanged}
+
 
 \section{Proposed syntax and semantics}
 
@@ -538,18 +545,16 @@ conventions used in the SBML Level~3 Core specification document.
 \subsection{Namespace URI and other declarations necessary for using this package}
 \label{xml-namespace}
 
-Every SBML Level~3 package is identified uniquely by an XML namespace URI.  For an SBML document to be able to use a given Level~3 package, it must declare the use of that package by referencing its URI.  \changed{This version of the \distrib package has two URIs, depending on which version of core SBML is being used:}
-\begin{blockChanged}
+Every SBML Level~3 package is identified uniquely by an XML namespace URI.  For an SBML document to be able to use a given Level~3 package, it must declare the use of that package by referencing its URI.  This version of the \distrib package has two URIs, depending on which version of core SBML is being used:
 \begin{center}
 \uri{http://www.sbml.org/sbml/level3/version1/distrib/version1}
 \end{center}
 \begin{center}
 \uri{http://www.sbml.org/sbml/level3/version2/distrib/version1}
 \end{center}
-\end{blockChanged}
 
 
-Note that the \distrib package may be used with both \threeone and \threetwo documents, \changed{with the only semantic change between the two present in the \DistribBase class. Note that if used with \threeone the corresponding \distrib namespace for \threeone must be used and similarly if \threetwo is being used, the \distrib namespace must be the one for \threetwo.}
+Note that the \distrib package may be used with both \threeone and \threetwo documents, with the only semantic change between the two present in the \DistribBase class. Note that if used with \threeone the corresponding \distrib namespace for \threeone must be used and similarly if \threetwo is being used, the \distrib namespace must be the one for \threetwo.
 
 
 In addition, SBML documents using a given package must indicate whether the package may be used to change the mathematical meaning of \sbmlthreecore elements.  This is done using the attribute \token{required} on the \token{<sbml>} element in the SBML document.  For the \distrib package, the value of this attribute must be \val{true}, as the \DrawFromDistribution element overrides the core definition of a \FunctionDefinition.  Note that the value of this attribute must \emph{always} be set to \val{true}, even if the particular model does not contain any \DrawFromDistribution elements.
@@ -626,7 +631,6 @@ It is hoped that with this approach, modelers may use the \Distribution classes 
 When a distribution is defined in a \FunctionDefinition, it is sampled when it is invoked. To reuse a sampled value, the value must be assigned to a parameter first, such as through the use of an \InitialAssignment or \EventAssignment.  When a distribution is defined elsewhere, that information may be used outside of the model, using whatever methodology is appropriate to answer the question being pursued.
 
 
-\begin{blockChanged}
 \subsection{The \DistribBase class}
 \label{sec:DistribBase-class}
 \label{DistribBase-class}
@@ -635,13 +639,12 @@ When a distribution is defined in a \FunctionDefinition, it is sampled when it i
 The \DistribBase class is an abstract base class which is the parent class for every class in this \distrib package.  Its sole purpose is to encapsulate how this package handles the fact that in \threetwo, the attributes \token{id} and \token{name} were added to \SBase.  It defines attributes 'distrib:id' and 'distrib:name' as optional, so that they can be used in \threeone documents where those attributes would otherwise not exist.  However, in \threetwo documents, 'distrib:id' and 'distrib:name' may not be used: the core attributes \token{id} and \token{name} should be used instead.  In this way, every \distrib element will always have exactly one id and exactly one name.
 
 The meaning of these attributes is identical, regardless of the level/version of the document in which they appear.  When a subclass makes one of the attributes required (as the \token{id} of the \DistribInput class), this means that it must have the 'distrib:id' attribute in a \threeone document, or an \token{id} attribute in a \threetwo document.
-\end{blockChanged}
 
 The \token{id} attribute is of type \primtype{SId}, and must be unique among other ids in the \primtype{SId} namespace in the parent \Model, and has no mathematical meaning, unless stated otherwise in the definition of that object.  The \token{name} attribute is of type \primtype{string}, and is provided to allow the user to define a human-readable label for the object, and has no uniqueness restrictions.
 
 \begin{figure}[bh]
   \includegraphics{figs/distribBase.pdf}
-  \caption{\changed{The definition of the \DistribBase class.  The \token{id} and \token{name} attributes defined are optional, but must not be used in \threetwo documents.}}
+  \caption{The definition of the \DistribBase class.  The \token{id} and \token{name} attributes defined are optional, but must not be used in \threetwo documents.}
   \label{fig:distribBase}
 \end{figure}
 
@@ -661,7 +664,7 @@ The \FunctionDefinition class may or may not still contain the \mathml block con
 \end{figure}
 
 
-As outlined above, the \FunctionDefinition class is extended to contain a \DrawFromDistribution child, which overrides \changed{the <lambda> element of the \Math child} present in the \FunctionDefinition.  Software that does not support \distribshort could potentially invoke the original \Math of the \FunctionDefinition (see \ref{sec:fallbackfunc}) instead.
+As outlined above, the \FunctionDefinition class is extended to contain a \DrawFromDistribution child, which overrides the <lambda> element of the \Math child present in the \FunctionDefinition.  Software that does not support \distribshort could potentially invoke the original \Math of the \FunctionDefinition (see \ref{sec:fallbackfunc}) instead.
 
 
 
@@ -699,7 +702,7 @@ Each \DistribInput element represents an argument to the function, and serves as
 
 If the \LambdaClass child of the \FunctionDefinition is present, it must have the same number of \token{bvar} children as the \DrawFromDistribution has \DistribInput children.  They do not, however, have to have the same ids:  the \token{bvar} ids are defined as being local to the \LambdaClass function in much the same way that the \DistribInput ids are defined as being local to the \DrawFromDistribution object.
 
-Each \token{index} attribute on a \DistribInput within a \ListOfDistribInputs element must have a unique value, numbered consecutively from \val{0}:  if one \DistribInput is present, its \token{index} value must be \val{0}; if there are two, they must have \token{index} values of \val{0} and \val{1}, etc. \changed{Where the \FunctionDefinition also contains a \Math child the values of the \token{index} relates the \DistribInput to the the <bvar> element in the corresponding position.}
+Each \token{index} attribute on a \DistribInput within a \ListOfDistribInputs element must have a unique value, numbered consecutively from \val{0}:  if one \DistribInput is present, its \token{index} value must be \val{0}; if there are two, they must have \token{index} values of \val{0} and \val{1}, etc. Where the \FunctionDefinition also contains a \Math child the values of the \token{index} relates the \DistribInput to the the <bvar> element in the corresponding position.
 
 \subsubsection{Attributes inherited from \SBase}
 

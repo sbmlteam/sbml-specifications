@@ -13,11 +13,8 @@ The proposed \FBCPackage version~3 extends the definition of the \FluxObjective,
   \centering
   % Requires \usepackage{graphicx}
   \includegraphics[height=0.85\textheight]{images/fbc_uml_v3.pdf}\\
-  \caption{A UML representation of the \FBCPackage version three. Derived from \SBase, most
-	\FBC classes inherit support for constructs such as SBML \Notes and
-	\Annotation's. The [association] element name is the name of the class, de-capitalized.  In this case, the possible values are "and", "or", or "geneProductRef". See \ref{conventions} for conventions related to this figure.
-	The individual classes are further discussed in the text.}
-  \label{fig:fbc_uml}
+  \caption{A UML representation of the \FBCPackage version three. Derived from \SBase, most\FBC classes inherit support for constructs such as SBML \Notes and \Annotation's. The [association] element name is the name of the class, de-capitalized. In this case, the possible values are "and", "or", or "geneProductRef". See \ref{conventions} for conventions related to this figure. The individual classes are further discussed in the text.}
+  \label{fig:fbc_uml_v3}
 \end{figure}
 
 %\subsection{The extended \class{SBase} class}
@@ -53,6 +50,11 @@ represents the index of a variable that occurs in either the \FluxObjective or \
 %represents the index of a variable that occurs in a user defined constraint. It can have one
 %of the following two values \val{linear} or \val{quadratic}.
 
+\subsubsection{The \FBC \class{listOfUserConstraints}}
+\label{listofuserconstraints-class}
+
+As shown in \ref{fig:fbc_v3_uml_user_constraints} the \ListOfUserConstraints is derived from \SBase and inherits the attributes \token{metaid} and \token{sboTerm}, as well as
+the subcomponents for \Annotation and \Notes. The \ListOfUserConstraints must contain at least one \UserConstraint (defined in \ref{userconstraint-class}).
 
 \subsection{The extended \class{Species} class}
 
@@ -85,14 +87,12 @@ The optional attribute \token{chemicalFormula} containing a \primtype{string} th
 \begin{table}[h!]
   \begin{tabular}{ccc}
     % after \\: \hline or \cline{col1-col2} \cline{col3-col4} ...
-     $RCONH_{2}$ & $RCOX$ & $C_{2}H_{4}O_{2}(CH_{2})_{n}$	  \\
+     $RCONH_{2}$ & $RCOX$ & $C_{2}H_{4}O_{2}(CH_{2})_{n}$ \\
   \end{tabular}
   \caption{Examples of chemical formulas written using allowed non-Hill symbols, as described in \ref{chemicalFormula-attribute}.}\label{table:non-hill}
 \end{table}
 %
 \newtxt{In addition the undefined parenthesised group index may also occur: $(\ldots)_n$. While allowed, the use of any of these symbols is not encourage as, in general, any reaction in which such a \Species occurs as a reagent cannot be balanced. Therefore, any \token{chemicalFormula} that contains any of the aforementioned, non-Hill compatible symbols, will generate a `best practices' warning on model validation.}
-
-
 
 \subsection{The \FBC \class{FluxObjective} class}
 
@@ -100,6 +100,8 @@ The optional attribute \token{chemicalFormula} containing a \primtype{string} th
 The required \token{variableType} attribute contains a \primtype{FbcVariableType} that
 represents the index of a variable that occurs in a \FluxObjective. It can have one
 of the following two values \val{linear} or \val{quadratic}.
+%
+\exampleFile{examples/ex-v3-userconstraints.txt}
 %
 \begin{figure}[ht]
   \centering
@@ -109,14 +111,7 @@ of the following two values \val{linear} or \val{quadratic}.
   \label{fig:fbc_uml_userconstraint}
 \end{figure}
 
-\subsubsection{The \FBC \class{listOfUserConstraints}}
-\label{listofuserconstraints-class}
 
-As shown in \ref{fig:fbc_v3_uml_user_constraints} the \ListOfUserConstraints is derived from \SBase
-and inherits the attributes \token{metaid} and \token{sboTerm}, as well as
-the subcomponents for \Annotation and \Notes. The
-\ListOfUserConstraints must contain at least one \UserConstraint (defined in
-\ref{userconstraint-class}).
 
 \subsection{The \FBC \class{UserConstraint} class}
 \label{userconstraint-class}
@@ -126,7 +121,7 @@ The \FBC \UserConstraint class is derived from \SBML \SBase and inherits
 \Annotation and \Notes. It's purpose is to define non-stoichiometric constraints, i.e., constraints that are not implicitly defined by the reaction network. The \UserConstraint contains a linear combination of \UserConstraintComponent's contained in a \ListOfUserConstraintComponents.
 
 \paragraph{The \token{id} and \token{name} attributes}
-An \UserConstraint has an optional \token{id} of type
+A \UserConstraint has an optional \token{id} of type
 \primtype{SId} and an optional attribute \token{name} of type \primtype{string}.
 
 \paragraph{The \token{lowerBound} attribute}
@@ -167,24 +162,32 @@ An \UserConstraintComponent has an optional \token{id} of type \primtype{SId} an
 The required \token{coefficient} attribute contains an \primtype{SIdRef} that is restricted to reference only a \Parameter which then holds the coefficient value. (\newtxt{In strict mode this should probably behave like a FluxObjective coefficient and not be able to have the value NaN and +-inf }).
 
 \paragraph{The \token{variable} attribute}
-The required \token{variable} attribute contains an \primtype{SIdRef} that is restricted to reference the \primtype{SId} of either a \Reaction or (\newtxt{non-constant?}) \Parameter.
+The required \token{variable} attribute contains an \primtype{SIdRef} that is restricted to reference the \primtype{SId} of either a \Reaction or (\newtxt{non-constant?}) \Parameter. \newtxt{If a \token{variable} refers to a \Parameter, it may not refer to the \primtype{SId} referenced by the \token{coefficient} attribute.}
 
 \paragraph{The \token{variableType} attribute}
 The required \token{variableType} attribute contains a \primtype{FbcVariableType} that indicates whether a variable should be considered as `linear' or `quadratic'.
 
-\subsection{The \FBC \class{ListOfKeyValuePairs}}
-\label{ListOfKeyValuePairs-class}
 
-The \class{ListOfKeyValuePairs}, see \ref{fig:fbc_v3_uml_keyvalue} for details, forms the basis of a controlled annotation defined by the \FBCPackage. This element defines a `structured note' or `descriptive list' of keys and associated values. 
+
+
+
+
+
+\subsection{The \FBC \class{ListOfKeyValuePairs} class}
+\label{listofkeyvaluepairs-class}
+
+The \ListOfKeyValuePairs, see \ref{fig:fbc_v3_uml_keyvalue} for details, forms the basis of a controlled annotation defined by the \FBCPackage. This element defines a `structured note' or `descriptive list' of keys and associated values.
 %
-\begin{quote}
-\begin{description}
-  \item[keyX] 47
-  \item[ZZkey] beard level 5
-  \item[x--factor] intangible metaphysical property
-\end{description}
-\end{quote}
+\exampleFile{examples/ex-v3-kvp1.txt}
 %
+%\begin{quote}
+%\begin{description}
+%  \item[keyX] 47
+%  \item[ZZkey] beard level 5
+%  \item[x--factor] intangible metaphysical property
+%\end{description}
+%\end{quote}
+%%
 As such it is analogous to the official \SBML RDF annotation used to support MIRIAM annotations, as defined in the \SBML specification documents. Similarly, we define an official \FBC annotation, the \ListOfKeyValuePairs. The advantages of using the existing \SBML annotation mechanism include, \SBase not needing any further extension (a technical/performance advantage) and the annotation can be used directly in all existing \SBML levels and versions.
 
 As is the case with the RDF/MIRIAM annotations, support for \ListOfKeyValuePairs will be included in the \SBML support libraries.
@@ -195,8 +198,7 @@ As is the case with the RDF/MIRIAM annotations, support for \ListOfKeyValuePairs
   %\includegraphics[width=6cm]{images/fbc_v3_uml_keyvalue.pdf}\\
   \includegraphics[width=0.6\textwidth]{images/fbc_v3_uml_keyvalue.pdf}\\
   \caption{A UML representation of the \SBML \SBase class extended in
-  the \FBCPackage by the \ListOfKeyValuePairs. See \ref{conventions} for conventions related to this
-  figure.}
+  the \FBCPackage by the \protect{\ListOfKeyValuePairs}. See \ref{conventions} for conventions related to this figure.}
   \label{fig:fbc_v3_uml_keyvalue}
 \end{figure}
 %
@@ -204,15 +206,13 @@ As shown in \ref{fig:fbc_v3_uml_keyvalue}, the \ListOfKeyValuePairs is derived f
 
 \paragraph{The \token{xmlns} attribute}
 The \token{xmlns} is a mandatory component of the \ListOfKeyValuePairs, is of the type \primtype{url} which must have the value: \token{http://sbml.org/fbc/keyvaluepair}.
-%
-\exampleFile{examples/ex-v3-kvp1.txt}
 
 
 \subsection{The \FBC \class{KeyValuePair} class}
 \label{keyvaluepair-class}
 
-The \FBC \KeyValuePair class is not derived from \SBML \SBase and therefore \newtxt{does not} inherit \token{metaid} and \token{sboTerm}, as well as the subcomponents for
-\Annotation and \Notes. It's purpose is to define a structured key--value pair. 
+The \FBC \KeyValuePair class is not derived from \SBase and therefore \newtxt{does not} inherit \token{metaid} and \token{sboTerm}, as well as, the subcomponents for
+\Annotation and \Notes. It's purpose is to define a key--value pair.
 
 The \KeyValuePair defines a single mandatory attribute the \token{key} as well as two optional attributes: \token{value} and \token{url}.
 
@@ -223,7 +223,7 @@ The \token{key} is the mandatory component of the \KeyValuePair pair and is of t
 The optional \token{value} attribute is of \primtype{string} and contains the value associated with a particular \token{key}. If not present, the \KeyValuePair is defined to have no value.
 
 \paragraph{The \token{url} attribute}
-The optional attribute \token{url} is of type \primtype{url}. This attribute is included and references a resource that contains a description of the \token{key} component of the \KeyValuePair. Note that the nature or structure of this resource is not defined. For example, it could be an HTML page with a textual description of the \token{key}s used by a particular tool or another that contains a table.
+The optional attribute \token{url} is of type \primtype{url}. This attribute is included and references a resource that contains a description of the \token{key} component of the \KeyValuePair. Note that the nature or structure of this resource is not defined. For example, it could be an HTML page with a textual description of the \token{key}(s) used by a particular tool or another that contains a table.
 
 
 

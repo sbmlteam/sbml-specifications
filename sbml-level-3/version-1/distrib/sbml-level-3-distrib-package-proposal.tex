@@ -557,7 +557,7 @@ Every SBML Level~3 package is identified uniquely by an XML namespace URI.  For 
 Note that the \distrib package may be used with both \threeone and \threetwo documents, with the only semantic change between the two present in the \DistribBase class. Note that if used with \threeone the corresponding \distrib namespace for \threeone must be used and similarly if \threetwo is being used, the \distrib namespace must be the one for \threetwo.
 
 
-In addition, SBML documents using a given package must indicate whether the package may be used to change the mathematical meaning of \sbmlthreecore elements.  This is done using the attribute \token{required} on the \token{<sbml>} element in the SBML document.  For the \distrib package, the value of this attribute must be \val{true}, as the \DrawFromDistribution element overrides the core definition of a \FunctionDefinition.  Note that the value of this attribute must \emph{always} be set to \val{true}, even if the particular model does not contain any \DrawFromDistribution elements.
+In addition, SBML documents using a given package must indicate whether the package may be used to change the mathematical meaning of \sbmlthreecore elements.  This is done using the attribute \token{required} on the \token{<sbml>} element in the SBML document.  For the \distrib package, the value of this attribute must be \val{true}, as the \DrawFromDistribution element overrides the core definition of a \FunctionDefinition, \changed{and because of the newly-allowed MathML elements}.  Note that the value of this attribute must \emph{always} be set to \val{true}, even if the particular model does not contain any \DrawFromDistribution elements \changed{or new MathML elements}.
 
 The following fragment illustrates the beginning of a typical SBML model using \threeone and this version of the \distrib package:
 
@@ -624,11 +624,11 @@ random value from that distribution.
 
 Secondly, it provides a mechanism for describing elements with information about their uncertainty.  One common use case for this will be to provide the standard deviation for a value.  Another may be describing a parameter's distribution, so that a better search can be performed in a parameter scan experiment.
 
-These purposes are achieved by extending \FunctionDefinition and \SBase, which in turn use the \Distribution and \UncertStatistics classes, modeled after \uncertml.  Several distributions and statistics are defined explicitly in this specification, but more can be defined by referencing the external ontology such as the ProbOnto ontology through the \ExternalDistribution and \ExternalParameter classes.
+These purposes are achieved by \changed{allowing new \mathml elements, and by} extending \FunctionDefinition and \SBase, which in turn use the \Distribution and \UncertStatistics classes, modeled after \uncertml.  Several distributions and statistics are defined explicitly in this specification, but more can be defined by referencing an external ontology such as ProbOnto through the \ExternalDistribution and \ExternalParameter classes.
 
-It is hoped that with this approach, modelers may use the \Distribution classes defined in this specification with a reasonable expectation of various software packages recognizing and replicating those distributions.  However, if another distribution is required, those distributions may still be encoded, even if this makes the model less exchangeable.
+It is hoped that with this approach, modelers may use the \changed{extensions} defined in this specification with a reasonable expectation \changed{that most other} software packages \changed{will also recognize them}.  However, if another distribution is required, those distributions may still be encoded \changed{through reference to an external ontology}, even if this makes the model less exchangeable.
 
-When a distribution is defined in a \FunctionDefinition, it is sampled when it is invoked. To reuse a sampled value, the value must be assigned to a parameter first, such as through the use of an \InitialAssignment or \EventAssignment.  When a distribution is defined elsewhere, that information may be used outside of the model, using whatever methodology is appropriate to answer the question being pursued.
+When a distribution is defined in a \FunctionDefinition \changed{or used in the extended \Math}, it is sampled when it is invoked. \changed{If a particular returned value needs to be used again, that} value must be assigned to a parameter first, such as through the use of an \InitialAssignment or \EventAssignment.  When a distribution is defined elsewhere, that information may be used outside of the model, using whatever methodology is appropriate to answer the question being pursued.
 
 
 \subsection{The \DistribBase class}
@@ -647,6 +647,48 @@ The \token{id} attribute is of type \primtype{SId}, and must be unique among oth
   \caption{The definition of the \DistribBase class.  The \token{id} and \token{name} attributes defined are optional, but must not be used in \threetwo documents.}
   \label{fig:distribBase}
 \end{figure}
+
+\begin{blockChanged}
+\subsection{Extended \Math}
+
+To allow quick access to a variety of common functions, the \distrib package allows the use of new types of \token{csymbol} elements anywhere that \Math is used.  These \token{csymbol}s are functions, and therefore must be the first child of an \token{apply} element, and their arguments are predefined: you cannot call $normal(mean, variance)$, because the definition of the \token{normal} \token{csymbol} is $normal(mean, stdev)$.
+
+The newly-allowed \token{csymbol} elements are defined in the following table:
+
+\begin{longtabu} to \linewidth {
+    X[5,c]
+    X[5,l]}
+\textbf{URL} & \textbf{arguments} \\ \midrule
+\footnotesize{\url{http://www.sbml.org/sbml/symbols/distrib/normal}} &\footnotesize{$normal(mean, stdev)$ or $normal(mean, stdev, min, max)$}
+\\ \midrule
+\footnotesize{\url{http://www.sbml.org/sbml/symbols/distrib/uniform}} &\footnotesize{$uniform(min, max)$}
+\\ \midrule
+\footnotesize{\url{http://www.sbml.org/sbml/symbols/distrib/normal/bernoulli}} &\footnotesize{$bernoulli(prob)$}
+\\ \midrule
+\footnotesize{\url{http://www.sbml.org/sbml/symbols/distrib/normal/binomial}} &\footnotesize{$binomial(numberOfTrials, probabilityOfSuccess$ or $binomial(numberOfTrials, probabilityOfSuccess, min, max)$}
+\\ \midrule
+\footnotesize{\url{http://www.sbml.org/sbml/symbols/distrib/normal/cauchy}} &\footnotesize{$cauchy(location, scale)$ or $cauchy(location, scale, min, max)$}
+\\ \midrule
+\footnotesize{\url{http://www.sbml.org/sbml/symbols/distrib/normal/chi-square}} &\footnotesize{$chisquare(degreesOfFreedom)$ or $chisquare(degreesOfFreedom, min, max)$}
+\\ \midrule
+\footnotesize{\url{http://www.sbml.org/sbml/symbols/distrib/normal/exponential}} &\footnotesize{$exponential(rate)$ or $exponential(rate, min, max)$}
+\\ \midrule
+\footnotesize{\url{http://www.sbml.org/sbml/symbols/distrib/normal/gamma}} &\footnotesize{$gamma(shape, scale)$ or $gamma(shape, scale, min, max)$}
+\\ \midrule
+\footnotesize{\url{http://www.sbml.org/sbml/symbols/distrib/normal/laplace}} &\footnotesize{$laplace(location, scale)$ or $laplace(location, scale, min, max)$}
+\\ \midrule
+\footnotesize{\url{http://www.sbml.org/sbml/symbols/distrib/normal/log-normal}} &\footnotesize{$lognormal(shape, scale$ or $lognormal(shape, scale, min, max$}
+\\ \midrule
+\footnotesize{\url{http://www.sbml.org/sbml/symbols/distrib/normal/poisson}} &\footnotesize{$poisson(rate)$ or $poisson(rate, min, max)$}
+\\ \midrule
+\footnotesize{\url{http://www.sbml.org/sbml/symbols/distrib/normal/rayleigh}} &\footnotesize{$rayleigh(scale)$ or $rayleigh(scale, min, max)$}
+\\
+\bottomrule
+\end{longtabu}
+
+Many of the distributions take exactly two or four arguments (or exactly one or three arguments).  For those functions, the optional last two arguments are 'min' and 'max', for when the draw from the distribution is constrained to be between those two values.  For all functions, the 'min' boundary is \emph{inclusive}; that is, a value of \token{min} may be returned by the function (though this may be very unlikely for draws from a continuous distribution).  For all continuous distributions, the 'max' boundary is \emph{not inclusive}; that is, a value of \token{max} will never be returned.  The continuous distruibutions are \token{normal}, \token{cauchy}, \token{chisquare}, \token{exponential}, \token{gamma}, \token{laplace}, \token{lognormal}, and \token{rayleigh}.  For the discrete distributions, the 'max' boundray is \emph{inclusive}: that is, a value of \token{max} may indeed be returned.  The discrete distributions are \token{binomial} and \token{poisson}. 
+
+\end{blockChanged}
 
 \subsection{The extended \class{FunctionDefinition} class}
 \label{extended-functiondefinition-class}

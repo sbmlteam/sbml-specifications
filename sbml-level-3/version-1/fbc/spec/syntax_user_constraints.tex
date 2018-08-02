@@ -40,7 +40,7 @@ The \SBML \Model class is extended by a \token{listOfUserConstraints} of which i
 \label{primtype-fbcvariabletype}
 
 The \FBCPackage defines a new enumerated type \primtype{FbcVariableType} which
-represents the index of a variable that occurs in either the \FluxObjective or \UserConstraintComponent. It has one of the following two values, \val{linear} or \val{quadratic}.
+represents the index of a variable that occurs in either the \FluxObjective or \UserConstraintComponent. It contains the following two values, \val{linear} or \val{quadratic}.
 
 
 %\subsubsection{Type \primtypeNC{FbcUCCVariableType}}
@@ -80,9 +80,9 @@ The optional attribute \token{chemicalFormula} containing a \primtype{string} th
 	described in \ref{chemicalFormula-attribute}}\label{table:hill}
 \end{table}
 %
-\newtxt{Using this notation the number of carbon atoms in a molecule is indicated first, followed by the number of hydrogen atoms and then the number of all other chemical elements in alphabetical order. When the formula contains no carbon; all elements, including hydrogen, are listed alphabetically. Where there is more than a single atom present, this is indicated with an integer that precedes the element symbol.}
+\newtxt{Using this notation the number of carbon atoms in a molecule is indicated first, followed by the number of hydrogen atoms and then the number of all other chemical elements in alphabetical order. When the formula contains no carbon; all elements, including hydrogen, are listed alphabetically. Where there is more than a single atom present, this is indicated with an integer that follows the element symbol.}
 
-\newtxt{However, in certain situations it does become necessary to use a generic symbol in a user defined compound. For example, such symbols can include \textsf{R} and \textsf{X} and have the general form of a single capital letter followed by zero or more lowercase letters."}
+\newtxt{However, in certain situations it does become necessary to use a generic symbol in a user defined compound. For example, such symbols can include \textsf{R} and \textsf{X} and have the general form of a single capital letter followed by zero or more lowercase letters.}
 %
 \begin{table}[h!]
   \begin{tabular}{ccc}
@@ -92,9 +92,9 @@ The optional attribute \token{chemicalFormula} containing a \primtype{string} th
   \caption{Examples of chemical formulas written using allowed non-Hill symbols, as described in \ref{chemicalFormula-attribute}.}\label{table:non-hill}
 \end{table}
 %
-\newtxt{In addition, the undefined parenthesised group index may also be used, $(\ldots)_n$. Note the $n$ here has a literal intepretation and cannot be replaced by a value $(\ldots)_2$ or form part of an expression, $(\ldots)_{n-1}$.}
+\newtxt{In addition, the undefined parenthesised group index $(\ldots)_n$ may also be used. Note that in this case only the subscript $n$ is allowed, integer values $(\ldots)_2$ and expressions such as $(\ldots)_{n-1}$ are considered invalid.}
 
-\newtxt{While not invalid, the use of \textsf{R}, \textsf{X} and $(\ldots)_n$ is not encouraged as, in general, any \Reaction in which such a \Species occurs as a reagent cannot be balanced. Therefore, any \token{chemicalFormula} that contains any of the aforementioned, non-Hill compatible symbols will generate a `best practices' warning on model validation.}
+\newtxt{However, the use of \textsf{R}, \textsf{X} and $(\ldots)_n$ is not encouraged as, it may hinder the balancing of any Reaction in which such a \Species occurs. Therefore, any \token{chemicalFormula} that contains any of the aforementioned, non-Hill compatible symbols will raise a `best practices' warning on model validation.}
 
 \subsection{The \FBC \class{FluxObjective} class}
 
@@ -121,12 +121,11 @@ type \primtype{SId} and \token{name} an attribute of type \primtype{string}.
 The required \token{reaction} is of type \primtype{SIdRef} and is restricted
 to refer only to a \Reaction while the \token{coefficient} attribute
 holds a \primtype{double} referring to the coefficient that this \FluxObjective
-takes in the enclosing \Objective. 
+takes in the enclosing \Objective.
 
 \newtxt{\paragraph{The \token{variableType} attribute}
 The required \token{variableType} attribute contains a \primtype{FbcVariableType} that
-represents the index of a variable that occurs in a \FluxObjective. It can have one
-of the following two values \val{linear} or \val{quadratic}.}
+represents the index to which a variable is raised in a \FluxObjective. For example, where $J_{x}$ represents a steady-state flux the \primtype{FbcVariableType} defines either a \val{linear}, $J^1_x$ or \val{quadratic}, $J^2_x$ term.}
 
 \paragraph{Flux objectives: example code}
 \newtxt{An objective with purely linear terms in LP format:} \verb"Maximize: 1 R1 + 2 R2"
@@ -142,7 +141,7 @@ As described above the \FluxObjective defined here as $n\cdot J$ where
 the \token{coefficient} ($n$) is dimensionless and the \token{value} ($J$)
 takes the units of the \token{reaction} flux i.e.,~``extent per time''.
 Therefore, the \FluxObjective ($n\cdot J$)  has the unit ``extent per time''
-where the units of reaction ``extent'' and ``time'' are defined globally. 
+where the units of reaction ``extent'' and ``time'' are defined globally.
 
 
 
@@ -179,15 +178,6 @@ one \UserConstraintComponent contained in a \ListOfUserConstraintComponents.
 %
 \exampleFile{examples/ex-v3-userconstraints.txt}
 
-
-%\begin{figure}[ht]
-%  \centering
-%  % Requires \usepackage{graphicx}
-%  %\includegraphics[width=5cm]{images/v2harmony_fbc_objective.pdf}\\
-%  \caption{A UML representation of the \FBCPackage \UserConstraint class. For a complete description see \ref{fig:fbc_uml} as well as \ref{conventions} for conventions related to this figure.}
-%  \label{fig:fbc_uml_userconstraint}
-%\end{figure}
-
 \subsection{The \FBC \class{UserConstraintComponent} class}
 \label{userconstraintcomponent-class}
 
@@ -199,10 +189,10 @@ The \FBC \UserConstraintComponent class is derived from \SBML \SBase and inherit
 An \UserConstraintComponent has an optional \token{id} of type \primtype{SId} and an optional attribute \token{name} of type \primtype{string}.
 
 \paragraph{The \token{coefficient} attribute}
-The required \token{coefficient} attribute contains an \primtype{SIdRef} that is restricted to reference only a \Parameter which then holds the coefficient value. (\newtxt{In strict mode this should behave like a \FluxObjective coefficient for example, be defined as constant and not able to have the value NaN or $\pm$inf }).
+The required \token{coefficient} attribute contains an \primtype{SIdRef} that is restricted to reference only a constant \Parameter which holds the coefficient value. (\newtxt{In \textbf{strict} mode a \Parameter whose \primtype{SId} is referenced by a \token{coefficient}, as in the case of a \FluxObjective \token{coefficient}, has to be constant and not take the value NaN or $\pm$inf}).
 
 \paragraph{The \token{variable} attribute}
-The required \token{variable} attribute contains an \primtype{SIdRef} that is restricted to reference the \primtype{SId} of either a \Reaction or (\newtxt{non-constant}) \Parameter. \newtxt{If a \token{variable} refers to a non-constant \Parameter, it may not refer to an \primtype{SId} referenced by a \token{coefficient} attribute.} {\textbf{\large BGO: or more generally should parameters that act as variables only then be available to be referenced as variables (not coefficients, bounds etc)?}}
+\newtxt{The required \token{variable} attribute contains an \primtype{SIdRef} that is restricted to reference the \primtype{SId} of either a \Reaction or a non-constant \Parameter. Conversely, if such non-constant \Parameter's \primtype{SId} is referenced by a \UserConstraintComponent's \token{variable} attribute it may not be referenced by any \token{coefficient}, \token{lowerFluxBound} or \token{upperFluxBound} attribute.}
 
 \paragraph{The \token{variableType} attribute}
 The required \token{variableType} attribute contains a \primtype{FbcVariableType} that indicates whether a variable should be considered as `linear' or `quadratic'.
@@ -215,17 +205,7 @@ The \ListOfKeyValuePairs, see \ref{fig:fbc_v3_uml_keyvalue} for details, forms t
 %
 \exampleFile{examples/ex-v3-kvp1.txt}
 %
-%\begin{quote}
-%\begin{description}
-%  \item[keyX] 47
-%  \item[ZZkey] beard level 5
-%  \item[x--factor] intangible metaphysical property
-%\end{description}
-%\end{quote}
-%%
-As such it is analogous to the official \SBML RDF annotation used to support MIRIAM annotations, as defined in the \SBML specification documents. Similarly, we define an official \FBC annotation, the \ListOfKeyValuePairs. The advantages of using the existing \SBML annotation mechanism include, \SBase not needing any further extension (a technical/performance advantage) and the annotation can be used directly in all existing \SBML levels and versions.
-
-As is the case with the RDF/MIRIAM annotations, support for \ListOfKeyValuePairs will be included in the \SBML support libraries.
+As such it is analogous to the official \SBML RDF annotation used to support MIRIAM annotations, as defined in the \SBML specification documents. When an annotation that declares the \token{xmlns} \token{http://sbml.org/fbc/keyvaluepair} then it must have the format specified here. Tools may chose to support reading and interpreting the content as described, but may optionally ignore the annotation and merely round trip it with any other third party annotations. As is the case with the RDF/MIRIAM annotations, support for \ListOfKeyValuePairs will be included in the \SBML support libraries.
 %
 \begin{figure}[ht]
   \centering
@@ -237,19 +217,22 @@ As is the case with the RDF/MIRIAM annotations, support for \ListOfKeyValuePairs
   \label{fig:fbc_v3_uml_keyvalue}
 \end{figure}
 %
-As shown in \ref{fig:fbc_v3_uml_keyvalue}, the \ListOfKeyValuePairs is derived from and functions like a typical \SBML \textsf{\textbf{ListOf\rule{0.15in}{0.5pt}}} class with the restriction that it must contain one or more elements of type \KeyValuePair (see \ref{keyvaluepair-class}). In addition it defines a single mandatory attribute, \token{xmlns}, which identifies the annotation as belonging to the \FBCPackage.
+\newtxt{The official \FBCPackage annotation, as shown in \ref{fig:fbc_v3_uml_keyvalue}, the \ListOfKeyValuePairs is functions like a typical \SBML \textsf{\textbf{ListOf\rule{0.15in}{0.5pt}}} class with the restriction that it must contain one or more elements of type \KeyValuePair (see \ref{keyvaluepair-class}). In addition it defines a single mandatory attribute, \token{xmlns}, which identifies the annotation as belonging to the \FBCPackage.}
 
 \paragraph{The \token{xmlns} attribute}
-The \token{xmlns} is a mandatory component of the \ListOfKeyValuePairs, is of the type \primtype{url} which must have the value \token{http://sbml.org/fbc/keyvaluepair}. 
+The \token{xmlns} is a mandatory component of the \ListOfKeyValuePairs, is of the type \primtype{uri} and must have the value \token{http://sbml.org/fbc/keyvaluepair}.
 
 
 \subsection{The \FBC \class{KeyValuePair} class}
 \label{keyvaluepair-class}
 
-The \FBC \KeyValuePair class is not derived from \SBase and therefore \newtxt{does not} inherit \token{metaid} and \token{sboTerm}, as well as, the subcomponents for
-\Annotation and \Notes. It's purpose is to define a key--value pair with an extended key definition.
+\newtxt{The \FBC \KeyValuePair class is derived from \SBase and inherits the attribute \token{metaid},  \token{sboTerm} as well as the subcomponents needed for \Notes \marginpar{\textbf{\footnotesize I've purposely left out Annotation, BGO.}}. It's sole purpose is to define a key--value pair with an extended key definition.}
 
-The \KeyValuePair defines a single mandatory attribute the \token{key} as well as two optional attributes: \token{value} and \token{url}.
+The \KeyValuePair defines a single mandatory attribute the \token{key} as well as \newtxt{two optional attributes: \token{value} and \token{uri}}.
+
+\paragraph{The \token{id} and \token{name} attributes}
+A \KeyValuePair has two optional attributes: \token{id} an attribute of
+type \primtype{SId} and \token{name}, an attribute of type \primtype{string}.
 
 \paragraph{The \token{key} attribute}
 The \token{key} is the mandatory component of the \KeyValuePair pair and is of type \primtype{string}. It has the special property that every \token{key} in an enclosing \ListOfKeyValuePairs must be unique.
@@ -257,8 +240,8 @@ The \token{key} is the mandatory component of the \KeyValuePair pair and is of t
 \paragraph{The \token{value} attribute}
 The optional \token{value} attribute is of \primtype{string} and contains the value associated with a particular \token{key}. If not present, the \KeyValuePair is defined to have no value.
 
-\paragraph{The \token{url} attribute}
-The optional attribute \token{url} is of type \primtype{url}. This attribute is included and references a resource that contains a description of the \token{key} component of the \KeyValuePair. Note that the nature or structure of this resource is not defined. For example, it could be an HTML page with a textual description of the \token{key}(s) used by a particular tool or another that contains a table of key definitions. A theoretical example of a resource, as used in the above example, can be found here: \url{http://www.bgoli.net/kvp/propdefs1}
+\paragraph{The \token{uri} attribute}
+\newtxt{The optional attribute \token{uri} is of type \primtype{uri}. This attribute is included and references a resource that contains a description of the \token{key} component of the \KeyValuePair. Note that the nature or structure of this resource is not defined. For example, it could be an HTML page with a textual description of the \token{key}(s) used by a particular tool or another that contains a table of key definitions\footnote{\url{http://bgoli.net/kvp/spec_example.html} (Temporary, will change.)}.}
 
 However, the concomitant development of a central \token{key} resource and associated standardised \token{key} definition would enable greater model reusability and tool interoperability and be of benefit to the broader \SBML community.
 

@@ -28,7 +28,7 @@
 %% along with this library; if not, write to the Free Software Foundation,
 %% Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.
 
-\def\filedate{2014/08/10}
+\def\filedate{2017/09/05}
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesClass{sbmlpkgspec}[\filedate\space SBML Level 3
 Package Specification Style]
@@ -84,6 +84,7 @@ Package Specification Style]
 \RequirePackage[T1]{fontenc}
 \RequirePackage{suffix}
 \RequirePackage{varwidth}
+\RequirePackage{etoolbox}
 
 % We use the "optional" package to indicate whether to generate a grayscale
 % vs a color version of the document without having to alter the .tex file
@@ -647,7 +648,7 @@ Package Specification Style]
 
 \fancyhf{}
 
-\newcommand{\@footchpsection}{Section \nouppercase{\leftmark}}
+\newcommand{\@footchpsection}{\sectionlabel~\nouppercase{\leftmark}}
 \newcommand{\@footpage}{Page \thepage\ of \pageref*{LastPage}}
 
 \renewcommand{\footrule}{}
@@ -656,7 +657,7 @@ Package Specification Style]
   \renewcommand{\headrulewidth}{0.25pt}
   \renewcommand{\headrule}{}
   \lhead{}%
-  \rhead{\color{mediumgray}\small\textsf{Section \nouppercase{\rightmark}}}%
+  \rhead{\color{mediumgray}\small\textsf{\sectionlabel~\nouppercase{\rightmark}}}%
   \cfoot{}%
   \lfoot{\color{mediumgray}\small\textsf{\@footchpsection}}%
   \rfoot{\color{mediumgray}\small\textsf{\@footpage}}%
@@ -1122,8 +1123,11 @@ Package Specification Style]
 \newcommand{\sect}[1]{\normallabels\@commonRefNoStar{#1}}
 \WithSuffix\newcommand\sect*[1]{\normallabels\@commonRefStar{#1}}
 
-\newcommand{\apdx}[1]{\appendixlabels\@commonRefNoStar{#1}}
-\WithSuffix\newcommand\apdx*[1]{\appendixlabels\@commonRefStar{#1}}
+\newcommand{\apdx}[1]{\appendixlabels\@commonRefNoStar{#1}\normallabels}
+\WithSuffix\newcommand\apdx*[1]{\appendixlabels\@commonRefStar{#1}\normallabels}
+
+\pretocmd{\appendix}{\pagebreak}{}{}
+\apptocmd{\appendix}{\appendixlabels}{}{}
 
 
 % Misc.

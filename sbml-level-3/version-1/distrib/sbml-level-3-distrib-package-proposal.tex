@@ -1261,7 +1261,54 @@ The units of uncertainty statistics and distributions are generally either dimen
 
 \paragraph{The uncertainty of a \Species}
 
-A \Species is a unique SBML construct in that its value is either an amount or a concentration, depending on the value of its \token{hasOnlySubstanceUnits} attribute (\val{true} for amount, or \val{false} for concentration).  The value of its uncertainty tracks with this: if the value of the parent \Species \token{hasOnlySubstanceUnits} is \val{true}, the uncertainty is in terms of amounts, and if \val{false}, the uncertainty is in terms of concentration.  It is assumed that if the uncertainty is expressed in terms of concentration, that uncertainty is \emph{not affected} by any uncertainty about the size of the species' compartment.  That is, we assume that if we measure a species concentration as $5 \pm 0.2$ in a compartment volume of 1, we would have measured the same concentration variability had the compartment volume been 10 or 100.  Therefore, to convert the uncertainty of a \Species concentration to the uncertainty of a \Species amount, we multiply by the size of the compartment, and ignore that compartment's uncertainty.  Thus, if the above example species concentration appears in a compartment of size $2$, the species amount would be $10 \pm 0.4$.
+A \Species is a unique SBML construct in that its value is either an amount or a concentration, depending on the value of its \token{hasOnlySubstanceUnits} attribute (\val{true} for amount, or \val{false} for concentration).  The value of its uncertainty tracks with this: if the value of the parent \Species \token{hasOnlySubstanceUnits} is \val{true}, the uncertainty is in terms of amounts, and if \val{false}, the uncertainty is in terms of concentration.
+
+If a \Species is being modeled in SBML in amounts, but was measured in terms of its concentration, or visa versa, an \InitialAssignment should be created that explicitly handles this conversion and assigns the appropriate value to the \Species, as in the example below.
+
+\begin{example}
+...
+    <listOfCompartments>
+      <compartment id="C" spatialDimensions="3" size="2" constant="true">
+        <distrib:uncertainty>
+          <distrib:uncertStatistics>
+            <distrib:standardDeviation distrib:value="0.15"/>
+          </distrib:uncertStatistics>
+        </distrib:uncertainty>
+      </compartment>
+    </listOfCompartments>
+    <listOfSpecies>
+      <species id="S_amt" compartment="C" hasOnlySubstanceUnits="true"
+               boundaryCondition="false" constant="false"/>
+    </listOfSpecies>
+    <listOfParameters>
+      <parameter id="S_conc" value="3.4" constant="true">
+        <distrib:uncertainty>
+          <distrib:uncertStatistics>
+            <distrib:standardDeviation distrib:value="0.3"/>
+          </distrib:uncertStatistics>
+        </distrib:uncertainty>
+      </parameter>
+    </listOfParameters>
+    <listOfInitialAssignments>
+      <initialAssignment symbol="S_amt">
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+          <apply>
+            <times/>
+            <ci> S_conc </ci>
+            <ci> C </ci>
+          </apply>
+        </math>
+      </initialAssignment>
+    </listOfInitialAssignments>
+...
+\end{example}
+
+Here, the uncertainty of the species \val{S\_amt} is not set explicitly, and instead can be derived from the uncertainty of the values in its initial assignment (\val{S\_conc} and \val{C}).
+
+\paragraph{Propagation of error}
+
+It may be possible to calculate the propagation of error for a simulation of an SBML model.  Be advised that this will be a complicated system, and may involve calculating partial derivates of equations that are not explicitly encoded.  Many simulators choose instead to estimate the error through stochastic simulations.  Either approach should be possible with a properly encoded \distribshort model.
+
 
 \end{blockChanged}
 

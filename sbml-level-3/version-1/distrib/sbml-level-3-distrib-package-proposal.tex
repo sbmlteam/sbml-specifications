@@ -19,12 +19,12 @@
 \newcommand{\Category}{\defRef{Category}{Category-class}}
 \newcommand{\ContinuousUnivariateDistribution}{\defRef{ContinuousUnivariateDistribution}{ContinuousUnivariateDistribution-class}}
 \newcommand{\DiscreteUnivariateDistribution}{\defRef{DiscreteUnivariateDistribution}{DiscreteUnivariateDistribution-class}}
-\newcommand{\DistribInput}{\defRef{DistribInput}{DistribInput-class}}
+%\newcommand{\DistribInput}{\defRef{DistribInput}{DistribInput-class}}
 \newcommand{\DistribBase}{\defRef{DistribBase}{DistribBase-class}}
 \newcommand{\Distribution}{\defRef{Distribution}{Distribution-class}}
-\newcommand{\DrawFromDistribution}{\defRef{DrawFromDistribution}{DrawFromDistribution-class}}
+%\newcommand{\DrawFromDistribution}{\defRef{DrawFromDistribution}{DrawFromDistribution-class}}
 \newcommand{\ListOfCategories}{\defRef{ListOfCategories}{ListOfCategories-class}}
-\newcommand{\ListOfDistribInputs}{\defRef{ListOfDistribInputs}{ListOfDistribInputs-class}}
+%\newcommand{\ListOfDistribInputs}{\defRef{ListOfDistribInputs}{ListOfDistribInputs-class}}
 \newcommand{\ListOfExternalParameters}{\defRef{ListOfExternalParameters}{ListOfExternalParameters-class}}
 \newcommand{\MultivariateDistribution}{\defRef{MultivariateDistribution}{MultivariateDistribution-class}}
 \newcommand{\ExternalDistribution}{\defRef{ExternalDistribution}{ExternalDistribution-class}}
@@ -150,7 +150,7 @@ from MS.\\ \midrule
 0.18 (Draft) & June 2017 & Lucian Smith & Fixes to reflect feedback on version 0.17.\\\midrule
 0.19 (Draft) & June 2018 & Lucian Smith & Resolved id/name issues with SBML core l3v1 vs. l3v2.\\\midrule
 0.20 (Draft) & December 2018 & Lucian Smith & Updates to allow distributions as new MathML csymbols.\\\midrule
-0.21 (Draft) & January 2018 & Lucian Smith & \changed{Revisions based on suggestions from sbml-distrib, including extensive edits from Matthias.}\\
+0.21 (Draft) & January 2018 & Lucian Smith & \changed{Revisions based on suggestions from sbml-distrib, including extensive edits from Matthias.  Also removed the extended function definitions entirely.}\\
 %\midrule
 \bottomrule
 \end{edtable}
@@ -553,7 +553,7 @@ Every SBML Level~3 package is identified uniquely by an XML namespace URI.  For 
 Note that the \distrib package may be used with both \threeone and \threetwo documents, with the only semantic change between the two present in the \DistribBase class. Note that if used with \threeone the corresponding \distrib namespace for \threeone must be used and similarly if \threetwo is being used, the \distrib namespace must be the one for \threetwo.
 
 
-In addition, SBML documents using a given package must indicate whether the package may be used to change the mathematical meaning of \sbmlthreecore elements.  This is done using the attribute \token{required} on the \token{<sbml>} element in the SBML document.  For the \distrib package, the value of this attribute must be \val{true}, as the \DrawFromDistribution element overrides the core definition of a \FunctionDefinition, and because of the newly-allowed MathML elements.  Note that the value of this attribute must \emph{always} be set to \val{true}, even if the particular model does not contain any \DrawFromDistribution elements or new MathML elements.
+In addition, SBML documents using a given package must indicate whether the package may be used to change the mathematical meaning of \sbmlthreecore elements.  This is done using the attribute \token{required} on the \token{<sbml>} element in the SBML document.  For the \distrib package, the value of this attribute must be \val{true}, as it \changed{defined new csymbols that may be used in any MathML}.  Note that the value of this attribute must \emph{always} be set to \val{true}, even if the particular model does not contain \changed{any of these csymbols}.
 
 The following fragment illustrates the beginning of a typical SBML model using \threeone and this version of the \distrib package:
 
@@ -573,6 +573,8 @@ The following fragment illustrates the beginning of a typical SBML model using \
       xmlns:distrib="http://www.sbml.org/sbml/level3/version2/distrib/version1"
       distrib:required="true">
 \end{example}
+
+\changed{There is no difference between these two namespaces, and all package semantics are identical.}
 
 \paragraph{XML Namespace use}
 
@@ -595,27 +597,27 @@ The \distrib package uses data types described in Section~3.1 of the \sbmlthreec
 The type \primtype{ExternalRef} is derived from \primtype{string} with the additional requirement that it be a valid URI.  An \primtype{ExternalRef} is used in \distrib to point to ontologies such as ProbOnto~\citep{swat:2016} which contain defined distributions and parameters. 
 
 
-\subsubsection{Type \fixttspace\primtypeNC{UncertId}}
-\label{sec:primtype-uncertid}
+%\subsubsection{Type \fixttspace\primtypeNC{UncertId}}
+%\label{sec:primtype-uncertid}
 
-The type \primtype{UncertId} is derived from \primtype{SId} (\sbmlthreecore specification Section~3.1.7) and has identical syntax.  The \primtype{UncertId} type is used to create local ids that can be used in the extended \FunctionDefinition objects to refer to the arguments of the function, in much the same way that the identities of the \token{bvar} elements are used in MathML \token{lambda} elements.  Each \primtype{UncertId} has a scope local to the \DrawFromDistribution in which it is found.  The
-equality of \primtype{UncertId} values is determined by an exact
-character sequence match; i.e., comparisons of these identifiers must be
-performed in a case-sensitive manner.
-
-
-\subsubsection{Type \fixttspace\primtypeNC{UncertIdRef}}
-\label{sec:primtype-uncertidref}
-
-Type \primtype{UncertIdRef} is used to reference different elements in different contexts.  Inside a \FunctionDefinition, an \primtype{UncertIdRef} may only reference an \primtype{UncertId} from a \DistribInput from that same \FunctionDefinition.  Outside a \FunctionDefinition, an \primtype{UncertIdRef} may reference any element with an \primtype{SId} that has mathematical meaning: even elements from other packages, and not in \sbmlthreecore.  In the context of an \threeone document, this still holds true.  Even though \threeone elements with \primtype{SIdRef} attributes cannot reference package elements, this does not preclude \distrib elements from doing so.
-
-If a referenced \primtype{SId} is from a package that is not understood by the software reading the model, the meaning of the \primtype{UncertIdRef} is undefined.   If an interpreter does not understand an id and cannot tell whether that id came from a not-understood package, it may issue a warning.
+%The type \primtype{UncertId} is derived from \primtype{SId} (\sbmlthreecore specification Section~3.1.7) and has identical syntax.  The \primtype{UncertId} type is used to create local ids that can be used in the extended \FunctionDefinition objects to refer to the arguments of the function, in much the same way that the identities of the \token{bvar} elements are used in MathML \token{lambda} elements.  Each \primtype{UncertId} has a scope local to the \DrawFromDistribution in which it is found.  The
+%equality of \primtype{UncertId} values is determined by an exact
+%character sequence match; i.e., comparisons of these identifiers must be
+%performed in a case-sensitive manner.
 
 
-As with \primtype{UncertId}, the equality of
-\primtype{UncertIdRef} values is determined by exact character sequence
-match; i.e., comparisons of these identifiers must be performed in a
-case-sensitive manner.
+%\subsubsection{Type \fixttspace\primtypeNC{UncertIdRef}}
+%\label{sec:primtype-uncertidref}
+
+%Type \primtype{UncertIdRef} is used to reference different elements in different contexts.  Inside a \FunctionDefinition, an \primtype{UncertIdRef} may only reference an \primtype{UncertId} from a \DistribInput from that same \FunctionDefinition.  Outside a \FunctionDefinition, an \primtype{UncertIdRef} may reference any element with an \primtype{SId} that has mathematical meaning: even elements from other packages, and not in \sbmlthreecore.  In the context of an \threeone document, this still holds true.  Even though \threeone elements with \primtype{SIdRef} attributes cannot reference package elements, this does not preclude \distrib elements from doing so.
+
+%If a referenced \primtype{SId} is from a package that is not understood by the software reading the model, the meaning of the \primtype{UncertIdRef} is undefined.   If an interpreter does not understand an id and cannot tell whether that id came from a not-understood package, it may issue a warning.
+
+
+%As with \primtype{UncertId}, the equality of
+%\primtype{UncertIdRef} values is determined by exact character sequence
+%match; i.e., comparisons of these identifiers must be performed in a
+%case-sensitive manner.
 
 
 
@@ -630,29 +632,12 @@ random value from that distribution.
 
 Secondly, it provides a mechanism for describing elements with information about their uncertainty.  One common use case for this \changed{is} to provide the standard deviation for a value.  Another may be describing a parameter's distribution, so that a better search can be performed in a parameter scan experiment.
 
-These purposes are achieved by allowing new \mathml elements, and by extending \FunctionDefinition and \SBase, which in turn use the \Distribution and \UncertStatistics classes, modeled after \uncertml.  Several distributions and statistics are defined explicitly in this specification, but more can be defined by referencing an external ontology such as ProbOnto through the \ExternalDistribution and \ExternalParameter classes.
+\changed{The first purpose is achieved by allowing new \mathml elements, and the second by extending \SBase,}  which in turn uses the \Distribution and \UncertStatistics classes, modeled after \uncertml.  Several distributions and statistics are defined explicitly in this specification, but more can be defined by referencing an external ontology such as ProbOnto through the \ExternalDistribution and \ExternalParameter classes.
 
-It is hoped that with this approach, modelers may use the extensions defined in this specification with a reasonable expectation that most other software packages will also recognize them.  However, if another distribution is required, those distributions may still be encoded through reference to an external ontology, even if this makes the model less exchangeable.
+%It is hoped that with this approach, modelers may use the extensions defined in this specification with a reasonable expectation that most other software packages will also recognize them.  However, if another distribution is required, those distributions may still be encoded through reference to an external ontology, even if this makes the model less exchangeable.
 
-When a distribution is defined in a \FunctionDefinition or used in the extended \Math, it is sampled when it is invoked. If a particular returned value needs to be used again, that value must be assigned to a parameter first, such as through the use of an \InitialAssignment or \EventAssignment.  When a distribution is defined elsewhere, that information may be used outside of the model, using whatever methodology is appropriate to answer the question being pursued.
+When a \changed{call to a distribution is defined} in the extended \Math, it is sampled when it is invoked. If a particular returned value needs to be used again, that value must be assigned to a parameter first, such as through the use of an \InitialAssignment or \EventAssignment.  When a distribution is defined elsewhere, that information may be used outside of the model, using whatever methodology is appropriate to answer the question being pursued.
 
-
-\subsection{The \DistribBase class}
-\label{sec:DistribBase-class}
-\label{DistribBase-class}
-\label{sec:idname}
-
-The \DistribBase class is an abstract base class which is the parent class for every class in this \distrib package.  Its purpose is to replicate within the \distrib package what changed between \threeone and \threetwo: the addition of an optional \token{id} and \token{name} attribute to \SBase.  By adding these attributes here, \distrib may be used completely exchangeably between Level~1 and Level~2 documents without changing anything.
-
-\begin{figure}[bh]
-  \includegraphics{figs/distribBase.pdf}
-  \caption{The definition of the \DistribBase class.  The \token{id} and \token{name} attributes defined are optional, but must not be used in \threetwo documents.}
-  \label{fig:distribBase}
-\end{figure}
-
-The meaning of these attributes is identical, regardless of the level/version of the document in which they appear.  When a subclass makes one of the attributes required (as the \token{id} of the \DistribInput class), this means that it must have the 'distrib:id' attribute in a \threeone document, or an \token{id} attribute in a \threetwo document.
-
-The \token{id} attribute is of type \primtype{SId}, and must be unique among other ids in the \primtype{SId} namespace in the parent \Model, and has no mathematical meaning, unless stated otherwise in the definition of that object.  The \token{name} attribute is of type \primtype{string}, and is provided to allow the user to define a human-readable label for the object, and has no uniqueness restrictions.
 
 \subsection{Extended \Math}
 
@@ -691,275 +676,89 @@ The newly-allowed \token{csymbol} elements are defined in the following table:
 \bottomrule
 \end{longtabu}
 
-Many of the distributions take exactly two or four arguments (or exactly one or three arguments).  For those functions, the optional last two arguments are 'min' and 'max', for when the draw from the distribution is constrained to be between those two values.  For all functions, the 'min' boundary is \emph{inclusive}; that is, a value of \token{min} may be returned by the function (though this may be very unlikely for draws from a continuous distribution).  For all continuous distributions, the 'max' boundary is \emph{not inclusive}; that is, a value of \token{max} will never be returned.  The continuous distributions are \token{normal}, \token{cauchy}, \token{chisquare}, \token{exponential}, \token{gamma}, \token{laplace}, \token{lognormal}, and \token{rayleigh}.  For the discrete distributions, the 'max' boundray is \emph{inclusive}: that is, a value of \token{max} may indeed be returned.  The discrete distributions are \token{binomial} and \token{poisson}. 
+Many of the distributions take exactly two or four arguments (or exactly one or three arguments).  For those functions, the optional last two arguments are 'min' and 'max', for when the draw from the distribution is constrained to be between those two values.  For all functions, the 'min' boundary is \emph{inclusive}; that is, a value of \token{min} may be returned by the function (though this may be very unlikely for draws from a continuous distribution).  For all continuous distributions, the 'max' boundary is \emph{not inclusive}; that is, a value of \token{max} will never be returned.  The continuous distributions are \token{normal}, \token{cauchy}, \token{chisquare}, \token{exponential}, \token{gamma}, \token{laplace}, \token{lognormal}, and \token{rayleigh}.  For the discrete distributions, the 'max' boundray is \emph{inclusive}: that is, a value of \token{max} may indeed be returned.  The discrete distributions are \token{binomial} and \token{poisson}.
 
+\begin{blockChanged}
+\paragraph{Fallback functions}
 
-\subsection{The extended \class{FunctionDefinition} class}
-\label{extended-functiondefinition-class}
+If an interpreter is unable to calculate one or more of the above extended \mathml functions, it might simply fail, or it might choose to return the mean of the given function instead.  In either case, it is a good idea to inform the user that the model cannot be interpreted by the software as intended. 
+\end{blockChanged}
 
-To model random processes, this package extends the \FunctionDefinition class as
-can be seen in the UML representation in \fig{fig:funcdef}. The redefined \FunctionDefinition optionally
-contains a single \token{drawFromDistribution} child.
+%\subsection{The extended \class{FunctionDefinition} class}
+%\label{extended-functiondefinition-class}
 
-The \FunctionDefinition class may or may not still contain the \mathml block containing the standard SBML function definition if used in an \threetwo document, but it must contain this MathML block if used in an \threeone document, because that element is required in that level and version.  If present, the MathML should be ignored, but may ensure a degree of backwards compatibility for SBML readers and validators that do not understand the \distribshort package.
+%To model random processes, this package extends the \FunctionDefinition class as
+%can be seen in the UML representation in \fig{fig:funcdef}. The redefined \FunctionDefinition optionally
+%contains a single \token{drawFromDistribution} child.
 
-\begin{figure}[htb]
-\includegraphics[width=0.75\linewidth]{figs/extended-functionDefinition.pdf}
-\caption{The definition of the extended \FunctionDefinition class, plus the \DrawFromDistribution, \ListOfDistribInputs, and \DistribInput classes.  The \Distribution class is used here, but defined later.  A \DrawFromDistribution element must have exactly one \Distribution child.  Together, these classes provide a way to transform a \FunctionDefinition to sample from a distribution.}
-\label{fig:funcdef}
-\end{figure}
+%The \FunctionDefinition class may or may not still contain the \mathml block containing the standard SBML function definition if used in an \threetwo document, but it must contain this MathML block if used in an \threeone document, because that element is required in that level and version.  If present, the MathML should be ignored, but may ensure a degree of backwards compatibility for SBML readers and validators that do not understand the \distribshort package.
 
+%\begin{figure}[htb]
+%\includegraphics[width=0.75\linewidth]{figs/extended-functionDefinition.pdf}
+%\caption{The definition of the extended \FunctionDefinition class, plus the \DrawFromDistribution, \ListOfDistribInputs, and \DistribInput classes.  The \Distribution class is used here, but defined later.  A \DrawFromDistribution element must have exactly one \Distribution child.  Together, these classes provide a way to transform a \FunctionDefinition to sample from a distribution.}
+%\label{fig:funcdef}
+%\end{figure}
 
-%As outlined above, the \FunctionDefinition class is extended to contain a \DrawFromDistribution child, which overrides the <lambda> element of the \Math child present in the \FunctionDefinition.  Software that does not support \distribshort could potentially invoke the original \Math of the \FunctionDefinition (see \ref{sec:fallbackfunc}) instead.
 
+%%As outlined above, the \FunctionDefinition class is extended to contain a \DrawFromDistribution child, which overrides the <lambda> element of the \Math child present in the \FunctionDefinition.  Software that does not support \distribshort could potentially invoke the original \Math of the \FunctionDefinition (see \ref{sec:fallbackfunc}) instead.
 
 
-In the \Model, an extended \FunctionDefinition may be used in any \mathml elsewhere in the document to perform a draw from a distribution.  This draw will be unique for every use of the \FunctionDefinition, whether or not the draw is performed at the same simulation time as a different draw (for example, if used in two different \InitialAssignment elements).
 
+%In the \Model, an extended \FunctionDefinition may be used in any \mathml elsewhere in the document to perform a draw from a distribution.  This draw will be unique for every use of the \FunctionDefinition, whether or not the draw is performed at the same simulation time as a different draw (for example, if used in two different \InitialAssignment elements).
 
 
-\subsection{The \class{DrawFromDistribution} class}
-\label{DrawFromDistribution-class}
-\label{drawfromdistribution-class}
 
-As illustrated in \fig{fig:funcdef}, the \DrawFromDistribution class may have a \ListOfDistribInputs child, which may in turn contain any number of \DistribInput children, which act as the arguments to the function--they serve the same role as the \token{bvar} elements of the \LambdaClass child of a \FunctionDefinition.  The order of arguments is determined by the \token{index} attribute:  the first argument (if any) must have an index of \val{0}, the second of \val{1}, etc.  If no \ListOfDistribInputs is provided, or if one is provided with no \DistribInput children, the function contains no arguments.
+%\subsection{The \class{DrawFromDistribution} class}
+%\label{DrawFromDistribution-class}
+%\label{drawfromdistribution-class}
 
-The \DrawFromDistribution must also have a \Distribution child, representing the distribution from which to draw a value.  Because \Distribution is an abstract class, the name of the element will be the name of the class of the particular distribution being used, with its first letter made lower case (so, \val{normalDistribution} for \NormalDistribution, \val{studentTDistribution} for \StudentTDistribution, etc.).  Within this \Distribution, any \primtype{UncertIdRef} must reference the \primtype{UncertId} of a \DistribInput for the \FunctionDefinition in which it appears.
+%As illustrated in \fig{fig:funcdef}, the \DrawFromDistribution class may have a \ListOfDistribInputs child, which may in turn contain any number of \DistribInput children, which act as the arguments to the function--they serve the same role as the \token{bvar} elements of the \LambdaClass child of a \FunctionDefinition.  The order of arguments is determined by the \token{index} attribute:  the first argument (if any) must have an index of \val{0}, the second of \val{1}, etc.  If no \ListOfDistribInputs is provided, or if one is provided with no \DistribInput children, the function contains no arguments.
 
-\subsubsection{Attributes inherited from \SBase}
+%The \DrawFromDistribution must also have a \Distribution child, representing the distribution from which to draw a value.  Because \Distribution is an abstract class, the name of the element will be the name of the class of the particular distribution being used, with its first letter made lower case (so, \val{normalDistribution} for \NormalDistribution, \val{studentTDistribution} for \StudentTDistribution, etc.).  Within this \Distribution, any \primtype{UncertIdRef} must reference the \primtype{UncertId} of a \DistribInput for the \FunctionDefinition in which it appears.
 
-A \DrawFromDistribution always inherits the optional \token{metaid} and \token{sboTerm} attributes, and inherits optional \token{id} and \token{name} attributes as described in \sec{sec:idname}.  The \token{id} of a \DrawFromDistribution has no mathematical meaning.
+%\subsubsection{Attributes inherited from \SBase}
 
+%A \DrawFromDistribution always inherits the optional \token{metaid} and \token{sboTerm} attributes, and inherits optional \token{id} and \token{name} attributes as described in \sec{sec:idname}.  The \token{id} of a \DrawFromDistribution has no mathematical meaning.
 
-\subsection{The \class{ListOfDistribInputs} class}
-\label{ListOfDistribInputs-class}
-\label{listofdistribinputs-class}
 
-The \ListOfDistribInputs class, like other \ListOf classes in \sbmlthreecore, is a container for zero or more \DistribInput objects.  If empty, it simply means that no child \DistribInput objects are defined for its parent, and is equivalent to not including the \ListOfDistribInputs object at all.  This situation defines an extended \FunctionDefinition with zero arguments, and might be useful if the list is annotated with the reason why it is empty, for example.
+%\subsection{The \class{ListOfDistribInputs} class}
+%\label{ListOfDistribInputs-class}
+%\label{listofdistribinputs-class}
 
+%The \ListOfDistribInputs class, like other \ListOf classes in \sbmlthreecore, is a container for zero or more \DistribInput objects.  If empty, it simply means that no child \DistribInput objects are defined for its parent, and is equivalent to not including the \ListOfDistribInputs object at all.  This situation defines an extended \FunctionDefinition with zero arguments, and might be useful if the list is annotated with the reason why it is empty, for example.
 
-\subsection{The \class{DistribInput} class}
-\label{DistribInput-class}
-\label{distribinput-class}
 
-The \DistribInput class mimics the \token{bvar} elements of MathML lambda functions.  It must have an \token{id} attribute of type \primtype{UncertId} and an \token{index} attribute of type \primtype{non-negative integer}.
+%\subsection{The \class{DistribInput} class}
+%\label{DistribInput-class}
+%\label{distribinput-class}
 
-Each \DistribInput element represents an argument to the function, and serves as a local identifier, referenced only by the \Distribution class. %See the examples in \ref{sec:fd-examples} for more details.
+%The \DistribInput class mimics the \token{bvar} elements of MathML lambda functions.  It must have an \token{id} attribute of type \primtype{UncertId} and an \token{index} attribute of type \primtype{non-negative integer}.
 
-If the \LambdaClass child of the \FunctionDefinition is present, it must have the same number of \token{bvar} children as the \DrawFromDistribution has \DistribInput children.  They do not, however, have to have the same ids:  the \token{bvar} ids are defined as being local to the \LambdaClass function in much the same way that the \DistribInput ids are defined as being local to the \DrawFromDistribution object.
+%Each \DistribInput element represents an argument to the function, and serves as a local identifier, referenced only by the \Distribution class. %See the examples in \ref{sec:fd-examples} for more details.
 
-Each \token{index} attribute on a \DistribInput within a \ListOfDistribInputs element must have a unique value, numbered consecutively from \val{0}:  if one \DistribInput is present, its \token{index} value must be \val{0}; if there are two, they must have \token{index} values of \val{0} and \val{1}, etc. Where the \FunctionDefinition also contains a \Math child the values of the \token{index} relates the \DistribInput to the the <bvar> element in the corresponding position.
+%If the \LambdaClass child of the \FunctionDefinition is present, it must have the same number of \token{bvar} children as the \DrawFromDistribution has \DistribInput children.  They do not, however, have to have the same ids:  the \token{bvar} ids are defined as being local to the \LambdaClass function in much the same way that the \DistribInput ids are defined as being local to the \DrawFromDistribution object.
 
-\subsubsection{Attributes inherited from \SBase}
+%Each \token{index} attribute on a \DistribInput within a \ListOfDistribInputs element must have a unique value, numbered consecutively from \val{0}:  if one \DistribInput is present, its \token{index} value must be \val{0}; if there are two, they must have \token{index} values of \val{0} and \val{1}, etc. Where the \FunctionDefinition also contains a \Math child the values of the \token{index} relates the \DistribInput to the the <bvar> element in the corresponding position.
 
-A \DistribInput always inherits the optional \token{metaid} and \token{sboTerm} attributes, and inherits the \token{id} and \token{name} attributes as described in \sec{sec:idname}.  The \token{id} of a \DistribInput has no external mathematical meaning, is required, and is of type \primtype{UncertId}, as described above.  Note that in an \threetwo document, a \DistribInput must either have an \token{id} in the core namespace, or an \token{id} in the \distrib namespace (but not both).
+%\subsubsection{Attributes inherited from \SBase}
 
-\begin{figure}[htb]
-\includegraphics[width=0.75\linewidth]{figs/distribution.pdf}
-\caption{The definition of the abstract \Distribution class, plus the abstract \UnivariateDistribution and \MultivariateDistribution classes.  Also shown are the \ContinuousUnivariateDistribution, \DiscreteUnivariateDistribution, \CategoricalUnivariateDistribution, and \ExternalDistribution classes, defined later.  Note that the \MultivariateDistribution class is only defined here, and, as such, has no concrete classes that derive from it at this time in this version of the \distrib specification.  If further discussion reveals a need for them, it is shown here as an example of where it would be defined, but may disappear from a future version of the spec if no derived class for it is ever defined.}
-\label{fig:distribution}
-\end{figure}
+%A \DistribInput always inherits the optional \token{metaid} and \token{sboTerm} attributes, and inherits the \token{id} and \token{name} attributes as described in \sec{sec:idname}.  The \token{id} of a \DistribInput has no external mathematical meaning, is required, and is of type \primtype{UncertId}, as described above.  Note that in an \threetwo document, a \DistribInput must either have an \token{id} in the core namespace, or an \token{id} in the \distrib namespace (but not both).
 
-\subsection{The \class{Distribution} class}
-\label{Distribution-class}
-\label{distribution-class}
-
-The \Distribution class is the abstract class from which all distributions are derived.  They are organized here in much the same way they were in \uncertml, by whether they are univariate or multivariate, and whether they are continuous, discrete, or categorical.  In addition, the \ExternalDistribution inherits from \Distribution, as a 'generic' distribution definition class that allows the user to define any distribution in an external ontology such as ProbOnto.
-
-When a \Distribution is encountered, its parent \FunctionDefinition is defined as sampling from the defined distribution, and returning that sample.  It may contain any number of \token{UncertIdRef} strings, each of which must correspond to an \token{UncertId} defined in a \DistribInput in the same function.
-
-{\color{red} Lucian: \controversial NOTE!  There are too many distributions defined in this version of the \distrib specification!  This is done on purpose.  The goal of this draft of the specification is not to be normative, but to lay out the details of everything that might possibly be wanted, with the intent of reducing the number to what is actually going to be used and implemented in a subsequent draft, based on user and developer feedback.  As a start, then, every single univariate distribution defined in \uncertml, plus the \RayleighDistribution (defined in Frank's annotation scheme), is presented.  The idea is that developers first implement what is useful for them, then we trim the list to only what at least one developer implemented, then we give developers the newly-winnowed list and say 'this is what other people want' and ask them to fill in the gaps.  It is predicted that the final number of pre-defined distributions will number about a dozen or so.}
-
-In this draft of the \distrib specification, no mixed distributions and no multivariate distributions are presented, as the author has not seen any call for these distributions specifically, and believes that the generic \ExternalDistribution distribution could cover those cases on an as-needed basis.  If this turns out to not be the case, those distributions will be added to a subsequent version of this specification.  The use of the Arrays package would be required for any multivariate distribution.
-
-\subsubsection{Attributes inherited from \SBase}
-
-A \Distribution always inherits the optional \token{metaid} and \token{sboTerm} attributes, and inherits optional \token{id} and \token{name} attributes as described in \sec{sec:idname}.  The \token{id} of a \Distribution has no mathematical meaning.
-
-
-\subsection{The \class{UnivariateDistribution} class}
-\label{UnivariateDistribution-class}
-\label{univariatedistribution-class}
-
-The \UnivariateDistribution class is an abstract class that derives from the \Distribution abstract class, and which has three derived classes itself: \ContinuousUnivariateDistribution, \DiscreteUnivariateDistribution, and \CategoricalUnivariateDistribution.  It is provided as a bookkeeping class to distinguish it from other types of distributions.
-
-
-\subsection{The \class{MultivariateDistribution} class}
-\label{MultivariateDistribution-class}
-\label{multivariatedistribution-class}
-
-The \MultivariateDistribution class is an abstract class with no derived classes in the current specification, but some could be added in the future.  Most likely, it will be removed from the final version of the spec.
-
-
-\begin{figure}[htb]
-\includegraphics[width=0.55\linewidth]{figs/continuousUnivariateDistribution_first.pdf}
-\caption{The definition of the \ContinuousUnivariateDistribution abstract class, and its \BetaDistribution, \CauchyDistribution, \ChiSquareDistribution, \ExponentialDistribution, \FDistribution, \GammaDistribution, \InverseGammaDistribution, \LaPlaceDistribution, and \LogNormalDistribution children.  All may have lower and upper \UncertBound children, and each has one or more other parameters encoded as \UncertValue children (both defined below).}
-\label{fig:continuousUnivariateDistribution_first}
-\end{figure}
-
-
-\subsection{The \class{ContinuousUnivariateDistribution} class}
-\label{ContinuousUnivariateDistribution-class}
-\label{continuousunivariatedistribution-class}
-The abstract \ContinuousUnivariateDistribution class is the base class for a wide variety of distributions, all of which describe a potentially-bounded continuous range of probabilities.  Many of the most commonly-used distributions such as the \NormalDistribution and the \UniformDistribution fall into this category.
-
-\begin{figure}[htb]
-\includegraphics[width=0.55\linewidth]{figs/continuousUnivariateDistribution_second.pdf}
-\caption{The definition of the \ContinuousUnivariateDistribution abstract class, and its \LogisticDistribution, \NormalDistribution, \ParetoDistribution, \RayleighDistribution, \StudentTDistribution, \UniformDistribution, and \WeibullDistribution children.  All may have lower and upper \UncertBound children, and each has one or more other parameters encoded as \UncertValue children (both defined below).}
-\label{fig:continuousUnivariateDistribution_second}
-\end{figure}
-
-All \ContinuousUnivariateDistribution elements may have two optional children: \val{lowerTruncationBound} and \val{upperTruncationBound}, both of the class \UncertBound (defined below).  Either element, if present, limit the range of possible sampled values from the distribution.  The \val{lowerTruncationBound} defines the lowest value (inclusive or not, as defined by that element's \token{inclusive} attribute) that can be sampled, and the \val{upperTruncationBound} defines the highest.  If both children are present, the \val{lowerTruncationBound} must either be lower than the \val{upperTruncationBound}, or they may be equal, if both bounds are set \token{inclusive}=\val{true}.  Similarly, some distributions are themselves naturally bound (some may, for example, only return values greater than zero).  In those cases, the natural lower bound of the distribution must either be lower than the \val{upperTruncationBound}, or be equal to it if the natural lower bound is inclusive, and if the \val{upperTruncationBound} is set \token{inclusive}=\val{true}.  Similarly, the natural upper bound of the distribution must either be higher than the \val{lowerTruncationBound}, or it may be equal to it if the natural upper bound is inclusive and if the \val{lowerTruncationBound} is set \token{inclusive}=\val{true}.  It may be impossible to determine this from a static analysis of the model, as either or both bound's values may depend on other dynamic variables.  If a simulator encounters this situation, the sampled value and the behavior of the simulator are undefined.
-
-If bounded, the cumulative probability that would have been assigned to the region outside the bound is re-assigned proportionally to the rest of the distribution.  It should be noted that while discarding any value obtained from the non-truncated version of the distribution and re-sampling is indeed one method that could be used to accomplish this, the efficiency of that algorithm decreases with the width of the allowed window, and indeed is technically zero (and would take an infinite amount of time to complete) should the bounds be equal to one another.  Taking any samples obtained outside the bound window and instead returning the boundary value itself is incorrect, and will not result in a proper draw from the defined distribution.
-
-The distributions of this type allowed in this version of the specification are defined in \fig{fig:continuousUnivariateDistribution_first} and \fig{fig:continuousUnivariateDistribution_second}.  A full list of all of the distributions is provided in \sec{sec:allDistributions}.
-
-
-\begin{figure}[htb]
-\includegraphics[width=0.55\linewidth]{figs/discreteUnivariateDistribution.pdf}
-\caption{The definition of the \DiscreteUnivariateDistribution abstract class, and its \BinomialDistribution, \GeometricDistribution, \HypergeometricDistribution, \NegativeBinomialDistribution, and \PoissonDistribution children.  All may have lower and upper \UncertBound children, and each has one or more other parameters encoded as \UncertValue children (both defined below).}
-\label{fig:discreteUnivariateDistribution}
-\end{figure}
-
-\subsection{The \class{DiscreteUnivariateDistribution} class}
-\label{DiscreteUnivariateDistribution-class}
-\label{discreteunivariatedistribution-class}
-
-The abstract \DiscreteUnivariateDistribution class is the base class for a wide variety of distributions, all of which describe a potentially-bounded range of probabilities of discrete values.  The most commonly-used distributions in this class is probably the \PoissonDistribution.  Distributions that always return integers fall in this category, which often involve events happening at particular frequencies.
-
-All \DiscreteUnivariateDistribution elements (like \ContinuousUnivariateDistribution elements) may have two optional children: \val{lowerTruncationBound} and \val{upperTruncationBound}, both of the class \UncertBound (defined below).  Either element, if present, limit the range of possible sampled values from the distribution.  The \val{lowerTruncationBound} defines the value below which no sampling may take place
-(inclusive or not, as defined by that element's \token{inclusive} attribute), and the \val{upperTruncationBound} defines the value above which no sampling may take place.  These bounds may fall between the possible discrete values being returned:  as an example, for a distribution that returned an integer in the series [0, 1, 2, ...], if it was given a \val{lowerTruncationBound} of 1.5, the lowest value it could return would be 2.  In this case, the value of the \token{inclusive} attribute on the \UncertBound would be immaterial, as '1.5' could never be returned.
-
-As in the case of the \ContinuousUnivariateDistribution bounds, if both bounds are present, the \val{lowerTruncationBound} must either be lower than the \val{upperTruncationBound}, or they may be equal, if both bounds are set \token{inclusive}=\val{true}.  Similarly, the discrete distributions are themselves often naturally bound (some may, for example, only return values greater than zero).  In those cases, the natural lower bound of the distribution must be either be lower than the \val{upperTruncationBound}, or it may be equal to it if the natural lower bound is inclusive, and if the \val{upperTruncationBound} is set \token{inclusive}=\val{true}.  Similarly, the natural upper bound of the distribution must either be higher than the \val{lowerTruncationBound}, or it may be equal to it if the natural upper bound is inclusive and if the \val{lowerTruncationBound} is set \token{inclusive}=\val{true}.  In addition, if both bounds are defined, they must define a span within which at least one possible sampled discrete value may be found.  For a distribution that returns integers, for example, one may not define a lower bound of 1.5 and an upper bound of 1.8, as no integer lies within that range.  It may be impossible to determine if any of these rules are violated from a static analysis of the model, as either or both bound's values may depend on other dynamic variables.  If a simulator encounters this situation, the sampled value and the behavior of the simulator are undefined.
-
-If bounded, the cumulative probability that would have been assigned to the values outside the bound is re-assigned proportionally to the rest of the distribution.  It should be noted that while discarding any value obtained from the non-truncated version of the distribution and re-sampling is indeed one method that could be used to accomplish this, the efficiency of that algorithm decreases with the width of the allowed window, and indeed is technically zero (and could take an infinite amount of time to complete) should the bounds allow only a single discrete value.  Taking any samples obtained outside the bound window and instead returning the boundary value itself is incorrect, and will not result in a proper draw from the defined distribution.
-
-The distributions of this type allowed in this version of the specification are defined in \fig{fig:discreteUnivariateDistribution}.  A full list of all of the distributions is provided in \sec{sec:allDistributions}.
-
-
-
-\begin{figure}[htb]
-\includegraphics[width=0.85\linewidth]{figs/categoricalUnivariateDistribution.pdf}
-\caption{The definition of the \CategoricalUnivariateDistribution abstract class, plus the \BernoulliDistribution, \CategoricalDistribution, \ListOfCategories, and \Category classes.}
-\label{fig:categoricalUnivariateDistribution}
-\end{figure}
-
-\subsection{The \class{CategoricalUnivariateDistribution} class}
-\label{CategoricalUnivariateDistribution-class}
-\label{categoricalunivariatedistribution-class}
-
-The \CategoricalUnivariateDistribution abstract class includes distributions where the various possible sampled values are each explicitly listed, along with the probability for that sampled value.  The sum of these probabilities must therefore equal 1.0, in order to be valid.  This type of distribution class is used for things such as weighted die rolls, or other situations where particular values are obtained at arbitrary probabilities.
-
-Because each possible sampled value is explicitly listed in an \CategoricalUnivariateDistribution, it does not have the optional \UncertBound values that the other univariate distributions do: if a particular value is not allowed, it is simply dropped from the list of options, and the probabilities of the other values are scaled accordingly.
-
-
-\subsection{Distribution Elements}
-
-Because the list of distributions is extensive, all of them are provided at the end of this document in \sec{sec:allDistributions}.  The elements they use are defined below.
-
-\begin{figure}[htb]
-\includegraphics[width=0.35\linewidth]{figs/uncertValue.pdf}
-\caption{The definition of the \UncertValue and \UncertBound classes.  These classes define a way to reference either a value or an element with mathematical meaning.  The \UncertBound class additionally defines whether it is considered to be inclusive or not.}
-\label{fig:uncertValue}
-\end{figure}
-
-\subsubsection{The \class{UncertValue} class}
-\label{UncertValue-class}
-\label{uncertvalue-class}
-
-The \UncertValue class provides two optional attributes, exactly one of which must be defined.  The \token{value} attribute (of type \primtype{double}) is used when the \UncertValue represents a particular number, and the \token{var} attribute (of type \primtype{UncertIdRef}) is used when the \UncertValue represents a referenced element with mathematical meaning.  In the context of a \FunctionDefinition, this can only reference a \DistribInput, as no \primtype{SId} from the \Model may be referenced from within a \FunctionDefinition.  In other contexts, it may reference the \primtype{SId} of any element with mathematical meaning; see \sec{sec:primtype-uncertidref}.
-
-The optional \token{units} attribute may be used to indicate the units of the \token{val} attribute.  As such, it may only be defined if the \UncertValue has a defined \token{value} attribute, and not if it has a defined \token{var} attribute.  (In the latter case, the units may be derived from the referenced element.)
-
-Any given \UncertValue in a \Distribution will have an element name specific to the parameter it represents within that \Distribution.  So, for example, a \NormalDistribution will have one child \UncertValue with the name \val{<mean>}, and might have another \UncertValue child with the name \val{<stddev>}.  All these parameters are defined as the same class for simplicity, since all of them merely need a way to reference a value.
-
-
-\subsubsection{Attributes inherited from \SBase}
-
-An \UncertValue always inherits the optional \token{metaid} and \token{sboTerm} attributes, and inherits optional \token{id} and \token{name} attributes as described in \sec{sec:idname}.  Outside of a \FunctionDefinition, the \token{id} of a \UncertValue takes the mathematical value of its \token{value} attribute if that attribute is defined, and the mathematical value of the corresponding \token{var} if that attribute is defined.  This meaning may be used in other contexts, but that meaning may not be set directly by any other SBML element of any level, version, or package.  If setting the value is desired, the \token{var} attribute should be used, and that referenced element set as per normal SBML procedures.  The meaning is provided mostly to allow access to the \token{val} attribute, which otherwise would be undiscoverable to any other SBML element.  Do note, however, that the scope of the \UncertValue \token{id} is limited to its \FunctionDefinition parent in that context.  In other contexts, its \token{id} has the scope of its parent \Model.
-
-\subsubsection{The \class{UncertBound} class}
-\label{UncertBound-class}
-\label{uncertbound-class}
-
-The \UncertBound class inherits from \UncertValue and adds a single required Boolean attribute \token{inclusive}.  This attribute indicates whether the value the bound represents is to be included in that range (\val{true}) or not (\val{false}).  This allows the creation of either 'open' or 'closed' boundaries of the ranges it is used to define.
-
-
-\begin{figure}[htb]
-\includegraphics[width=0.85\linewidth]{figs/externalDistribution.pdf}
-\caption{The definition of the \ExternalDistribution, \ExternalParameter, and \ListOfExternalParameters classes.  These classes define a way to define a distribution with reference to an external database or ontology of distribution definitions.}
-\label{fig:externalDistribution}
-\end{figure}
-
-\subsection{The \class{ExternalDistribution} class}
-\label{ExternalDistribution-class}
-\label{externaldistribution-class}
-
-The \ExternalDistribution class is provided to allow a modeler to encode a distribution not otherwise explicitly handled by this specification.  Because the range of possibilities is so vast, the modeler should not normally expect any given SBML simulator or other software to be able to properly manipulate this distribution, but particular software tools may implement support for certain distributions they know their own software's users may require.
-
-The required attribute \token{definitionURL}, of type \primtype{ExternalRef}, must be a URI that defines a valid distribution.  It is strongly recommended that modelers use distributions from ProbOnto (\url{http://probonto.org/}), as consistently referencing a single ontology will improve exchangeability, at least slightly.  The referenced distribution is then the distribution defined by this \ExternalDistribution, along with any parameterization provided by the children \ExternalParameter elements.
-
-Some referenced distributions are multivarite, meaning they define correlated distributions for two or more parameters.  It is impossible with \sbmlthreecore to define a \FunctionDefinition that returns a vector, and similarly no \primtype{SId} in \sbmlthreecore can be used to represent a vector.  If this is desired, then, the Arrays package must be used in concert with the \ExternalDistribution to cooperatively set up a model with a \FunctionDefinition that can use an array as input and/or as output.
-
-The \ExternalDistribution defines an optional child \ListOfExternalParameters, which can be used to parameterize the defined distribution.
-
-
-\subsection{The \class{ListOfExternalParameters} class}
-\label{ListOfExternalParameters-class}
-\label{listofexternalparameters-class}
-
-The \ListOfExternalParameters class, like other \ListOf classes in \sbmlthreecore, is a container for zero or more \ExternalParameter objects.  If empty, it simply means that no child \ExternalParameter objects are defined for its parent, and is equivalent to not including the \ListOfExternalParameters object at all.  This situation might be useful if the list is annotated with the reason why it is empty, for example.
-
-
-\subsection{The \class{ExternalParameter} class}
-\label{ExternalParameter-class}
-\label{externalparameter-class}
-
-The \ExternalParameter class, like the \ExternalDistribution, is provided to allow a modeler to encode externally-provided parameters not otherwise explicitly handled by this specification.  Again, the range of possibilities is vast, so modelers should ensure that the tool they wish to use encodes support for any \ExternalParameter they define.
-
-The \ExternalParameter inherits from \UncertValue, and adds the required attribute \token{definitionURL}, which is of type \primtype{ExternalRef}, and an optional child \ListOfExternalParameters.  The \token{definitionURL} must be a URI that defines a valid distribution-related parameter.  It is again strongly recommended that modelers use distribution parameters from ProbOnto (\url{http://probonto.org/}), as consistently referencing a single ontology will improve exchangeability.
-
-The child \ListOfExternalParameters is provided because some parameters may themselves need further parameterization.  For example, a mixture distribution defined as an \ExternalDistribution would contain as child \ExternalParameter objects those other base distributions that were mixed in the overall distribution.  Those base distributions would need to define their own parameterization, which could be accomplished here with child \ExternalParameter objects.  Similarly, ranges or categories might also need to be further defined with reference to child \ExternalParameter objects that would be considered to 'belong' to the parent \ExternalParameter.
-
-The referenced parameter is then the parameter defined by this \ExternalParameter, along with any further parameterization provided by its own children \ExternalParameter elements.
-
-Some referenced distributions are multivarite, meaning they define correlated distributions for two or more parameters.  If an input \ExternalParameter is required for a distribution, one must use the inherited \token{var} attribute to define the parameter's value rather than the \token{value} attribute, and SBML must contain some way to define that referenced \token{var} as an array (such as the Arrays package).
-
-
-
-
-
-
-
-%The full list of the 29 distributions and how they can be used is provided in \ref{sec:uncertml-distributions}.  Four of these distributions (Dirichlet, Multinomial, Multivariate Normal, and Multivariate Student T) use vectors as both input and output.  It is possible, if tedious, to provide vector input to these distributions by simply defining each element of the required vector as a numeric value or as an \primtype{UncertId.  However, it is not possible in \sbmlthreecore to take a single vector and simultaneously assign its values to different elements, or even to use a vector within MathML.  While it would be theoretically possible to define new elements in this specification to work around this limitation, such capabilities are more obviously the domain of the Arrays package within SBML, or of SED-ML\footnote{\url{http://sed-ml.org/}} (to set a suite of element values).  Unfortunately, as of this writing, the Arrays package has not yet been finalized, and many aspects of it have not been set.  Therefore, it is left to the future finalized Arrays package to define how to utilize a \FunctionDefinition that returns a vector, and how to define a \FunctionDefinition that takes a vector as input.  It is also possible for other individuals or groups to come up with custom annotations that define how to do this, and in fact, this is encouraged for any group that requires the use of any of these four distributions for their models.  If no such definitions exist, however, any numerical results from the use of these functions remain undefined, and models using this technique are unsimulatable.  (Such models may still be useful descriptions of certain situations, however.)  A final possibility is that SED-ML could be extended to extract the function definition, perform the sampling itself, and use the resulting vector to assign initial values to certain elements.
-
-%All three Sample elements in UncertML are logistically identical, and only semantically different.  The RandomSample describes a set of realizations known to come from a randomly-distributed source.  The SystematicSample describes a set of deliberately chosen realizations, such as those resulting from unscented sampling methods for Gaussian random variables.  The UnknownSample describes a set of realizations for which the source distribution is unknown.  All three describe a set of realizations, each with a weight and one or more values. The weights of all realizations in a single Sample must sum to 1.0.
-
-%UncertML also allows the definition of realizations with \val{categories} instead of \val{values} (i.e. \primtype{strings} instead of \primtype{doubles}).  This data type is unsupported in\sbmlthreecore, but if a package supports this data type in the future (as the Qualitative Models package might), \val{categories} could be used.
-
-%When a \Distribution is encountered containing a Sample, its parent \FunctionDefinition is defined as randomly choosing a single realization from the the \uncertml according to its \token{weight}, and, if the realization contains a \token{values} child, returning that value (or vector of values) when the function is called.  If the realization contains a \token{categories} child, that string (or vector of strings) is returned instead.  (\uncertml requires that a single realization contain either a \token{values} or \token{categories} child, but may not have both.)
-
-%As happens with some of the UncertML distributions above, then, if the chosen realization has multiple values or categories, the result of the draw is a vector, which cannot, in \sbmlthreecore, be used either in MathML or as an assignment to an SBML element.  The Arrays package or some form of custom annotation must be used to define what happens when a multi-value realization is chosen.
-
-%Similarly, there is no \token{string} data type for SBML elements defined in \sbmlthreecore.  Without a package that defines such a data type, then, any call to a \FunctionDefinition that returns a string or vector of strings from a \token{categories} \uncertml element will be undefined and therefore unsimulatable, but may, again, be a useful description of a particular type of model.
-
-%Note \notice that the \ExplicitPMF class in previous versions of this specification did not use \uncertml, and instead defined its own way of listing samples.  The functionality (with the addition of ids instead of numbers in \uncertml 3.0) is replicated in the CategoricalDistribution class of \uncertml 3.0.
-
+%\begin{figure}[htb]
+%\includegraphics[width=0.75\linewidth]{figs/distribution.pdf}
+%\caption{The definition of the abstract \Distribution class, plus the abstract \UnivariateDistribution and \MultivariateDistribution classes.  Also shown are the \ContinuousUnivariateDistribution, \DiscreteUnivariateDistribution, \CategoricalUnivariateDistribution, and \ExternalDistribution classes, defined later.  Note that the \MultivariateDistribution class is only defined here, and, as such, has no concrete classes that derive from it at this time in this version of the \distrib specification.  If further discussion reveals a need for them, it is shown here as an example of where it would be defined, but may disappear from a future version of the spec if no derived class for it is ever defined.}
+%\label{fig:distribution}
+%\end{figure}
 
 
 \subsection{Discrete vs. continuous sampling}
 \label{discrete-continuous}
 
-The \primtype{SId}s of \FunctionDefinition elements can be used in \sbmlthreecore in both discrete and continuous contexts:  \InitialAssignment, \EventAssignment, \Priority, and \Delay elements are all discrete, while \Rule, \KineticLaw, and \Trigger elements are all continuous in time.  For discrete contexts, the behavior of \distribshort-extended \FunctionDefinition elements is well-defined:  one or more random values are sampled from the distribution each time the function definition is invoked. Each invocation implies one sampling operation.  In continuous contexts, however, their behavior is ill-defined.  More information than is defined in this package (such as autocorrelation values or full conditional probabilities) would be required to make random sampling tractable in continuous contexts, and is beyond the scope of this version of the package.  If some package is defined in the future that adds this information, or if custom annotations are provided that add this information, such models may become simulatable.  However, this package does not define how to handle sampling in continuous contexts, and recommends against it: a warning may be produced by any software encountering the use of a \distribshort-extended \FunctionDefinition in a continuous context.  Assuming such models are desirable, and the information is not provided in a separate package, this information may be incorporated into a future version of this specification.
+\changed{\mathml csymbols may} be used in \sbmlthreecore in both discrete and continuous contexts:  \InitialAssignment, \EventAssignment, \Priority, and \Delay elements are all discrete, while \Rule, \KineticLaw, and \Trigger elements are all continuous in time.  For discrete contexts, the behavior of \distribshort-extended \FunctionDefinition elements is well-defined:  one or more random values are sampled from the distribution each time the function definition is invoked. Each invocation implies one sampling operation.  In continuous contexts, however, their behavior is ill-defined.  More information than is defined in this package (such as autocorrelation values or full conditional probabilities) would be required to make random sampling tractable in continuous contexts, and is beyond the scope of this version of the package.  If some package is defined in the future that adds this information, or if custom annotations are provided that add this information, such models may become simulatable.  However, this package does not define how to handle sampling in continuous contexts, and recommends against it: a warning may be produced by any software encountering the use of a \distribshort-extended \changed{\mathml} in a continuous context.  Assuming such models are desirable, and the information is not provided in a separate package, this information may be incorporated into a future version of this specification.
 
-Any other package that defines new contexts for MathML will also either be discrete or continuous.  Discrete situations (such as those defined in the Qualitative Models package) are, as above, well-defined.  Continuous situations (as might arise within the Spatial Processes package, over space instead of over time) will most likely be ill-defined.  Those packages must therefore either define for themselves how to handle \distribshort-extended \FunctionDefinition elements, or leave it to some other package/annotation scheme to define how to handle the situation.
+Any other package that defines new contexts for MathML will also either be discrete or continuous.  Discrete situations (such as those defined in the Qualitative Models package) are, as above, well-defined.  Continuous situations (as might arise within the Spatial Processes package, over space instead of over time) will most likely be ill-defined.  Those packages must therefore either define for themselves how to handle \distribshort-extended \changed{\mathml} elements, or leave it to some other package/annotation scheme to define how to handle the situation.
 
 
-%\subsection{Truncation}
-%\label{truncation}
-
-%In order to perform truncation, one or both ends of the distribution are cut off, and the remaining function is re-scaled so the area under the curve is once again 1.0.  This capability is provided through the use of the \val{truncationLowerBound} and \val{truncationUpperBound} elements.  As those element names imply, the first is used to truncate the distribution at a lower bound, and the second at an upper bound.  The fact that both are inclusive mean that the value at that boundary may possibly be returned by the function.  Care should thus be taken to ensure that (for example) if zero is a \emph{non-inclusive} bound for one's model, that a value slightly larger than zero be used as the distribution's inclusive lower bound.
 
 \begin{blockChanged}
 \subsection{Examples using the extended \token{csymbol} elements}
@@ -1020,166 +819,102 @@ When used with four arguments instead of two, the normal distribution is truncat
 \end{example}
 
 This use would apply a draw from a normal distribution with mean $z$, standard deviation $10$, lower bound $z-2$ (inclusive) and upper bound $z+2$ (not inclusive) to the SBML element \val{y}.
+
+\subsubsection{Defining conditional events}
+
+Simultaneous events in SBML are ordered based on their \Priority values, with higher values being executed first, and potentially cancelling events that fire after them.  In this example, two simultaneous events have priorities set with csymbols defined in \distribshort.  The event E0 has a priority of \val{uniform(0,1)}, while the event E1 has a priority of \val{uniform(0,2)}.  This means that 75\% of the time, event E1 will have a higher priority than E0, and will fire first, assigning a value of $5$ to parameter \val{x}.  Because this negates the trigger condition for E0, which is set \token{persistent}=\val{false}, this means that E0 never fires, and the value of x remains at $5$.  The remaining 25\% of the time, the reverse happens, with E0 setting the value of x to $3$ instead.
+
+
+\begin{example}
+<?xml version="1.0" encoding="UTF-8"?>
+<sbml xmlns="http://www.sbml.org/sbml/level3/version2/core"
+      xmlns:distrib="http://www.sbml.org/sbml/level3/version2/distrib/version1"
+      level="3" version="2" distrib:required="true">
+  <model metaid="__main" id="__main">
+    <listOfParameters>
+      <parameter metaid="__main.x" id="x" value="0" constant="false"/>
+    </listOfParameters>
+    <listOfEvents>
+      <event id="E0" useValuesFromTriggerTime="true">
+        <trigger initialValue="true" persistent="false">
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <and/>
+              <apply>
+                <gt/>
+                <csymbol encoding="text" definitionURL="http://www.sbml.org/sbml/symbols/time">
+                         time </csymbol>
+                <cn type="integer"> 2 </cn>
+              </apply>
+              <apply>
+                <lt/>
+                <ci> x </ci>
+                <cn type="integer"> 1 </cn>
+              </apply>
+            </apply>
+          </math>
+        </trigger>
+        <priority>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <csymbol encoding="text" definitionURL="http://www.sbml.org/sbml/symbols/distrib/uniform">
+                       uniform </csymbol>
+              <cn type="integer"> 0 </cn>
+              <cn type="integer"> 1 </cn>
+            </apply>
+          </math>
+        </priority>
+        <listOfEventAssignments>
+          <eventAssignment variable="x">
+            <math xmlns="http://www.w3.org/1998/Math/MathML">
+              <cn type="integer"> 3 </cn>
+            </math>
+          </eventAssignment>
+        </listOfEventAssignments>
+      </event>
+      <event id="E1" useValuesFromTriggerTime="true">
+        <trigger initialValue="true" persistent="false">
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <and/>
+              <apply>
+                <gt/>
+                <csymbol encoding="text" definitionURL="http://www.sbml.org/sbml/symbols/time">
+                         time </csymbol>
+                <cn type="integer"> 2 </cn>
+              </apply>
+              <apply>
+                <lt/>
+                <ci> x </ci>
+                <cn type="integer"> 1 </cn>
+              </apply>
+            </apply>
+          </math>
+        </trigger>
+        <priority>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <csymbol encoding="text" definitionURL="http://www.sbml.org/sbml/symbols/distrib/uniform">
+                       uniform </csymbol>
+              <cn type="integer"> 0 </cn>
+              <cn type="integer"> 2 </cn>
+            </apply>
+          </math>
+        </priority>
+        <listOfEventAssignments>
+          <eventAssignment variable="x">
+            <math xmlns="http://www.w3.org/1998/Math/MathML">
+              <cn type="integer"> 5 </cn>
+            </math>
+          </eventAssignment>
+        </listOfEventAssignments>
+      </event>
+    </listOfEvents>
+  </model>
+</sbml>
+\end{example}
+
 \end{blockChanged}
-
-%\subsubsection{Defining a 'die roll' PMF with a \CategoricalDistribution}
-%In the following example, a \FunctionDefinition is extended to define a draw from a \CategoricalDistribution PMF:
-
-%\clearpage
-%\begin{example}
-%...
-%      <functionDefinition id="die_roll">
-%        <distrib:drawFromDistribution>
-%          <distrib:categoricalDistribution>
-%            <distrib:listOfCategories>
-%              <distrib:category>
-%                <distrib:probability distrib:value="0.25"/>
-%                <distrib:value distrib:value="1"/>
-%              </distrib:category>
-%              <distrib:category>
-%                <distrib:probability distrib:value="0.25"/>
-%                <distrib:value distrib:value="2"/>
-%              </distrib:category>
-%              <distrib:category>
-%                <distrib:probability distrib:value="0.25"/>
-%                <distrib:value distrib:value="3"/>
-%              </distrib:category>
-%              <distrib:category>
-%                <distrib:value distrib:value="4"/>
-%              </distrib:category>
-%            </distrib:listOfCategories>
-%          </distrib:categoricalDistribution>
-%        </distrib:drawFromDistribution>
-%      </functionDefinition>
-%...
-%\end{example}
-
-%No inputs are provided.  Three of the four \Category children of the \CategoricalDistribution all have equal values for their \token{probability} children, with the fourth not having its probability set, meaning that it has a probability such that the sum of all the probabilities among all categories is 1.0.  Each child \Category is therefore equally likely to be chosen, resulting in this function returning \val{1}, \val{2}, \val{3}, or \val{4}, each with equal probability.
-
-%In a modeling context where it is not a die being rolled, but different patients which we are sampling, the following function definition uses the same structure:
-
-%\begin{example}
-%...
-%      <functionDefinition id="pick_patient">
-%        <distrib:drawFromDistribution>
-%          <distrib:categoricalDistribution>
-%            <distrib:listOfCategories>
-%              <distrib:category id="patient1">
-%                <distrib:probability distrib:value="0.25"/>
-%                <distrib:value distrib:value="1.21"/>
-%              </distrib:category>
-%              <distrib:category id="patient2">
-%                <distrib:probability distrib:value="0.25"/>
-%                <distrib:value distrib:value="2.24"/>
-%              </distrib:category>
-%              <distrib:category id="patient3">
-%                <distrib:probability distrib:value="0.25"/>
-%                <distrib:value distrib:value="-0.6"/>
-%              </distrib:category>
-%              <distrib:category id="patient4">
-%                <distrib:value distrib:value="1.82"/>
-%              </distrib:category>
-%            </distrib:listOfCategories>
-%          </distrib:categoricalDistribution>
-%        </distrib:drawFromDistribution>
-%      </functionDefinition>
-%...
-%\end{example}
-
-%Here, we have four patients, each of which had a different value.  When sampled (such as in an initial assignment), one would be chosen at random to populate a value for the simulation.  In a more complicated context where several different values were sampled from a single patient, the 'Arrays' package would need to be used, so that all the values from a single patient could be returned as a group, and then assigned to their appropriate targets.  In that case, various arrays could be set up with the first value in all arrays corresponding to the first patient, the second value with the second patient, etc.  A \DrawFromDistribution could then be created to return a patient index at random, and that index used to assign values in the simulation.
-
-
-%\subsubsection{Defining an external distribution}
-
-%In the following example, a \FunctionDefinition is extended to define a draw from an externally-defined distribution (in this case, an alternative parameterization of the \ExponentialDistribution):
-
-%\begin{example}
-%...
-%      <functionDefinition id="Exponential2">
-%        <distrib:drawFromDistribution>
-%          <distrib:listOfDistribInputs>
-%            <distrib:distribInput id="beta" distrib:index="0"/>
-%          </distrib:listOfDistribInputs>
-%          <distrib:externalDistribution name="Exponential 2"
-%              distrib:definitionURL="http://www.probonto.org/ontology#PROB_k0000353">
-%            <distrib:listOfExternalParameters>
-%              <distrib:externalParameter name="Beta" distrib:var="beta"
-%                distrib:definitionURL="http://www.probonto.org/ontology#PROB_k0000362"/>
-%            </distrib:listOfExternalParameters>
-%          </distrib:externalDistribution>
-%        </distrib:drawFromDistribution>
-%      </functionDefinition>
-%...
-%\end{example}
-
-%As defined in the ProbOnto ontology, this parameterization of the exponential distribution takes the form $1/{\beta e^{-x/\beta}}$ instead of the form $\lambda e^{-x\lambda}$, used by the \ExponentialDistribution.  
-
-
-
-
-
-
-
-%\subsubsection{Defining a 'pick one' sample with UncertML}
-%In the following example, a \FunctionDefinition is extended to define a draw from an UncertML-defined set of samples:
-
-%\begin{example}
-%<sbml xmlns:distrib="http://www.sbml.org/sbml/level3/distrib/version1" xmlns="http://www.sbml.org/sbml/level3/version2/core" level="3" version="2" distrib:required="true">
-%  <model>
-%    <listOfFunctionDefinitions>
-%      <functionDefinition id="pick_one">
-%        <distrib:drawFromDistribution>
-%          <distrib:listOfDistribInputs>
-%            <distrib:distribInput distrib:id="A" distrib:index="0"/>
-%            <distrib:distribInput distrib:id="B" distrib:index="1"/>
-%            <distrib:distribInput distrib:id="C" distrib:index="2"/>
-%            <distrib:distribInput distrib:id="D" distrib:index="3"/>
-%          </distrib:listOfDistribInputs>
-%          <distrib:categoricalDistribution>
-%            <distrib:listOfCategories>
-%              <distrib:category>
-%                <distrib:probability distrib:value="0.25"/>
-%                <distrib:value distrib:var="A"/>
-%              </distrib:category>
-%              <distrib:category>
-%                <distrib:probability distrib:value="0.25"/>
-%                <distrib:value distrib:var="B"/>
-%              </distrib:category>
-%              <distrib:category>
-%                <distrib:probability distrib:value="0.25"/>
-%                <distrib:value distrib:var="C"/>
-%              </distrib:category>
-%              <distrib:category>
-%                <distrib:value distrib:var="D"/>
-%              </distrib:category>
-%            </distrib:listOfCategories>
-%          </distrib:categoricalDistribution>
-%        </distrib:drawFromDistribution>
-%      </functionDefinition>
-%    </listOfFunctionDefinitions>
-%    <listOfParameters>
-%      <parameter id="y"/>
-%    </listOfParameters>
-%    <listOfInitialAssignments>
-%      <initialAssignment symbol="y">
-%        <math xmlns="http://www.w3.org/1998/Math/MathML">
-%          <apply>
-%          <apply>
-%            <ci> pick_one </ci>
-%            <cn> 0.3 </cn>
-%            <cn> 5.2 </cn>
-%            <cn> -4 </cn>
-%            <cn> 8.77 </cn>
-%          </apply>
-%        </math>
-%      </initialAssignment>
-%    </listOfInitialAssignments>
-%  </model>
-%</sbml>
-%\end{example}
-
-%In this example, the function 'pickone' is defined, with four arguments, \val{A}, \val{B}, \val{C}, and \val{D}.  When called, each argument has an equal chance of being chosen as the return value.  The parameter 'x' is initialized by calling this function with the arguments 0.3, 5.2, -4, and 8.77, each of which has an equally likely chance of being chosen.
-
 
 %\subsection{Equivalence with Fallback Function}
 %\label{sec:fallbackfunc}
@@ -1227,6 +962,7 @@ This use would apply a draw from a normal distribution with mean $z$, standard d
 %      </functionDefinition>
 %\end{example}
 
+
 \begin{figure}[bh]
   \includegraphics{figs/extended-sbase.pdf}
   \caption{The definition of the extended \SBase class to include a new optional \Uncertainty child, which in turn has optional \UncertStatistics and \Distribution children.  Intended for use with any element with mathematical meaning, or with a \Math child.}
@@ -1237,13 +973,75 @@ This use would apply a draw from a normal distribution with mean $z$, standard d
 \label{sec:extended-sbase-class}
 \label{extended-sbase-class}
 
-As can be seen in \fig{fig:extended-sbase-uml}, the SBML base class \SBase is extended to include an optional \Uncertainty child, which in turn contains an optional \Distribution child, and an optional \UncertStatistics child, either or both of which may be used to include information about the uncertainty of the parent element.  In \sbmlthreecore, one should only extend those \SBase elements with mathematical meaning (\Compartment, \Parameter, \Reaction, \Species, and \SpeciesReference), or those \SBase elements with \Math children (\Constraint, \Delay, \EventAssignment, \FunctionDefinition, \InitialAssignment, \KineticLaw, \Priority, \Rule, and \Trigger).  \changed{The \Uncertainty child is added to} \SBase instead of to each SBML element so that other packages inherit the ability to extend their own elements in the same fashion:  for example, the \FluxBound class from the Flux Balance Constraints package has mathematical meaning, and could be given \changed{an \Uncertainty child containing information} about the distribution or set of samples from which it was drawn.  Similarly, the \FunctionTerm class from the Qualitative Models package has a \Math child, and could be similarly extended.
+As can be seen in \fig{fig:extended-sbase-uml}, the SBML base class \SBase is extended to include an optional \Uncertainty child, which in turn contains an optional \Distribution child, and an optional \UncertStatistics child, either or both of which may be used to include information about the uncertainty of the parent element.  In \sbmlthreecore, one should only extend those \SBase elements with mathematical meaning (\Compartment, \Parameter, \Reaction, \Species, and \SpeciesReference), or those \SBase elements with \Math children (\Constraint, \Delay, \EventAssignment, \FunctionDefinition, \InitialAssignment, \KineticLaw, \Priority, \Rule, and \Trigger).  \changed{The \Uncertainty child is added to} \SBase instead of to each SBML element so that other packages inherit the ability to extend their own elements in the same fashion:  for example, the \FluxBound class from the Flux Balance Constraints package has mathematical meaning, and could be given \changed{an \Uncertainty child containing information} about the distribution or set of samples from which it was drawn.  Similarly, the \FunctionTerm class from the Qualitative Models package has a \Math child, and could be extended.
 
-A few SBML elements can interact in interesting ways that can confuse the semantics here.  A \Reaction element and its \KineticLaw child, for example, both reference the exact same mathematics, so only one should be extended with a child \Uncertainty.  Similarly, if an \InitialAssignment assigns to a constant element (\Parameter, \Species, etc.), the uncertainty for both should be the same, or only one should be provided.
+A few SBML elements can interact in interesting ways that can confuse the semantics here.  A \Reaction element and its \KineticLaw child, for example, both reference the exact same mathematics, so only one should be extended with a child \Uncertainty.  Similarly, \changed{the uncertainty of an \InitialAssignment will be identical to the uncertainty of the element it assigns to, and therefore only one should be extended}.
 
 Other elements not listed above should probably not be given an \Uncertainty child, as it would normally not make sense to talk about the uncertainty of something that doesn't have a corresponding mathematical meaning.  However, because packages or annotations can theoretically give new meaning (including mathematical meaning) to elements that previously did not have them, this is not a requirement.
 
 It is important to note that the uncertainty described either by the \Distribution or the \UncertStatistics elements are defined as being the uncertainty at the moment the element's mathematical meaning is calculated, and does not describe the uncertainty of how that element changes over time.  For a \Species, \Parameter, \Compartment, and \SpeciesReference, this means that it is the uncertainty of their initial values, and does not describe the uncertainty in how those values evolve in time.  The reason for this is that other SBML constructs all describe how (or if) the values change in time, and it is those other constructs that should be used to describe a symbol's time-based uncertainty.  For example, a \Species whose initial value had uncertainty due to instrument precision could have an \Uncertainty child describing this.  A \Species whose value was known to change over time due to unknown processes, but which had a known average and standard deviation could be given an \AssignmentRule that set that \Species amount to the known average, and the \AssignmentRule itself could be given an \UncertStatistics child describing the standard deviation of the variability.
+
+
+\subsection{The \DistribBase class}
+\label{sec:DistribBase-class}
+\label{DistribBase-class}
+\label{sec:idname}
+
+The \DistribBase class is an abstract base class which is the parent class for every class in this \distrib package.  Its purpose is to replicate within the \distrib package what changed between \threeone and \threetwo: the addition of an optional \token{id} and \token{name} attribute to \SBase.  By adding these attributes here, \distribshort may be used completely exchangeably between Level~1 and Level~2 documents without \changed{any other modifications.}
+
+\begin{figure}[bh]
+  \includegraphics{figs/distribBase.pdf}
+  \caption{The definition of the \DistribBase class.  The \token{id} and \token{name} attributes defined are optional, and are identical to the ones they inherit in \threetwo documents from \SBase.}
+  \label{fig:distribBase}
+\end{figure}
+
+The meaning of these attributes is identical, regardless of the level/version of the document in which they appear.
+
+The \token{id} attribute is of type \primtype{SId}, and must be unique among other ids in the \primtype{SId} namespace in the parent \Model, and has no mathematical meaning, unless stated otherwise in the definition of that object.  The \token{name} attribute is of type \primtype{string}, and is provided to allow the user to define a human-readable label for the object.  It has no uniqueness restrictions.
+
+\begin{figure}[htb]
+\includegraphics[width=0.8\linewidth]{figs/uncertValue.pdf}
+\caption{The definition of the \UncertValue, \UncertBound, and \ExternalParameter classes.  These classes all describe a way to define or reference an element with mathematical meaning.  The \UncertBound class additionally defines whether it is considered to be inclusive or not.  The meaning of an \ExternalParameter is defined by its \token{definitionURL}, as well as its children.}
+\label{fig:uncertValue}
+\end{figure}
+
+\subsection{The \class{UncertValue} class}
+\label{UncertValue-class}
+\label{uncertvalue-class}
+
+The \UncertValue class provides two optional attributes, exactly one of which must be defined.  The \token{value} attribute (of type \primtype{double}) is used when the \UncertValue represents a particular number, and the \token{var} attribute (of type \primtype{UncertIdRef}) is used when the \UncertValue represents a referenced element with mathematical meaning.  %In the context of a \FunctionDefinition, this can only reference a \DistribInput, as no \primtype{SId} from the \Model may be referenced from within a \FunctionDefinition.  In other contexts, it may reference the \primtype{SId} of any element with mathematical meaning; see \sec{sec:primtype-uncertidref}.
+
+The optional \token{units} attribute may be used to indicate the units of the \token{val} attribute.  As such, it may only be defined if the \UncertValue has a defined \token{value} attribute, and not if it has a defined \token{var} attribute.  (In the latter case, the units may be obtained from the referenced element.)
+
+Any given \UncertValue in a \Distribution will have an element name specific to the parameter it represents within that \Distribution.  So, for example, a \NormalDistribution will have one child \UncertValue with the name \val{<mean>}, and might have another \UncertValue child with the name \val{<stddev>}.  All these parameters are defined as the same class for simplicity, since all of them merely need a way to reference a value.
+
+
+\subsubsection{Attributes inherited from \SBase}
+
+An \UncertValue always inherits the optional \token{metaid} and \token{sboTerm} attributes, and inherits optional \token{id} and \token{name} attributes as described in \sec{sec:idname}.  The \token{id} of a \UncertValue takes the mathematical value of its \token{value} attribute if that attribute is defined, and the mathematical value of the corresponding \token{var} if that attribute is defined.  This meaning may be used in other contexts, but that meaning may not be set directly by any other SBML element of any level, version, or package.  If setting the value is desired, the \token{var} attribute should be used, and that referenced element set as per normal SBML procedures.  The meaning is provided mostly to allow access to the \token{val} attribute, which otherwise would be undiscoverable to any other SBML element.
+
+\subsection{The \class{UncertBound} class}
+\label{UncertBound-class}
+\label{uncertbound-class}
+
+The \UncertBound class inherits from \UncertValue and adds a single required Boolean attribute \token{inclusive}.  This attribute indicates whether the value the bound represents is to be included in that range (\val{true}) or not (\val{false}).  This allows the creation of either 'open' or 'closed' boundaries of the ranges it is used to define.
+
+
+
+\subsection{The \class{ExternalParameter} class}
+\label{ExternalParameter-class}
+\label{externalparameter-class}
+
+The \ExternalParameter class is provided to allow a modeler to encode externally-provided parameters not otherwise explicitly handled by this specification.  The range of possibilities is vast, so modelers should ensure that the tool they wish to use encodes support for any \ExternalParameter they define.
+
+The \ExternalParameter inherits from \UncertValue, and adds the required attribute \token{definitionURL}, which is of type \primtype{ExternalRef}, and an optional child \ListOfExternalParameters.  The \token{definitionURL} must be a URI that defines a valid distribution-related parameter.  It is strongly recommended that modelers use distribution parameters from ProbOnto (\url{http://probonto.org/}) and other statistical parameters from STATO (\url{https://www.ebi.ac.uk/ols/ontologies/stato}), as consistently referencing a single ontology will improve exchangeability.
+
+The child \ListOfExternalParameters is provided because some parameters may themselves need further parameterization.  For example, a mixture distribution defined as an \ExternalDistribution would contain as child \ExternalParameter objects those other base distributions that were mixed in the overall distribution.  Those base distributions would need to define their own parameterization, which could be accomplished here with child \ExternalParameter objects.  Similarly, ranges or categories might also need to be further defined with reference to child \ExternalParameter objects that would be considered to 'belong' to the parent \ExternalParameter.
+
+The referenced parameter is then the parameter defined by this \ExternalParameter, along with any further parameterization provided by its own children \ExternalParameter elements.
+
+\changed{Some external parameters are not single-value, but are multi-value.  In these cases, you will either need several \ExternalParameter objects, or a way to reference an SBML element extended to be defined as an array (such as the Arrays package).}
+
 
 
 \subsection{The \class{Uncertainty} class}
@@ -1253,6 +1051,8 @@ It is important to note that the uncertainty described either by the \Distributi
 The \Uncertainty class has two optional children: an \UncertStatistics child and a \Distribution child.  \changed{Either or both may be used to store information about the uncertainty of an element, e.g. the distribution it was drawn from or its standard deviation.}  The \Uncertainty may be annotated to provide \changed{additional information}.
 
 Note that for \changed{elements that change in value over time, the described uncertainty applies only to the element's initial state, and not to how it changes in time.  For typical simulations, this means the element's initial assignment.}
+
+{\color{red} Lucian: \controversial At this point, I realize that I should have nixed the separate 'UncertStatistics' and just put everything there as the child of \Uncertainty.  If nobody's using this yet, maybe I will.}
 
 \begin{blockChanged}
 \paragraph{The units of uncertainty values}
@@ -1318,7 +1118,7 @@ An \Uncertainty always inherits the optional \token{metaid} and \token{sboTerm} 
 
 \begin{figure}[bh]
   \includegraphics{figs/uncertStatistics.pdf}
-  \caption{The definition of the \UncertStatistics and \UncertStatisticSpan classes.  (The \UncertValue and \ExternalParameter classes are defined elsewhere and re-used here.)  The \UncertStatistics class actually has a number of optional children, in three groups: those that can be classified as 'single value' statistics, those that can be classified as a 'span', and those not defined in this specification, but by an external ontology such as ProbOnto.  The possible 'single value' statistics are listed in \sec{UncertStatistics-class}}
+  \caption{The definition of the \UncertStatistics, \UncertStatisticSpan, and \ListOfExternalParameters classes.  (The \UncertValue and \ExternalParameter classes are defined elsewhere and re-used here.)  The \UncertStatistics class has a number of optional children, in three groups: those that can be classified as 'single value' statistics, those that can be classified as a 'span', and those not defined in this specification, but by an external ontology such as ProbOnto \changed{or STATO}.}
   \label{fig:uncertStatistics}
 \end{figure}
 
@@ -1369,7 +1169,7 @@ All the definitions below are from an archived copy of the definitions at \url{h
 \label{UncertStatisticSpan-class}
 \label{uncertstatisticspan-class}
 
-The \UncertStatisticSpan class defines a span of values that define an uncertainty statistic such as confidence interval or range.  It has four optional attributes, \token{varLower} and \token{varUpper}, of type \primtype{SIdRef}, and \token{valueLower} and \token{valueUpper}, of type double.  Exactly one of the attributes \token{varLower} and \token{valueLower} may be defined, and exactly one of the attributes \token{varUpper} and \token{valueUpper} may be defined.  If no attributes are defined, the parameters of the span are undefined.  If only one attribute is defined (one of the upper or lower attributes), that aspect of the span is defined, and the other end is undefined.  The span is fully defined if two attributes (one lower and one upper) is defined.
+The \UncertStatisticSpan class defines a span of values that define an uncertainty statistic such as confidence interval or range.  It has four optional attributes, \token{varLower} and \token{varUpper}, of type \primtype{SIdRef}, and \token{valueLower} and \token{valueUpper}, of type double.  Exactly one of the attributes \token{varLower} and \token{valueLower} may be defined, and exactly one of the attributes \token{varUpper} and \token{valueUpper} may be defined.  If no attributes are defined, the parameters of the span are undefined.  If only one attribute is defined (one of the upper or lower attributes), that aspect of the span is defined, and the other end is undefined.  The span is fully defined if two attributes (one lower and one upper) are defined.
 
 The value of the lower attribute (whichever is defined) must be lesser or equal to the value of the upper attribute (whichever is defined), at the initial conditions of the model.  The \UncertStatistics element cannot affect the core mathematics of an SBML model, but if it is used in a mathematical context during simulation of the model, this restriction on the attribute values must be maintained, or the \UncertStatisticSpan object as a whole will be undefined.
 
@@ -1434,6 +1234,30 @@ The plot on the right shows the 1st to 9th 10-quantiles (or deciles) for a norma
 \end{itemize}
 
 
+\subsection{The \class{ListOfExternalParameters} class}
+\label{ListOfExternalParameters-class}
+\label{listofexternalparameters-class}
+
+The \ListOfExternalParameters class, like other \ListOf classes in \sbmlthreecore, is a container for zero or more \ExternalParameter objects.  If empty, it simply means that no child \ExternalParameter objects are defined for its parent, and is equivalent to not including the \ListOfExternalParameters object at all.  This situation might be useful if the list is annotated with the reason why it is empty, for example.
+
+
+\subsection{The \class{Distribution} class}
+\label{Distribution-class}
+\label{distribution-class}
+
+The \Distribution class is the abstract class from which all distributions are derived.  They are organized here in much the same way they were in \uncertml, by whether they are univariate or multivariate, and whether they are continuous, discrete, or categorical.  In addition, the \ExternalDistribution inherits from \Distribution, as a 'generic' distribution definition class that allows the user to define any distribution in an external ontology such as ProbOnto.
+
+%When a \Distribution is encountered, its parent \FunctionDefinition is defined as sampling from the defined distribution, and returning that sample.  It may contain any number of \token{UncertIdRef} strings, each of which must correspond to an \token{UncertId} defined in a \DistribInput in the same function.
+
+{\color{red} Lucian: \controversial When these distributions were originally defined, they were being used in extended \FunctionDefinition elements to define actual draws from the distributions.  Now that that part of the spec has been replaced by new csymbols, these distributions are now solely being used as children of the \Uncertainty element.  If people like this, great; if we want to ditch it for the \ExternalDistribution construct instead, that's fine.  We could even expand this list as some sort of automatic conversion of ProbOnto.}
+
+In this draft of the \distrib specification, no mixed distributions and no multivariate distributions are presented, as the author has not seen any call for these distributions specifically, and believes that the generic \ExternalDistribution distribution could cover those cases on an as-needed basis.  If this turns out to not be the case, those distributions will be added to a subsequent version of this specification.  The use of the Arrays package would be required for any multivariate distribution.
+
+The full list of distributions is included in \apdx{apdx-distributions}.
+
+\subsubsection{Attributes inherited from \SBase}
+
+A \Distribution always inherits the optional \token{metaid} and \token{sboTerm} attributes, and inherits optional \token{id} and \token{name} attributes as described in \sec{sec:idname}.  The \token{id} of a \Distribution has no mathematical meaning.
 
 
 \subsection{Examples using extended \SBase}
@@ -1643,7 +1467,8 @@ And here is the same model, using the 'csymbol' defined in \distribshort:
       <initialAssignment symbol="x">
         <math xmlns="http://www.w3.org/1998/Math/MathML">
           <apply>
-            <csymbol encoding="text" definitionURL="http://www.sbml.org/sbml/symbols/distrib/normal"> normal </csymbol>
+            <csymbol encoding="text" definitionURL="http://www.sbml.org/sbml/symbols/distrib/normal">
+                     normal </csymbol>
             <cn type="integer"> 3 </cn>
             <cn> 0.2 </cn>
           </apply>
@@ -1659,7 +1484,7 @@ And here is the same model, using the 'csymbol' defined in \distribshort:
 
 \subsection{The \arrays package}
 This package is dependent on no other package, but might rely on the \arrays package
-to provide vector and matrix structures if those are desired/used.  Note that currently, the only way to need arrays is if an \ExternalDistribution is defined that requires array input or output.
+to provide vector and matrix structures if those are desired/used.  Note that currently, the only way to need arrays is if an \ExternalDistribution or \ExternalParameter is defined that requires array input or output.
 
 
 
@@ -1694,7 +1519,7 @@ consistent with current SBML semantics.
 
 \subsection{Multiple uses of distributions }
 
-In this example, a normal distribution is used in three places:  to denote the uncertainty in the parameter \val{V}, the uncertainty in the initial assignment to \val{V}, and to construct the initial assignment itself through the use of \changed{the \val{normal} csymbol}.  Note that strictly speaking, since \val{V} is constant, one could assume that the uncertainty in the parameter itself was identical to the uncertainty in its initial assigment; both are given here by way of illustration.
+In this example, \changed{a \token{normal} csymbol is used in an initial assignment, and \token{mean} and \token{standardDeviation} elements are} used to denote the uncertainty in the parameter \val{V}, and the uncertainty in the initial assignment to \val{V}.  Note that strictly speaking, one could assume that the uncertainty in the parameter itself was identical to the uncertainty in its initial assigment; both are given here by way of illustration.
 
 \exampleFile{examples/user-defined.xml}
 
@@ -1716,7 +1541,7 @@ In this example, several \Parameter elements are given confidence intervals, and
 
 \section{Prototype implementations}
 
-As of this writing (May 2017), libsbml has full support for elements defined in previous iterations of \distrib, and work is ongoing to develop support for the new distributions and statistics introduced in this version of the specification.  Antimony (\url{http://antimony.sf.net/}) has support for a limited number of \uncertml function (normal, uniform, exponential, gamma, poisson, and truncated versions of these) for model creation only (no simulation).  LibRoadRunner (\url{http://libroadrunner.org}) also supports the normal and uniform functions (though not their truncated forms), and is a full simulator.  Neither Antimony nor LibRoadRunner support the \token{uncertainty} child of \SBase, and support the extended \FunctionDefinition only.
+\changed{As of this writing (January 2019), libsbml has full support for all elements defined in this version of the specification.  Antimony (\url{http://antimony.sf.net/}) has support for a the new csymobls for model creation only (no simulation).  Antimony does not support the \token{uncertainty} child of \SBase, and supports the extended csymbols only.  Libroadrunner supports a limited number of distributions from a previous version of this spec.}
 
 %\section{Unresolved issues}
 %\label{sec:unresolved}
@@ -1734,384 +1559,18 @@ Before that a lot of the ground work was carried out by Darren
 Wilkinson who led the discussion on \distribshort at the Seattle SBML
 Hackathon and before that Colin Gillespie who wrote an initial
 proposal back in 2005. The authors would also like to thank the
-participants of the \distribshort sessions during HARMONY 2012 and
-COMBINE 2012 for their excellent contributions in helping revising
-this proposal; Sarah Keating, Maciej Swat and Nicolas le Nov\`{e}re
+participants of the \distribshort sessions during \changed{various HARMONY and
+COMBINE meetings} for their excellent contributions in helping revising
+this proposal; Sarah Keating, Maciej Swat, Nicolas le Nov\`{e}re, \changed{and Matthias K\:{o}nig}
 for useful discussions, corrections and review comments; and Mike
 Hucka for \LaTeX{} advice and the beautiful template upon which this
 document is based.
 
 \appendix
 
-\section{Distributions}
-\label{sec:allDistributions}
 
-In this table, all distributions are listed, along with their types (Continuous, Categorical, or Discrete), whether they're univariate or multivariate, and a brief description.  The element name is the name of the distribution with spaces removed, the initial letter lower-cased, and \val{Distribution} appended, so, for example, the \val{Exponential} distribution becomes \val{<exponentialDistribution>}, and the \val{Student T} distribution becomes \val{<studentTDistribution>}.
-%The exception is that all of the mixture models (ones that end with \val{Mixture Model}), only have spaces removed but nothing appended:  the Continuous Univariate Mixture Model becomes \val{<ContinuousUnivariateMixtureModel>}, etc.
 
-All of these distributions inherit from the abstract \Distribution class.  Additionally, the appropriate distributions inherit from the \UnivariateDistribution or \MultivariateDistribution abstract classes, and further from the \ContinuousUnivariateDistribution, \DiscreteUnivariateDistribution, or \CategoricalUnivariateDistribution classes, which are related to one another as one would expect.
-
-All descriptions are based on the information from \url{http://www.uncertml.org/}, which is now defunct, but which can still be accessed at \url{http://web.archive.org/web/20160313012501/uncertml.org}.
-
-Distributions are listed grouped by category (type and univarite/multivariate), and alphabetical within those categories.
-
-
-\subsection{The \class{BetaDistribution} class}
-\label{BetaDistribution-class}
-\label{betadistribution-class}
-
-The \BetaDistribution is a \ContinuousUnivariateDistribution that defines the \UncertValue children \token{alpha} ($\alpha$) and \token{beta} ($\beta$).  Both \token{alpha} and \token{beta} must be positive.
-
-A random variable x is Beta distributed if the probability density function (pdf) is of the form:
-
-\begin{center}
-$\frac{1}{B\left(\alpha,\beta\right)}x^{\alpha-1}\left(1-x\right)^{\beta-1}$, where $B\left(\alpha,\beta\right)$ = $\frac{\Gamma\left(\alpha\right)\Gamma\left(\beta\right)}{\Gamma\left(\alpha+\beta\right)}$
-\end{center}
-
-The distribution is usually denoted as $x\sim Be\left(\alpha,\beta\right)$ with parameters $\alpha$ and $\beta$, both positive real values. As the domain of the random variable is defined to be $[0,1]$ the Beta distribution is normally used to describe the distribution of a probability value.
-
-\subsection{The \class{CauchyDistribution} class}
-\label{CauchyDistribution-class}
-\label{cauchydistribution-class}
-
-The \CauchyDistribution is a \ContinuousUnivariateDistribution that defines the \UncertValue children \token{location} ($\theta$) and \token{scale} ($\gamma$).  The \token{scale} value must be positive.
-
-A random variable x follows a Cauchy distribution if the probability density function (pdf) is of the form:
-
-\begin{center}
-$\frac{1}{\pi\gamma}\left[1+\left(\frac{x-\theta}{\gamma}\right)^2\right]^{-1}$
-\end{center}
-
-The Cauchy distribution is equivalent to a Student-T distribution with 1 degree of freedom. It is widely used in physics, optics and astronomy. It is also known as the Lorenz or the Breit-Wigner distribution.
-
-\subsection{The \class{ChiSquareDistribution} class}
-\label{ChiSquareDistribution-class}
-\label{chisquaredistribution-class}
-
-The \ChiSquareDistribution is a \ContinuousUnivariateDistribution defining a \UncertValue child \token{degreesOfFreedom} ($\nu$).  The \token{degreesOfFreedom} must be a positive integer.
-
-A random variable x is Chi-square distributed if the probability density function (pdf) is of the form:
-
-\begin{center}
-$\frac{1}{\Gamma(\nu/2)2^{\nu/2}}x^{\nu/2-1}exp(-x/2)$
-\end{center}
-
-The distribution is usually denoted as $x\sim\chi_\nu$ where $\nu$ is known as the degrees of freedom parameter. $\nu$ has to be positive and $x$ has to be non-negative for the density to be defined. The Chi-square distribution is a special case of the Gamma distribution where $\chi \sim\Gamma(k=\nu/2,\theta=2)$.
-
-\subsection{The \class{ExponentialDistribution} class}
-\label{ExponentialDistribution-class}
-\label{exponentialdistribution-class}
-
-The \ExponentialDistribution is a \ContinuousUnivariateDistribution that defines the \UncertValue child \token{rate} ($\lambda$).  The \token{rate} value must be positive.
-
-A random variable x follows an exponential distribution if the probability density function (pdf) is of the form:
-
-\begin{center}
-$\lambda e^{-\lambda x}$
-\end{center}
-
-It is often represented as $x \sim$ Exp$(\lambda)$. It is used to model the time between events for a Poisson process and is used in simulation of stochastic systems.
-
-\subsection{The \class{FDistribution} class}
-\label{FDistribution-class}
-\label{fdistribution-class}
-
-The \FDistribution is a \ContinuousUnivariateDistribution that defines the \UncertValue children \token{numerator} ($\nu_1$) and \token{denominator} ($\nu_2$).  Both \token{numerator} and \token{denominator} must be positive integers.
-
-A random variable x follows an F distribution if the probability density function (pdf) is of the form:
-
-\begin{center}
-$\frac{ 1 } {B(\nu_1/2, \nu_2/2)} \left( \frac{\nu_1}{\nu_2}\right)^{\nu_1/2} x^{\nu_1/2 - 1} \left(1 + \frac{\nu_1}{\nu_2}x \right)^{-\frac{\nu_1+\nu_2}{2} }$
-\end{center}
-
-where $B(.)$ is the Beta function. It often arises as the ratio of two random variables that are identically Chi-Square distributed.
-
-\subsection{The \class{GammaDistribution} class}
-\label{GammaDistribution-class}
-\label{gammadistribution-class}
-
-The \GammaDistribution is a \ContinuousUnivariateDistribution that defines the \UncertValue children \token{shape} ($k$) and \token{scale} ($\theta$).  Both \token{shape} and \token{scale} must be positive.
-
-A random variable x is Gamma distributed if the probability density function (pdf) is of the form:
-
-\begin{center}
-$\frac{1}{\Gamma(k) \theta^k} x^{k-1} exp(-x/\theta) $ with $ \Gamma(\cdot) $ the Gamma function.
-\end{center}
-
-The distribution is usually denoted as $x \sim Gamma(k, \theta)$ where $k$ is known as the shape parameter and $\theta$ the scale parameter. Both parameters have be positive and $x$ has to be non-negative for the density to be defined. In practice the Gamma distribution is often use to model the distribution of non-negative quantities such as variances.
-
-\subsection{The \class{InverseGammaDistribution} class}
-\label{InverseGammaDistribution-class}
-\label{inversegammadistribution-class}
-
-The \InverseGammaDistribution is a \ContinuousUnivariateDistribution that defines the \UncertValue children \token{shape} ($\alpha$) and \token{scale} ($\beta$).  Both \token{alpha} and \token{beta} must be positive.
-
-A random variable x is Inverse Gamma distributed if the probability density function (pdf) is of the form:
-
-\begin{center}
-$\frac{\beta^\alpha}{\Gamma(\alpha)}x^{-\alpha-1}exp(-\beta/x)$
-\end{center}
-
-If variable $x$ is Inverse Gamma distributed, 1/$x$ is gamma distributed. The Inverse Gamma distribution function can be obtained from the Gamma distribution by a transformation of variables.
-
-\subsection{The \class{LaPlaceDistribution} class}
-\label{LaPlaceDistribution-class}
-\label{laplacedistribution-class}
-
-The \LaPlaceDistribution is a \ContinuousUnivariateDistribution that defines the \UncertValue children \token{location} ($\mu$) and \token{scale} ($b$).  The \token{scale} value must be positive.
-
-A random variable x is Laplace distributed if the probability density function (pdf) is of the form:
-
-\begin{center}
-$\frac{1}{2b}exp(-\frac{abs(x-\mu)}{b})$
-\end{center}
-
-where $abs$ denotes the absolute value. It can be thought of as a combination of two exponential distributions.
-
-\subsection{The \class{LogNormalDistribution} class}
-\label{LogNormalDistribution-class}
-\label{lognormaldistribution-class}
-
-The \LogNormalDistribution is a \ContinuousUnivariateDistribution that defines the \UncertValue children \token{shape} ($\sigma^2$) and \token{logScale} ($\mu$).  The \token{shape} value must be positive.
-
-A random variable x is Log Normal distributed if the probability density function (pdf) is of the form:
-
-\begin{center}
-$\frac{1}{x \sqrt{2 \pi \sigma^2}} exp(-\frac{ (\mathrm{ln}(x)-\mu)^2 }{2 \sigma^2})$
-\end{center}
-
-If variable x is normally distributed, exp(x) is Log Normal distributed. The Log Normal distribution function can be obtained from the normal distribution by a transformation of variables. It is often used for variables that must be positive.
-
-\subsection{The \class{LogisticDistribution} class}
-\label{LogisticDistribution-class}
-\label{logisticdistribution-class}
-
-The \LogisticDistribution is a \ContinuousUnivariateDistribution that defines the \UncertValue children \token{location} ($\mu$) and \token{scale} ($s$).  The \token{scale} value must be positive.
-
-A random variable x is Logistic distributed if the probability density function (pdf) is of the form:
-
-\begin{center}
-$\frac{exp(-(x-\mu)/s)}{s(1+exp(-(x-\mu)/s))^2}$
-\end{center}
-
-\subsection{The \class{NormalDistribution} class}
-\label{NormalDistribution-class}
-\label{normaldistribution-class}
-
-The \NormalDistribution is a \ContinuousUnivariateDistribution that defines the \UncertValue children \token{mean} ($\mu$), \token{stddev} ($\sigma$), and \token{variance} ($\sigma^2$).  The distribution must either define a \token{stddev} or a \token{variance}, but not both.  The \token{variance}, if defined, must be positive.
-
-A random variable x is normally distributed if the probability density function (pdf) is of the form:
-
-\begin{center}
-$\frac{1}{\sqrt{2\pi\sigma^2}}exp(-\frac{(x-\mu)^2}{2\sigma^2})$
-\end{center}
-
-The distribution is usually denoted as $x\sim \mathcal{N}(\mu,\sigma^2)$ where $\mu$ is known as the mean parameter and $\sigma^2$ the variance parameter. If the random variable x is a vector of length greater than one, the normal distribution can be generalised to the Multivariate normal.  A reason for the widespread usage of the normal distribution is the Central limit theorem which states that the distribution of the mean of a large number of independent identically distributed random variables tends to a normal distributions as the number of random variables increases.
-
-\subsection{The \class{ParetoDistribution} class}
-\label{ParetoDistribution-class}
-\label{paretodistribution-class}
-
-The \ParetoDistribution is a \ContinuousUnivariateDistribution that defines the \UncertValue children \token{scale} ($x_m$) and \token{shape} ($\alpha$).  Both \token{shape} and \token{scale} must be positive.
-
-A random variable x follows a Pareto distribution if the probability density function is of the form:
-
-\begin{center}
-$\frac{\alpha x_m^\alpha}{x^{\alpha+1}}$
-\end{center}
-
-The distribution allows for the specification of a minimum value below which the density is 0. It is a skewed heavy-tailed distribution.
-
-\subsection{The \class{RayleighDistribution} class}
-\label{RayleighDistribution-class}
-\label{rayleighdistribution-class}
-
-The \RayleighDistribution is a \ContinuousUnivariateDistribution that defines the \UncertValue children \token{scale}.
-
-[From Wikipedia:] A Rayleigh distribution is often observed when the overall magnitude of a vector is related to its directional components. One example where the Rayleigh distribution naturally arises is when wind velocity is analyzed into its orthogonal 2-dimensional vector components. Assuming that each component is uncorrelated, normally distributed with equal variance, and zero mean, then the overall wind speed (vector magnitude) will be characterized by a Rayleigh distribution. A second example of the distribution arises in the case of random complex numbers whose real and imaginary components are independently and identically distributed Gaussian with equal variance and zero mean. In that case, the absolute value of the complex number is Rayleigh-distributed.
-
-\subsection{The \class{StudentTDistribution} class}
-\label{StudentTDistribution-class}
-\label{studenttdistribution-class}
-
-The \StudentTDistribution is a \ContinuousUnivariateDistribution that defines the \UncertValue children  \token{location} ($\mu$), \token{scale} ($\sigma^2$) and \token{degreesOfFreedom} ($\nu$).
-
-A random variable x follows a Student-t distribution if the probability density function (pdf) is of the form:
-
-\begin{center}
-$\frac{\Gamma(\nu/2+1/2)}{\Gamma(\nu/2)(\pi\nu\sigma^2)^{1/2}}[1+\frac{(x-\mu)^2}{\nu\sigma^2}]^{-\nu/2-1/2}$. The distribution is usually denoted as $x\sim St(\mu,\lambda,\nu)$
-\end{center}
-
-This distribution corresponds to integrating out the variance of a normal distribution using a inverse Gamma prior. It can therefore be interpreted as an infinite mixture of normal distributions having the same mean but different variances. The three parameters are the mean ($\mu$), degrees of freedom ($\nu$) and variance ($\sigma^2$). Setting the variance to 1 and the mean to 0 we obtain the Student-t form found in standard statistics references such as Wikipedia. Setting the d.f. to 1 the Cauchy distribution is obtained. Setting the d.f. to infinity the normal distribution is obtained. The student-t distribution is commonly used in likelihood inference as the maximum likelihood parameter estimates are more robust to outlier observations compared to the normal distribution.
-
-\subsection{The \class{UniformDistribution} class}
-\label{UniformDistribution-class}
-\label{uniformdistribution-class}
-
-The \UniformDistribution is a \ContinuousUnivariateDistribution that defines the \UncertValue children \token{minimum} ($a$), \token{maximum} ($b$) and the optional \token{numberOfClasses}.  The \token{minimum} value must be less than the \token{maximum} value.  If \token{numberOfClasses} is defined, its value must be an integer greater than or equal to two.
-
-A random variable x follows a uniform distribution if the probability density function (pdf) is of the form:
-
-\begin{center}
-$\frac{1}{b-a}$
-\end{center}
-
-The distribution assigns equal probability to all events within the chosen domain between (and including) the minimum ($a$) and the maximum ($b$).
-
-If \token{numberOfClasses} is included, the uniform range is divided into $numberOfClasses-1$ sections, and each of the borders of those sections are equally likely to be returned.  If \token{numberOfClasses} is 2 (the minimum), the range just has $2-1=1$ section, and the borders of that section (the \token{minimum} and \token{maximum}) are the two possible return values.  If \token{numberofClasses} is 3, the range is broken into $3-1=2$ sections, leaving the \token{minimum}, \token{maximum}, and mean as the three possible return values, etc.
-
-\subsection{The \class{WeibullDistribution} class}
-\label{WeibullDistribution-class}
-\label{weibulldistribution-class}
-
-The \WeibullDistribution is a \ContinuousUnivariateDistribution that defines the \UncertValue children \token{shape} ($k$) and \token{scale} ($\lambda$).  Both \token{shape} and \token{scale} must be positive.
-
-A random variable x follows an Weibull distribution if the probability density function (pdf) is of the form:
-
-\begin{center}
-$\frac{k}{\lambda}\left(\frac{x}{\lambda}\right)^{k-1}exp(-x/\lambda)^k$
-\end{center}
-
-It includes the exponential distribution as a special case. It is often used in engineering and finance.
-
-%Continuous Multivariate Mixture Model & Continuous & Multivariate 
-%  & A mixture model is a linear combination of base distributions. A widely used case is where the base distributions are Gaussian in which case the model is known as the Gaussian Mixture Model.
-%Dirichlet & Continuous & Multivariate 
-%  & A $K$ dimensional random variable x follows a Dirichlet distribution if the probability density function (pdf) is of the form $\frac{1}{B(\mathbf{a})} \prod_{i=1}^K x_i^{\alpha_i - 1}$ where $B(\mathbf{a}) = \frac{ \prod^k_{i=1} \Gamma(\alpha_i) } { \Gamma( \sum_{i=1}^K \alpha_i ) }$ and $\Gamma(.)$ is the Gamma function. It is the multivariate extension of the beta distribution to higher dimensions with K a positive integer greater than or equal to 2.
-%Multivariate Normal & Continuous & Multivariate 
-%  & The Multivariate Normal is an extension of the univariate normal distribution to higher dimensional vector spaces. A random vector variable of dimension $ k $  denoted $ \mathbf{x} $ is normally distributed if the probability density function (pdf) is of the form $(2 \pi)^{-k/2} \mathrm{det}(\Sigma)^{-1/2} exp (-\frac{1}{2} (\mathbf{x} - \mathbf{\mu})^T \Sigma^{-1} (\mathbf{x} - \mathbf{\mu}) ) $ where $ \mathrm{det}(.) $ denotes the determinant and $ (.)^T $ the matrix transpose. The distribution is usually denoted as $ \mathbf{x} \sim \mathcal{N}(\mathbf{\mu}, \Sigma) $ where $ \mathbf{\mu} $ is known as the mean vector parameter and $ \Sigma $ the covariance matrix parameter.
-%Multivariate Student T & Continuous & Multivariate 
-%  & A random variable $ \mathbf{x} $ follows a multivariate Student-t distribution if the probability density function (pdf) is of the form $\frac{ \Gamma(\nu/2 + k/2)} {\Gamma(\nu/2) (\pi \nu)^{k/2} \mathrm{det} (\Sigma)^{1/2} } \left[1 + \frac{ \Delta^2 } { \nu } \right]^{-\nu/2 - k/2}  $ where $ \Delta^2 = (\mathbf{x} - \mathbf{\mu})^T \Sigma^{-1}  (\mathbf{x} - \mathbf{\mu}) $ is the squared Mahalanobis distance. The distribution is usually denoted as $ x \sim St(\mathbf{\mu},\Sigma,\nu) $. It is the extension of the univariate student-t distribution to higher dimensions. Student-t distributions are often used when tails are expected to be heavier than Gaussian or Normal, and can result from applying Bayesian inference.
-%Normal Inverse Gamma & Continuous & Multivariate 
-%  & A Normal Inverse Gamma distribution is the conjugate prior of a normal distribution with unknown mean and variance. It is the coupled product of an Inverse Gamma distribution and a normal distribution. In particular if $p(\mathbf{X} ; \mu, \sigma^2) $ is the likelihood function of a Normally distributed set of random variables with mean $ \mu $ and variance $ \sigma^2 $ and if both the mean and variance are considered unknown, the conjugate prior is $  p(\mu,\sigma^2) = p(\mu ; \sigma^2) p(\sigma^2) $ where $  p(\mu ; \sigma^2) = \mathcal{N}(\mu ; \mu_0, \sigma^2/\nu) $ a Normal prior on the mean and $ p(\sigma^2) = \mathrm{IG}(\sigma^2 ; \alpha, \beta) $ an Inverse Gamma prior on the variance. Note that the priors are not independent as the prior variance of the mean is a linear function of of the variance $ \sigma^2 $. It is also common to use a Normal-Gamma distribution where a conjugate prior is placed on the unknown mean and precision (i.e. inverse variance) of the Normal likelihood in which case the prior is a product of a Normal and Gamma distributions. In the case of a Multivariate normal likelihood, the corresponding conjugate prior is a Normal-Wishart distribution.
-
-\subsection{The \class{BinomialDistribution} class}
-\label{BinomialDistribution-class}
-\label{binomialdistribution-class}
-
-The \BinomialDistribution is a \DiscreteUnivariateDistribution that defines the \UncertValue children \token{numberOfTrials} ($n$) and \token{probabilityOfSuccess} ($\theta$).  The \token{numberOfTrials} must be a positive integer, and \token{probabilityOfSuccess} must be a value between zero and one, inclusive.
-
-A random variable $ x $ follows a Binomial distribution if the probability mass function (pmf) is of the form:
-
-\begin{center}
-${n \choose x} \theta^x (1-\theta)^{n-x} $
-\end{center}
-
-where $ {n \choose x} $ denotes $ n $ choose $ x $. The distribution is usually denoted as $ x \sim b(n,\theta) $. The distribution describes the probability of getting $ x $ successes in $n$ trials of independent experiments that have the same probability of success.
-
-\subsection{The \class{GeometricDistribution} class}
-\label{GeometricDistribution-class}
-\label{geometricdistribution-class}
-
-The \GeometricDistribution is a \DiscreteUnivariateDistribution that defines the \UncertValue child \token{probability} ($p$).  The \token{probability} must have a value must be between zero and one, inclusive.
-
-A random variable $ x $ follows a geometric distribution if the probability mass function (pmf) is of the form:
-
-\begin{center}
-$(1-p)^{x-1} p$
-\end{center}
-
-It is often represented as $x \sim \mathrm{Geom}(p)$. It is the discrete analogue of the exponential distribution. It is used to model distribution of the number of binary (Bernoulli) trials needed to get one success, with parameter, probability $p$.
-
-\subsection{The \class{HypergeometricDistribution} class}
-\label{HypergeometricDistribution-class}
-\label{hypergeometricdistribution-class}
-
-The \HypergeometricDistribution is a \DiscreteUnivariateDistribution that defines the \UncertValue children \token{numberOfSuccesses} ($m$). \token{numberOfTrials} ($n$), and \token{populationSize} ($N$).  All three values must be positive integers, chosen such that \token{numberOfTrials} is less than or equal to \token{populationSize}.
-
-A random variable $ x $ follows a hypergeometric distribution if the probability mass function (pmf) is of the form:
-
-\begin{center}
-$\frac{ {m \choose k} { N-m \choose n-k } } { {N \choose n}}$
-\end{center}
-
-probability of getting $x$ successes.  It describes the number of successes in a sequence of draws without replacement.
-
-\subsection{The \class{NegativeBinomialDistribution} class}
-\label{NegativeBinomialDistribution-class}
-\label{negativebinomialdistribution-class}
-
-The \NegativeBinomialDistribution is a \DiscreteUnivariateDistribution.  It has two defined \UncertValue children \token{numberOfFailures} ($r$) and \token{probability} ($p$). The \token{numberOfFailures} must be a positive integer, and \token{probability} must have a value between zero and one, inclusive.
-
-A random variable $ x $ follows a Negative Binomial distribution if the probability mass function (pmf) is of the form:
-
-\begin{center}
-${x + r - 1 \choose x} p^x (1-p)^r $
-\end{center}
-
-The distribution describes the probability of getting $ x $ successes in trials of independent experiments that have the same probability of success, and are run until we observe $ r $ failures.  Note that some systems formulate this distribution differently:  observing $k$ failures before obtaining the $r^{th}$ success.  The formulation above follows the English version of Wikipedia; the alternate formulation is used on other language Wikipedia definitions of the distribution, as well as various software packages like Matlab and R.
-
-{\color{red} Lucian: \controversial NOTE!  The above formulation was used by UncertML and Wikipedia, the sort-of-default distribution definition source for the annotation scheme.  However, once people actually start implementing it, they may find that their software package uses the alternative.  The ProbOnto 2.5 specification (\url{https://sites.google.com/site/probonto/download}) goes into great detail on this issue in Appendix A.3, for anyone who wants to know more.  I would be happy to change the definition to match people's software, if need be.}
-
-
-\subsection{The \class{PoissonDistribution} class}
-\label{PoissonDistribution-class}
-\label{poissondistribution-class}
-
-The \PoissonDistribution is a \DiscreteUnivariateDistribution that defines the \UncertValue child \token{rate} ($\lambda$).  The \token{rate} value must be positive.
-
-A random variable $ x $ follows a Poisson distribution if the probability mass function (pmf) is of the form:
-
-\begin{center}
-$\frac{\lambda^x}{x!} \mathrm{exp}(-\lambda)$
-\end{center}
-
-The Poisson distribution can be used to model the number of events occurring within fixed time period of time.
-
-
-%Discrete Multivariate Mixture Model & Discrete & Multivariate 
-%  & A mixture model is a linear combination of base distributions. A widely used case is where the base distributions are Gaussian in which case the model is known as the Gaussian Mixture Model.
-%Multinomial & Discrete & Multivariate 
-%  & A random variable $ x $ follows a Multinomial distribution if the probability mass function (pmf) is of the form $\frac{N!}{x_1! \dots x_k!} \prod_{i=1}^K p_i^{x_i}$. The Multinomial distribution is a multivariate generalisation of the Binomial distribution for a $ K $ state variable to be in state $ k $ given $N$ observations. This can be confused with the Categorical distribution (added at version 3.0 of UncertML) which can be considered a Multinomial distribution when a 1 of K encoding is used.
-%Wishart & Discrete & Multivariate 
-%  & A random matrix variable $ \mathbf{X} $ of size $ D \times D $ follows a Wishart distribution if the probability density function is of the form $\mathrm{det}(\mathbf{W})^{-\nu/2} \left( 2^{\nu D/2} \pi^{D(D-1)/4} \prod_{i=1}^D \Gamma\left(\frac{\nu+1-i}{2}\right) \right)^{-1}$ $\mathrm{det}(\mathbf{X})^{(\nu-D-1)/2} \exp\left(-\frac{1}{2} \mathrm{Tr} (\mathbf{W}^{-1} \mathbf{X}) \right)$ where $ \mathrm{det} $ denotes the determinant, $ \mathrm{Tr} $ the matrix trace. The Wishart distributon is the conjugate prior for the inverse of a covariance matrix of a Multivariate Normal distribution. It is a generalistion of the gamma distribution to higher dimensions. In one dimesion the Wishart distribution is equivalent to a gamma distribution with parameters $ k=\nu/2 $ and $ \theta = 1/2\mathbf{W} $.
-
-
-\subsection{The \class{BernoulliDistribution} class}
-\label{BernoulliDistribution-class}
-\label{bernoullidistribution-class}
-
-The \BernoulliDistribution is a \CategoricalUnivariateDistribution that defines the \UncertValue child \token{prob} ($\mu$).  The \token{prob} must have a value between zero and one, inclusive.  It defines the probability that $x=1$.
-
-A random variable $ x $ follows a Bernoulli distribution if the probability mass function (pmf) is of the form:
-
-\begin{center}
-$\mu^x (1-\mu)^{1-x} $
-\end{center}
-
-It describes the distribution of a single binary variable $ x $.
-
-\subsection{The \class{CategoricalDistribution} class}
-\label{CategoricalDistribution-class}
-\label{categoricaldistribution-class}
-
-The \CategoricalDistribution is a \CategoricalUnivariateDistribution that contains one or more \Category elements, each of which defines \UncertValue \token{value} and \token{probability} children associated with that category.  In order to be valid, the sum of the probabilities over all categories must either equal 1.0, or there must be exactly one \Category without a child \UncertValue \token{probability}, which is then set to $ 1.0 - sum(other probabilities)$.  (In this case, that sum must be between 0.0 and 1.0, inclusive.)
-
-A Categorical distribution is a generalisation of the Bernoulli distribution to $ K $ discrete outcomes, giving the $ K $ probabilities $ p_i $, $ i=1,..,K $ for each outcome. There is no ordering in the $ K $ outcomes.
-
-The optional \token{rank} attribute, if present, is provided as a way to differentiate between an ordered vs. unordered categorical distribution.  It does not affect the sampling of the distribution in any way, and is provided for reference only.  The \token{rank} attributes, if present, must be unique among the \Category elements of a single \CategoricalDistribution, and must begin with \val{0}.  Thus, if one \Category with a \token{rank} is present, the value of its \token{rank} must be \val{0}; if there are two, they must be \val{0} and \val{1}, etc.
-
-
-\subsection{The \class{ListOfCategories} class}
-\label{ListOfCategories-class}
-\label{listofcategories-class}
-
-The \ListOfCategories class, like other \ListOf classes in \sbmlthreecore, is a container for one or more \Category objects.  Unlike many of \ListOf classes in \sbmlthreecore, at least one child \Category is required, because the behavior of the parent distribution would be undefined if it had no child \Category objects from which to choose.
-
-
-\subsection{The \class{Category} class}
-\label{Category-class}
-\label{category-class}
-
-The \Category class has a required \UncertValue child \token{value}, and an optional \UncertValue child \token{probability}.  In any \CategoricalDistribution, only one child \Category may have an undefined \token{probability}; the rest must be defined and their totals add up to less than one.  If all \Category children have defined \token{probability} children, the total of all of those probabilities must add up to exactly one.
-
-Each \Category defines a \token{value}, and that value's \token{probability} of being sampled from that distribution.  If the \token{probability} is not explicitly defined, it is implicitly defined as one minus the sum of the probabilities of all the other \Category objects in the same \CategoricalDistribution.
-
-\subsubsection{Attributes inherited from \SBase}
-
-A \Category always inherits the optional \token{metaid} and \token{sboTerm} attributes, and inherits optional \token{id} and \token{name} attributes as described in \sec{sec:idname}.  The \token{id} of a \Category has no mathematical meaning.
-
-
+\input{apdx-distributions}
 \input{apdx-validation}
 
 

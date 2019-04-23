@@ -17,18 +17,18 @@
 \newcommand{\TODO}[1]{\colorbox{blue}{\textcolor{white}{TODO: #1}}}
 
 \newcommand{\DistribBase}{\defRef{DistribBase}{DistribBase-class}}
-\newcommand{\Distribution}{\defRef{Distribution}{Distribution-class}}
 \newcommand{\UncertSpan}{\defRef{UncertSpan}{UncertSpan-class}}
 \newcommand{\UncertParameter}{\defRef{UncertParameter}{UncertParameter-class}}
 \newcommand{\Uncertainty}{\defRef{Uncertainty}{Uncertainty-class}}
 \newcommand{\ListOfUncertainties}{\defRef{ListOfUncertainties}{ListOfUncertainties-class}}
+\newcommand{\ListOfUncertParameters}{\defRef{ListOfUncertParameters}{ListOfUncertParameters-class}}
 
 
-\newcommand{\FluxBound}{\textbf{\class{FluxBound}}\xspace}
+\newcommand{\ChangedMath}{\textbf{\class{ChangedMath}}\xspace}
 \newcommand{\FunctionTerm}{\textbf{\class{FunctionTerm}}\xspace}
 \newcommand{\LambdaClass}{\textbf{\class{Lambda}}\xspace}
-\newcommand{\ChangedMath}{\textbf{\class{ChangedMath}}\xspace}
 \newcommand{\Math}{\textbf{\class{Math}}\xspace}
+\newcommand{\QualitativeSpecies}{\textbf{\class{QualitativeSpecies}}\xspace}
 
 \newcommand{\arraysshort}{arrays\xspace}
 \newcommand{\arrays}{Arrays\xspace}
@@ -135,7 +135,7 @@ from MS.\\ \midrule
 \midrule
 0.22 (Draft) & February 2018 & Lucian Smith & Addition of \token{sampleSize}, mean values of distributions for fallback.\\
 \midrule
-0.23 (Draft) & February 2018 & Lucian Smith and Michael Hucka & Removal of \Distribution and all subclasses; replaced with a \Math element instead; collapsed UncertStatistics into Uncertainty; some other edits from Michael Hucka.\\
+0.23 (Draft) & February 2018 & Lucian Smith and Michael Hucka & Removal of Distribution and all subclasses; replaced with a \Math element instead; collapsed UncertStatistics into Uncertainty; some other edits from Michael Hucka.\\
 \midrule
 0.24 (Draft) & March 2018 & Lucian Smith & \changed{Removal of second distrib namespace, as it's no longer necessary. [[ANYTHING ELSE?]]}\\
 \bottomrule
@@ -552,12 +552,11 @@ The \distrib package uses data types described in Section~3.1 of the \sbmlthreec
 
 The type \primtype{ExternalRef} is derived from the type \primtype{string} with the additional requirement that it be a valid URI.  An \primtype{ExternalRef} is used in the \distrib package to point to ontologies such as ProbOnto~\citep{swat:2016}, which contain the definitions of distributions and parameters.
 
+\subsubsection{Type \fixttspace\primtypeNC{UncertKind}}
+\label{sec:primtype-uncertkind}
 
-%LS DEBUG:  If I uncomment this section, the table ends up wanting to wrap over the end of the page or something, and latex hangs.
-%\subsubsection{Type \fixttspace\primtypeNC{UncertKind}}
-%\label{sec:primtype-uncerttype}
+The type \primtype{UncertKind} is derived from the type \primtype{string} and its values are restricted to being one of the following possibilities: \val{coefficientOfVariation}, \val{kurtosis}, \val{mean}, \val{median}, \val{mode}, \val{sampleSize}, \val{skewness}, \val{standardDeviation}, \val{standardError}, \val{variance}, \val{confidenceInterval}, \val{credibleInterval}, \val{interquartileRange}, \val{range}, \val{externalParameter}, and \val{distribution}.  Attributes of type \primtype{UncertKind} cannot take on any other values.  The meaning of these values is discussed in the context of the \UncertParameter class's definition in \sec{UncertParameter-class}.
 
-%The type \primtype{UncertKind} is derived from the type \primtype{string} and its values are restricted to being one of the following possibilities: \val{coefficientOfVariation}, \val{kurtosis}, \val{mean}, \val{median}, \val{mode}, \val{sampleSize}, \val{skewness}, \val{standardDeviation}, \val{standardError}, \val{variance}, \val{confidenceInterval}, \val{credibleInterval}, \val{interquartileRange}, \val{range}, \val{externalParameter}, and \val{distribution}.  Attributes of type \primtype{UncertKind} cannot take on any other values.  The meaning of these values is discussed in the context of the \UncertParameter class's definition in \sec{UncertParameter-class}.
 
 
 
@@ -578,7 +577,7 @@ When a call to a distribution is defined in the extended \Math, it is sampled wh
 
 To allow quick access to a variety of common functions, the \distrib package allows the use of new types of \token{csymbol} elements anywhere that \Math is used.  These \token{csymbol}s are functions, and therefore must be the first child of an \token{apply} element, and their arguments are predefined: you cannot call \textit{normal(mean, variance)}, because the definition of the \token{normal} \token{csymbol} is \textit{normal(mean, stdev)}.
 
-\begin{table}[bh]
+\begin{table}[]
   \centering
   \caption{The \val{definitionURL} values allowed for the \token{csymbol} of \Math for documents which use the \distribshort package, and what arguments those functions may take.}
   \begin{edtable}{tabularx}{\linewidth}{@{}>{\ttfamily}l>{\normalfont\itshape}l@{}}
@@ -638,7 +637,7 @@ If an SBML interpreter is unable to calculate one or more of the above extended 
 
 The following mean values may be used as a fallback for software that cannot perform draws from a distribution.  Note that truncated versions of these functions will have different means.  Note also that the \token{cauchy} distribution has no mean, by definition.
 
-\begin{table}[bh]
+\begin{table}[]
   \centering
   \caption{The mean values for the non-truncated versions of the distribution functions.  These values could potentially be used as a fallback for simulators which are not able to draw from the distributions themselves.}
   \begin{edtable}{tabularx}{4.5in}{>{\normalfont\itshape}r>{\normalfont\itshape}l}
@@ -692,7 +691,6 @@ Several examples are given below that illustrate various uses of the new \token{
 In this example, the initial value of \token{y} is set as a draw from the normal distribution \changed{$normal(z, 10)$}:
 
 \begin{example}
-...
   <initialAssignment symbol="y">
     <math xmlns="http://www.w3.org/1998/Math/MathML">
       <apply>
@@ -703,7 +701,6 @@ In this example, the initial value of \token{y} is set as a draw from the normal
       </apply>
     </math>
   </initialAssignment>
-...
 \end{example}
 
 This use would apply a draw from a normal distribution with mean \token{z} and standard deviation \token{10} to the symbol \token{y}.
@@ -713,7 +710,6 @@ This use would apply a draw from a normal distribution with mean \token{z} and s
 When used with four arguments instead of two, the normal distribution is truncated \changed{to $normal(z, 10, z-2, z+2)$}:
 
 \begin{example}
-...
   <initialAssignment symbol="y">
     <math xmlns="http://www.w3.org/1998/Math/MathML">
       <apply>
@@ -734,7 +730,6 @@ When used with four arguments instead of two, the normal distribution is truncat
       </apply>
     </math>
   </initialAssignment>
-...
 \end{example}
 
 This use would apply a draw from a normal distribution with mean \token{z}, standard deviation \token{10}, lower bound \token{z $-$ 2} (inclusive) and upper bound \token{z $+$ 2} (not inclusive) to the SBML symbol \token{y}.
@@ -857,7 +852,7 @@ The \token{id} attribute is of type \primtype{SId}, and must be unique among oth
 
 As can be seen in \fig{fig:extended-sbase-uml}, the SBML base class \SBase is extended to include \changed{an optional \ListOfUncertainties child element, which in turn contains optional \Uncertainty elements, each of which may contain a set of \UncertParameter objects that describe the uncertainty of the extended element.  Multiple \Uncertainty elements are allowed as children of \SBase to allow the modeler to record \Uncertainty measurements from different sources (papers, experiments, etc.) that may overlap and/or contradict one another.}
 
-In \sbmlthreecore, one should only extend those \SBase elements with mathematical meaning (\Compartment, \Parameter, \Reaction, \Species, and \SpeciesReference), or those \SBase elements with \Math children (\Constraint, \Delay, \EventAssignment, \FunctionDefinition, \InitialAssignment, \KineticLaw, \Priority, \Rule, and \Trigger).  The \Uncertainty child is added to \SBase instead of to each SBML element so that other packages inherit the ability to extend their own elements in the same fashion:  for example, the \FluxBound class from the Flux Balance Constraints package has mathematical meaning, and could be given an \Uncertainty child containing information about the distribution or set of samples from which it was drawn.  Similarly, the \FunctionTerm class from the Qualitative Models package has a \Math child, and could be extended.
+In \sbmlthreecore, one should only extend those \SBase elements with mathematical meaning (\Compartment, \Parameter, \Reaction, \Species, and \SpeciesReference), or those \SBase elements with \Math children (\Constraint, \Delay, \EventAssignment, \FunctionDefinition, \InitialAssignment, \KineticLaw, \Priority, \Rule, and \Trigger).  The \Uncertainty child is added to \SBase instead of to each SBML element so that other packages inherit the ability to extend their own elements in the same fashion:  for example, the \changed{Qualitative Models package has the \QualitativeSpecies class which has mathematical meaning, and a \FunctionTerm class which has a \Math child.  Both could be given an \Uncertainty child containing information about the distribution or set of samples from which they were drawn.}
 
 
 \begin{figure}[b]
@@ -898,8 +893,8 @@ An \Uncertainty always inherits the optional \token{metaid} and \token{sboTerm} 
 
 
 \begin{figure}[htb]
-\includegraphics[width=0.6\linewidth]{figs/uncertParameter.pdf}
-\caption{The definition of the \UncertParameter and \UncertParameter classes.  These classes all describe a way to define or reference an element with mathematical meaning.  The meaning of an \UncertParameter is defined by its \token{definitionURL}, as well as its children.}
+\includegraphics[width=0.8\linewidth]{figs/uncertParameter.pdf}
+\caption{\changed{The definition of the \UncertParameter and \UncertSpan classes.  These classes allow an \Uncertainty to define an uncertainty numerically.}}
 \label{fig:uncertParameter}
 \end{figure}
 
@@ -907,6 +902,7 @@ An \Uncertainty always inherits the optional \token{metaid} and \token{sboTerm} 
 \begin{blockChanged}
 
 \subsection{The \class{UncertParameter} class}
+\label{ListOfUncertParameters-class}
 \label{UncertParameter-class}
 \label{uncertparameter-class}
 
@@ -915,12 +911,12 @@ Each \UncertParameter defines one uncertainty statistic about the parent element
 \subsubsection{The \token{type} attribute}
 The \token{type} attribute defines what the \UncertParameter describes.  Depending on the type, other attributes will be allowed or not, and the class must either be the base \UncertParameter or the \UncertSpan class, according to \tab{tab:uncertparamtype}.
 
-\begin{table}[bh]
+\begin{table}[]
   \centering
   \caption{Values for the \token{type} attribute of a \UncertParameter, what class should be used with that type, and what attributes are allowed.}
   \begin{edtable}{tabularx}{5.5in}{>{\normalfont\itshape}X>{\normalfont\itshape}c>{\normalfont\itshape}c>{\normalfont\itshape}c>{\normalfont\itshape}c>{\normalfont\itshape}c>{\normalfont\itshape}c>{\normalfont\itshape}c>{\normalfont\itshape}c}
 \toprule
-\textbf{\textsf{\textup{Value}}} & \textbf{\textsf{\textup{Class}}}  & \textbf{\textsf{\textup{value/var}}}  & \textbf{\textsf{\textup{units}}}  & \textbf{\textsf{\textup{definitionURL}}}  & \textbf{\textsf{\textup{valueLower/varLower}}}  & \textbf{\textsf{\textup{valueUpper/varUpper}}} & \textbf{\textsf{\textup{math}}} & \textbf{\textsf{\textup{listOfExternalParameters}}}
+\textbf{\textsf{\textup{Value}}} & \textbf{\textsf{\textup{Class}}}  & \textbf{\textsf{\textup{value/var}}}  & \textbf{\textsf{\textup{units}}}  & \textbf{\textsf{\textup{definitionURL}}}  & \textbf{\textsf{\textup{valueLower/ varLower}}}  & \textbf{\textsf{\textup{valueUpper/ varUpper}}} & \textbf{\textsf{\textup{math}}} & \textbf{\textsf{\textup{listOfExternalParameters}}}
 \\ \midrule
 coefficientOfVariation & \UncertParameter & \greencheck & \greencheck & \ding{20} & \ding{20} & \ding{20} & \ding{20} & \ding{20}
 \\ \midrule
@@ -977,20 +973,142 @@ An \UncertParameter always inherits the optional \token{metaid} and \token{sboTe
 The optional child \token{math} element contains MathML, and may only be used for an \UncertParameter of type \val{distribution} or \val{externalParameter}.  When defined for a \val{distribution}, the MathML should define that distribution, such as by using one of the \token{csymbol} definitions from this specification.
 
 \subsubsection{The child \token{ListOfUncertParameters} element}
-The optional child \token{ListOfUncertParameters} element is exclusively used for an \UncertParameter of type \val{externalParameter}.  Unlike an \Uncertainty, there are no uniqueness restrictions among the children of this element: any number of \UncertParameter elements of any \token{type} may be used, according to whatever makes sense for the the statistic defined by the parent \token{definitionURL}.
+The optional child \token{ListOfUncertParameters} element is exclusively used for an \UncertParameter of type \val{externalParameter}.  Unlike an \Uncertainty, there are no uniqueness restrictions among the children of this element: any number of \UncertParameter elements of any \token{type} may be used, according to whatever makes sense for the statistic defined by the parent \token{definitionURL}.
+
+\subsection{The \class{UncertSpan} class}
+\label{UncertSpan-class}
+\label{uncertspan-class}
+
+The \UncertSpan class defines a span of values that define an uncertainty statistic such as confidence interval or range.  It inherits from \UncertParameter, and adds four optional attributes, \token{varLower} and \token{varUpper}, of type \primtype{SIdRef}, and \token{valueLower} and \token{valueUpper}, of type \primtype{double}.  Exactly one of the attributes \token{varLower} and \token{valueLower} may be defined, and exactly one of the attributes \token{varUpper} and \token{valueUpper} may be defined.  If no attributes are defined, the parameters of the span are undefined.  If only one attribute is defined (one of the upper or lower attributes), that aspect of the span is defined, and the other end is undefined.  The span is fully defined if two attributes (one lower and one upper) are defined.
+
+The value of the lower attribute (whichever is defined) must be lesser or equal to the value of the upper attribute (whichever is defined), at the initial conditions of the model.  The \Uncertainty element cannot affect the core mathematics of an SBML model, but if it is used in a mathematical context during simulation of the model, this restriction on the attribute values must be maintained, or the \UncertSpan object as a whole will be undefined.
+
+Like the \token{units} attribute on an \UncertParameter, the \token{units} attribute is provided if \token{valueUpper} and/or \token{valueLower} is defined.  The units on both the upper and lower ends of the span must match each other, if defined.  The units for span ends defined by reference may be obtained from the referenced SBML element.  The upper and lower values must always have the same units.
 
 
 
 
+\subsection{The different \UncertParameter and \UncertSpan \token{type} values.}
 
+The \primtype{UncertKind} values each have a particular definition.  The following kinds are all single-value types, and thus may either be defined by \token{value} or \token{var}, and must only be used for \UncertParameter elements, not \UncertSpan elements:
+
+\end{blockChanged}
+
+\begin{itemize}
+
+\item \token{coefficientOfVariation}:  For a random variable with mean $ \mu $ and strictly positive standard deviation $ \sigma $, the coefficient of variation is defined as the ratio $ \frac{\sigma}{\mid\mu\mid} $. One benefit of using the coefficient of variation rather than the standard deviation is that it is unitless.
+
+\item \token{kurtosis}:  The kurtosis of a distribution is a measure of how peaked the distribution is. The kurtosis is defined as $ \mu_4/\sigma^4 $ where $ \mu_4 $ is the fourth central moment of the distribution and $ \sigma $ is its standard deviation.
+
+\item \token{mean}:  The arithmetic mean (typically just the mean) is what is commonly called the average. It is defined as $ \bar{x} = \frac{1}{n}\cdot \sum_{i=1}^n{x_i} $ where $ x_i $ represents with $ i $th observation of the quantity $ x $ in the sample set of size $ n $. It is related to the expected value of a random variable, $ \mu = E[X] $ in that the population mean, $ \mu $, which is the average of all quantities in the population and is typically not known, is replaced by its estimator, the sample mean $ \bar{x} $. Note that this statistic does not deal with issues of sample size, rather the mean is taken to refer to the population mean.
+
+\item \token{median}:  The median is described as the numeric value separating the higher half of a sample (or population) from the lower half. The median of a finite list of numbers can be found by arranging all the observations from lowest value to highest value and picking the middle one. If there is an even number of observations, then there is no single middle value, then the average of the two middle values is used. The median is also the 0.5 quantile, or 50th percentile.
+
+\item \token{mode}:  The mode is the value that occurs the most frequently in a data set (or a probability distribution). It need not be unique (e.g., two or more quantities occur equally often) and is typically defined for continuous valued quantities by first defining the histogram, and then giving the \changed{central} value of the bin containing the most counts.
+
+\item \token{sampleSize}:  The sample size is a direct count of the number of observations made or the number of samples measured.  It is used in several other statistical measurements, and can be used to convert one to another.
+
+\item \token{skewness}:  The skewness of a random variable is a measure of how asymmetric the corresponding probability distribution is. The skewness is defined as $ \mu_3/\sigma^3 $ where $ \mu_3 $ is the 3rd \changed{central} moment of the distribution and $ \sigma $ is its standard deviation.
+
+\item \token{standardDeviation}:  The standard deviation of a distribution or population is the square root of its variance and is given by $ \sigma = \sqrt{E[(X - \mu)^2]} $ where $ \mu = E[X] $. The population standard deviation is given by $ \sigma = \sqrt{\frac{1}{n} \sum_{i=1}^n\left(x_i - \bar{x} \right)^2} $ where $ \bar{x} = \frac{1}{n}\cdot \sum_{i=1}^n{x_i} $, and $ x_i $ represents the $ i $th observation of the quantity $ x $ in the population of size $ n $. The standard deviation is a widely used measure of the variability or dispersion since it is reported in the natural units of the quantity being considered. Note that if a finite sample of a population has been used then the sample standard deviation is the appropriate unbiased estimator to use.
+
+\item \token{standardError}:  The standard error is the standard deviation of estimates of a population value. If that population value is a mean, this statistic is called the standard error of the mean.  It is calculated as the standard deviation of a sample divided by the square root of the number of the sample size.  As the sample size increases, the sample size draws closer to the population size, and the standard error approaches zero.  $ \sigma_{\bar{x}} = \sigma/\sqrt{n} $.
+
+\item \token{variance}:  The variance of a random quantity (or distribution) is the average value of the square of the deviation of that variable from its mean, given by $ \sigma^2 = \text{Var}[X] = E[(X - \mu)^2] $ where $ \mu = E[X] $. The complete population variance is given by $ \sigma^2 = \frac{1}{n} \sum_{i=1}^n\left(x_i - \bar{x} \right)^2 $ where $ \bar{x} = \frac{1}{n}\cdot \sum_{i=1}^n{x_i} $, and $ x_i $ represents the $ i $th observation of the quantity $ x $ in the population of size $ n $. This is the estimator of the population variance and should be replaced by the sample variance when using samples of finite size.
+
+\end{itemize}
+
+\changed{The following \token{UncertKind} values are all spans, and may only be used for \UncertSpan elements.  They are defined by an upper and lower value:}
+
+\begin{itemize}
+
+\item {\token{confidenceInterval}:  For a univariate random variable $ x $, a confidence interval is a range $ [a,b] $, $ a<b $, so that $ x $ lies between $ a $ and $ b $ with given probability. For example, a 95\% confidence interval is a range in which $ x $ falls 95\% of the time (or with probability 0.95). Confidence intervals provide intuitive summaries of the statistics of the variable $ x $.
+
+If $ x $ has a continuous probability distribution $ P $, then $ [a,b] $ is a 95\% confidence interval if $ \int_a^b P(x) = 0.95 $.
+
+Unless specified otherwise, the confidence interval is usually chosen so that the remaining probability is split equally, that is $ P(x<a) = P(x>b) $. If $ x $ has a symmetric distribution, then the confidence intervals are usually centered around the mean. However, non-centered confidence intervals are possible and are better described by their lower and upper quantiles or levels. For example, a 50\% confidence interval would usually lie between the 25\% and 75\% quantiles, but could in theory also lie between the 10\% and 60\% quantiles, although this would be rare in practice. The \token{confidenceInterval} allows you the flexibility to specify non-symmetric confidence intervals however in practice we would expect the main usage to be for symmetric intervals.
+
+The \token{confidenceInterval} child of a \Uncertainty is always the 95\% confidence interval.  For other confidence intervals, use an \UncertParameter instead. }
+
+\item {\token{credibleInterval}:  In Bayesian statistics, a credible interval is similar to a confidence interval determined from the posterior distribution of a random variable $ x $. That is, given a prior distribution $ p(x) $ and some observations $ D $, the posterior probability $ p(x\mid D) $ can be computed using Bayes theorem. A 95\% credible interval is then any interval $ [a,b] $ so that $ \int_a^b p(x\mid D) = 0.95 $, that is the variable $ x $ lies in the interval $ [a,b] $ with posterior probability 0.95. Note that the interpretation of a credible interval is not the same as a (frequentist) confidence interval.
+
+The \token{credibleInterval} child of a \Uncertainty is always the 95\% credible interval.  For other credibility intervals, use an \UncertParameter instead.}
+
+
+\item \token{interquartileRange}:  The interquartile range is the range between the 1st and 3rd quartiles. It contains the middle 50\% of the sample realisations (or of the sample probability). It is typically used and shown in box plots.
+
+\item \token{range}:  The range is the interval $ [a,b] $ so that $ a<b $ and contains all possible values of $ x $. This is also often called the statistical range, which is the distance from the smallest value to the largest value in a sample dataset. For a sample dataset $ X = (x_1, ..., x_N $), the range is the distance from the smallest $ x_i $ to the largest. It is often used as a first estimate of the sample dispersion.
+
+\end{itemize}
+
+\begin{blockChanged}
+Finally, we have the \val{distribution} and \val{externalParameter} types:
+
+\begin{itemize}
+
+\item {\token{distribution}}: If the uncertainty is defined by a known distribution, that distribution may either be defined by using the child \token{math} element, or by using the \token{definitionURL}.  When the \token{math} child is used, that math should contain the distribution in question:  typically this will be a distribution \token{csymbol} but may be something more complicated, like a \token{piecewise} function.  If the \token{definitionURL} is used, many more distributions may be used than are defined in this specification (like an \token{externalParameter}, below).  To fully define this distrubiton, it will almost certainly be necessary to further define that distribution with child \UncertParameter elements.  For example, a Beta distribution takes two parameters ($\alpha$ and $\beta$), each of which could be defined by a child \UncertParameter of type \val{externalParameter}, with appropriate \token{definitionURL} values.  A \token{type} of value \val{distribution} is only valid for \UncertParameter elements, not \UncertSpan elements.
+
+\item{\token{externalParameter}}: This type is uniquely described by an appropriate \token{definitionURL}, and is provided to allow a modeler to encode externally-provided parameters not otherwise explicitly handled by this specification.  The range of possibilities is vast, so modelers should ensure that the tool they wish to use encodes support for any \UncertParameter they define.  As this parameter may be similar to any of the other types, there are no restrictions on what other attributes or children that may be used by an \UncertParameter of this type:  it may be a single value; it may be a span; it may be defined by a child \token{math} element; it may be defined by child \UncertParameter elements; it may be defined by any combination of the above.  The only restriction is that the \token{definitionURL} \emph{must} be defined for any \UncertParameter of type \val{externalParameter}.  This type value may be used for either \UncertParameter or \UncertSpan elements.
+
+As an example, here's an \UncertParameter that defines the 99\% confidence interval of a \Parameter (using made-up \token{definitionURL} values):
+
+\begin{example}
+  <listOfParameters>
+    <parameter id="p1" value="3.42" constant="true">
+      <distrib:listOfUncertainties>
+        <distrib:uncertainty>
+          <distrib:uncertSpan type="externalParameter" lowerValue="3.19" upperValue="3.83"
+                              definitionURL="http://dist.org/CI">
+            <distrib:listOfUncertParameters>
+              <distrib:uncertParameter type="externalParameter" value="0.99"
+                              definitionURL="http://dist.org/CIpercent">
+            </distrib:listOfUncertParameters>
+          </distrib:uncertSpan>
+        </distrib:uncertainty>
+      <distrib:listOfUncertainties>
+    </parameter>
+  </listOfParameters>
+\end{example}
+
+\end{itemize}
+\end{blockChanged}
+
+As examples, the following statistics are not defined by a single value nor by a range, and would therefore be good candidates for encoding as an external parameter.  These terms were included in the now-defunct UncertML (and the definitions were again taken from \url{https://web.archive.org/web/20161029215725/uncertml.org/}), and may also be findable in other ontologies such as STATO (which has a searchable database at \url{https://www.ebi.ac.uk/ols/ontologies/stato}):
+
+\begin{itemize}
+\item \changed{\token{centralMoment}}:  For a given positive natural number $ k $, the $ k\textsuperscript{th} $ \changed{central} moment of a random variable $ x $ is defined as $ \mu_k = E[(x - E[x])^k] $. That is, it is the expected value of the deviation from the mean to the power $ k $. In particular, $ \mu_0 = 1 $, $ \mu_1 = 0 $ and $ \mu_2 $ is the variance of $ x $.
+
+\item \token{correlation}:  The correlation between two random variables $ x_1 $ and $ x_2 $ is the extent to which these variable vary together in a linear fashion. It is characterized by the coefficient $ \rho_{1,2} = E[(x_1-\mu_1)(x_2-\mu_2)] / \sigma_1\sigma_2 $ where $ \mu_1 $ and $ \mu_2 $ are the means of $ x_1 $ and $ x_2 $ respectively, and $ \sigma_1 $ and $ \sigma_2 $ are their respective standard deviations. Note this is strictly not a description of uncertainty, but it can be useful to represent the correlation between two variables. Generally a covariance specification would be preferred since this describes the uncertainty.
+
+\item \token{decile}:  A decile, $ d $, is any of the nine values that divide the sorted quantities into ten equal parts, so that each part represents 1/10 of the sample, population or distribution. The first decile is equivalent to the 10th percentile.
+
+\item \token{moment}:  For a given positive natural number $ k $, the $ k\textsuperscript{th} $ moment of a random variable $ x $ is defined as $ \mu_k = E[x^k] $. In particular, $ \mu_0 = 1 $ and $ \mu_1 $ is the mean of $ x $.
+The moments can be defined with respect to some point $ a $, that is $ \mu_k(a) = E[(x - a)^k] $. Moments defined about the mean are called \changed{central} moments.
+
+\item \token{percentile}:  A percentile is the value of a quantity below which a certain percent of values fall. This can be defined for samples, populations and distributions. For finite samples there is no widely accepted method, but all methods essentially rank the quantities and then use some interpolation to compute the percentile, unless the sample size $ n $ is a multiple of 100. For probability distributions the inverse cumulative density function can be used.  The most widely used method is as follows: to estimate the value, $ x_p $, of the $ p $th percentile of an ascending ordered dataset containing $ n $ elements with values $ x_1, x_2, ... ,x_n $ first compute $ \rho = \frac{p}{100}\,({n}-1)+1 $. Now $ \rho $ is split into its integer component, $ k $, and decimal component, $ d $, such that $ \rho = k + d $. $ x_p $ is then calculated as $ x_p = x_k+d(x_{k+1}-x_k) $ where $ 1 < \rho < n $ with special cases $ x_p = x_1 \; [\rho=1]; \ x_n \; [\rho=n] $.
+
+\item \token{probability}:  Given a random variable $ x $ with probability density function $ f(x) $, the probability that $ x $ lies in some part of its domain $ \mathcal{X} $ is defined as $ P(x \in \mathcal{X}) = \int_{x\in\mathcal{X}} f(x) $. $ \mathcal{X} $ can be defined as a lower- or upper-bounded range, e.g., $ P(x < 3.2) $, or as the intersection of several such ranges, e.g., $ P(x \geq 1.7 \cap x < 3.2) $.
+
+\item \token{quantile}:  Given a random variable $ x $, the $ n $-quantiles are the values of $ x $ which split the domain into $ n $ regions of equal probability. For instance, the $ k\textsuperscript{th} $ $ n $-quantile is the value $ q_k $ for which $ P(x<q_k) = \frac{k}{n} $. For some common values of $ n $, the $ n $-quantiles have additional names, namely quartiles for $ n=4 $, deciles for $ n=10 $ and percentiles for $ n=100 $.
+More generally, a quantile can be associated to any probability $ p $, so that $ q $ is the value of $ x $ below which a proportion $ p $ of the probability lies, i.e., $ P(x<q) = p $.
+The plot on the right shows the 1st to 9th 10-quantiles (or deciles) for a normal distribution ($ \mu = 4 $, $ \sigma = 1 $) as orange dots. The blue curve is the cumulative density function of $ x $. Note how the quantiles split the probability (y-axis) into 10 equal regions.
+
+\item \token{quartile}:  The quartiles are the 4-quantiles, that is the 4 values of $ x $ below which lies a proportion 0.25, 0.50, 0.75 and 1 of the probability. One can also think of them as the 4 values of $ x $ which split the domain into 4 regions of equal probability.
+\end{itemize}
+
+
+
+
+\begin{blockChanged}
 \subsection{The uncertainty of a \Species}
 
 A \Species is a unique SBML construct in that its value is either an amount or a concentration, depending on the value of its \token{hasOnlySubstanceUnits} attribute (\val{true} for amount, or \val{false} for concentration).  The value of its uncertainty tracks with this: if the value of \changed{\token{hasOnlySubstanceUnits} on the parent \Species} is \val{true}, the uncertainty is in terms of amounts, and if \val{false}, the uncertainty is in terms of concentration.
 
 If a \Species is being modeled in SBML in amounts, but was measured in terms of its concentration, or visa versa, an \InitialAssignment should be created that explicitly handles this conversion and assigns the appropriate value to the \Species, as in the example below.
 
+\clearpage
+
 \begin{example}
-...
     <listOfCompartments>
       <compartment id="C" spatialDimensions="3" size="2" constant="true">
         <distrib:listOfUncertainties>
@@ -1024,156 +1142,12 @@ If a \Species is being modeled in SBML in amounts, but was measured in terms of 
         </math>
       </initialAssignment>
     </listOfInitialAssignments>
-...
 \end{example}
 
 Here, the uncertainty of the species \val{S\_amt} is not set explicitly, and instead can be derived from the uncertainty of the values in its initial assignment (\val{S\_conc} and \val{C}).
 
 
 \end{blockChanged}
-
-
-The 
-
-class provides two optional attributes, exactly one of which must be defined.  
-
-The optional \token{units} attribute may be used to indicate the units of the \token{val} attribute.  As such, it may only be defined if the \UncertParameter has a defined \token{value} attribute, and not if it has a defined \token{var} attribute.  (In the latter case, the units may be obtained from the referenced element.)
-
-Any given \UncertParameter in an \Uncertainty will have an element name specific to the parameter it represents within that \Uncertainty.  So, for example, one \Uncertainty may have a single child \UncertParameter with the name \val{<mean>}, and another might have a \UncertParameter child with the name \val{<standardDeviation>}.  All these parameters are defined as the same class for simplicity, since all of them merely need a way to reference a value.
-
-
-\subsection{The \class{ExternalParameter} class}
-\label{ExternalParameter-class}
-\label{externalparameter-class}
-
-The \UncertParameter class is provided to allow a modeler to encode externally-provided parameters not otherwise explicitly handled by this specification.  The range of possibilities is vast, so modelers should ensure that the tool they wish to use encodes support for any \UncertParameter they define.
-
-The \UncertParameter inherits from \UncertParameter, and adds the required attribute \token{definitionURL}, which is of type \primtype{ExternalRef}, and an optional child .  The \token{definitionURL} must be a URI that defines a valid distribution-related parameter.  It is strongly recommended that modelers use distribution parameters from ProbOnto (\url{http://probonto.org/}) and other statistical parameters from STATO (\url{https://www.ebi.ac.uk/ols/ontologies/stato}), as consistently referencing a single ontology will improve exchangeability.
-
-The child is provided because some parameters may themselves need further parameterization.  For example, a mixture distribution defined as an \UncertParameter would itself contain child \UncertParameter objects those other base distributions that were mixed in the overall distribution.  Those base distributions would need to define their own parameterization, which could be accomplished here with child \UncertParameter objects.  Similarly, ranges or categories might also need to be further defined with reference to child \UncertParameter 
-objects that would be considered to ``belong'' to the parent \UncertParameter.
-
-The referenced parameter is then the parameter defined by this \UncertParameter, along with any further parameterization provided by its own children \UncertParameter elements.
-
-Some external parameters are not single-valued, but are multi-valued.  In these cases, you will either need several \UncertParameter objects, or a way to reference an SBML element extended to be defined as an array (such as the SBML Arrays package).
-
-
-\subsection{The \UncertParameter children of \Uncertainty}
-
-An \UncertParameter is defined in \sec{UncertParameter-class}.  The possible \UncertParameter types are listed below.  Each is defined by its element name; the mean would be defined as \token{<mean>}, the standard deviation as \token{<standardDeviation>}, etc.
-
-All the definitions below are from an archived copy of the definitions at \url{http://uncertml.org/}, with the exception of \token{standardError}, which was added here.
-
-\begin{itemize}
-
-\item \token{coefficientOfVariation}:  For a random variable with mean $ \mu $ and strictly positive standard deviation $ \sigma $, the coefficient of variation is defined as the ratio $ \frac{\sigma}{\mid\mu\mid} $. One benefit of using the coefficient of variation rather than the standard deviation is that it is unitless.
-
-\item \token{kurtosis}:  The kurtosis of a distribution is a measure of how peaked the distribution is. The kurtosis is defined as $ \mu_4/\sigma^4 $ where $ \mu_4 $ is the fourth central moment of the distribution and $ \sigma $ is its standard deviation.
-
-\item \token{mean}:  The arithmetic mean (typically just the mean) is what is commonly called the average. It is defined as $ \bar{x} = \frac{1}{n}\cdot \sum_{i=1}^n{x_i} $ where $ x_i $ represents with $ i $th observation of the quantity $ x $ in the sample set of size $ n $. It is related to the expected value of a random variable, $ \mu = E[X] $ in that the population mean, $ \mu $, which is the average of all quantities in the population and is typically not known, is replaced by its estimator, the sample mean $ \bar{x} $. Note that this statistic does not deal with issues of sample size, rather the mean is taken to refer to the population mean.
-
-\item \token{median}:  The median is described as the numeric value separating the higher half of a sample (or population) from the lower half. The median of a finite list of numbers can be found by arranging all the observations from lowest value to highest value and picking the middle one. If there is an even number of observations, then there is no single middle value, then the average of the two middle values is used. The median is also the 0.5 quantile, or 50th percentile.
-
-\item \token{mode}:  The mode is the value that occurs the most frequently in a data set (or a probability distribution). It need not be unique (e.g., two or more quantities occur equally often) and is typically defined for continuous valued quantities by first defining the histogram, and then giving the \changed{central} value of the bin containing the most counts.
-
-\item \token{sampleSize}:  The sample size is a direct count of the number of observations made or the number of samples measured.  It is used in several other statistical measurements, and can be used to convert one to another.
-
-\item \token{skewness}:  The skewness of a random variable is a measure of how asymmetric the corresponding probability distribution is. The skewness is defined as $ \mu_3/\sigma^3 $ where $ \mu_3 $ is the 3rd \changed{central} moment of the distribution and $ \sigma $ is its standard deviation.
-
-\item \token{standardDeviation}:  The standard deviation of a distribution or population is the square root of its variance and is given by $ \sigma = \sqrt{E[(X - \mu)^2]} $ where $ \mu = E[X] $. The population standard deviation is given by $ \sigma = \sqrt{\frac{1}{n} \sum_{i=1}^n\left(x_i - \bar{x} \right)^2} $ where $ \bar{x} = \frac{1}{n}\cdot \sum_{i=1}^n{x_i} $, and $ x_i $ represents the $ i $th observation of the quantity $ x $ in the population of size $ n $. The standard deviation is a widely used measure of the variability or dispersion since it is reported in the natural units of the quantity being considered. Note that if a finite sample of a population has been used then the sample standard deviation is the appropriate unbiased estimator to use.
-
-\item \token{standardError}:  The standard error is the standard deviation of estimates of a population value. If that population value is a mean, this statistic is called the standard error of the mean.  It is calculated as the standard deviation of a sample divided by the square root of the number of the sample size.  As the sample size increases, the sample size draws closer to the population size, and the standard error approaches zero.  $ \sigma_{\bar{x}} = \sigma/\sqrt{n} $.
-
-\item \token{variance}:  The variance of a random quantity (or distribution) is the average value of the square of the deviation of that variable from its mean, given by $ \sigma^2 = \text{Var}[X] = E[(X - \mu)^2] $ where $ \mu = E[X] $. The complete population variance is given by $ \sigma^2 = \frac{1}{n} \sum_{i=1}^n\left(x_i - \bar{x} \right)^2 $ where $ \bar{x} = \frac{1}{n}\cdot \sum_{i=1}^n{x_i} $, and $ x_i $ represents the $ i $th observation of the quantity $ x $ in the population of size $ n $. This is the estimator of the population variance and should be replaced by the sample variance when using samples of finite size.
-
-\end{itemize}
-
-
-\subsection{The \class{UncertSpan} class}
-\label{UncertSpan-class}
-\label{uncertstatisticspan-class}
-
-The \UncertSpan class defines a span of values that define an uncertainty statistic such as confidence interval or range.  It has four optional attributes, \token{varLower} and \token{varUpper}, of type \primtype{SIdRef}, and \token{valueLower} and \token{valueUpper}, of type double.  Exactly one of the attributes \token{varLower} and \token{valueLower} may be defined, and exactly one of the attributes \token{varUpper} and \token{valueUpper} may be defined.  If no attributes are defined, the parameters of the span are undefined.  If only one attribute is defined (one of the upper or lower attributes), that aspect of the span is defined, and the other end is undefined.  The span is fully defined if two attributes (one lower and one upper) are defined.
-
-The value of the lower attribute (whichever is defined) must be lesser or equal to the value of the upper attribute (whichever is defined), at the initial conditions of the model.  The \Uncertainty element cannot affect the core mathematics of an SBML model, but if it is used in a mathematical context during simulation of the model, this restriction on the attribute values must be maintained, or the \UncertSpan object as a whole will be undefined.
-
-Like the \token{units} attribute on an \UncertParameter, the \token{units} attribute is provided if either the upper or lower end of the span is defined by value, instead of by reference (i.e., if \token{valueUpper} and/or \token{valueLower} is defined).  The units on both the upper and lower ends of the span must match each other, if defined.  The units for span ends defined by reference may be obtained from the referenced SBML element.
-
-
-The possible \UncertSpan types are listed below, each defining a bounded span of values instead of a single value.  The definitions were again taken from an archived copy of \url{http://uncertml.org/}:
-
-\begin{itemize}
-
-\item {\token{confidenceInterval}:  For a univariate random variable $ x $, a confidence interval is a range $ [a,b] $, $ a<b $, so that $ x $ lies between $ a $ and $ b $ with given probability. For example, a 95\% confidence interval is a range in which $ x $ falls 95\% of the time (or with probability 0.95). Confidence intervals provide intuitive summaries of the statistics of the variable $ x $.
-
-If $ x $ has a continuous probability distribution $ P $, then $ [a,b] $ is a 95\% confidence interval if $ \int_a^b P(x) = 0.95 $.
-
-Unless specified otherwise, the confidence interval is usually chosen so that the remaining probability is split equally, that is $ P(x<a) = P(x>b) $. If $ x $ has a symmetric distribution, then the confidence intervals are usually centered around the mean. However, non-centered confidence intervals are possible and are better described by their lower and upper quantiles or levels. For example, a 50\% confidence interval would usually lie between the 25\% and 75\% quantiles, but could in theory also lie between the 10\% and 60\% quantiles, although this would be rare in practice. The \token{confidenceInterval} allows you the flexibility to specify non-symmetric confidence intervals however in practice we would expect the main usage to be for symmetric intervals.
-
-The \token{confidenceInterval} child of a \Uncertainty is always the 95\% confidence interval.  For other confidence intervals, use an \UncertParameter instead. }
-
-\item {\token{credibleInterval}:  In Bayesian statistics, a credible interval is similar to a confidence interval determined from the posterior distribution of a random variable $ x $. That is, given a prior distribution $ p(x) $ and some observations $ D $, the posterior probability $ p(x\mid D) $ can be computed using Bayes theorem. A 95\% credible interval is then any interval $ [a,b] $ so that $ \int_a^b p(x\mid D) = 0.95 $, that is the variable $ x $ lies in the interval $ [a,b] $ with posterior probability 0.95. Note that the interpretation of a credible interval is not the same as a (frequentist) confidence interval.
-
-The \token{credibleInterval} child of a \Uncertainty is always the 95\% credible interval.  For other credibility intervals, use an \UncertParameter instead.}
-
-
-\item \token{interquartileRange}:  The interquartile range is the range between the 1st and 3rd quartiles. It contains the middle 50\% of the sample realisations (or of the sample probability). It is typically used and shown in box plots.
-
-\item \token{range}:  The range is the interval $ [a,b] $ so that $ a<b $ and contains all possible values of $ x $. This is also often called the statistical range, which is the distance from the smallest value to the largest value in a sample dataset. For a sample dataset $ X = (x_1, ..., x_N $), the range is the distance from the smallest $ x_i $ to the largest. It is often used as a first estimate of the sample dispersion.
-
-\end{itemize}
-
-
-\subsubsection{Attributes inherited from \SBase}
-
-An \UncertSpan always inherits the optional \token{metaid} and \token{sboTerm} attributes, and inherits optional \token{id} and \token{name} attributes as described in \sec{sec:idname}.  The \token{id} of an \UncertSpan has no mathematical meaning.
-
-
-
-\subsection{The \UncertParameter children of \Uncertainty}
-
-Any number of \UncertParameter children (defined in \sec{ExternalParameter-class}) may be included, each defined by its \token{definitionURL}.
-
-As examples, the following statistics are not defined by a single value nor by a range, and would therefore be good candidates for encoding with an \UncertParameter.  These terms were included in the now-defunct UncertML (and the definitions were again taken from an archived copy of \url{http://uncertml.org/}), and may also be findable in other ontologies such as STATO (which has a searchable database at \url{https://www.ebi.ac.uk/ols/ontologies/stato}):
-
-\begin{itemize}
-\item \changed{\token{centralMoment}}:  For a given positive natural number $ k $, the $ k\textsuperscript{th} $ \changed{central} moment of a random variable $ x $ is defined as $ \mu_k = E[(x - E[x])^k] $. That is, it is the expected value of the deviation from the mean to the power $ k $. In particular, $ \mu_0 = 1 $, $ \mu_1 = 0 $ and $ \mu_2 $ is the variance of $ x $.
-
-\item \token{correlation}:  The correlation between two random variables $ x_1 $ and $ x_2 $ is the extent to which these variable vary together in a linear fashion. It is characterized by the coefficient $ \rho_{1,2} = E[(x_1-\mu_1)(x_2-\mu_2)] / \sigma_1\sigma_2 $ where $ \mu_1 $ and $ \mu_2 $ are the means of $ x_1 $ and $ x_2 $ respectively, and $ \sigma_1 $ and $ \sigma_2 $ are their respective standard deviations. Note this is strictly not a description of uncertainty, but it can be useful to represent the correlation between two variables. Generally a covariance specification would be preferred since this describes the uncertainty.
-
-\item \token{decile}:  A decile, $ d $, is any of the nine values that divide the sorted quantities into ten equal parts, so that each part represents 1/10 of the sample, population or distribution. The first decile is equivalent to the 10th percentile.
-
-\item \token{moment}:  For a given positive natural number $ k $, the $ k\textsuperscript{th} $ moment of a random variable $ x $ is defined as $ \mu_k = E[x^k] $. In particular, $ \mu_0 = 1 $ and $ \mu_1 $ is the mean of $ x $.
-The moments can be defined with respect to some point $ a $, that is $ \mu_k(a) = E[(x - a)^k] $. Moments defined about the mean are called \changed{central} moments.
-
-\item \token{percentile}:  A percentile is the value of a quantity below which a certain percent of values fall. This can be defined for samples, populations and distributions. For finite samples there is no widely accepted method, but all methods essentially rank the quantities and then use some interpolation to compute the percentile, unless the sample size $ n $ is a multiple of 100. For probability distributions the inverse cumulative density function can be used.  The most widely used method is as follows: to estimate the value, $ x_p $, of the $ p $th percentile of an ascending ordered dataset containing $ n $ elements with values $ x_1, x_2, ... ,x_n $ first compute $ \rho = \frac{p}{100}\,({n}-1)+1 $. Now $ \rho $ is split into its integer component, $ k $, and decimal component, $ d $, such that $ \rho = k + d $. $ x_p $ is then calculated as $ x_p = x_k+d(x_{k+1}-x_k) $ where $ 1 < \rho < n $ with special cases $ x_p = x_1 \; [\rho=1]; \ x_n \; [\rho=n] $.
-
-\item \token{probability}:  Given a random variable $ x $ with probability density function $ f(x) $, the probability that $ x $ lies in some part of its domain $ \mathcal{X} $ is defined as $ P(x \in \mathcal{X}) = \int_{x\in\mathcal{X}} f(x) $. $ \mathcal{X} $ can be defined as a lower- or upper-bounded range, e.g., $ P(x < 3.2) $, or as the intersection of several such ranges, e.g., $ P(x \geq 1.7 \cap x < 3.2) $.
-
-\item \token{quantile}:  Given a random variable $ x $, the $ n $-quantiles are the values of $ x $ which split the domain into $ n $ regions of equal probability. For instance, the $ k\textsuperscript{th} $ $ n $-quantile is the value $ q_k $ for which $ P(x<q_k) = \frac{k}{n} $. For some common values of $ n $, the $ n $-quantiles have additional names, namely quartiles for $ n=4 $, deciles for $ n=10 $ and percentiles for $ n=100 $.
-More generally, a quantile can be associated to any probability $ p $, so that $ q $ is the value of $ x $ below which a proportion $ p $ of the probability lies, i.e., $ P(x<q) = p $.
-The plot on the right shows the 1st to 9th 10-quantiles (or deciles) for a normal distribution ($ \mu = 4 $, $ \sigma = 1 $) as orange dots. The blue curve is the cumulative density function of $ x $. Note how the quantiles split the probability (y-axis) into 10 equal regions.
-
-\item \token{quartile}:  The quartiles are the 4-quantiles, that is the 4 values of $ x $ below which lies a proportion 0.25, 0.50, 0.75 and 1 of the probability. One can also think of them as the 4 values of $ x $ which split the domain into 4 regions of equal probability.
-\end{itemize}
-
-
-%\subsection{The \class{ListOfExternalParameters} class}
-%\label{ListOfExternalParameters-class}
-%\label{listofexternalparameters-class}
-
-%The \ListOfExternalParameters class, like other \ListOf classes in \sbmlthreecore, is a container for zero or more \UncertParameter objects.  If empty, it simply means that no child \UncertParameter objects are defined for its parent, and is equivalent to not including the \ListOfExternalParameters object at all.  This situation might be useful if the list is annotated with the reason why it is empty, for example.
-
-
-\subsection{The \class{Distribution} class}
-\label{Distribution-class}
-\label{distribution-class}
-
-The \Distribution class has an optional \Math child which, if present, must contain at its base one of the \token{csymbol} distributions defined in this specification.  This distribution defines the distribution from which the parent element is drawn.  Only the predefined \token{csymbol} distributions are available for this definition; if the element is drawn from a distribution not defined in this specification, \changed{an \UncertParameter defined to be a distribution should be used instead (see \ref{sec:external-dist-example})}.
-
-\subsubsection{Attributes inherited from \SBase}
-
-A \Distribution always inherits the optional \token{metaid} and \token{sboTerm} attributes, and inherits optional \token{id} and \token{name} attributes as described in \sec{sec:idname}.  The \token{id} of an \Distribution has no mathematical meaning.
 
 
 \subsection{Examples using extended \SBase}
@@ -1187,14 +1161,14 @@ Several examples are given to illustrate the use of the \Uncertainty class:
 In this examples, a species is given an \Uncertainty child to describe its standard deviation:
 
 \begin{example}
-...
   <species id="s1" compartment="C" initialAmount="3.22" hasOnlySubstanceUnits="true"
            boundaryCondition="false" constant="false">
-    <distrib:uncertainty>
-      <distrib:standardDeviation distrib:value="0.3"/>
-    </distrib:uncertainty>
+    <distrib:listOfUncertainties>
+      <distrib:uncertainty>
+        <distrib:uncertParameter type="standardDeviation" distrib:value="0.3"/>
+      </distrib:uncertainty>
+    <distrib:listOfUncertainties>
   </species>
-...
 \end{example}
 
 Here, the species with an initial amount of 3.22 is described as having a standard deviation of 0.3, a value that might be written as \val{3.22 $\pm$ 0.3}.  This is probably the simplest way to use the package to introduce facts about the uncertainty of the measurements of the values present in the model.
@@ -1202,16 +1176,16 @@ Here, the species with an initial amount of 3.22 is described as having a standa
 It is also possible to include additional information about the species, should more be known:
 
 \begin{example}
-...
   <species id="s1" compartment="C" initialAmount="3.22" hasOnlySubstanceUnits="true"
            boundaryCondition="false" constant="false">
-    <distrib:uncertainty>
-      <distrib:mean distrib:value="3.2"/>
-      <distrib:standardDeviation distrib:value="0.3"/>
-      <distrib:variance distrib:value="0.09"/>
-    </distrib:uncertainty>
+    <distrib:listOfUncertainties>
+      <distrib:uncertainty>
+        <distrib:uncertParameter type="mean" distrib:value="3.2"/>
+        <distrib:uncertParameter type="standardDeviation" distrib:value="0.3"/>
+        <distrib:uncertParameter type="variance" distrib:value="0.09"/>
+      </distrib:uncertainty>
+    </distrib:listOfUncertainties>
   </species>
-...
 \end{example}
 
 In this example, the initial amount of 3.22 is noted as having a mean of 3.2, a standard deviation of 0.3, and a variance of 0.09.  Note that the standard deviation can be calculated from the variance (or visa versa), but the modeler has chosen to include both here for convenience.  Note too that this use of the \Uncertainty element does not imply that the species amount comes from a normal distribution with a mean of 3.2 and standard deviation of 0.3, but rather that the species amount comes from an unknown distribution with those qualities.  If it is known that the value was drawn from a particular distribution, that distribution should be used, rather than the \token{Mean} and \token{StandardDeviation} statistical values.
@@ -1236,12 +1210,13 @@ estimation and use experimental observations to estimate \token{mu\_Z} and
 \changed{For added information, the modeler has chosen to include the observed mean and variance of the value.  These are close to the expected mean and variance from the given distribution (1.0 and 0.1, respectively, given the shape and scale), but were slightly different due to the sample size.}
 
 \begin{example}
-  <listOfParameters>
-    <parameter id="shape_Z" value="10" constant="true"/>
-    <parameter id="scale_Z" value="0.1" constant="true"/>
-    <parameter id="Z" constant="true">
+<listOfParameters>
+  <parameter id="shape_Z" value="10" constant="true"/>
+  <parameter id="scale_Z" value="0.1" constant="true"/>
+  <parameter id="Z" constant="true">
+    <distrib:listOfUncertainties>
       <distrib:uncertainty>
-        <distrib:distribution>
+        <distrib:uncertParameter type="distribution">
           <math xmlns="http://www.w3.org/1998/Math/MathML">
             <apply>
               <csymbol definitionURL="http://www.sbml.org/sbml/symbols/distrib/gamma"
@@ -1250,12 +1225,13 @@ estimation and use experimental observations to estimate \token{mu\_Z} and
               <ci> scale_Z </ci>
             </apply>
           </math>
-        </distrib:distribution>
+        </distrib:uncertParameter>
         <distrib:mean value="1.03"/>
         <distrib:variance value="0.97"/>
       </distrib:uncertainty>
-    </parameter>
-  </listOfParameters>
+    <distrib:listOfUncertainties>
+  </parameter>
+</listOfParameters>
 \end{example}
 
 \begin{blockChanged}
@@ -1267,17 +1243,17 @@ If an SBML value is drawn from a distribution not defined explicitly in this spe
 
 \begin{example}
 <parameter id="p1" constant="true">
-  <uncertainty xmlns="http://www.sbml.org/sbml/level3/version1/distrib/version1">
-    <listOfExternalParameters>
-      <externalParameter name="zeta"
+  <distrib:listOfUncertainties>
+    <uncertainty xmlns="http://www.sbml.org/sbml/level3/version1/distrib/version1">
+      <uncertParameter type="externalParameter" name="zeta"
                 definitionURL="http://www.probonto.org/ontology#PROB_k0001263">
-        <listOfExternalParameters>
-          <externalParameter name="shape" value="2.37"
+        <listOfUncertParameters>
+          <uncertParameter type="externalParameter" name="shape" value="2.37"
                 definitionURL="http://purl.obolibrary.org/obo/STATO_0000436"/>
-        </listOfExternalParameters>
-      </externalParameter>
-    </listOfExternalParameters>
-  </uncertainty>
+        </listOfUncertParameters>
+      </uncertParameter>
+    </uncertainty>
+  </distrib:listOfUncertainties>
 </parameter>
 \end{example}
 
@@ -1318,7 +1294,7 @@ It is also possible to create even more complex structures with the \UncertParam
 
 \end{blockChanged}
 
-
+\clearpage
 \section{Interaction with other packages}
 
 \subsection{Custom annotations for function definitions}
@@ -1332,6 +1308,7 @@ The following table is taken from the above document by Frank Bergmann, and can 
 \newcommand{\tighturl}[1]{\textls[-40]{\url{#1}}}
 
 \begin{table}[bh]
+  \caption{The annotation URLs.}
   \centering
   \begin{edtable}{tabularx}{\linewidth}{lp{0.65in}l>{\normalfont\itshape}l}
     \toprule

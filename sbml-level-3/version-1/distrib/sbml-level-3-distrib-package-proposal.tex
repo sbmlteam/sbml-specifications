@@ -52,7 +52,7 @@
 
 \packageTitle{The Distributions Package\\for SBML Level 3}
 \packageVersion{Version \changed{0.24} (Draft)}
-\packageVersionDate{\changed{March, 2019}}
+\packageVersionDate{\changed{April, 2019}}
 %\packageGeneralURL{http://sbml.org/Community/Wiki/SBML_Level_3_Proposals/Distributions_and_Ranges}
 %\packageThisVersionURL{}
 
@@ -137,7 +137,7 @@ from MS.\\ \midrule
 \midrule
 0.23 (Draft) & February 2018 & Lucian Smith and Michael Hucka & Removal of Distribution and all subclasses; replaced with a \Math element instead; collapsed UncertStatistics into Uncertainty; some other edits from Michael Hucka.\\
 \midrule
-0.24 (Draft) & March 2018 & Lucian Smith & \changed{Removal of second distrib namespace, as it's no longer necessary. [[ANYTHING ELSE?]]}\\
+0.24 (Draft) & April 2018 & Lucian Smith & \changed{Removal of second distrib namespace, and consolidation of the \UncertParameter class.}\\
 \bottomrule
 \end{edtable}
 \end{table}
@@ -420,6 +420,11 @@ In early 2017, it became clear that UncertML was no longer being worked on; the 
 At the HARMONY held at the University of Oxford, for the first time since the change from UncertML, a libSBML implementation of the specification was available.  This let people experiment with the package, and conclude that a simpler method of defining calls to distributions was desired.  It was proposed to define new MathML \texttt{csymbol} definitions for the common distributions.  Eventually, these new \token{csymbols} were used instead of the old Distribution class, greatly simplifying the proposal.
 
 
+\subsubsection{2019 HARMONY: Pasadena}
+
+\changed{In the weeks leading up to the HARMONY held at Caltech, the PWG discussed various options for encoding uncertainties, based on different people's requirements.  At HARMONY, we were able to coalesce around an approach that seems likely to be able to work for everyone, with multiple uncertainties per element, and a single \UncertParameter class with a \token{type} that encapsulates what used to be encoded in an element's class.}
+
+
 \section{Proposed syntax and semantics}
 
 \subsection{Overview}
@@ -510,7 +515,7 @@ Every SBML Level~3 package is identified uniquely by an XML namespace URI.  For 
 
 Note that the \distrib package may be used with both \threeone and \threetwo documents, with the no semantic changes between the two in any \distribshort element, due to the addition of \token{id} and \token{name} to the \DistribBase class.
 
-In addition, SBML documents using a given package must indicate whether the package may be used to change the mathematical meaning of \sbmlthreecore elements.  This is done using the attribute \token{required} on the \token{<sbml>} element in the SBML document.  For the \distrib package, the value of this attribute must be \val{true}, as it defined new csymbols that may be used in any MathML.  Note that the value of this attribute must \emph{always} be set to \val{true}, even if the particular model does not contain any of these csymbols.
+In addition, SBML documents using a given package must indicate whether the package may be used to change the mathematical meaning of \sbmlthreecore elements.  This is done using the attribute \token{required} on the \token{<sbml>} element in the SBML document.  For the \distrib package, the value of this attribute must be \val{true}, as it defines new csymbols that may be used in any MathML.  Note that the value of this attribute must \emph{always} be set to \val{true}, even if the particular model does not contain any of these csymbols.
 
 The following fragment illustrates the beginning of a typical SBML model using \threeone and this version of the \distrib package:
 
@@ -531,7 +536,7 @@ The following fragment illustrates the beginning of a typical SBML model using \
       distrib:required="true">
 \end{example}
 
-There is no difference between these two namespaces, and all package semantics are identical.
+There is no difference between \changed{the 'distrib' part of these documents}, and all package semantics are identical.
 
 \paragraph{XML Namespace use}
 
@@ -555,7 +560,7 @@ The type \primtype{ExternalRef} is derived from the type \primtype{string} with 
 \subsubsection{Type \fixttspace\primtypeNC{UncertKind}}
 \label{sec:primtype-uncertkind}
 
-The type \primtype{UncertKind} is derived from the type \primtype{string} and its values are restricted to being one of the following possibilities: \val{coefficientOfVariation}, \val{kurtosis}, \val{mean}, \val{median}, \val{mode}, \val{sampleSize}, \val{skewness}, \val{standardDeviation}, \val{standardError}, \val{variance}, \val{confidenceInterval}, \val{credibleInterval}, \val{interquartileRange}, \val{range}, \val{externalParameter}, and \val{distribution}.  Attributes of type \primtype{UncertKind} cannot take on any other values.  The meaning of these values is discussed in the context of the \UncertParameter class's definition in \sec{UncertParameter-class}.
+The type \primtype{UncertKind} is derived from the type \primtype{string} and its values are restricted to being one of the following possibilities: \val{coefficientOfVariation}, \val{kurtosis}, \val{mean}, \val{median}, \val{mode}, \val{sampleSize}, \val{skewness}, \val{standardDeviation}, \val{standardError}, \val{variance}, \val{confidenceInterval}, \val{credibleInterval}, \val{inter-\newline quartileRange}, \val{range}, \val{externalParameter}, and \val{distribution}.  Attributes of type \primtype{UncertKind} cannot take on any other values.  The meaning of these values is discussed in the context of the \UncertParameter class's definition in \sec{UncertParameter-class}.
 
 
 
@@ -635,7 +640,7 @@ Many of the distributions take exactly two or four arguments (or exactly one or 
 
 If an SBML interpreter is unable to calculate one or more of the above extended \mathml functions, it may simply fail, or it might choose to return the mean of the given function instead.  In either case, it is a good idea to inform the user that the model cannot be interpreted by the software as intended. \changed{Note that the mean of a discrete distribution is not necessarily a legal return value for that function, as it may not be an integer.}
 
-The following mean values may be used as a fallback for software that cannot perform draws from a distribution.  Note that truncated versions of these functions will have different means.  Note also that the \token{cauchy} distribution has no mean, by definition.
+The mean values in \tab{tab:meanvals} may be used as a fallback for software that cannot perform draws from a distribution.  Note that truncated versions of these functions will have different means.  Note also that the \token{cauchy} distribution has no mean, by definition.
 
 \begin{table}[]
   \centering
@@ -669,8 +674,9 @@ rayleigh(scale)                         & scale $\sqrt{\pi/2}$
 \\
 \bottomrule
 \end{edtable}
-\end{table}
+\label{tab:meanvals}
 \vspace*{-3ex}
+\end{table}
 
 \subsection{Discrete vs. continuous sampling}
 \label{discrete-continuous}
@@ -736,7 +742,7 @@ This use would apply a draw from a normal distribution with mean \token{z}, stan
 
 \subsubsection{Defining conditional events}
 
-Simultaneous events in SBML are ordered based on their \Priority values, with higher values being executed first, and potentially cancelling events that fire after them.  In this example, two simultaneous events have priorities set with csymbols defined in \distribshort.  The event \token{E0} has a priority of \token{uniform(0,1)}, while the event \token{E1} has a priority of \token{uniform(0,2)}.  This means that 75\% of the time, event \token{E1} will have a higher priority than \token{E0}, and will fire first, assigning a value of \token{5} to parameter \token{x}.  Because this negates the trigger condition for \token{E0}, which is set \token{persistent}=\val{false}, this means that \token{E0} never fires, and the value of \token{x} remains at \token{5}.  The remaining 25\% of the time, the reverse happens, with \token{E0} setting the value of \token{x} to \token{3} instead.
+Simultaneous events in SBML are ordered based on their \Priority values, with higher values being executed first, and potentially cancelling events that fire after them.  In this example, two simultaneous events have priorities set with csymbols defined in \distribshort.  The event \token{E0} has a priority of $uniform(0,1)$, while the event \token{E1} has a priority of $uniform(0,2)$.  This means that 75\% of the time, event \token{E1} will have a higher priority than \token{E0}, and will fire first, assigning a value of \token{5} to parameter \token{x}.  Because this negates the trigger condition for \token{E0}, which is set \token{persistent}=\val{false}, this means that \token{E0} never fires, and the value of \token{x} remains at \token{5}.  The remaining 25\% of the time, the reverse happens, with \token{E0} setting the value of \token{x} to \token{3} instead.
 
 
 \begin{example}
@@ -835,7 +841,7 @@ Simultaneous events in SBML are ordered based on their \Priority values, with hi
 \label{distribbase-class}
 \label{sec:idname}
 
-The \DistribBase class is an abstract base class which is the parent class for every class in this \distrib package.  Its purpose is to replicate within the \distrib package an important change between \threeone and \threetwo: the addition of an optional \token{id} and \token{name} attribute to \SBase.  By adding these attributes here, \distribshort may be used completely exchangeably between Level~1 and Level~2 documents without any other modifications.  The meaning of these attributes is identical, regardless of the Level/Version of the document in which they appear.
+The \DistribBase class is an abstract base class which is the parent class for every class in this \distrib package.  Its purpose is to replicate within the \distrib package an important change between \threeone and \threetwo: the addition of an optional \token{id} and \token{name} attribute to \SBase.  By adding these attributes here, \distribshort may be used completely exchangeably between Level~3 Version~1 and Level~3 Version~2 documents without any other modifications.  The meaning of these attributes is identical, regardless of the Level/Version of the document in which they appear.
 
 \begin{figure}[]
   \includegraphics{figs/distribBase.pdf}
@@ -874,7 +880,7 @@ It is important to note that the uncertainty described is defined as being the u
 \label{Uncertainty-class}
 \label{uncertainty-class}
 
-The \Uncertainty class is a collection of zero or more statistical measures related to the uncertainty of the parent SBML element.  \changed{It may only contain one of each type of measurment, which means that each of its \UncertParameter children must have a unique \token{type} attribute for every value but \val{externalParameter}.  Each \UncertParameter child with a \token{type} of \val{externalParameter} must, in turn, have a unique \token{definitionURL} value.  If a given SBML element has multiple measures of the same \token{type} (for example, as measured from different sources or different experiments), it should be given multiple \Uncertainty children.  Each \Uncertainty child must be a unique set of statistical measures.}
+The \Uncertainty class is a collection of zero or more statistical measures related to the uncertainty of the parent SBML element.  \changed{It may only contain one of each type of measurement, which means that each of its \UncertParameter children must have a unique \token{type} attribute for every value but \val{externalParameter}.  Each \UncertParameter child with a \token{type} of \val{externalParameter} must, in turn, have a unique \token{definitionURL} value.  If a given SBML element has multiple measures of the same \token{type} (for example, as measured from different sources or different experiments), it should be given multiple \Uncertainty children.  Each \Uncertainty child must be a unique set of statistical measures.}
 
 Note that for elements that change in value over time, the described uncertainty applies only to the element's initial state, and not to how it changes in time.  For typical simulations, this means the element's initial assignment.
 
@@ -894,7 +900,7 @@ An \Uncertainty always inherits the optional \token{metaid} and \token{sboTerm} 
 
 \begin{figure}[htb]
 \includegraphics[width=0.8\linewidth]{figs/uncertParameter.pdf}
-\caption{\changed{The definition of the \UncertParameter and \UncertSpan classes.  These classes allow an \Uncertainty to define an uncertainty numerically.}}
+\caption{\changed{The definition of the \UncertParameter, \UncertSpan, and \ListOfUncertParameters classes.  These classes allow an \Uncertainty to define an uncertainty numerically.}}
 \label{fig:uncertParameter}
 \end{figure}
 
@@ -906,7 +912,7 @@ An \Uncertainty always inherits the optional \token{metaid} and \token{sboTerm} 
 \label{UncertParameter-class}
 \label{uncertparameter-class}
 
-Each \UncertParameter defines one uncertainty statistic about the parent element.  It has one required attribute \token{type} of type \primtype{UncertKind} which defines what statistic it describes (i.e. \val{mean}, \val{standardDeviation}, \val{distribution}, etc.).  Its other attributes (\token{value}, \token{var}, \token{units}, and \token{definitionURL}), and children (\token{math} and \token{listOfUncertParameters})are all optional, each useable according to which \token{type} it is.
+Each \UncertParameter defines one uncertainty statistic about the parent element.  It has one required attribute \token{type} of type \primtype{UncertKind} which defines what statistic it describes (i.e. \val{mean}, \val{standardDeviation}, \val{distribution}, etc.).  Its other attributes (\token{value}, \token{var}, \token{units}, and \token{definitionURL}), and children (\token{math} and \token{listOfUncertParameters}) are all optional, each useable according to which \token{type} it is.
 
 \subsubsection{The \token{type} attribute}
 The \token{type} attribute defines what the \UncertParameter describes.  Depending on the type, other attributes will be allowed or not, and the class must either be the base \UncertParameter or the \UncertSpan class, according to \tab{tab:uncertparamtype}.
@@ -964,7 +970,7 @@ The optional \token{value} attribute (of type \primtype{double}) is used when th
 The optional \token{units} attribue of an \UncertParameter is of type \primtype{UnitSIdRef}.  The \primtype{UnitSIdRef} is defined in the \sbmlthreecore specification, but in brief, it may either be the \primtype{SId} of a \UnitDefinition in the \Model, or a predefined SI unit from the Table~2 in the \sbmlthreecore specification.  The units of uncertainty statistics are generally either dimensionless or the same as the units of the parent, according to the formula that defines the value.  A \token{mean} and a \token{standardDeviation}, for example, are always the same units as the parent, while a \token{coefficientOfVariation} is dimensionless.
 
 \subsubsection{The \token{definitionURL} attribute}
-The optional \token{definitionURL} attribute (of type \primtype{ExternalRef}) may be used when the \token{type} of the \UncertParameter is \val{externalParameter} or \val{distribution}.  The \primtype{ExternalRef} should point to an ontology URL, distribution \token{csymbol}, or other unique definition string that defines what is meant by this \UncertParameter.  The \token{definitionURL} may not be defined if the \token{type} is any other value: the other types are already completely defined.
+The optional \token{definitionURL} attribute (of type \primtype{ExternalRef}) may be used when the \token{type} of the \UncertParameter is \val{distribution}, \changed{and must be used when the \token{type} of the \UncertParameter is \val{externalParameter}}.  The \primtype{ExternalRef} should point to an ontology URL, distribution \token{csymbol}, or other unique definition string that defines what is meant by this \UncertParameter.  The \token{definitionURL} must not be defined if the \token{type} is any other value: the other types are already completely defined.
 
 \subsubsection{Attributes inherited from \SBase}
 An \UncertParameter always inherits the optional \token{metaid} and \token{sboTerm} attributes, and inherits optional \token{id} and \token{name} attributes as described in \sec{sec:idname}.  The \token{id} of a \UncertParameter takes the mathematical value of its \token{value} attribute if that attribute is defined, and the mathematical value of the corresponding \token{var} if that attribute is defined.  This meaning may be used in other contexts, but that meaning may not be set directly by any other SBML element of any Level, Version, or package.  If setting the value is desired, the \token{var} attribute should be used, and that referenced element set as per normal SBML procedures.  The meaning is provided mostly to allow access to the \token{val} attribute, which otherwise would be undiscoverable to any other SBML element.
@@ -973,7 +979,7 @@ An \UncertParameter always inherits the optional \token{metaid} and \token{sboTe
 The optional child \token{math} element contains MathML, and may only be used for an \UncertParameter of type \val{distribution} or \val{externalParameter}.  When defined for a \val{distribution}, the MathML should define that distribution, such as by using one of the \token{csymbol} definitions from this specification.
 
 \subsubsection{The child \token{ListOfUncertParameters} element}
-The optional child \token{ListOfUncertParameters} element is exclusively used for an \UncertParameter of type \val{externalParameter}.  Unlike an \Uncertainty, there are no uniqueness restrictions among the children of this element: any number of \UncertParameter elements of any \token{type} may be used, according to whatever makes sense for the statistic defined by the parent \token{definitionURL}.
+The optional child \token{ListOfUncertParameters} element may only be used for an \UncertParameter of type \val{distribution} or \val{externalParameter}.  Unlike an \Uncertainty, there are no uniqueness restrictions among the children of this element: any number of \UncertParameter elements of any \token{type} may be used, according to whatever makes sense for the statistic defined by the parent \token{definitionURL}.
 
 \subsection{The \class{UncertSpan} class}
 \label{UncertSpan-class}
@@ -983,14 +989,14 @@ The \UncertSpan class defines a span of values that define an uncertainty statis
 
 The value of the lower attribute (whichever is defined) must be lesser or equal to the value of the upper attribute (whichever is defined), at the initial conditions of the model.  The \Uncertainty element cannot affect the core mathematics of an SBML model, but if it is used in a mathematical context during simulation of the model, this restriction on the attribute values must be maintained, or the \UncertSpan object as a whole will be undefined.
 
-Like the \token{units} attribute on an \UncertParameter, the \token{units} attribute is provided if \token{valueUpper} and/or \token{valueLower} is defined.  The units on both the upper and lower ends of the span must match each other, if defined.  The units for span ends defined by reference may be obtained from the referenced SBML element.  The upper and lower values must always have the same units.
+Like the \token{units} attribute on an \UncertParameter, the \token{units} attribute is provided if \token{valueUpper} and/or \token{valueLower} is defined.  The units on both the upper and lower ends of the span must match each other, if defined.  The units for span ends defined by reference may be obtained from the referenced SBML element.
 
 
 
 
 \subsection{The different \UncertParameter and \UncertSpan \token{type} values.}
 
-The \primtype{UncertKind} values each have a particular definition.  The following kinds are all single-value types, and thus may either be defined by \token{value} or \token{var}, and must only be used for \UncertParameter elements, not \UncertSpan elements:
+The \primtype{UncertKind} values each have a particular definition.  The following kinds are all single-value types, and thus may either be defined by \token{value} or \token{var}, and must only be used for \UncertParameter elements, not \UncertSpan elements.  Definitions taken from taken from \url{https://web.archive.org/web/20161029215725/uncertml.org/}).
 
 \end{blockChanged}
 
@@ -1018,7 +1024,7 @@ The \primtype{UncertKind} values each have a particular definition.  The followi
 
 \end{itemize}
 
-\changed{The following \token{UncertKind} values are all spans, and may only be used for \UncertSpan elements.  They are defined by an upper and lower value:}
+\changed{The following \token{UncertKind} values are all spans, and may only be used for \UncertSpan elements.  They are defined by an upper and lower value.  Definitions taken from taken from \url{https://web.archive.org/web/20161029215725/uncertml.org/}).}
 
 \begin{itemize}
 
@@ -1028,11 +1034,11 @@ If $ x $ has a continuous probability distribution $ P $, then $ [a,b] $ is a 95
 
 Unless specified otherwise, the confidence interval is usually chosen so that the remaining probability is split equally, that is $ P(x<a) = P(x>b) $. If $ x $ has a symmetric distribution, then the confidence intervals are usually centered around the mean. However, non-centered confidence intervals are possible and are better described by their lower and upper quantiles or levels. For example, a 50\% confidence interval would usually lie between the 25\% and 75\% quantiles, but could in theory also lie between the 10\% and 60\% quantiles, although this would be rare in practice. The \token{confidenceInterval} allows you the flexibility to specify non-symmetric confidence intervals however in practice we would expect the main usage to be for symmetric intervals.
 
-The \token{confidenceInterval} child of a \Uncertainty is always the 95\% confidence interval.  For other confidence intervals, use an \UncertParameter instead. }
+The \token{confidenceInterval} child of a \Uncertainty is always the 95\% confidence interval.  For other confidence intervals, use an \UncertParameter \changed{of type \val{externalParameter}} instead. }
 
 \item {\token{credibleInterval}:  In Bayesian statistics, a credible interval is similar to a confidence interval determined from the posterior distribution of a random variable $ x $. That is, given a prior distribution $ p(x) $ and some observations $ D $, the posterior probability $ p(x\mid D) $ can be computed using Bayes theorem. A 95\% credible interval is then any interval $ [a,b] $ so that $ \int_a^b p(x\mid D) = 0.95 $, that is the variable $ x $ lies in the interval $ [a,b] $ with posterior probability 0.95. Note that the interpretation of a credible interval is not the same as a (frequentist) confidence interval.
 
-The \token{credibleInterval} child of a \Uncertainty is always the 95\% credible interval.  For other credibility intervals, use an \UncertParameter instead.}
+The \token{credibleInterval} child of a \Uncertainty is always the 95\% credible interval.  For other credibility intervals, use an \UncertParameter \changed{of type \val{externalParameter}} instead.}
 
 
 \item \token{interquartileRange}:  The interquartile range is the range between the 1st and 3rd quartiles. It contains the middle 50\% of the sample realisations (or of the sample probability). It is typically used and shown in box plots.
@@ -1046,28 +1052,26 @@ Finally, we have the \val{distribution} and \val{externalParameter} types:
 
 \begin{itemize}
 
-\item {\token{distribution}}: If the uncertainty is defined by a known distribution, that distribution may either be defined by using the child \token{math} element, or by using the \token{definitionURL}.  When the \token{math} child is used, that math should contain the distribution in question:  typically this will be a distribution \token{csymbol} but may be something more complicated, like a \token{piecewise} function.  If the \token{definitionURL} is used, many more distributions may be used than are defined in this specification (like an \token{externalParameter}, below).  To fully define this distrubiton, it will almost certainly be necessary to further define that distribution with child \UncertParameter elements.  For example, a Beta distribution takes two parameters ($\alpha$ and $\beta$), each of which could be defined by a child \UncertParameter of type \val{externalParameter}, with appropriate \token{definitionURL} values.  A \token{type} of value \val{distribution} is only valid for \UncertParameter elements, not \UncertSpan elements.
+\item {\token{distribution}}: If the uncertainty is defined by a known distribution, that distribution may either be defined by using the child \token{math} element, or by using the \token{definitionURL}.  When the \token{math} child is used, that math should contain the distribution in question:  typically this will be a distribution \token{csymbol} but may be something more complicated, like a \token{piecewise} function.  If the \token{definitionURL} is used, many more distributions may be used than are defined in this specification (like an \token{externalParameter}, below).  To fully define this distributon, it will almost certainly be necessary to further define that distribution with child \UncertParameter elements.  For example, a Beta distribution takes two parameters ($\alpha$ and $\beta$), each of which could be defined by a child \UncertParameter of type \val{externalParameter}, with appropriate \token{definitionURL} values.  A \token{type} of value \val{distribution} is only valid for \UncertParameter elements, not \UncertSpan elements.
 
-\item{\token{externalParameter}}: This type is uniquely described by an appropriate \token{definitionURL}, and is provided to allow a modeler to encode externally-provided parameters not otherwise explicitly handled by this specification.  The range of possibilities is vast, so modelers should ensure that the tool they wish to use encodes support for any \UncertParameter they define.  As this parameter may be similar to any of the other types, there are no restrictions on what other attributes or children that may be used by an \UncertParameter of this type:  it may be a single value; it may be a span; it may be defined by a child \token{math} element; it may be defined by child \UncertParameter elements; it may be defined by any combination of the above.  The only restriction is that the \token{definitionURL} \emph{must} be defined for any \UncertParameter of type \val{externalParameter}.  This type value may be used for either \UncertParameter or \UncertSpan elements.
+\item{\token{externalParameter}}: This type is uniquely described by an appropriate \token{definitionURL}, and is provided to allow a modeler to encode externally-provided parameters not otherwise explicitly handled by this specification.  The range of possibilities is vast, so modelers should ensure that the tool they wish to use encodes support for any \UncertParameter they define.  As an external parameter may take any form, there are no restrictions on what other attributes or children that may be used by an \UncertParameter of this type:  it may be a single value; it may be a span; it may be defined by a child \token{math} element; it may be defined by child \UncertParameter elements; it may be defined by any combination of the above.  The only restriction is that the \token{definitionURL} \emph{must} be defined for any \UncertParameter of type \val{externalParameter}.  This type value may be used for either \UncertParameter or \UncertSpan elements.
 
-As an example, here's an \UncertParameter that defines the 99\% confidence interval of a \Parameter (using made-up \token{definitionURL} values):
+As an example, here's an \UncertSpan that defines the 99\% confidence interval of a \Parameter (using made-up \token{definitionURL} values):
 
 \begin{example}
-  <listOfParameters>
-    <parameter id="p1" value="3.42" constant="true">
-      <distrib:listOfUncertainties>
-        <distrib:uncertainty>
-          <distrib:uncertSpan type="externalParameter" lowerValue="3.19" upperValue="3.83"
-                              definitionURL="http://dist.org/CI">
-            <distrib:listOfUncertParameters>
-              <distrib:uncertParameter type="externalParameter" value="0.99"
-                              definitionURL="http://dist.org/CIpercent">
-            </distrib:listOfUncertParameters>
-          </distrib:uncertSpan>
-        </distrib:uncertainty>
-      <distrib:listOfUncertainties>
-    </parameter>
-  </listOfParameters>
+  <parameter id="p1" value="3.42" constant="true">
+    <distrib:listOfUncertainties>
+      <distrib:uncertainty>
+        <distrib:uncertSpan type="externalParameter" lowerValue="3.19" upperValue="3.83"
+                            definitionURL="http://dist.org/CI">
+          <distrib:listOfUncertParameters>
+            <distrib:uncertParameter type="externalParameter" value="0.99"
+                            definitionURL="http://dist.org/CIpercent">
+          </distrib:listOfUncertParameters>
+        </distrib:uncertSpan>
+      </distrib:uncertainty>
+    </distrib:listOfUncertainties>
+  </parameter>
 \end{example}
 
 \end{itemize}
@@ -1115,7 +1119,7 @@ If a \Species is being modeled in SBML in amounts, but was measured in terms of 
           <distrib:uncertainty>
             <distrib:uncertParameter type="standardDeviation" value="0.15"/>
           </distrib:uncertainty>
-        <distrib:listOfUncertainties>
+        </distrib:listOfUncertainties>
       </compartment>
     </listOfCompartments>
     <listOfSpecies>
@@ -1128,7 +1132,7 @@ If a \Species is being modeled in SBML in amounts, but was measured in terms of 
           <distrib:uncertainty>
             <distrib:uncertParameter type="standardDeviation" value="0.3"/>
           </distrib:uncertainty>
-        <distrib:listOfUncertainties>
+        </distrib:listOfUncertainties>
       </parameter>
     </listOfParameters>
     <listOfInitialAssignments>
@@ -1150,7 +1154,7 @@ Here, the uncertainty of the species \val{S\_amt} is not set explicitly, and ins
 \end{blockChanged}
 
 
-\subsection{Examples using extended \SBase}
+\subsection{Examples using \Uncertainty}
 \label{extended-sbase-examples}
 
 Several examples are given to illustrate the use of the \Uncertainty class:
@@ -1167,7 +1171,7 @@ In this examples, a species is given an \Uncertainty child to describe its stand
       <distrib:uncertainty>
         <distrib:uncertParameter type="standardDeviation" distrib:value="0.3"/>
       </distrib:uncertainty>
-    <distrib:listOfUncertainties>
+    </distrib:listOfUncertainties>
   </species>
 \end{example}
 
@@ -1188,9 +1192,9 @@ It is also possible to include additional information about the species, should 
   </species>
 \end{example}
 
-In this example, the initial amount of 3.22 is noted as having a mean of 3.2, a standard deviation of 0.3, and a variance of 0.09.  Note that the standard deviation can be calculated from the variance (or visa versa), but the modeler has chosen to include both here for convenience.  Note too that this use of the \Uncertainty element does not imply that the species amount comes from a normal distribution with a mean of 3.2 and standard deviation of 0.3, but rather that the species amount comes from an unknown distribution with those qualities.  If it is known that the value was drawn from a particular distribution, that distribution should be used, rather than the \token{Mean} and \token{StandardDeviation} statistical values.
+In this example, the initial amount of 3.22 is noted as having a mean of 3.2, a standard deviation of 0.3, and a variance of 0.09.  Note that the standard deviation can be calculated from the variance (or visa versa), but the modeler has chosen to include both here for convenience.  Note too that this use of the \Uncertainty element does not imply that the species amount comes from a normal distribution with a mean of 3.2 and standard deviation of 0.3, but rather that the species amount comes from an unknown distribution with those qualities.  If it is known that the value was drawn from a particular distribution, \changed{an \UncertParameter of type \val{distribution} should be used, rather than \UncertParameter elements of type \val{mean} and \val{standardDeviation}}.
 
-Note also that 3.22 (the \token{initialAmount}) is different from 3.2 (the \token{Mean}):  evidently, this model was constructed as a realization of the underlying uncertainty, instead of trying to capture the single most likely model of the underlying process.
+Note also that 3.22 (the \token{initialAmount}) is different from 3.2 (the \token{mean}):  evidently, this model was constructed as a realization of the underlying uncertainty, instead of trying to capture the single most likely model of the underlying process.
 
 
 \subsubsection{Defining a random variable}
@@ -1226,10 +1230,10 @@ estimation and use experimental observations to estimate \token{mu\_Z} and
             </apply>
           </math>
         </distrib:uncertParameter>
-        <distrib:mean value="1.03"/>
-        <distrib:variance value="0.97"/>
+        <distrib:uncertParameter type="mean" value="1.03"/>
+        <distrib:uncertParameter type="variance" value="0.97"/>
       </distrib:uncertainty>
-    <distrib:listOfUncertainties>
+    </distrib:listOfUncertainties>
   </parameter>
 </listOfParameters>
 \end{example}
@@ -1238,58 +1242,62 @@ estimation and use experimental observations to estimate \token{mu\_Z} and
 \subsubsection{Defining external distributions}
 \label{sec:external-dist-example}
 
-If an SBML value is drawn from a distribution not defined explicitly in this specification, it is necessary to use the \UncertParameter construct to denote this.  In this example, the parameter p1 was drawn from a zeta distribution, with a shape parameter of 2.37.  An \UncertParameter is created with the 'zeta' URI, with a child \UncertParameter with the 'shape' URI.  For readability, 'zeta' and 'shape' were used as the names of these parameters.
+If an SBML value is drawn from a distribution not defined explicitly in this specification, it is necessary to use an \UncertParameter of type \val{externalParameter} to define the distribution's parameters.  In this example, the parameter \token{p1} was drawn from a zeta distribution, with a shape parameter of 2.37.  An \UncertParameter of type \val{distribution} is created with the 'zeta' URI, with a child \UncertParameter of type \val{externalParameter} with the 'shape' URI for its \token{definitionURL}.  For readability, 'zeta' and 'shape' were used as the names of these parameters.
 
 
 \begin{example}
 <parameter id="p1" constant="true">
-  <distrib:listOfUncertainties>
-    <uncertainty xmlns="http://www.sbml.org/sbml/level3/version1/distrib/version1">
-      <uncertParameter type="externalParameter" name="zeta"
-                definitionURL="http://www.probonto.org/ontology#PROB_k0001263">
+  <listOfUncertainties xmlns="http://www.sbml.org/sbml/level3/version1/distrib/version1">
+    <uncertainty>
+      <uncertParameter type="distribution" name="zeta"
+                 definitionURL="http://www.probonto.org/ontology#PROB_k0001263">
         <listOfUncertParameters>
           <uncertParameter type="externalParameter" name="shape" value="2.37"
-                definitionURL="http://purl.obolibrary.org/obo/STATO_0000436"/>
+                 definitionURL="http://purl.obolibrary.org/obo/STATO_0000436"/>
         </listOfUncertParameters>
       </uncertParameter>
     </uncertainty>
-  </distrib:listOfUncertainties>
+  </listOfUncertainties>
 </parameter>
 \end{example}
 
 
-It is also possible to create even more complex structures with the \UncertParameter scheme.  In this example, a parameter is drawn from a categorical distribution based on data from three patients.  The parent \UncertParameter is defined to be the 'categorical' distribution, with three 'category' children, each with two child 'value' and 'probability' parameters.  Collectively, they define a distribution where a value of 1.01 has a probability of 50\%, a value of 2.24 has a probability of 25\%, and a value of 1.72 has a probability of 25\%.  (The \token{definitionURL} examples here were made up for the purposes of this example, to be readable.  In an actual SBML document, they would point to external ontologies.)
+It is also possible to create even more complex structures with the \UncertParameter scheme.  In this example, we define a categorical distribution based on data from three patients.  The parent \UncertParameter is defined to be the 'categorical' distribution, with three 'category' children, each with two child 'value' and 'probability' parameters.  Collectively, they define a distribution where a value of 1.01 has a probability of 50\%, a value of 2.24 has a probability of 25\%, and a value of 1.72 has a probability of 25\%.  (The \token{definitionURL} examples here were made up for the purposes of this example, to be readable.  In an actual SBML document, they would point to external ontologies.)
 
 
 \begin{example}
-<parameter id="s1" constant="true">
-  <uncertainty xmlns="http://www.sbml.org/sbml/level3/version1/distrib/version1">
-    <listOfExternalParameters>
-      <externalParameter definitionURL="http://dist.org/categorical">
-        <listOfExternalParameters>
-          <externalParameter id="patient1" definitionURL="http://dist.org/category">
-            <listOfExternalParameters>
-              <externalParameter value="1.01" definitionURL="http://dist.org/cat_val"/>
-              <externalParameter value="0.5" definitionURL="http://dist.org/cat_prob"/>
-            </listOfExternalParameters>
-          </externalParameter>
-          <externalParameter id="patient2" definitionURL="http://dist.org/category">
-            <listOfExternalParameters>
-              <externalParameter value="2.24" definitionURL="http://dist.org/cat_val"/>
-              <externalParameter value="0.25" definitionURL="http://dist.org/cat_prob"/>
-            </listOfExternalParameters>
-          </externalParameter>
-          <externalParameter id="patient3" definitionURL="http://dist.org/category">
-            <listOfExternalParameters>
-              <externalParameter value="1.72" definitionURL="http://dist.org/cat_val"/>
-              <externalParameter value="0.25" definitionURL="http://dist.org/cat_prob"/>
-            </listOfExternalParameters>
-          </externalParameter>
-        </listOfExternalParameters>
-      </externalParameter>
-    </listOfExternalParameters>
+<listOfUncertainties xmlns="http://www.sbml.org/sbml/level3/version1/distrib/version1">
+  <uncertainty>
+    <uncertParameter type="distribution" definitionURL="http://dist.org/categorical">
+      <listOfExternalParameters>
+        <uncertParameter type="externalParameter" id="p1" definitionURL="http://dist.org/category">
+          <listOfExternalParameters>
+            <uncertParameter type="externalParameter" value="1.01"
+                             definitionURL="http://dist.org/cat_val"/>
+            <uncertParameter type="externalParameter" value="0.5"
+                             definitionURL="http://dist.org/cat_prob"/>
+          </listOfExternalParameters>
+        </externalParameter>
+        <uncertParameter type="externalParameter" id="p2" definitionURL="http://dist.org/category">
+          <listOfExternalParameters>
+            <uncertParameter type="externalParameter" value="2.24"
+                             definitionURL="http://dist.org/cat_val"/>
+            <uncertParameter type="externalParameter" value="0.25"
+                             definitionURL="http://dist.org/cat_prob"/>
+          </listOfExternalParameters>
+        </externalParameter>
+        <uncertParameter type="externalParameter" id="p3" definitionURL="http://dist.org/category">
+          <listOfExternalParameters>
+            <uncertParameter type="externalParameter" value="1.72"
+                             definitionURL="http://dist.org/cat_val"/>
+            <uncertParameter type="externalParameter" value="0.25"
+                             definitionURL="http://dist.org/cat_prob"/>
+          </listOfExternalParameters>
+        </externalParameter>
+      </listOfExternalParameters>
+    </externalParameter>
   </uncertainty>
-</parameter>
+</listOfUncertainties>
 \end{example}
 
 \end{blockChanged}
@@ -1301,9 +1309,9 @@ It is also possible to create even more complex structures with the \UncertParam
 \label{sec:annotation-scheme}
 Before this package was available, a collection of SBML simulator authors developed an \emph{ad hoc} convention for exchanging annotated \FunctionDefinition objects that represented draws from distributions.  This convention is described by Frank T. Bergmann at \url{https://docs.google.com/file/d/0B_wMqVOQLkZ3TVZHblNNRWgzNTg/}, and represents a basic starting point for any modeler interested in exchanging SBML models containing draws from distributions.
 
-When implementing \distrib support, it would be possible to include ``backwards'' support for this annotation convention by annotating any extended \FunctionDefinition that happens to match the following distribution to also include these annotations, where appropriate.
+When implementing \distrib support, it would be possible to include ``backwards'' support for this annotation convention by \changed{wrapping any calls to a distribution in a \FunctionDefinition, and annotating that using this scheme}.
 
-The following table is taken from the above document by Frank Bergmann, and can be used as a template if translating from that \FunctionDefinition system to the \distrib extended \Math system.  The suggested fallback function returns the mean of the distribution.
+\tab{tab:annotationURLs} is taken from the above document by Frank Bergmann, and can be used as a template if translating from that \FunctionDefinition system to the \distrib extended \Math system.  The suggested fallback function returns the mean of the distribution.
 
 \newcommand{\tighturl}[1]{\textls[-40]{\url{#1}}}
 
@@ -1340,6 +1348,7 @@ bernoulli   & Bernoulli     & \tighturl{http://en.wikipedia.org/wiki/Bernoulli_d
 \\
     \bottomrule
   \end{edtable}
+\label{tab:annotationURLs}
 \end{table}
 
 % \clearpage
@@ -1419,7 +1428,7 @@ And here is the same model, using the \token{csymbol} defined in \distribshort:
 
 \subsection{The \arrays package}
 This package is dependent on no other package, but might rely on the \arrays package
-to provide vector and matrix structures if those are desired/used.  Note that currently, the only way to need arrays is if an \UncertParameter                  is defined that requires array input or output.
+to provide vector and matrix structures if those are desired/used.  Note that currently, the only way to need arrays is if an \UncertParameter \changed{of type \val{externalParameer}} is defined that requires array input or output.
 
 \begin{blockChanged}
 \subsection{SBML Level~3 Version~2}
@@ -1467,7 +1476,7 @@ In this example, a \token{normal} csymbol is used in an initial assignment, and 
 
 \subsection{Defining confidence intervals }
 
-In this example, several \Parameter elements are given confidence intervals, and several species are given standard deviations.  Each indicates the modeler's assessment of the precision of the estimated given values for those elements.  
+In this example, several \Parameter elements are given confidence intervals, and several \Species are given standard deviations.  Each indicates the modeler's assessment of the precision of the estimated given values for those elements.  
 
 \exampleFile{examples/confidence-intervals.xml}
 
@@ -1482,7 +1491,7 @@ In this example, several \Parameter elements are given confidence intervals, and
 
 \section{Prototype implementations}
 
-As of this writing (February 2019), libSBML has full support for all elements defined in this version of the specification, with the exception of \token{standardError} and \token{sampleSize}.  Antimony (\url{http://antimony.sf.net/}) has support for a the new csymbols for model creation only (no simulation), but does not support the \token{uncertainty} child of \SBase.  Libroadrunner supports a limited number of distributions from a previous version of this spec.
+As of this writing (April 2019), libSBML has full support for all elements defined in this version of the specification.  Antimony (\url{http://antimony.sf.net/}) has support for a the new csymbols for model creation only (no simulation), but does not support the \token{uncertainty} child of \SBase.  Libroadrunner supports a limited number of distributions from a previous version of this spec.
 
 %\section{Unresolved issues}
 %\label{sec:unresolved}

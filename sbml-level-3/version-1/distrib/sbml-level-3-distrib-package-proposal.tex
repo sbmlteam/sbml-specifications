@@ -51,7 +51,7 @@
 
 
 \packageTitle{The Distributions Package\\for SBML Level 3}
-\packageVersion{Version \changed{0.27} (Release Candidate)}
+\packageVersion{Version \changed{0.26} (Release Candidate)}
 \packageVersionDate{\changed{March 26, 2020}}
 %\packageGeneralURL{http://sbml.org/Community/Wiki/SBML_Level_3_Proposals/Distributions_and_Ranges}
 %\packageThisVersionURL{}
@@ -103,7 +103,7 @@ The following table summarizes the history of this document.
 \tightspacing
 \begin{table}[bh]
   \centering
-  \begin{edtable}{tabularx}{\linewidth}{cccX}
+  \begin{edtable}{tabularx}{\linewidth}{p{1.7cm}cp{2.3cm}X}
     \toprule
     \textbf{Version} & \textbf{Date} & \textbf{Author} & \textbf{Comments}\\
     \midrule
@@ -149,6 +149,8 @@ from Maciej.\\ \midrule
 0.24 (Draft) & April 2019 & Lucian Smith & Removal of second distrib namespace, and consolidation of the \UncertParameter class based on HARMONY 2019 discussions.\\
 \midrule
 0.25 (Draft) & July 2019 & Lucian Smith & The \token{id} of a \UncertParameter no longer has mathematical meaning in any other context.\\
+\midrule
+0.26 (Release Candidate) & March 2020 & Lucian Smith & Add validation rules, and other corrections for release candidate.\\
 \bottomrule
 \end{edtable}
 \end{table}
@@ -172,7 +174,6 @@ probability distribution. In particular the following are in scope:
 \begin{itemize}
 \item Sampling from a univariate continuous distribution
 \item Sampling from a univariate discrete distribution
-\item Sampling from a user-defined discrete probability density function
 \item Specification of descriptive statistics (mean, standard
   deviation, standard error, etc.)
 \end{itemize}
@@ -193,19 +194,19 @@ package but are now \textbf{out of scope}:
 
 This draft specification describes the consensus view of workshop participants and subscribers to the sbml-distrib mailing list. Although it was written by the listed authors, it does not solely reflect their views nor is it their proposal alone. Rather, it is their understanding of the consensus view of what the \distrib package should do and how it should do it. The contributors listed have made significant contributions to the development and writing of this specification and are credited accordingly, but a more comprehensive attribution is provided in the acknowledgements (\sec{sec:acknowledgements}).
 
-\subsection{Conventions used in this document}
+%\subsection{Conventions used in this document}
 
-There are some
-parts of this draft specification where there is no clear consensus on the
-correct solution, or only recent agreement, or agreement by a group
-that may not be representative of the SBML community as a
-whole. These cases are indicated by the \controversial question mark
-in the left margin (illustrated here). The reader should pay particular
-attention to these points and ideally provide feedback, especially if
-they disagree with what is proposed. Similarly there will be points---especially as the proposal is consolidated---which are agreed,
-but which the reader should take note of and perhaps read again. These
-points \watchout are emphasized by the hand pointer in the left margin
-(illustrated).
+%There are some
+%parts of this draft specification where there is no clear consensus on the
+%correct solution, or only recent agreement, or agreement by a group
+%that may not be representative of the SBML community as a
+%whole. These cases are indicated by the \controversial question mark
+%in the left margin (illustrated here). The reader should pay particular
+%attention to these points and ideally provide feedback, especially if
+%they disagree with what is proposed. Similarly there will be points---especially as the proposal is consolidated---which are agreed,
+%but which the reader should take note of and perhaps read again. These
+%points \watchout are emphasized by the hand pointer in the left margin
+%(illustrated).
 
 \section{Background}
 
@@ -560,7 +561,7 @@ The \distrib package uses data types described in Section~3.1 of the \sbmlthreec
 \subsubsection{Type \fixttspace\primtypeNC{ExternalRef}}
 \label{sec:primtype-externalref}
 
-The type \primtype{ExternalRef} is derived from the type \primtype{string} with the additional requirement that it be a valid URI.  An \primtype{ExternalRef} is used in the \distrib package to point to ontologies such as ProbOnto~\citep{swat:2016}, which contain the definitions of distributions and parameters.
+The type \primtype{ExternalRef} is derived from the type \primtype{string} with the additional requirement that it be a valid URI.  An \primtype{ExternalRef} is used in the \UncertParameter class to point to ontologies such as ProbOnto~\citep{swat:2016}, which contain the definitions of distributions and parameters.
 
 \subsubsection{Type \fixttspace\primtypeNC{UncertKind}}
 \label{sec:primtype-uncertkind}
@@ -583,7 +584,7 @@ Sampling from probability distributions is achieved by allowing new \mathml elem
 When a call to a distribution is defined in the extended \Math, it is sampled when it is invoked. If a particular sampled value should be used multiple times, that value must be assigned to a parameter first, such as through the use of an \InitialAssignment or \EventAssignment.  When an external distribution is defined, it is not used in the math of the model, but may be used externally where appropriate.
 
 
-\begin{table}[]
+\begin{table}[ht]
   \centering
   \caption{The \val{definitionURL} values allowed for the \token{csymbol} of \Math for documents that use the \distribshort package, and the arguments those functions may take.}
   \vspace*{1ex}
@@ -633,6 +634,7 @@ http://www.sbml.org/sbml/symbols/distrib/rayleigh     & rayleigh(scale) \\
 \end{table}
 
 \subsection{Extended \Math}
+\label{sec:extended-math}
 
 To allow quick access to a variety of common functions, the \distrib package allows the use of new types of \token{csymbol} elements anywhere that \Math is used.  These \token{csymbol}s are functions, and therefore must be the first child of an \token{apply} element, and their arguments are predefined: you cannot call \textit{normal(mean, variance)}, because the definition of the \token{normal} \token{csymbol} is \textit{normal(mean, stdev)}.
 
@@ -652,7 +654,7 @@ If an SBML interpreter is unable to calculate one or more of the above extended 
 
 The mean values in \tab{tab:meanvals} may be used as a fallback for software that cannot perform draws from a distribution.  Note that truncated versions of these functions will have different means.  Note also that the \token{cauchy} distribution has no mean, by definition.
 
-\begin{table}[]
+\begin{table}[ht]
   \centering
   \caption{The mean values for the non-truncated versions of the distribution functions.  These values could potentially be used as a fallback for simulators which are not able to draw from the distributions themselves.}
   \vspace*{1ex}
@@ -845,7 +847,7 @@ Simultaneous events in SBML are ordered based on their \Priority values, with hi
 \end{example}
 
 
-\begin{figure}[h]
+\begin{figure}[ht]
   \includegraphics{figs/distribBase}
   \caption{The definition of the \DistribBase class.  The \token{id} and \token{name} attributes defined are optional, and are identical to the ones they inherit in \threetwo documents from \SBase.}
   \label{fig:distribBase}
@@ -861,7 +863,7 @@ The \DistribBase class is an abstract base class which is the parent class for e
 
 The \token{id} attribute is of type \primtype{SId}, and must be unique among other ids in the \primtype{SId} namespace in the parent \Model, and has no mathematical meaning, unless stated otherwise in the definition of that object.  The \token{name} attribute is of type \primtype{string}, and is provided to allow the user to define a human-readable label for the object.  It has no uniqueness restrictions.
 
-\begin{figure}[h]
+\begin{figure}[ht]
   \vspace*{2em}
   \includegraphics{figs/extended-sbase}
   \caption{The definition of the extended \SBase class to include a new optional \ListOfUncertainties child element.  Intended for use with any element with mathematical meaning, or with a \Math child element.  Also defines the \ListOfUncertainties and \Uncertainty classes.}
@@ -873,6 +875,7 @@ The \token{id} attribute is of type \primtype{SId}, and must be unique among oth
 \label{sec:extended-sbase-class}
 \label{extended-sbase-class}
 \label{ListOfUncertainties-class}
+\label{listofuncertainties-class}
 
 As can be seen in \fig{fig:extended-sbase-uml}, the SBML base class \SBase is extended to include an optional \ListOfUncertainties child element, which in turn contains optional \Uncertainty elements, each of which may contain a set of \UncertParameter objects that describe the uncertainty of the extended element.  Multiple \Uncertainty elements are allowed as children of \SBase to allow the modeler to record \Uncertainty measurements from different sources (papers, experiments, etc.) that may overlap and/or contradict one another.
 
@@ -911,7 +914,7 @@ An \Uncertainty always inherits the optional \token{metaid} and \token{sboTerm} 
 
 
 \begin{figure}[htb]
-\includegraphics[width=0.8\linewidth]{figs/uncertParameter.pdf}
+\includegraphics[width=0.85\linewidth]{figs/uncertParameter.pdf}
 \caption{The definition of the \UncertParameter, \UncertSpan, and \ListOfUncertParameters classes.  These classes allow an \Uncertainty to define an uncertainty numerically.}
 \label{fig:uncertParameter}
 \end{figure}
@@ -919,7 +922,7 @@ An \Uncertainty always inherits the optional \token{metaid} and \token{sboTerm} 
 
 \newcommand*\rot{\rotatebox{90}}
 
-\begin{table}[]
+\begin{table}[ht]
   \centering
   \caption{Values for the \token{type} attribute of a \UncertParameter, the class that should be used with that type, and the attributes and children that are allowed.}
 \vspace{1ex}  \begin{edtable}{tabularx}{5.2in}{>{\normalfont\itshape}X>{\normalfont\itshape}c>{\normalfont\itshape}c>{\normalfont\itshape}c>{\normalfont\itshape}c>{\normalfont\itshape}c>{\normalfont\itshape}c>{\normalfont\itshape}c>{\normalfont\itshape}c}
@@ -932,7 +935,7 @@ An \Uncertainty always inherits the optional \token{metaid} and \token{sboTerm} 
 & \rot{\textbf{\textsf{\textup{valueUpper/ varUpper}}}}
 & \rot{\textbf{\textsf{\textup{definitionURL}}}}
 & \rot{\textbf{\textsf{\textup{math}}}}
-& \rot{\textbf{\textsf{\textup{listOfExternalParameters}}}}
+& \rot{\textbf{\textsf{\textup{listOfUncertParameters}}}}
 \\ \midrule
 coefficientOfVariation & \UncertParameter & \greencheck & \greencheck & \ding{20} & \ding{20} & \ding{20} & \ding{20} & \ding{20}
 \\ \midrule
@@ -973,10 +976,11 @@ externalParameter & either & \greencheck & \greencheck & \greencheck & \greenche
 
 \subsection{The \class{UncertParameter} class}
 \label{ListOfUncertParameters-class}
+\label{listofuncertparameters-class}
 \label{UncertParameter-class}
 \label{uncertparameter-class}
 
-Each \UncertParameter defines one uncertainty statistic about the parent element.  It has one required attribute \token{type} of type \primtype{UncertKind} which defines what statistic it describes (i.e. \val{mean}, \val{standardDeviation}, \val{distribution}, etc.).  Its other attributes (\token{value}, \token{var}, \token{units}, and \token{definitionURL}), and children (\token{math} and \token{listOfUncertParameters}) are all optional, each useable according to which \token{type} it is.
+Each \UncertParameter defines one uncertainty statistic about the parent element.  It has one required attribute \token{type} of type \primtype{UncertKind} which defines what statistic it describes (i.e. \val{mean}, \val{standardDeviation}, \val{distribution}, etc.).  Its other attributes (\token{value}, \token{var}, \token{units}, and \token{definitionURL}), and children (\token{math} and \token{list\-Of\-Uncert\-Pa\-ra\-me\-ters}) are all optional, each useable according to which \token{type} it is.
 
 \subsubsection{The \token{type} attribute}
 The \token{type} attribute defines what the \UncertParameter describes.  Depending on the type, other attributes will be allowed or not, and the class must either be the base \UncertParameter or the \UncertSpan class, according to \tab{tab:uncertparamtype}.
@@ -998,7 +1002,7 @@ An \UncertParameter always inherits the optional \token{metaid} and \token{sboTe
 The optional \token{math} element contains MathML, and may only be used for an \UncertParameter of type \val{distribution} or \val{externalParameter}.  When defined for a \val{distribution}, the MathML should define that distribution, such as by using one of the extended \token{csymbol} definitions from this specification.
 
 \subsubsection{The child \token{ListOfUncertParameters} element}
-The optional child \token{ListOfUncertParameters} element may only be used for an \UncertParameter of type \val{distribution} or \val{externalParameter}.  Unlike an \Uncertainty, there are no uniqueness restrictions among the children of this element: any number of \UncertParameter elements of any \token{type} may be used, according to whatever makes sense for the statistic defined by the parent \token{definitionURL}.
+The optional child \token{ListOfUncertParameters} element may only be used for an \UncertParameter of type \val{dist\-ri\-bu\-tion} or \val{externalParameter}.  Unlike an \Uncertainty, there are no uniqueness restrictions among the children of this element: any number of \UncertParameter elements of any \token{type} may be used, according to whatever makes sense for the statistic defined by the parent \token{definitionURL}.
 
 \subsection{The \class{UncertSpan} class}
 \label{UncertSpan-class}
@@ -1200,9 +1204,11 @@ It is also possible to include additional information about the species, should 
            boundaryCondition="false" constant="false">
     <distrib:listOfUncertainties>
       <distrib:uncertainty>
-        <distrib:uncertParameter type="mean" distrib:value="3.2"/>
-        <distrib:uncertParameter type="standardDeviation" distrib:value="0.3"/>
-        <distrib:uncertParameter type="variance" distrib:value="0.09"/>
+        <distrib:listOfUncertParameters>
+          <distrib:uncertParameter type="mean" distrib:value="3.2"/>
+          <distrib:uncertParameter type="standardDeviation" distrib:value="0.3"/>
+          <distrib:uncertParameter type="variance" distrib:value="0.09"/>
+        </distrib:listOfUncertParameters>
       </distrib:uncertainty>
     </distrib:listOfUncertainties>
   </species>
@@ -1284,34 +1290,36 @@ It is also possible to create even more complex structures with the \UncertParam
 \begin{example}
 <listOfUncertainties xmlns="http://www.sbml.org/sbml/level3/version1/distrib/version1">
   <uncertainty>
-    <uncertParameter type="distribution" definitionURL="http://dist.org/categorical">
-      <listOfExternalParameters>
-        <uncertParameter type="externalParameter" id="p1" definitionURL="http://dist.org/category">
-          <listOfExternalParameters>
-            <uncertParameter type="externalParameter" value="1.01"
-                             definitionURL="http://dist.org/cat_val"/>
-            <uncertParameter type="externalParameter" value="0.5"
-                             definitionURL="http://dist.org/cat_prob"/>
-          </listOfExternalParameters>
-        </externalParameter>
-        <uncertParameter type="externalParameter" id="p2" definitionURL="http://dist.org/category">
-          <listOfExternalParameters>
-            <uncertParameter type="externalParameter" value="2.24"
-                             definitionURL="http://dist.org/cat_val"/>
-            <uncertParameter type="externalParameter" value="0.25"
-                             definitionURL="http://dist.org/cat_prob"/>
-          </listOfExternalParameters>
-        </externalParameter>
-        <uncertParameter type="externalParameter" id="p3" definitionURL="http://dist.org/category">
-          <listOfExternalParameters>
-            <uncertParameter type="externalParameter" value="1.72"
-                             definitionURL="http://dist.org/cat_val"/>
-            <uncertParameter type="externalParameter" value="0.25"
-                             definitionURL="http://dist.org/cat_prob"/>
-          </listOfExternalParameters>
-        </externalParameter>
-      </listOfExternalParameters>
-    </externalParameter>
+    <listOfUncertParameters>
+      <uncertParameter type="distribution" definitionURL="http://dist.org/categorical">
+        <listOfUncertParameters>
+          <uncertParameter type="externalParameter" id="p1" definitionURL="http://dist.org/category">
+            <listOfUncertParameters>
+              <uncertParameter type="externalParameter" value="1.01"
+                               definitionURL="http://dist.org/cat_val"/>
+              <uncertParameter type="externalParameter" value="0.5"
+                               definitionURL="http://dist.org/cat_prob"/>
+            </listOfUncertParameters>
+          </uncertParameter>
+          <uncertParameter type="externalParameter" id="p2" definitionURL="http://dist.org/category">
+            <listOfUncertParameters>
+              <uncertParameter type="externalParameter" value="2.24"
+                               definitionURL="http://dist.org/cat_val"/>
+              <uncertParameter type="externalParameter" value="0.25"
+                               definitionURL="http://dist.org/cat_prob"/>
+            </listOfUncertParameters>
+          </uncertParameter>
+          <uncertParameter type="externalParameter" id="p3" definitionURL="http://dist.org/category">
+            <listOfUncertParameters>
+              <uncertParameter type="externalParameter" value="1.72"
+                               definitionURL="http://dist.org/cat_val"/>
+              <uncertParameter type="externalParameter" value="0.25"
+                               definitionURL="http://dist.org/cat_prob"/>
+            </listOfUncertParameters>
+          </uncertParameter>
+        </listOfUncertParameters>
+      </uncertParameter>
+    </listOfUncertParameters>
   </uncertainty>
 </listOfUncertainties>
 \end{example}
@@ -1322,7 +1330,7 @@ It is also possible to create even more complex structures with the \UncertParam
 
 \subsection{Custom annotations for function definitions}
 \label{sec:annotation-scheme}
-Before this package was available, a collection of SBML simulator authors developed an \emph{ad hoc} convention for exchanging annotated \FunctionDefinition objects that represented draws from distributions.  This convention is described by Frank T. Bergmann at \url{http://co.mbine.org/specifications/sbml.proposal.distrib-annotations.version-1}, and represents a basic starting point for any modeler interested in exchanging SBML models containing draws from distributions.
+Before this package was available, a collection of SBML simulator authors developed an \emph{ad hoc} convention for exchanging annotated \FunctionDefinition objects that represented draws from distributions.  This convention is described at \url{http://co.mbine.org/specifications/sbml.proposal.distrib-annotations.version-1} by Frank T. Bergmann, and represents a basic starting point for any modeler interested in exchanging SBML models containing draws from distributions.
 
 When implementing \distrib support, it would be possible to include ``backwards'' support for this annotation convention by wrapping any calls to a distribution in a \FunctionDefinition, and annotating that using this scheme.
 
@@ -1330,7 +1338,7 @@ When implementing \distrib support, it would be possible to include ``backwards'
 
 \newcommand{\tighturl}[1]{\textls[-40]{\url{#1}}}
 
-\begin{table}[bh]
+\begin{table}[hb]
   \caption{The annotation URLs.}
   \centering
   \begin{edtable}{tabularx}{\linewidth}{lp{0.65in}l>{\normalfont\itshape}l}

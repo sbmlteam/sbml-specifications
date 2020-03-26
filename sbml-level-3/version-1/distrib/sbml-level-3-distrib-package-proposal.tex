@@ -51,8 +51,8 @@
 
 
 \packageTitle{The Distributions Package\\for SBML Level 3}
-\packageVersion{Version \changed{0.26} (Draft)}
-\packageVersionDate{\changed{July 29, 2019}}
+\packageVersion{Version \changed{0.27} (Release Candidate)}
+\packageVersionDate{\changed{March 26, 2020}}
 %\packageGeneralURL{http://sbml.org/Community/Wiki/SBML_Level_3_Proposals/Distributions_and_Ranges}
 %\packageThisVersionURL{}
 
@@ -64,9 +64,9 @@
 \\ Hinxton, UK     & Seattle, WA, USA\\
 \\
   \multicolumn{2}{c}{\Large\bf{Contributors}}\\
-\\ Nicolas Le Nov\`{e}re & Darren Wilkinson
-\\ Babraham Institute    & University of Newcastle
-\\ Babraham, UK          & Newcastle, UK
+\\ Frank Bergmann              & Darren Wilkinson
+\\ University of Heidelberg    & University of Newcastle
+\\ Heidelberg,DE               & Newcastle, UK
 \\
 \\ Maciej J Swat          & Sarah Keating
 \\ QSP Simcyp             & EMBL-EBI
@@ -76,14 +76,14 @@
 \\ Humboldt University & California Institute of Technology
 \\ Berlin, DE          & Pasadena, CA, USA
 \\
-\\ Colin Gillespie         & Chris Meyers
+\\ Colin Gillespie         & Chris Myers
 \\ University of Newcastle & University of Utah
 \\ Newcastle, UK           & Salt Lake City, UT, USA
 \\
 %\\
-%     \multicolumn{2}{c}{ Colin Gillespie}\\
-%     \multicolumn{2}{c}{University of Newcastle}\\
-%     \multicolumn{2}{c}{ Newcastle, UK}\\
+%     \multicolumn{2}{c}{Frank Bergmann}\\
+%     \multicolumn{2}{c}{University of Heidelberg}\\
+%     \multicolumn{2}{c}{Heidelberg, DE}\\
 \end{tabular}
 }
 
@@ -644,7 +644,7 @@ The value of \token{min} must be less than the value of \token{max} for all cont
 
 To define a distribution with only one bound, the other bound should be defined as INF or -INF, as appropriate.  For those distributions that have an intrisic lower bound of 0, setting \token{min} to 0 or any negative number will have no effect, but is legal.
 
-\changed{The versions of \token{cauchy} and \token{laplace} with one argument draw from the corresponding distribution with that argument as its scale value, and a value of \val{0} for its \token{location}.}
+The versions of \token{cauchy} and \token{laplace} with one argument draw from the corresponding distribution with that argument as its scale value, and a value of \val{0} for its \token{location}.
 
 \paragraph{Fallback functions}
 
@@ -845,6 +845,12 @@ Simultaneous events in SBML are ordered based on their \Priority values, with hi
 \end{example}
 
 
+\begin{figure}[h]
+  \includegraphics{figs/distribBase}
+  \caption{The definition of the \DistribBase class.  The \token{id} and \token{name} attributes defined are optional, and are identical to the ones they inherit in \threetwo documents from \SBase.}
+  \label{fig:distribBase}
+\end{figure}
+
 \subsection{The \class{DistribBase} class}
 \label{sec:DistribBase-class}
 \label{DistribBase-class}
@@ -853,13 +859,15 @@ Simultaneous events in SBML are ordered based on their \Priority values, with hi
 
 The \DistribBase class is an abstract base class which is the parent class for every class in this \distrib package.  Its purpose is to replicate within the \distrib package an important change between \threeone and \threetwo: the addition of an optional \token{id} and \token{name} attribute to \SBase.  By adding these attributes here, \distribshort may be used completely exchangeably between Level~3 Version~1 and Level~3 Version~2 documents without any other modifications.  The meaning of these attributes is identical, regardless of the Level/Version of the document in which they appear.
 
-\begin{figure}[t]
-  \includegraphics{figs/distribBase.pdf}
-  \caption{The definition of the \DistribBase class.  The \token{id} and \token{name} attributes defined are optional, and are identical to the ones they inherit in \threetwo documents from \SBase.}
-  \label{fig:distribBase}
-\end{figure}
-
 The \token{id} attribute is of type \primtype{SId}, and must be unique among other ids in the \primtype{SId} namespace in the parent \Model, and has no mathematical meaning, unless stated otherwise in the definition of that object.  The \token{name} attribute is of type \primtype{string}, and is provided to allow the user to define a human-readable label for the object.  It has no uniqueness restrictions.
+
+\begin{figure}[h]
+  \vspace*{2em}
+  \includegraphics{figs/extended-sbase}
+  \caption{The definition of the extended \SBase class to include a new optional \ListOfUncertainties child element.  Intended for use with any element with mathematical meaning, or with a \Math child element.  Also defines the \ListOfUncertainties and \Uncertainty classes.}
+
+\label{fig:extended-sbase-uml}
+\end{figure}
 
 \subsection{The extended \SBase class}
 \label{sec:extended-sbase-class}
@@ -870,13 +878,6 @@ As can be seen in \fig{fig:extended-sbase-uml}, the SBML base class \SBase is ex
 
 In \sbmlthreecore, one should only extend those \SBase elements with mathematical meaning (\Compartment, \Parameter, \Reaction, \Species, and \SpeciesReference), or those \SBase elements with \Math children (\Constraint, \Delay, \EventAssignment, \FunctionDefinition, \InitialAssignment, \KineticLaw, \Priority, \Rule, and \Trigger).  The \Uncertainty child is added to \SBase instead of to each SBML element so that other packages inherit the ability to extend their own elements in the same fashion:  for example, the Qualitative Models package has the \QualitativeSpecies class which has mathematical meaning, and a \FunctionTerm class which has a \Math child.  Both could be given an \Uncertainty child containing information about the distribution or set of samples from which they were drawn.
 
-\begin{figure}[b]
-  \vspace*{2em}
-  \includegraphics{figs/extended-sbase.pdf}
-  \caption{The definition of the extended \SBase class to include a new optional \ListOfUncertainties child element.  Intended for use with any element with mathematical meaning, or with a \Math child element.  Also defines the \ListOfUncertainties and \Uncertainty classes.}
-
-\label{fig:extended-sbase-uml}
-\end{figure}
 
 
 A few SBML elements can interact in interesting ways that can confuse the semantics here.  A \Reaction element and its \KineticLaw child, for example, both reference the same mathematical formula, so only one should be extended with an \Uncertainty child element.  Similarly, the uncertainty of an \InitialAssignment will be identical to the uncertainty of the element it assigns to, and therefore only one of those elements should be extended.
@@ -900,6 +901,7 @@ The child \UncertParameter children are named according to their class, so any \
 
 It may be possible to propagate the error defined in \Uncertainty elements through the mathematics defined in a simulation of the model.  Be advised that this will be a complicated system, and may involve calculating partial derivates of equations that are not explicitly encoded.  Many simulators choose instead to estimate the error through stochastic simulations.  Either approach should be possible with a properly encoded \distribshort model.
 
+\clearpage
 
 \subsubsection{Attributes inherited from \SBase}
 
@@ -990,7 +992,7 @@ The optional \token{units} attribue of an \UncertParameter is of type \primtype{
 The optional \token{definitionURL} attribute (of type \primtype{ExternalRef}) may be used when the \token{type} of the \UncertParameter is \val{distribution}, and must be used when the \token{type} of the \UncertParameter is \val{externalParameter}.  The \primtype{ExternalRef} should point to an ontology URL, distribution \token{csymbol}, or other unique definition string that defines what is meant by this \UncertParameter.  The \token{definitionURL} must not be defined if the \token{type} is any other value: the other types are already completely defined.
 
 \subsubsection{Attributes inherited from \SBase}
-An \UncertParameter always inherits the optional \token{metaid} and \token{sboTerm} attributes, and inherits optional \token{id} and \token{name} attributes as described in \sec{sec:idname}.  The \token{id} of a \UncertParameter \changed{does not take on the mathematical value of its \token{value} attribute, and may not be used in mathematical contexts.  Instead, if the value of the element is to be used elsewhere, the \token{var} attribute should be used instead, and that referenced value used in other contexts.}
+An \UncertParameter always inherits the optional \token{metaid} and \token{sboTerm} attributes, and inherits optional \token{id} and \token{name} attributes as described in \sec{sec:idname}.  The \token{id} of a \UncertParameter does not take on the mathematical value of its \token{value} attribute, and may not be used in mathematical contexts.  Instead, if the value of the element is to be used elsewhere, the \token{var} attribute should be used instead, and that referenced value used in other contexts.
 
 \subsubsection{The child \token{math} element}
 The optional \token{math} element contains MathML, and may only be used for an \UncertParameter of type \val{distribution} or \val{externalParameter}.  When defined for a \val{distribution}, the MathML should define that distribution, such as by using one of the extended \token{csymbol} definitions from this specification.
@@ -1123,7 +1125,7 @@ A \Species is a unique SBML construct in that its value is either an amount or a
 
 If a \Species is being modeled in SBML in amounts, but was measured in terms of its concentration, or visa versa, an \InitialAssignment should be created that explicitly handles this conversion and assigns the appropriate value to the \Species, as in the example below.
 
-\clearpage
+%\clearpage
 
 \begin{example}
     <listOfCompartments>
@@ -1165,6 +1167,7 @@ Here, the uncertainty of the species \val{S\_amt} is not set explicitly, and ins
 
 
 
+\clearpage
 
 \subsection{Examples using \class{Uncertainty}}
 \label{extended-sbase-examples}
@@ -1192,7 +1195,6 @@ Here, the species with an initial amount of 3.22 is described as having a standa
 
 It is also possible to include additional information about the species, should more be known:
 
-\clearpage
 \begin{example}
   <species id="s1" compartment="C" initialAmount="3.22" hasOnlySubstanceUnits="true"
            boundaryCondition="false" constant="false">
@@ -1277,6 +1279,7 @@ If an SBML value is drawn from a distribution not defined explicitly in this spe
 
 It is also possible to create even more complex structures with the \UncertParameter scheme.  In this example, we define a categorical distribution based on data from three patients.  The parent \UncertParameter is defined to be the 'categorical' distribution, with three 'category' children, each with two child 'value' and 'probability' parameters.  Collectively, they define a distribution where a value of 1.01 has a probability of 50\%, a value of 2.24 has a probability of 25\%, and a value of 1.72 has a probability of 25\%.  (The \token{definitionURL} examples here were made up for the purposes of this example, to be readable.  In an actual SBML document, they would point to external ontologies.)
 
+\clearpage
 
 \begin{example}
 <listOfUncertainties xmlns="http://www.sbml.org/sbml/level3/version1/distrib/version1">
@@ -1445,7 +1448,7 @@ to provide vector and matrix structures if those are desired/used.  Note that cu
 \subsection{SBML Level~3 Version~2}
 This package may be used with either SBML Level~3 Version~1 Core, or SBML Level~3 Version~2 Core, and no construct in this package changes as a result: the addition of \token{id} and \token{name} to \DistribBase means that the addition of those attributes to \SBase in SBML Level~3 Version~2 Core is redundant.
 
-However, another change between SBML Level~3 Version~1 and Version~2 is that in Version~2, core elements and core \Math may refer to package \token{ids} with mathematical meaning.  Since \distrib \UncertParameter elements do indeed have mathematical meaning, this means that their ids may appear in core \Math, while this is not allowed in Version~1.  If an \UncertParameter does need to be referenced in a Version~1 document, the \token{var} attribute should be used to connect the element to a core \Parameter, instead of using the \token{value} attribute.
+Another change between SBML Level~3 Version~1 and Version~2 is that in Version~2, core elements and core \Math may refer to package \token{ids} with mathematical meaning.  However, \distrib \UncertParameter elements do not have mathematical meaning, and may not be used in this fashion. Instead, the \token{var} attribute should be used to connect the element to a core \Parameter, instead of using the \token{value} attribute.  This approach has the advantage of working both in Version~1 and Version~2 of SBML Core.
 
 
 \section{Use-cases and examples}
@@ -1499,12 +1502,16 @@ In this example, several \Parameter elements are given confidence intervals, and
 %\exampleFile{examples/user-defined-pmf.xml}
 
 
-\section{Prototype implementations}
+%\section{Prototype implementations}
 
-As of this writing (April 2019), libSBML has full support for all elements defined in this version of the specification.  Antimony (\url{http://antimony.sf.net/}) has support for a the new csymbols for model creation only (no simulation), but does not support the \token{uncertainty} child of \SBase.  Libroadrunner supports a limited number of distributions from a previous version of this spec.
+%As of this writing (April 2019), libSBML has full support for all elements defined in this version of the specification.  Antimony (\url{http://antimony.sf.net/}) has support for a the new csymbols for model creation only (no simulation), but does not support the \token{uncertainty} child of \SBase.  Libroadrunner supports a limited number of distributions from a previous version of this spec.
 
 %\section{Unresolved issues}
 %\label{sec:unresolved}
+
+\appendix
+
+\input{apdx-validation.tex}
 
 
 \section{Acknowledgements}

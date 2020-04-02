@@ -51,15 +51,15 @@
 
 
 \packageTitle{The Distributions Package\\for SBML Level 3}
-\packageVersion{Version \changed{0.26} (Release Candidate)}
-\packageVersionDate{\changed{March 26, 2020}}
-%\packageGeneralURL{http://sbml.org/Community/Wiki/SBML_Level_3_Proposals/Distributions_and_Ranges}
-%\packageThisVersionURL{}
+\packageVersion{Version 1, Release 1}
+\packageVersionDate{April 2, 2020}
+\packageGeneralURL{http://sbml.org/Documents/Specifications/SBML_Level_3/Packages/distrib}
+\packageThisVersionURL{https://co.mbine.org/specifications/sbml.level-3.version-1.distrib.version-1.release-1}
 
 \author{%
   \begin{tabular}{c>{\hspace{20pt}}c}
   \multicolumn{2}{c}{\Large\bf{Authors}}\\
-\\ Lucian P Smith           &Stuart L Moodie
+\\ Lucian P Smith           & Stuart L Moodie
 \\ University of Washington & Eight Pillars Ltd
 \\ Seattle, WA, USA         & Edinburgh, UK
 \\
@@ -88,10 +88,10 @@
 \end{tabular}
 }
 
-\frontNotice{Disclaimer: This is a working draft of the SBML Level 3
-  ``distrib'' package specification. It is not a normative document.  Please
-  send comments and other feedback to the mailing list:
-  \mailto{sbml-distrib@lists.sourceforge.net.}}
+%\frontNotice{Disclaimer: This is a working draft of the SBML Level 3
+%  ``distrib'' package specification. It is not a normative document.  Please
+%  send comments and other feedback to the mailing list:
+%  \mailto{sbml-distrib@lists.sourceforge.net.}}
 
 \maketitlepage
 \maketableofcontents
@@ -193,7 +193,7 @@ package but are now \textbf{out of scope}:
 
 \subsection{This document}
 
-This draft specification describes the consensus view of workshop participants and subscribers to the sbml-distrib mailing list. Although it was written by the listed authors, it does not solely reflect their views nor is it their proposal alone. Rather, it is their understanding of the consensus view of what the \distrib package should do and how it should do it. The contributors listed have made significant contributions to the development and writing of this specification and are credited accordingly, but a more comprehensive attribution is provided in the acknowledgements (\sec{sec:acknowledgements}).
+This draft specification describes the consensus view of workshop participants and subscribers to the sbml-distrib mailing list. Although it was written by the listed authors, it does not solely reflect their views nor is it their proposal alone. Rather, it is their understanding of the consensus view of what the \distrib package should do and how it should do it. The contributors listed have made significant contributions to the development and writing of this specification and are credited accordingly, but a more comprehensive attribution is provided in the acknowledgments (\sec{sec:acknowledgments}).
 
 %\subsection{Conventions used in this document}
 
@@ -897,6 +897,8 @@ It is important to note that the uncertainty described is defined as being the u
 
 The \Uncertainty class is a collection of zero or more statistical measures related to the uncertainty of the parent SBML element.  It may only contain one of each type of measurement, which means that each of its \UncertParameter children must have a unique \token{type} attribute for every value but \val{externalParameter}.  Each \UncertParameter child with a \token{type} of \val{externalParameter} must, in turn, have a unique \token{definitionURL} value.  If a given SBML element has multiple measures of the same \token{type} (for example, as measured from different sources or different experiments), it should be given multiple \Uncertainty children.  Each \Uncertainty child must be a unique set of statistical measures.
 
+These statistical measures do not numerically affect simulation of the model.  They are, in essence, a controlled annotation format specifically designed for this sort of information.  Tools may use this information as they wish, just as they can with other annotation information.
+
 Note that for elements that change in value over time, the described uncertainty applies only to the element's initial state, and not to how it changes in time.  For typical simulations, this means the element's initial assignment.
 
 The child \UncertParameter children are named according to their class, so any \UncertSpan child will have the element name \token{uncertSpan}, and any \UncertParameter base class child will have the element name \token{uncertParameter}.
@@ -1284,7 +1286,7 @@ If an SBML value is drawn from a distribution not defined explicitly in this spe
 \end{example}
 
 
-It is also possible to create even more complex structures with the \UncertParameter scheme.  In this example, we define a categorical distribution based on data from three patients.  The parent \UncertParameter is defined to be the 'categorical' distribution, with three 'category' children, each with two child 'value' and 'probability' parameters.  Collectively, they define a distribution where a value of 1.01 has a probability of 50\%, a value of 2.24 has a probability of 25\%, and a value of 1.72 has a probability of 25\%.  (The \token{definitionURL} examples here were made up for the purposes of this example, to be readable.  In an actual SBML document, they would point to external ontologies.)
+It is also possible to create even more complex structures with the \UncertParameter scheme.  In this example, we define a categorical distribution based on data from three patients.  The parent \UncertParameter is defined to be the 'categorical' distribution, with three 'category' children, each with two child 'value' and 'probability' parameters.  Collectively, they define a distribution where a value of 1.01 has a probability of 50\%, a value of 2.24 has a probability of 25\%, and a value of 1.72 has a probability of 25\%.  (The \token{definitionURL} examples here were made up for the purposes of this example, to be readable.  In an actual SBML document, they would point to existing external ontologies.)
 
 \clearpage
 
@@ -1460,6 +1462,56 @@ This package may be used with either SBML Level~3 Version~1 Core, or SBML Level~
 Another change between SBML Level~3 Version~1 and Version~2 is that in Version~2, core elements and core \Math may refer to package \token{ids} with mathematical meaning.  However, \distrib \UncertParameter elements do not have mathematical meaning, and may not be used in this fashion. Instead, the \token{var} attribute should be used to connect the element to a core \Parameter, instead of using the \token{value} attribute.  This approach has the advantage of working both in Version~1 and Version~2 of SBML Core.
 
 
+\subsection{Other SBML Level~3 Packages}
+This package may be used seamlessly with other SBML Level~3 packages that have \Math elements, and/or that have elements with mathematical meaning.  It would be possible, for example, to use a \distribshort \token{csymbol} in the \Math of a 'Qualitative Models' \token{<functionTerm>}.  In this example, the \token{functionTerm} returns true when a quantity 'A' is greater than or equal to a value drawn from a uniform distribution:
+
+\begin{example}
+<qual:transition qual:id="tr_B">
+  [...]
+  <qual:listOfFunctionTerms>
+    <qual:functionTerm qual:resultLevel="1">
+      <math xmlns="http://www.w3.org/1998/Math/MathML"> 
+        <!-- A >= uniform(0,2)-->
+        <apply>
+          <geq/>
+          <ci>A</ci>
+          <apply>
+            <csymbol definitionURL="http://www.sbml.org/sbml/symbols/distrib/uniform"
+                     encoding="text"> uniform </csymbol>
+            <cn type="integer"> 0 </cn>
+            <cn type="integer"> 2 </cn>
+          </apply>
+        </apply>
+      </math>
+    </qual:functionTerm>
+    <qual:defaultTerm qual:resultLevel="0"/>
+  </qual:listOfFunctionTerms>
+</qual:transition>
+\end{example}
+
+A Qualitative Species could also be given a child \Uncertainty.  Here, the value of A is described as coming from a poisson distribution:
+
+\begin{example}
+<qual:qualitativeSpecies qual:compartment="cytosol" qual:constant="false" 
+                         qual:id="A" qual:maxLevel="6">
+  <distrib:listOfUncertainties>
+    <distrib:uncertainty>
+      <distrib:uncertParameter distrib:type="distribution">
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+          <apply>
+            <csymbol definitionURL="http://www.sbml.org/sbml/symbols/distrib/poisson"
+                     encoding="text"> poisson </csymbol>
+            <cn type="integer"> 0 </cn>
+          </apply>
+        </math>
+      </distrib:uncertParameter>
+    </distrib:uncertainty>
+  </distrib:listOfUncertainties>
+</qual:qualitativeSpecies>
+\end{example}
+
+These constructs can be used in identical ways in other SBML Level~3 packages.
+
 \section{Use-cases and examples}
 
 The following examples are more fleshed out than the ones in the main text, and/or illustrate features of this package that were not previously illustrated.
@@ -1523,8 +1575,8 @@ In this example, several \Parameter elements are given confidence intervals, and
 \input{apdx-validation.tex}
 
 
-\section{Acknowledgements}
-\label{sec:acknowledgements}
+\section{Acknowledgments}
+\label{sec:acknowledgments}
 
 Much of the initial concrete work leading to this proposal document
 was carried out at the Statistical Models Workshop in Hinxton in 2011,

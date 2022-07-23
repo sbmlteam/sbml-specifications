@@ -365,45 +365,6 @@ If a \Reaction is defined to be a local (having an \token{isLocal} value of \val
 
 If the referenced \Species come from multiple compartments, the \token{compartment} of the \Reaction must be a \Compartment that makes physical sense for the individual \Species to meet.
 
-\subsection{The \class{Geometry} class}
-\label{geometry-class}
-\label{listofcoordinatecomponents-class}
-\label{listofdomaintypes-class}
-\label{listofdomains-class}
-\label{listofadjacentdomains-class}
-\label{listofgeometrydefinitions-class}
-\label{listofsampledfields-class}
-
-A single geometry must be defined within the model if the spatial extension is to be used. \fig{Geometry-uml} shows the definition of the \Geometry element.
- 
-\begin{figure}[ht]
-  \includegraphics{figs/Geometry-uml}
-  \caption{The definition of the \Geometry, \ListOfCoordinateComponents, \ListOfDomainTypes, \ListOfDomains, \ListOfAdjacentDomains, \ListOfGeometryDefinitions, and \ListOfSampledFields classes from the Spatial package.  The various children of the ListOf- classes are defined in their own sections.}
-  \label{Geometry-uml}
-  \label{ListOfCoordinateComponents-uml}
-  \label{ListOfDomainTypes-uml}
-  \label{ListOfDomains-uml}
-  \label{ListOfAdjacentDomains-uml}
-  \label{ListOfGeometryDefinitions-uml}
-  \label{ListOfSampledFields-uml}
-\end{figure}
-
-\subsubsection{The \fixttspace\tokenNC{id} and \fixttspace\tokenNC{name} attributes}
-The \token{id} attribute is of type \primtype{SpId}, uniquely identifies the \Geometry element, and is optional.  It has no mathematical meaning, and cannot be connected to a \Parameter via a \SpatialSymbolReference element.  The optional \token{name} attribute is of type \primtype{string}, may be used to add a human-readable label to the object, and has no uniqueness requirements.
-
-\subsubsection{The \fixttspace\tokenNC{coordinateSystem} attribute}
-The \token{coordinateSystem} attribute is a required attribute and is of type \primtype{GeometryKind}. It represents the coordinate system used by the \Geometry.  A value of  \val{cartesian} indicates that the geometry is a cartesian coordinate system, with the coordinate components corresponding to the x, y, and z components of that system (which could be 1-, 2-, or 3-dimensional).  This is the only coordinate system defined in this version of the specification--in the future, if necessary, \val{cylendrical}, \val{spherical}, and \val{polar} may be added as possibilities, along with n-dimensional cartesian modeling, should there be interest in the modeling community to exchange these types of models.
-
-%A value of \val{cylindrical} indicates that the geometry is a three-dimensional cylendrical coordinate system, with coordinate components corresponding to radial distance, azimuth angle, and axial position.  A value of \val{spherical} indicates that the geometry is a three-dimensional spherical coordinate system, with coordinate components corresponding to radial distance, polar angle, and azimuth angle.  A value of \val{polar} indicates that the geometry is a two-dimensional polar coordinate system, with coordinate components corresponding to radial distance and angle (the two-dimensional equivalent of the cylendrical coordinate system).
-
-\subsubsection{The listOf container classes}
-The \Geometry has listOfCoordinateComponents, listOfDomainTypes, listOfDomains, listOfAdjacentDomains, listOfGeometryDefinitions, and listOfSampledFields that help define the geometry.  The \ListOfCoordinateComponents is a list of \CoordinateComponent objects, the \ListOfDomainTypes is a list of \DomainType objects, the \ListOfDomains is a list of \Domain objects, \ListOfAdjacentDomains is a list of \AdjacentDomains objects, the \ListOfGeometryDefinitions is a list of alternative \GeometryDefinitions (\ParametricGeometry, \CSGeometry, \SampledFieldGeometry, \AnalyticGeometry, and \MixedGeometry), and the \ListOfSampledFields is a list of \SampledField objects.  Of these, only the \ListOfCoordinateComponents is required, but, if present, none of them may be empty.
-
-Note that the children of the \ListOfGeometryDefinitions object are not called \token{geometryDefinition} but rather take the name of the derived class, decapitalized.  Thus, they may be called \token{analyticGeometry}, \token{csGeometry}, \token{parametricGeometry}, \token{sampledFieldGeometry}, or \token{mixedGeometry}.
-
-The \ListOfCoordinateComponents is unique in that it defines the dimensions of the \Geometry.  Thus, every \Geometry must have a child \ListOfCoordinateComponents with exactly one, two, or three children.  When there is one child, it must be of type \token{cartesianX}; when there are two, they must be of type \token{cartesianX} and \token{cartesianY}, and when there are three, they must be of types \token{cartesianX}, \token{cartesianY}, and \token{cartesianZ}.
-
-
 \subsection{The \class{CoordinateComponent} class}
 \label{coordinatecomponent-class}
 A \CoordinateComponent object explicitly defines a coordinate component of the coordinate axes and gives them names, units, and formally associates them with a coordinate system. The \CoordinateComponent also defines the minimum and maximum values of the coordinate axis it represents. The definition of \CoordinateComponent is shown in \fig{CoordinateComponent-uml}.
@@ -454,6 +415,124 @@ For Cartesian geometries, one-dimensional geometries must be defined by having a
 \subsubsection{The \fixttspace\tokenNC{unit} attribute}
 The unit of a \CoordinateComponent is represented by the \token{unit} attribute, of type \primtype{UnitSIdRef}.  If not specified, the unit of a \CoordinateComponent inherits from the \token{lengthUnits} attribute of the \Model object, and if that in turn is not specified, the \CoordinateComponent units cannot be determined.
 %Many coordinates may have different units from the \token{lengthUnits} of the \Model, since this is a distance metric and not always the same as the unit of each individual coordinate.  For example, in Polar coordinates, the coordinate component 'theta' may be described in radians while component 'rho' may be in microns.  
+
+
+\subsection{The \class{SampledField} class}
+\label{sampledfield-class}
+A \SampledField is a sampled scalar field such as an image or samples from a level set. The attributes of \SampledField represent the specification of a sample dataset (the number of samples in x, y, z coordinates, data type of the sample representation, etc.) and the text child of the \SampledField is the actual sampled data, defined in \fig{sampledfield-uml}.  The purpose of a \SampledField is to fill the \Geometry with values that can be used in math and/or in \SampledFieldGeometry elements.  Values are defined at lattice points within the \Geometry, and are interpolated to fill the remainder of all off-lattice locations.
+
+\begin{figure}[ht]
+  \includegraphics{figs/SampledField-uml}
+  \caption{The definition of the \SampledField class from the Spatial package.}
+  \label{sampledfield-uml}
+\end{figure}
+
+\subsubsection{The \fixttspace\tokenNC{id} and \fixttspace\tokenNC{name} attributes}
+The \token{id} attribute identifies a \SampledField.  It is of type \primtype{SpId} and is a required attribute.  The mathematical value of a \SampledField is the value and dimensionality of the field itself, and can be bound to a \Parameter by using a \SpatialSymbolReference.  If used in conjunction with the SBML Level~3 \val{arrays} package, it can be used and manipulated as if it was an array of the appropriate dimensions, even though its \emph{meaning} is the value of the field at all points within its borders, not just those at the lattice points.  However, even without the use of the \val{arrays} package, it can be used in \sbmlthreecore MathML to set the value of a spatially-distributed SBML symbol such as a \Species or \Parameter, such as through an \InitialAssignment, \Rule, or \EventAssignment.  The optional \token{name} attribute is of type \primtype{string}, may be used to add a human-readable label to the object, and has no uniqueness requirements.
+
+The size of the field is assumed to match the axes (the \CoordinateComponent children) of the parent \Geometry, and is assumed to be regularly spaced in each dimension, but is not required to be spaced the same way in all dimensions.  In other words, if the Geometry defines a 10 cm by 10 cm square, and a SampledField is a 10x5 array, the \val{[0,0]} entry in the array will correspond to the point \val{0~cm, 0~cm} in the Geometry, and the \val{[10,5]} entry in the array will correspond to the point \val{10~cm, 10~cm} in the Geometry.  Off-latice points (such as the value at \val{9~cm, 9~cm} in this example) have no direct corresponding value in the \SampledField, and are determined according to the \token{interpolationType} attribute, defined below.
+
+When tied to a \SpatialSymbolReference, regardless of its useage, each \SampledField still must represent values across the entire \Geometry.  If used in an \InitialAssignment to assign values to a \Species that only exists in a particular \DomainType within the \Geometry, entries in the \SampledField that correspond to areas of space not covered by that \DomainType will simply be ignored.  Those values may be set to zero, or could be used in other contexts.  For example, a \SampledField could represent 'the concentration of ATP in the Geometry', and one \InitialAssignment could be used to apply the field to the species 'ATP in the cytosol' and a second \InitialAssignment could be used to apply the same field to the species 'ATP in the nucleus', with different values being examined and used in each case.
+
+When used in a \SampledFieldGeometry, again, the values of the field are interpolated to all off-lattice points to determine whether or not any arbitrary location within the \Geometry is part of a given \SampledVolume or not.
+
+\subsubsection{The \fixttspace\tokenNC{interpolationType} attribute}
+The required \token{interpolationType} attribute is type \primtype{InterpolationKind}. It is used to specify how values at off-lattice locations are to be calculated.  A value of \val{nearestNeighbor} means that the nearest lattice point value is to be returned.  A value of \val{linear} means that the value to be returned is the linear interpolation from nearby lattice points, either simple linear in the case of one-dimensional interpolation, bilinear in the case of two-dimensional interpolation, or trilinear in the case of three-dimensional interpolation.
+
+%If the attribute is not defined, then no interpolation strategy is to be inferred or implied for this \SampleData element.  Simulators may use one of the above strategies or some other strategy, as befits their situation.
+
+\subsubsection{The \fixttspace\tokenNC{numSamples1}, \tokenNC{numSamples2}, \tokenNC{numSamples3} attributes}
+The \token{numSamples1}, \token{numSamples2}, and \token{numSamples3} attributes represent the number of samples in each of the coordinate components. (e.g. numX, numY, numZ) in an image dataset.  These attributes are of type \primtype{positive int} and are required to specify the \SampledField. The samples are assumed to be uniformly sampled.  It is required to have as many \token{numSamples} attributes as there are \CoordinateComponent elements in the \Geometry, with \token{numSamples1} defined if there is a \token{cartesianX} element; \token{numSamples2} defined if there is a \token{cartesianY} element, and \token{numSamples3} defined if there is a \token{cartesianZ} element, each attribute corresponding to the \CoordinateComponent with the respective \token{type}.
+
+\subsubsection{The \fixttspace\tokenNC{compression} attribute}
+The required \token{compression} attribute is of type \primtype{CompressionKind}. It is used to specify the compression used when encoding the data, and can have the value \val{uncompressed} if no compression was used, or \val{deflated} if the deflation algorithm was used to compress the data.  The deflation compression algorithm to be used is gzip, which adds a header to the deflated data.  This algorithm is freely available.  The version of the data to be compressed is the string version of the values in the array, which may consist of numbers, whitespace, commas, and semicolons.
+
+\subsubsection{The \fixttspace\tokenNC{samplesLength} attribute}
+The \token{samplesLength} attribute is of type \primtype{positive int} and is required. It represents the array length of the \primtype{arrayData} text child of this node.  If uncompressed, this will equal the product of the \token{numSamples*} attributes, but if compressed, this will equal the new compressed length of the array, not including any added whitespace.  It is included for convenience and validation purposes.
+
+\subsubsection{The \fixttspace\tokenNC{dataType} attribute}
+The \token{dataType} attribute is of type \primtype{DataKind} and is optional.  It is used to specify the type of the data being stored, so that the uncompressed data can be stored in an appropriate storage type.  The three main value types are \val{uint} for unsigned integers, \val{int} for signed integers, and \val{double} for double-precision floating point values.  For backwards compatibility, and for cases where storage space might be an issue, other values may also be used: \val{float} to indicate single-precision (32-bit) floating point values, and \val{uint8}, \val{uint16}, and \val{uint32} to indicate 8-bit, 16-bit, and 32-bit unsigned integer values, respectively.
+
+\subsubsection{The \fixttspace\tokenNC{Samples} text child}
+The \token{Samples} text child of the \SampledField is where the data for the \SampledField resides.  It is of type \primtype{arrayData}, which is defined as whitespace-delimited, possibly-compressed numerical values.  Whether or not the data is compressed (and how, if so) is stated with the \token{compression} attribute, and the type of numerical values included is stated in the \token{dataType} attribute.  The total number of entries in the array can be derived from the \token{numSamples} attributes, by multiplying them together (if present).  It is suggested, but not required, that if the data is uncompressed, that the grouped points be separated from each other with the use of a semicolon.  If the data is compressed, a semicolon is not to be used.
+
+The order of data points in the \token{Samples} should be the same as the dimensionality of the object, that is, first by the first (\token{x}) dimension, then by the second (\token{y}) dimension (if present), and then by the third (\token{z}) dimension (if present).  Thus, the array is indexed such that to access data point (\token{x}, \token{y}, \token{z}), one would look in entry:
+
+$samples[x + numSamples1*y + numsamples1*numSamples2*z]$
+
+\subsubsection{A \SampledField example}
+Here are snippets of an example in which a \SampledField element is used in an initial assignment, where the field's value inside the nucleus (\val{img}) is used in a formula to compute the ATP level:
+
+\begin{example}
+[...]
+  <species id="ATP_nuc" compartment="Nucleus" hasOnlySubstanceUnits="false"
+           boundaryCondition="false" constant="false" spatial:isSpatial="true"/>
+[...]
+  <parameter id="img" constant="false">
+    <spatial:spatialSymbolReference spatial:spatialRef="imgvals"/>
+  </parameter>
+[...]
+  <initialAssignment symbol="ATP_nuc">
+    <math xmlns="http://www.w3.org/1998/Math/MathML">
+      <apply>
+        <plus/>
+        <apply>
+          <divide/>
+          <ci> img </ci>
+          <cn type="integer"> 2 </cn>
+        </apply>
+        <cn type="integer"> 3 </cn>
+      </apply>
+    </math>
+  </initialAssignment>
+[...]
+  <spatial:sampledField spatial:id="imgvals" spatial:dataType="uint8"
+           spatial:numSamples1="51" spatial:numSamples2="59"
+           spatial:numSamples3="23" spatial:interpolationType="linear"
+           spatial:compression="uncompressed" spatial:samplesLength="1255">
+    120 218 237 221 235 114 219 48 [...]
+  </spatial:sampledField>
+[...]
+\end{example}
+
+
+\subsection{The \class{Geometry} class}
+\label{geometry-class}
+\label{listofcoordinatecomponents-class}
+\label{listofdomaintypes-class}
+\label{listofdomains-class}
+\label{listofadjacentdomains-class}
+\label{listofgeometrydefinitions-class}
+\label{listofsampledfields-class}
+
+A single geometry must be defined within the model if the spatial extension is to be used. \fig{Geometry-uml} shows the definition of the \Geometry element.
+ 
+\begin{figure}[ht]
+  \includegraphics{figs/Geometry-uml}
+  \caption{The definition of the \Geometry, \ListOfCoordinateComponents, \ListOfDomainTypes, \ListOfDomains, \ListOfAdjacentDomains, \ListOfGeometryDefinitions, and \ListOfSampledFields classes from the Spatial package.  The various children of the ListOf- classes are defined in their own sections.}
+  \label{Geometry-uml}
+  \label{ListOfCoordinateComponents-uml}
+  \label{ListOfDomainTypes-uml}
+  \label{ListOfDomains-uml}
+  \label{ListOfAdjacentDomains-uml}
+  \label{ListOfGeometryDefinitions-uml}
+  \label{ListOfSampledFields-uml}
+\end{figure}
+
+\subsubsection{The \fixttspace\tokenNC{id} and \fixttspace\tokenNC{name} attributes}
+The \token{id} attribute is of type \primtype{SpId}, uniquely identifies the \Geometry element, and is optional.  It has no mathematical meaning, and cannot be connected to a \Parameter via a \SpatialSymbolReference element.  The optional \token{name} attribute is of type \primtype{string}, may be used to add a human-readable label to the object, and has no uniqueness requirements.
+
+\subsubsection{The \fixttspace\tokenNC{coordinateSystem} attribute}
+The \token{coordinateSystem} attribute is a required attribute and is of type \primtype{GeometryKind}. It represents the coordinate system used by the \Geometry.  A value of  \val{cartesian} indicates that the geometry is a cartesian coordinate system, with the coordinate components corresponding to the x, y, and z components of that system (which could be 1-, 2-, or 3-dimensional).  This is the only coordinate system defined in this version of the specification--in the future, if necessary, \val{cylendrical}, \val{spherical}, and \val{polar} may be added as possibilities, along with n-dimensional cartesian modeling, should there be interest in the modeling community to exchange these types of models.
+
+%A value of \val{cylindrical} indicates that the geometry is a three-dimensional cylendrical coordinate system, with coordinate components corresponding to radial distance, azimuth angle, and axial position.  A value of \val{spherical} indicates that the geometry is a three-dimensional spherical coordinate system, with coordinate components corresponding to radial distance, polar angle, and azimuth angle.  A value of \val{polar} indicates that the geometry is a two-dimensional polar coordinate system, with coordinate components corresponding to radial distance and angle (the two-dimensional equivalent of the cylendrical coordinate system).
+
+\subsubsection{The listOf container classes}
+The \Geometry has listOfCoordinateComponents, listOfDomainTypes, listOfDomains, listOfAdjacentDomains, listOfGeometryDefinitions, and listOfSampledFields that help define the geometry.  The \ListOfCoordinateComponents is a list of \CoordinateComponent objects, the \ListOfDomainTypes is a list of \DomainType objects, the \ListOfDomains is a list of \Domain objects, \ListOfAdjacentDomains is a list of \AdjacentDomains objects, the \ListOfGeometryDefinitions is a list of alternative \GeometryDefinitions (\ParametricGeometry, \CSGeometry, \SampledFieldGeometry, \AnalyticGeometry, and \MixedGeometry), and the \ListOfSampledFields is a list of \SampledField objects.  Of these, only the \ListOfCoordinateComponents is required, but, if present, none of them may be empty.
+
+Note that the children of the \ListOfGeometryDefinitions object are not called \token{geometryDefinition} but rather take the name of the derived class, decapitalized.  Thus, they may be called \token{analyticGeometry}, \token{csGeometry}, \token{parametricGeometry}, \token{sampledFieldGeometry}, or \token{mixedGeometry}.
+
+The \ListOfCoordinateComponents is unique in that it defines the dimensions of the \Geometry.  Thus, every \Geometry must have a child \ListOfCoordinateComponents with exactly one, two, or three children.  When there is one child, it must be of type \token{cartesianX}; when there are two, they must be of type \token{cartesianX} and \token{cartesianY}, and when there are three, they must be of types \token{cartesianX}, \token{cartesianY}, and \token{cartesianZ}.
 
 
 \subsection{The \class{Boundary} class}
@@ -1127,84 +1206,4 @@ Rather than struggle with the task of preventing overlapping regions of space fr
 No two \GeometryDefinition elements should have the same \token{ordinal} value, even if they should not overlap, because some tools may not calculate the geometries to the same level of precision as other tools, and may end up with overlap due to rounding errors, and will still need to resolve the ambiguity for their own purposes.  If a software tool discovers two overlapping \GeometryDefinition elements with the same \token{ordinal} value, it may resolve the situation however it sees fit.
 
 Note that these ordinals only apply at the level of the immediate parent \MixedGeometry.  Any \token{ordinal} attribute from any \AnalyticVolume or \CSGObject applies only at the level of those volumes or objects, and serve to distinguish within-\GeometryDefinition layout order, not between-\GeometryDefinition layout order, defined here.  Likewise, if a \GeometryDefinition child of a \MixedGeometry it itself a \MixedGeometry, those ordinals also only apply at the level of that \MixedGeometry, and not at the level of the parent \MixedGeometry.
-
-
-\subsection{The \class{SampledField} class}
-\label{sampledfield-class}
-A \SampledField is a sampled scalar field such as an image or samples from a level set. The attributes of \SampledField represent the specification of a sample dataset (the number of samples in x, y, z coordinates, data type of the sample representation, etc.) and the text child of the \SampledField is the actual sampled data, defined in \fig{sampledfield-uml}.  The purpose of a \SampledField is to fill the \Geometry with values that can be used in math and/or in \SampledFieldGeometry elements.  Values are defined at lattice points within the \Geometry, and are interpolated to fill the remainder of all off-lattice locations.
-
-\begin{figure}[ht]
-  \includegraphics{figs/SampledField-uml}
-  \caption{The definition of the \SampledField class from the Spatial package.}
-  \label{sampledfield-uml}
-\end{figure}
-
-\subsubsection{The \fixttspace\tokenNC{id} and \fixttspace\tokenNC{name} attributes}
-The \token{id} attribute identifies a \SampledField.  It is of type \primtype{SpId} and is a required attribute.  The mathematical value of a \SampledField is the value and dimensionality of the field itself, and can be bound to a \Parameter by using a \SpatialSymbolReference.  If used in conjunction with the SBML Level~3 \val{arrays} package, it can be used and manipulated as if it was an array of the appropriate dimensions, even though its \emph{meaning} is the value of the field at all points within its borders, not just those at the lattice points.  However, even without the use of the \val{arrays} package, it can be used in \sbmlthreecore MathML to set the value of a spatially-distributed SBML symbol such as a \Species or \Parameter, such as through an \InitialAssignment, \Rule, or \EventAssignment.  The optional \token{name} attribute is of type \primtype{string}, may be used to add a human-readable label to the object, and has no uniqueness requirements.
-
-The size of the field is assumed to match the axes (the \CoordinateComponent children) of the parent \Geometry, and is assumed to be regularly spaced in each dimension, but is not required to be spaced the same way in all dimensions.  In other words, if the Geometry defines a 10 cm by 10 cm square, and a SampledField is a 10x5 array, the \val{[0,0]} entry in the array will correspond to the point \val{0~cm, 0~cm} in the Geometry, and the \val{[10,5]} entry in the array will correspond to the point \val{10~cm, 10~cm} in the Geometry.  Off-latice points (such as the value at \val{9~cm, 9~cm} in this example) have no direct corresponding value in the \SampledField, and are determined according to the \token{interpolationType} attribute, defined below.
-
-When tied to a \SpatialSymbolReference, regardless of its useage, each \SampledField still must represent values across the entire \Geometry.  If used in an \InitialAssignment to assign values to a \Species that only exists in a particular \DomainType within the \Geometry, entries in the \SampledField that correspond to areas of space not covered by that \DomainType will simply be ignored.  Those values may be set to zero, or could be used in other contexts.  For example, a \SampledField could represent 'the concentration of ATP in the Geometry', and one \InitialAssignment could be used to apply the field to the species 'ATP in the cytosol' and a second \InitialAssignment could be used to apply the same field to the species 'ATP in the nucleus', with different values being examined and used in each case.
-
-When used in a \SampledFieldGeometry, again, the values of the field are interpolated to all off-lattice points to determine whether or not any arbitrary location within the \Geometry is part of a given \SampledVolume or not.
-
-\subsubsection{The \fixttspace\tokenNC{interpolationType} attribute}
-The required \token{interpolationType} attribute is type \primtype{InterpolationKind}. It is used to specify how values at off-lattice locations are to be calculated.  A value of \val{nearestNeighbor} means that the nearest lattice point value is to be returned.  A value of \val{linear} means that the value to be returned is the linear interpolation from nearby lattice points, either simple linear in the case of one-dimensional interpolation, bilinear in the case of two-dimensional interpolation, or trilinear in the case of three-dimensional interpolation.
-
-%If the attribute is not defined, then no interpolation strategy is to be inferred or implied for this \SampleData element.  Simulators may use one of the above strategies or some other strategy, as befits their situation.
-
-\subsubsection{The \fixttspace\tokenNC{numSamples1}, \tokenNC{numSamples2}, \tokenNC{numSamples3} attributes}
-The \token{numSamples1}, \token{numSamples2}, and \token{numSamples3} attributes represent the number of samples in each of the coordinate components. (e.g. numX, numY, numZ) in an image dataset.  These attributes are of type \primtype{positive int} and are required to specify the \SampledField. The samples are assumed to be uniformly sampled.  It is required to have as many \token{numSamples} attributes as there are \CoordinateComponent elements in the \Geometry, with \token{numSamples1} defined if there is a \token{cartesianX} element; \token{numSamples2} defined if there is a \token{cartesianY} element, and \token{numSamples3} defined if there is a \token{cartesianZ} element, each attribute corresponding to the \CoordinateComponent with the respective \token{type}.
-
-\subsubsection{The \fixttspace\tokenNC{compression} attribute}
-The required \token{compression} attribute is of type \primtype{CompressionKind}. It is used to specify the compression used when encoding the data, and can have the value \val{uncompressed} if no compression was used, or \val{deflated} if the deflation algorithm was used to compress the data.  The deflation compression algorithm to be used is gzip, which adds a header to the deflated data.  This algorithm is freely available.  The version of the data to be compressed is the string version of the values in the array, which may consist of numbers, whitespace, commas, and semicolons.
-
-\subsubsection{The \fixttspace\tokenNC{samplesLength} attribute}
-The \token{samplesLength} attribute is of type \primtype{positive int} and is required. It represents the array length of the \primtype{arrayData} text child of this node.  If uncompressed, this will equal the product of the \token{numSamples*} attributes, but if compressed, this will equal the new compressed length of the array, not including any added whitespace.  It is included for convenience and validation purposes.
-
-\subsubsection{The \fixttspace\tokenNC{dataType} attribute}
-The \token{dataType} attribute is of type \primtype{DataKind} and is optional.  It is used to specify the type of the data being stored, so that the uncompressed data can be stored in an appropriate storage type.  The three main value types are \val{uint} for unsigned integers, \val{int} for signed integers, and \val{double} for double-precision floating point values.  For backwards compatibility, and for cases where storage space might be an issue, other values may also be used: \val{float} to indicate single-precision (32-bit) floating point values, and \val{uint8}, \val{uint16}, and \val{uint32} to indicate 8-bit, 16-bit, and 32-bit unsigned integer values, respectively.
-
-\subsubsection{The \fixttspace\tokenNC{Samples} text child}
-The \token{Samples} text child of the \SampledField is where the data for the \SampledField resides.  It is of type \primtype{arrayData}, which is defined as whitespace-delimited, possibly-compressed numerical values.  Whether or not the data is compressed (and how, if so) is stated with the \token{compression} attribute, and the type of numerical values included is stated in the \token{dataType} attribute.  The total number of entries in the array can be derived from the \token{numSamples} attributes, by multiplying them together (if present).  It is suggested, but not required, that if the data is uncompressed, that the grouped points be separated from each other with the use of a semicolon.  If the data is compressed, a semicolon is not to be used.
-
-The order of data points in the \token{Samples} should be the same as the dimensionality of the object, that is, first by the first (\token{x}) dimension, then by the second (\token{y}) dimension (if present), and then by the third (\token{z}) dimension (if present).  Thus, the array is indexed such that to access data point (\token{x}, \token{y}, \token{z}), one would look in entry:
-
-$samples[x + numSamples1*y + numsamples1*numSamples2*z]$
-
-\subsubsection{A \SampledField example}
-Here are snippets of an example in which a \SampledField element is used in an initial assignment, where the field's value inside the nucleus (\val{img}) is used in a formula to compute the ATP level:
-
-\begin{example}
-[...]
-  <species id="ATP_nuc" compartment="Nucleus" hasOnlySubstanceUnits="false"
-           boundaryCondition="false" constant="false" spatial:isSpatial="true"/>
-[...]
-  <parameter id="img" constant="false">
-    <spatial:spatialSymbolReference spatial:spatialRef="imgvals"/>
-  </parameter>
-[...]
-  <initialAssignment symbol="ATP_nuc">
-    <math xmlns="http://www.w3.org/1998/Math/MathML">
-      <apply>
-        <plus/>
-        <apply>
-          <divide/>
-          <ci> img </ci>
-          <cn type="integer"> 2 </cn>
-        </apply>
-        <cn type="integer"> 3 </cn>
-      </apply>
-    </math>
-  </initialAssignment>
-[...]
-  <spatial:sampledField spatial:id="imgvals" spatial:dataType="uint8"
-           spatial:numSamples1="51" spatial:numSamples2="59"
-           spatial:numSamples3="23" spatial:interpolationType="linear"
-           spatial:compression="uncompressed" spatial:samplesLength="1255">
-    120 218 237 221 235 114 219 48 [...]
-  </spatial:sampledField>
-[...]
-\end{example}
-
 

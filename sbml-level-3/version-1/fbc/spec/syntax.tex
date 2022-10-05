@@ -19,8 +19,9 @@ must declare the use of that package by referencing its URI.  The following
 is the namespace URI for this version of the Flux Balance Constraints
 package for SBML Level~3 Version~1:
 \begin{center}
-\uri{http://www.sbml.org/sbml/level3/version1/fbc/version2}
+\texttt{http://www.sbml.org/sbml/level3/version1/fbc/version3}
 \end{center}
+
 
 In addition, SBML documents using a given package must indicate whether
 understanding the package is required for complete mathematical interpretation
@@ -35,19 +36,23 @@ Constraints package:
 \begin{example}
 <?xml version="1.0" encoding="UTF-8"?>
 <sbml xmlns="http://www.sbml.org/sbml/level3/version1/core" level="3" version="1"
-   xmlns:fbc="http://www.sbml.org/sbml/level3/version1/fbc/version2" fbc:required="false">
+   xmlns:fbc="http://www.sbml.org/sbml/level3/version1/fbc/version3" fbc:required="false">
 \end{example}
 
 \begin{figure}[ht!]
   \centering
   % Requires \usepackage{graphicx}
-  \includegraphics[width=0.85\textwidth]{images/v3harmony_fbc_uml.pdf}\\
+  %\includegraphics[width=0.85\textwidth]{images/v3harmony_fbc_uml.pdf}\\
+  %V3
+  \includegraphics[height=0.85\textheight]{images/fbc_uml_v3.pdf}\\
   \caption{A UML representation of the \FBCPackage. Derived from \SBase, the
 	\FBC classes inherit support for constructs such as SBML \Notes and
 	\Annotation's. The [association] element name is the name of the class, de-capitalized.  In this case, the possible values are "and", "or", or "geneProductRef". See \ref{conventions} for conventions related to this figure.
 	The individual classes are further discussed in the text.}
   \label{fig:fbc_uml}
 \end{figure}
+
+
 
 \subsection{Primitive data types}
 \label{primtypes}
@@ -60,33 +65,31 @@ use of a new primitive: the enumeration \primtype{FbcType}, see \ref{fig:fbc_uml
 for the interrelation between
 these entities.
 
-The \primtype{SId} type is used as the data type for the identifiers of \GeneProduct (\ref{geneproduct-class}),
-\GeneProductRef (\ref{geneproductref-class}),
-\GeneProductAssociation (\ref{geneproductassociation-class}),
-\FluxObjective (\ref{fluxobjective-class}) and \Objective (\ref{objective-class}) classes.
+\newtxt{The \primtype{SId} type is used as the data type for the identifiers of \Objective (\ref{objective-class}), \FluxObjective (\ref{fluxobjective-class}), \GeneProduct (\ref{geneproduct-class}), \GeneProductAssociation (\ref{geneproductassociation-class}), \GeneProductRef (\ref{geneproductref-class}), \UserDefinedConstraint (\ref{userdefinedconstraint-class}), \UserDefinedConstraintComponent (\ref{userdefinedconstraintcomponent-class}) and \KeyValuePair (\ref{keyvaluepair-class}) classes.}
 %
 \newtxt{In all cases where the primitive data type \primtype{SId} is used in the \FBCPackage it is used unchanged from its description in \sbmlthreecore. When used as the type of a \token{fbc:id} attribute, that ID is added to the core \primtype{SId} namespace, and must continue to follow those rules for uniqueness: no \token{fbc:id} may duplicate any other \token{fbc:id}, nor the \token{id} of any \Model, \FunctionDefinition, \Compartment, \Species, \Reaction, \SpeciesReference, \ModifierSpeciesReference, \Event, or \Parameter, nor the \token{package:id} of any other SBML Level~3 package element that is also defined as being in the \primtype{SId} namespace.}
 
 In the \FBCPackage the \ListOfObjectives has an attribute of type \primtype{SIdRef} that is used to
-refer to an `active' \Objective as does the extended \Reaction class which defines two attributes referring to flux capacity constraints. Finally, the \GeneProductRef class declares an attribute of type \primtype{SIdRef} which references a \GeneProduct which itself contains an attribute that can refer to a \Species.
+refer to an `active' \Objective as does the extended \Reaction class which defines two attributes referring to flux capacity constraints. The \GeneProductRef class declares an attribute of type \primtype{SIdRef} which references a \GeneProduct which itself contains an attribute that can refer to a \Species. \newtxt{Finally, the \UserDefinedConstraint and \UserDefinedConstraintComponent both declare attributes of type \primtype{SIdRef} and a more detailed description of what they refer to can be found in the relevant class descriptions.}
 
 \subsubsection{Type \primtypeNC{FbcType}}
 \label{primtype-fbctype}
 
-The \FBCPackage defines a new enumerated type \primtype{FbcType} which
-represents the optimization sense of the objective function. It can have one
-of the following two values \val{maximize} or \val{minimize}.
+The \FBCPackage defines a new enumerated type \primtype{FbcType} which represents the optimization sense of the objective function. It can have one of the following two values \val{maximize} or \val{minimize}.
 
-\newpage
+\subsubsection{Type \primtypeNC{FbcVariableType}}
+\label{primtype-fbcvariabletype}
+
+\newtxt{The \FBCPackage defines a new enumerated type \primtype{FbcVariableType} which
+represents the index of a variable that occurs in either the \FluxObjective or \UserDefinedConstraintComponent. It can have one of two values, \val{linear} or \val{quadratic}.}
+
+
 \subsection{The extended \class{Model} class}
 \label{model-class}
 %\label{listoffluxbounds-class}
 
-
-The \SBML \Model class is extended by adding a mandatory boolean attribute
-\token{strict} as well as optional lists: %\token{listOfFluxBounds},
-\token{listOfObjectives} and \token{listOfGeneProducts}.
-A \Model may contain at most one of each of these lists.
+\newtxt{The \SBML \Model class is extended by adding a mandatory boolean attribute
+\token{strict} as well as optional lists: \token{listOfObjectives}, \token{listOfGeneProducts} and \token{listOfUserDefinedConstraints}.} A \Model may contain, at most, one of each of these lists.
 
 \begin{figure}[ht]
   \centering
@@ -112,6 +115,8 @@ A \Model may contain at most one of each of these lists.
 
 The mandatory attribute \token{strict}, of type \primtype{boolean}, is used to apply an additional set of restrictions to the model. The \token{strict} attribute ensures that the \FBCPackage can be used to encode legacy FBA models expressible as Linear Programs (LP's) with software that is unable to analyze arbitrary mathematical expressions. In addition it ensures that a `strict' model is fully described and mathematically consistent, for example, by ensuring that all fluxes have a valid upper or lower bound.
 
+\marginpar{\newtxt{How does strict interact with FBC3?}}
+
 This is accomplished by defining a set of restrictions which come into effect if \token{strict} is set to \val{true}:
 %
 \begin{itemize}
@@ -128,6 +133,8 @@ This is accomplished by defining a set of restrictions which come into effect if
 	\item { A \Reaction \token{lowerFluxBound} attribute may not point to a \Parameter with a \token{value} of \val{INF}.}
 	\item { A \Reaction \token{upperFluxBound} attribute may not point to a \Parameter with a \token{value} of \val{-INF}.}
     \item {For all reactions, the value of a \token{lowerFluxBound} must be less than or equal to the value of the \token{upperFluxBound}.}
+    \item {\newtxt{A \Parameter whose \primtype{SId} is referenced by a \UserDefinedConstraintComponent \token{coefficient} attribute has to be set as \token{constant} and not take the value \val{NaN} or \val{$\pm$INF}.}}
+    \item {\newtxt{A non-constant \Parameter whose \primtype{SId} is referenced by a \UserDefinedConstraintComponent \token{variable} attribute may not be referenced by any \UserDefinedConstraintComponent \token{coefficient}, \UserDefinedConstraint \token{lowerBound} \& \token{upperBound} or \Reaction \token{lowerFluxBound} \& \token{upperFluxBound} attribute.}}
 
 \end{itemize}
 %
@@ -163,13 +170,17 @@ and inherits the attributes \token{metaid} and \token{sboTerm}, as well as
 the subcomponents for \Annotation and \Notes. The \ListOfGeneProducts must
 contain at least one \GeneProduct (defined in \ref{geneproduct-class}).
 
+\subsubsection{The \FBC \class{listOfUserDefinedConstraints}}
+\label{listofuserdefinedconstraints-class}
+
+\newtxt{As shown in \ref{fig:fbc_uml} the \ListOfUserDefinedConstraints is derived from \SBase and inherits the attributes \token{metaid} and \token{sboTerm}, as well as the subcomponents for \Annotation and \Notes. The \ListOfUserDefinedConstraints must contain at least one \UserDefinedConstraint (defined in \ref{userdefinedconstraint-class}).}
 
 \subsubsection{A note on units}
 \label{fbcunits}
 The main unit definitions that should be considered when using the \FBCPackage
 are the global model definitions of ``extent''  and ``time'' as all \FBC flux
 related classes (i.e., %\FluxBound and
-\FluxObjective implicitly attain the same
+\FluxObjective implicitly attains the same
 unit as the \Reaction that they reference). More details on units can be found
 in their respective class definitions.
 
@@ -182,7 +193,8 @@ of two attributes \token{charge} and \token{chemicalFormula}.
 \begin{figure}[h]
   \centering
   % Requires \usepackage{graphicx}
-  \includegraphics[width=6cm]{images/v2harmony_fbc_species.pdf}\\
+  %\includegraphics[width=6cm]{images/v2harmony_fbc_species.pdf}\\
+  \includegraphics[width=6cm]{images/v3harmony_fbc_species.pdf}\\
   \caption{A UML representation of the extended \SBML \Species class used in
   the \FBCPackage. See \ref{conventions} for conventions related to this
   figure.}
@@ -190,46 +202,87 @@ of two attributes \token{charge} and \token{chemicalFormula}.
 \end{figure}
 
 
+%\paragraph{The \token{charge} attribute}
+%The optional attribute \token{charge} which contains a signed
+%\primtype{integer} referring to the \Species object's charge and is
+%defined as it was in the \SBML Level 2 Version 1 specification
+%: \textit{``The optional field charge takes an integer indicating
+%the charge on the species (in terms of electrons, not the SI unit coulombs).''}
+%
+%\paragraph{The \token{chemicalFormula} attribute}
+%\label{chemicalFormula-attribute}
+%The optional attribute \token{chemicalFormula} containing a
+%\primtype{string} that represents the \Species objects elemental
+%composition.
+%%
+%\exampleFile{examples/ex_spec_l3.txt}
+%%
+%While there are many ways of referring to an elemental composition the purpose
+%of the \token{chemicalFormula} attribute is to allow reaction balancing and
+%validation which is particularly important in constraint-based models.
+%
+%The format of \token{chemicalFormula} must consist only of atomic names (as in
+%the Periodic Table) or user defined compounds either of which take the form of
+%a single capital letter followed by zero or more lowercase letters. Where there
+%is more than a single atom present, this is indicated with an integer. With
+%regards to order (and enhance inter-operability) it is recommended to use the
+%Hill system order \citep{hillsystem, hillwikipedia}.
+%
+%%
+%\begin{table}[h!]
+%  %\centering
+%  H2O4S\qquad C2H5Br\qquad BrH\\
+%  C10H12N5O13P3\qquad CH3I\\
+%  \caption{Examples of chemical formulas written using the Hill System. As
+%	described in \ref{chemicalFormula-attribute}}\label{table:hill}
+%\end{table}
+%%
+%Using this notation the number of carbon atoms in a molecule is indicated
+%first, followed by the number of hydrogen atoms and then the number of all
+%other chemical elements in alphabetical order. When the formula contains no
+%carbon; all elements, including hydrogen, are listed alphabetically.
+
 \paragraph{The \token{charge} attribute}
-The optional attribute \token{charge} which contains a signed
-\primtype{integer} referring to the \Species object's charge and is
-defined as it was in the \SBML Level 2 Version 1 specification
-: \textit{``The optional field charge takes an integer indicating
-the charge on the species (in terms of electrons, not the SI unit coulombs).''}
+
+\newtxt{The optional attribute charge contains a signed double referring to the Species object’s charge (in terms of electrons, not the SI unit coulombs). Note, that unlike FBC versions one and two a \Species may, for the purposes of charge, be interpreted as a pseudoisomer or aggregate molecule and may assume a non-integer value. Non-integer charges should be used with caution as their use may have unintended side-effects, for example, with respect to the accuracy of reaction balancing.}
 
 \paragraph{The \token{chemicalFormula} attribute}
 \label{chemicalFormula-attribute}
-The optional attribute \token{chemicalFormula} containing a
-\primtype{string} that represents the \Species objects elemental
-composition.
-%
-\exampleFile{examples/ex_spec_l3.txt}
-%
-While there are many ways of referring to an elemental composition the purpose
-of the \token{chemicalFormula} attribute is to allow reaction balancing and
-validation which is particularly important in constraint-based models.
 
-The format of \token{chemicalFormula} must consist only of atomic names (as in
-the Periodic Table) or user defined compounds either of which take the form of
-a single capital letter followed by zero or more lowercase letters. Where there
-is more than a single atom present, this is indicated with an integer. With
-regards to order (and enhance inter-operability) it is recommended to use the
-Hill system order \citep{hillsystem, hillwikipedia}.
+The optional attribute \token{chemicalFormula} containing a \primtype{string} that represents the \Species objects elemental composition.
 
+\newtxt{While there are many ways of referring to an elemental composition, the purpose of the \token{chemicalFormula} attribute is to enable reaction balancing and validation, something of particular importance in constraint-based models.}
+
+\newtxt{The format of the \token{chemicalFormula} should, whenever possible, consist only of atomic names
+(as in the Periodic Table). Similarly, for enhanced inter-operability, the element order should be arranged according to the Hill system (see \ref{table:hill2})} \citep{hillsystem, hillwikipedia}.
 %
 \begin{table}[h!]
-  %\centering
-  H2O4S\qquad C2H5Br\qquad BrH\\
-  C10H12N5O13P3\qquad CH3I\\
+  \begin{tabular}{ccc}
+    % after \\: \hline or \cline{col1-col2} \cline{col3-col4} ...
+     $H_{2}O_{4}S$ & $C_{2}H_{5}Br$ & $BrH$ \\
+     $C_{10}H_{12}N_{5}O_{13}P_{3}$ & $CH_{3}I$ & $CH_{4}$  \\
+  \end{tabular}
   \caption{Examples of chemical formulas written using the Hill System. As
-	described in \ref{chemicalFormula-attribute}}\label{table:hill}
+	described in \ref{chemicalFormula-attribute}}\label{table:hill2}
 \end{table}
 %
-Using this notation the number of carbon atoms in a molecule is indicated
-first, followed by the number of hydrogen atoms and then the number of all
-other chemical elements in alphabetical order. When the formula contains no
-carbon; all elements, including hydrogen, are listed alphabetically.
+\newtxt{Using this notation the number of carbon atoms in a molecule is indicated first, followed by the number of hydrogen atoms and then the number of all other chemical elements in alphabetical order. When the formula contains no carbon; all elements, including hydrogen, are listed alphabetically. Where there is more than a single atom present, this is indicated with an integer that follows the element symbol.}
 
+\exampleFile{examples/ex-v3-species.txt}
+%
+\newtxt{However, in certain situations, it may become necessary to use a generic symbol to represent an undefined or generic component of a user-defined compound. Generic components can only be specified as the symbols \textsf{R} or \textsf{X}.}
+%
+\begin{table}[h!]
+  \begin{tabular}{ccc}
+    % after \\: \hline or \cline{col1-col2} \cline{col3-col4} ...
+     $RCONH_{2}$ & $COX$ & $C_{2}H_{4}O_{2}(CH_{2})_{n}$ \\
+  \end{tabular}
+  \caption{Examples of chemical formulas written using the allowed non-Hill symbols described in \ref{chemicalFormula-attribute}.}\label{table:non-hill}
+\end{table}
+%
+\newtxt{Furthermore, the undefined parenthesised group index $(\ldots)_n$ may also be used to indicate an arbitrary repetition of a chemical group. Note that a parenthesized group may only be followed by the subscript $n$. Integer values, for example, $(\ldots)_2$ and expressions such as $(\ldots)_{n-1}$ are considered invalid chemical formula.}
+
+\newtxt{Please note, the use of \textsf{R}, \textsf{X} and $(\ldots)_n$ is not generally advised, as any \Reaction in which such a \Species occurs cannot necessarily be balanced and may lead to the construction of an invalid model. To highlight this potential problem, any \token{chemicalFormula} that contains any of the aforementioned, non-Hill compatible symbols will raise a `best practices' warning on model validation.}
 
 \subsection{The \FBC \class{GeneProduct} class}
 \label{geneproduct-class}
@@ -400,25 +453,63 @@ different set of \class{FluxObjectives} (see \ref{fluxobjective-class}).
 For an example of how the \Objective relates to the description of the
 underlying mathematical model please see \ref{examples1:objfunc}.
 
+%\subsection{The \FBC \class{FluxObjective} class}
+%\label{fluxobjective-class}
+%
+%The \FBC \FluxObjective class is derived from \SBML \SBase and inherits
+%\token{metaid} and \token{sboTerm}, as well as the subcomponents for
+%\Annotation and \Notes.
+%
+%The \FluxObjective class is a relatively simple container for a model
+%variable weighted by a signed linear coefficient.
+%
+%%
+%\begin{figure}[ht]
+%  \centering
+%  % Requires \usepackage{graphicx}
+%  \includegraphics[width=5cm]{images/v2harmony_fbc_fluxobjective.pdf}\\
+%  \caption{A UML representation of the \FBCPackage \FluxObjective class. For a complete description see \ref{fig:fbc_uml} as well as \ref{conventions} for conventions related to this figure.}
+%  \label{fig:fbc_uml_fobj}
+%\end{figure}
+%
+%\paragraph{The \token{id} and \token{name} attributes}
+%A \FluxObjective has two optional attributes: \token{id} an attribute of
+%type \primtype{SId} and \token{name} an attribute of type \primtype{string}.
+%
+%\paragraph{The \token{reaction} and \token{coefficient} attributes}
+%The required \token{reaction} is of type \primtype{SIdRef} and is restricted
+%to refer only to a \Reaction while the \token{coefficient} attribute
+%holds a \primtype{double} referring to the coefficient that this \FluxObjective
+%takes in the enclosing \Objective. For example the objective
+%\texttt{ Maximize: 1 R1 + 2 R2} would be encoded as
+%%
+%\exampleFile{examples/ex_fluxobj_fbc.txt}
+%
+%\paragraph{Units}
+%As described above the \FluxObjective defined here as $n\cdot J$ where
+%the \token{coefficient} ($n$) is dimensionless and the \token{value} ($J$)
+%takes the units of the \token{reaction} flux i.e.,~``extent per time''.
+%Therefore, the \FluxObjective ($n\cdot J$)  has the unit ``extent per time''
+%where the units of reaction ``extent'' and ``time'' are defined globally.
+
 \subsection{The \FBC \class{FluxObjective} class}
 \label{fluxobjective-class}
 
-The \FBC \FluxObjective class is derived from \SBML \SBase and inherits
-\token{metaid} and \token{sboTerm}, as well as the subcomponents for
-\Annotation and \Notes.
-
-The \FluxObjective class is a relatively simple container for a model
-variable weighted by a signed linear coefficient.
-
+The \FBC \FluxObjective class is derived from \SBML \SBase and inherits \token{metaid} and \token{sboTerm}, as well as the subcomponents for \Annotation and \Notes.
+%
+\newtxt{The FluxObjective class is a relatively simple container for a model variable weighted by a signed numerical coefficient. The model variable is defined as being either a `linear' or `quadratic' variable.}
 %
 \begin{figure}[ht]
   \centering
   % Requires \usepackage{graphicx}
-  \includegraphics[width=5cm]{images/v2harmony_fbc_fluxobjective.pdf}\\
+  \includegraphics[width=6cm]{images/fbc_v3_uml_fobj.pdf}\\
   \caption{A UML representation of the \FBCPackage \FluxObjective class. For a complete description see \ref{fig:fbc_uml} as well as \ref{conventions} for conventions related to this figure.}
-  \label{fig:fbc_uml_fobj}
+  \label{fig:fbc_uml_userdefinedconstraint}
 \end{figure}
-
+%
+% I don't thing this is needed
+%\newtxt{The \FluxObjective class is a relatively simple container for a model variable that can be defined as the variable type `linear' or `quadratic' and weighted by a signed linear coefficient.}
+%
 \paragraph{The \token{id} and \token{name} attributes}
 A \FluxObjective has two optional attributes: \token{id} an attribute of
 type \primtype{SId} and \token{name} an attribute of type \primtype{string}.
@@ -427,14 +518,24 @@ type \primtype{SId} and \token{name} an attribute of type \primtype{string}.
 The required \token{reaction} is of type \primtype{SIdRef} and is restricted
 to refer only to a \Reaction while the \token{coefficient} attribute
 holds a \primtype{double} referring to the coefficient that this \FluxObjective
-takes in the enclosing \Objective. For example the objective
-\texttt{ Maximize: 1 R1 + 2 R2} would be encoded as
+takes in the enclosing \Objective expression.
+
+\newtxt{\paragraph{The \token{variableType} attribute}
+The required \token{variableType} attribute contains a \primtype{FbcVariableType} that
+represents the index to which a variable is raised in a \FluxObjective. For example, where $J$ represents a steady-state flux the \primtype{FbcVariableType} defines either a \val{linear}, $J^1$ or \val{quadratic}, $J^2$ term.}
+
+\paragraph{Two examples of objective functions encoded in \SBML}
+\newtxt{A common linear objective function (expressed in LP format):} \verb"Maximize: 1 R1"
 %
-\exampleFile{examples/ex_fluxobj_fbc.txt}
+\exampleFile{examples/ex-v3-fluxobjective-linear.txt}
+%
+\newtxt{An advanced objective function with both a linear and quadratic term (expressed in LP format):} \verb"Minimize: 1 R1 + [4 R2^2]/2"
+%
+\exampleFile{examples/ex-v3-fluxobjective.txt}
 
 \paragraph{Units}
-As described above the \FluxObjective defined here as $n\cdot J$ where
+As described above the linear \FluxObjective defined here as $n\cdot J$ where
 the \token{coefficient} ($n$) is dimensionless and the \token{value} ($J$)
 takes the units of the \token{reaction} flux i.e.,~``extent per time''.
-Therefore, the \FluxObjective ($n\cdot J$)  has the unit ``extent per time''
-where the units of reaction ``extent'' and ``time'' are defined globally.
+\newtxt{Therefore, the \token{linear} \FluxObjective, ($n\cdot J$)  has the unit $\frac{extent}{time}$ where the units of reaction ``extent'' and ``time'' are defined globally. Analogously, in the case of a \token{quadratic} \FluxObjective, $n\cdot J^{2}$ this would be $\frac{extent^{2}}{time^{2}}$}.
+

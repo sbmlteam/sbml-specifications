@@ -5,12 +5,12 @@
 %% Date created: 2011-08-11
 %%
 %% Copyright 2007-2019 California Institute of Technology, Pasadena, CA, USA.
-%% 
+%%
 %% This file is free software; you can redistribute it and/or modify it
 %% under the terms of the GNU Lesser General Public License as published
 %% by the Free Software Foundation; either version 2.1 of the License, or
 %% any later version.
-%% 
+%%
 %% This library is distributed in the hope that it will be useful, but
 %% WITHOUT ANY WARRANTY, WITHOUT EVEN THE IMPLIED WARRANTY OF
 %% MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.  The software and
@@ -23,7 +23,7 @@
 %% and its documentation, even if the California Institute of Technology
 %% has been advised of the possibility of such damage.  See the
 %% GNU Lesser General Public License for more details.
-%% 
+%%
 %% You should have received a copy of the GNU Lesser General Public License
 %% along with this library; if not, write to the Free Software Foundation,
 %% Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.
@@ -75,7 +75,7 @@ Package Specification Style]
 \RequirePackage{calc}
 \RequirePackage{fancyhdr}
 \RequirePackage{fancybox}
-\RequirePackage{amsmath}
+%\RequirePackage{amsmath}
 \RequirePackage{amssymb}
 \RequirePackage{bbding}
 \RequirePackage{wasysym}
@@ -613,7 +613,7 @@ Package Specification Style]
 
 % Including the logo on the front page.  We switch which copy of the logo
 % file we use, depending on various factors, and we switch which file format
-% is used depending on the output we're producing. 
+% is used depending on the output we're producing.
 
 \ifgrayscalespec
   \newcommand{\@badgebasefile}{sbml-badge-gray}
@@ -1005,7 +1005,7 @@ Package Specification Style]
 % and that's a heavy package to load every time.  I got annoyed by how much
 % it slowed down my latex runs that I created a simple note alternative
 % instead. Here's the original todonotes version, for posterity:
-% 
+%
 % \RequirePackage[textsize=scriptsize]{todonotes}
 %
 % \if@draftspec
@@ -1068,7 +1068,7 @@ Package Specification Style]
 %
 % Using the unstarred version for the first reference and starred version
 % for subsequent references avoids this, and will produce text like this:
-% 
+%
 %   "In Figure 2 on the next page, blah blah blah.  Figure 2 also blah
 %   blah blah."
 %
@@ -1187,7 +1187,7 @@ Package Specification Style]
 \newcommand{\Unit}{\textbf{\class{Unit}}\xspace}
 
 
-% 
+%
 % Final settings before the body begins.
 %
 

@@ -1,6 +1,6 @@
 % -*- TeX-master: "main"; fill-column: 72 -*-
 
-\section{Proposed syntax and semantics}
+\section{Package syntax and semantics}
 \label{syntax}
 
 In this section, we define the syntax and semantics of the Flux Balance
@@ -132,7 +132,7 @@ This is accomplished by defining a set of restrictions which come into effect if
 	\item { A \Reaction \token{upperFluxBound} attribute may not point to a \Parameter with a \token{value} of \val{-INF}.}
     \item {For all reactions, the value of a \token{lowerFluxBound} must be less than or equal to the value of the \token{upperFluxBound}.}
     \item {\newtxt{A \Parameter whose \primtype{SId} is referenced by a \UserDefinedConstraintComponent \token{coefficient} attribute has to be set as \token{constant} and not take the value \val{NaN} or \val{$\pm$INF}.}}
-    \item {\newtxt{A non-constant \Parameter whose \primtype{SId} is referenced by a \UserDefinedConstraintComponent \token{variable} attribute may not be referenced by any \UserDefinedConstraintComponent \token{coefficient}, \UserDefinedConstraint \token{lowerBound} \& \token{upperBound} or \Reaction \token{lowerFluxBound} \& \token{upperFluxBound} attribute.}}
+    \item {\newtxt{A non-constant \Parameter whose \primtype{SId} is referenced by a \UserDefinedConstraintComponent \token{variable} or \token{variable2} attribute may not be referenced by any \UserDefinedConstraintComponent \token{coefficient}, \UserDefinedConstraint \token{lowerBound} \& \token{upperBound} or \Reaction \token{lowerFluxBound} \& \token{upperFluxBound} attribute.}}
 
 \end{itemize}
 %
@@ -495,7 +495,7 @@ underlying mathematical model please see \ref{examples1:objfunc}.
 
 The \FBC \FluxObjective class is derived from \SBML \SBase and inherits \token{metaid} and \token{sboTerm}, as well as the subcomponents for \Annotation and \Notes.
 %
-\newtxt{The FluxObjective class is a relatively simple container for a model variable weighted by a signed numerical coefficient. The model variable is defined as being either a `linear' or `quadratic' variable.}
+\newtxt{The \FluxObjective class is a relatively simple container for model variables weighted by a signed numerical coefficient. It is defined as being either a `linear' or `quadratic' component.}
 %
 \begin{figure}[ht]
   \centering
@@ -512,15 +512,15 @@ The \FBC \FluxObjective class is derived from \SBML \SBase and inherits \token{m
 A \FluxObjective has two optional attributes: \token{id} an attribute of
 type \primtype{SId} and \token{name} an attribute of type \primtype{string}.
 
-\paragraph{The \token{reaction} and \token{coefficient} attributes}
-The required \token{reaction} is of type \primtype{SIdRef} and is restricted
+\paragraph{The \token{reaction}, \token{reaction2} and \token{coefficient} attributes}
+The required \token{reaction} and optional \token{reaction2} attributes are of type \primtype{SIdRef} and are restricted
 to refer only to a \Reaction while the \token{coefficient} attribute
 holds a \primtype{double} referring to the coefficient that this \FluxObjective
 takes in the enclosing \Objective expression.
 
 \newtxt{\paragraph{The \token{variableType} attribute}
 The required \token{variableType} attribute contains a \primtype{FbcVariableType} that
-represents the type of exponent to which a variable is raised in a \FluxObjective. For example, where $J$ represents a steady-state flux the \primtype{FbcVariableType} defines either a \val{linear}, $J^1$ or \val{quadratic}, $J^2$ term.}
+represents the type of exponent contained by the \FluxObjective. For example, where $J$ represents a steady-state flux in the \token{reaction} attribute, the \primtype{FbcVariableType} allows the definition of either a \val{linear}, $J^1$ or \val{quadratic}, $J^2$ term. In addition, a \val{quadratic} component may be defined using the optional attribute \token{reaction2}. For example, with \token{reaction2} represented by $J_{r2}$ it is possible to define a \val{quadratic} \FluxObjective of the form $J^{1}*J_{r2}^{1}$.}
 
 \paragraph{Two examples of objective functions encoded in \SBML}
 \newtxt{A common linear objective function (expressed in LP format):} \verb"Maximize: 1 R1"
@@ -530,6 +530,8 @@ represents the type of exponent to which a variable is raised in a \FluxObjectiv
 \newtxt{An advanced objective function with both a linear and quadratic term (expressed in LP format):} \verb"Minimize: 1 R1 + [4 R2^2]/2"
 %
 \exampleFile{examples/ex-v3-fluxobjective.txt}
+%
+\newtxt{Note that the LP format expression of the quadratice terms is written as $\frac{2*R2^2}{2}$ and it is left to the implementing tool to make any necessary translation of the quadratic terms to the required native solver format.}
 
 \paragraph{Units}
 As described above the linear \FluxObjective defined here as $n\cdot J$ where

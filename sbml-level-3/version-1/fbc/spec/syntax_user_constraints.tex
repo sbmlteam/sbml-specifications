@@ -24,7 +24,7 @@
 \end{equation}
 
 %
-\newtxt{The \UserDefinedConstraint contains a \ListOfUserDefinedConstraintComponents representing a linear combination of \UserDefinedConstraintComponent{s}. Similar to a \FluxObjective each \UserDefinedConstraintComponent contains a coefficient--variable pair where the \token{coefficient} refers to a constant \Parameter. Furthermore, the \UserDefinedConstraintComponent \token{variable} attribute may either refer to a \Reaction or to a non-constant \Parameter, thus allowing the use of non-reaction, artificial, variables. See the attribute descriptions for more detail.}
+\newtxt{The \UserDefinedConstraint contains a \ListOfUserDefinedConstraintComponents representing a linear combination of \UserDefinedConstraintComponent{s}. Similar to a \FluxObjective each \UserDefinedConstraintComponent contains a coefficient and model variable(s). In the case of \UserDefinedConstraintComponent the \token{coefficient} refers to a constant \Parameter while the \token{variable} and optional \token{variable2} attributes may either refer to a \Reaction or to a non-constant \Parameter. This allows for the creation of non-reaction variables. Quadratic constraint components are also supported, see the attribute descriptions for more detail.}
 
 \paragraph{The \token{id} and \token{name} attributes}
 \newtxt{A \UserDefinedConstraint has an optional \token{id} of type
@@ -49,7 +49,7 @@ must contain one or more elements of type \UserDefinedConstraintComponent (see \
 
 \newtxt{The \FBC \UserDefinedConstraintComponent class is derived from \SBML \SBase and inherits
 \token{metaid} and \token{sboTerm}, as well as the subcomponents for
-\Annotation and \Notes. The \UserDefinedConstraintComponent class is a relatively simple container for a variable and a variable type specifier which is weighted by a signed coefficient.}
+\Annotation and \Notes. The \UserDefinedConstraintComponent class is a relatively simple container for a signed coefficient, model variable(s), parameter(s) and a variable type specifier.}
 
 \paragraph{The \token{id} and \token{name} attributes}
 \newtxt{An \UserDefinedConstraintComponent has an optional \token{id} of type \primtype{SId} and an optional attribute \token{name} of type \primtype{string}.}
@@ -57,11 +57,11 @@ must contain one or more elements of type \UserDefinedConstraintComponent (see \
 \paragraph{The \token{coefficient} attribute}
 \newtxt{The required \token{coefficient} attribute contains an \primtype{SIdRef} that is restricted to reference only a \Parameter which holds the coefficient value. In \textbf{strict} mode a \Parameter whose \primtype{SId} is referenced by a \token{coefficient}, has to be set as \token{constant} and not take the value \val{NaN} or \val{$\pm$INF}.}
 
-\paragraph{The \token{variable} attribute}
-\newtxt{The required \token{variable} attribute contains an \primtype{SIdRef} that is restricted to reference the \primtype{SId} of either a \Reaction or non-constant \Parameter. In \textbf{strict} mode such a non-constant \Parameter whose \primtype{SId} is referenced by a \UserDefinedConstraintComponent \token{variable} attribute may not be referenced by any \UserDefinedConstraintComponent \token{coefficient}, \UserDefinedConstraint \token{lowerBound} \& \token{upperBound} or \Reaction \token{lowerFluxBound} \& \token{upperFluxBound} attribute.}
+\paragraph{The \token{variable} and \token{variable2} attributes}
+\newtxt{The required \token{variable} attribute and optional \token{variable2}, contain an \primtype{SIdRef} that is restricted to reference the \primtype{SId} of either a \Reaction or non-constant \Parameter. In \textbf{strict} mode such a non-constant \Parameter whose \primtype{SId} is referenced by a \UserDefinedConstraintComponent \token{variable} or \token{variable2} attribute may not be referenced by any \UserDefinedConstraintComponent \token{coefficient}, \UserDefinedConstraint \token{lowerBound} \& \token{upperBound} or \Reaction \token{lowerFluxBound} \& \token{upperFluxBound} attribute.}
 
 \paragraph{The \token{variableType} attribute}
-\newtxt{The required \token{variableType} attribute contains a \primtype{FbcVariableType} that indicates whether a variable should be considered as \val{linear} or \val{quadratic}.}
+\newtxt{The required \token{variableType} attribute contains a \primtype{FbcVariableType} that indicates whether a variable should be considered as \val{linear} or \val{quadratic}. Quadratic variables can be defined as either single or mixed variable terms. For example, where $J$ represents a steady-state flux in the \token{variable} attribute, the \primtype{FbcVariableType} allows the definition of either a \val{linear}, $J^1$ or \val{quadratic}, $J^2$ variable. In addition, a mixed \val{quadratic} component may be defined using the optional attribute \token{variable2}. For example, with \token{variable2} represented by $J_{R2}$ and \token{coefficient}, $C$, it is possible to define a mixed, two variable \val{quadratic} \UserDefinedConstraintComponent of the form $C \times J^{1} \times J_{R2}^{1}$.}
 
 \paragraph{An example of encoding two user defined constraints in \SBML}
 \newtxt{The following example illustrates the encoding of two \UserDefinedConstraint{s}. The first uses only \Reaction{s} as variables, while the second introduces an artificial, non-constant, \Parameter as a variable.}
@@ -76,11 +76,11 @@ must contain one or more elements of type \UserDefinedConstraintComponent (see \
 \subsection{The \FBC \class{ListOfKeyValuePairs} class}
 \label{listofkeyvaluepairs-class}
 
-\newtxt{The \ListOfKeyValuePairs, see \ref{fig:fbc_v3_uml_keyvalue} for details, forms the basis of a controlled annotation defined by the \FBCPackage. This element defines a `descriptive list' data keys and associated values which can be used to store metadata that is not encodable as a typical \SBML \Annotation.}
+\newtxt{The optional \ListOfKeyValuePairs, see \ref{fig:fbc_v3_uml_keyvalue} for details, forms the basis of a controlled annotation defined by the \FBCPackage. This element defines a `descriptive list' of data keys and associated values which can be used to store metadata that is not encodable as a typical \SBML \Annotation.}
 %
 \exampleFile{examples/ex-v3-kvp1.txt}
 %
-\newtxt{As such it is analogous, and supplemental, to the official \SBML RDF annotation used to support MIRIAM compliant annotations defined in the \SBML specification. The \ListOfKeyValuePairs is an element of an \Annotation that declares the \token{xmlns} attribute to be \token{http://sbml.org/fbc/keyvaluepair} and then strictly applies the \ListOfKeyValuePairs format. As it is defined as an \Annotation, software may choose to support reading and interpreting the \ListOfKeyValuePairs content and optionally ignore the annotation and merely read and write it with any other third party \Annotation{s}. However, as is the case with the RDF/MIRIAM \Annotation{s}, read and write support for \ListOfKeyValuePairs will be included in the \SBML support libraries and be easily accessible to tool developers.}
+\newtxt{As such, it is analogous and supplemental to the official \SBML RDF annotation used to support MIRIAM compliant annotations. The \ListOfKeyValuePairs is an optional element of an \Annotation that declares the \token{xmlns} attribute to be \val{http://sbml.org/fbc/keyvaluepair} and then strictly applies the \ListOfKeyValuePairs format. As it is defined as an \Annotation, software may choose to support reading and interpreting the \ListOfKeyValuePairs content and optionally ignore the annotation and merely read and write it with any other third party \Annotation{s}. As is the case with the RDF/MIRIAM \Annotation{s}, read and write support for the \ListOfKeyValuePairs annotation is included in the \SBML support libraries and easily accessible to tool developers.}
 %
 \begin{figure}[ht]
   \centering

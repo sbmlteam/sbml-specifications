@@ -1594,34 +1594,11 @@ dependency needs to be stated, and for this purpose, the
 symbol refers to ``instantaneous current time'' in a simulation,
 frequently given the literal name $t$ in one's equations.
 
-An assumption in SBML is that ``start time'' or ``initial time''
-in a simulation is zero, that is, if $t_0$ is the initial time in
-the system, $t_0 = 0$.  This corresponds to the most common
-scenario.  Initial conditions in SBML take effect at time $t = 0$.
-There is no mechanism in SBML for setting the initial time to a
-value other than 0.  To refer to a different time in a model, one
-approach is to define a \Parameter for a new time variable and use
-an \AssignmentRule in which the assignment expression subtracts a
-value from the \token{csymbol} \emph{time}.  For example, if the
-desired offset is 2 seconds, the MathML expression would be
+\begin{blockChanged}
+  In a simulation experiment involving an SBML model, time is controlled externally by the experiment, and not by the model itself.  An experiment may involve calculating the steady state of the SBML model (in which case 'time' nominally has no meaning, or is 'infinity'), or it may involve simulating the model for arbitrary time spans.  Most commonly, those spans start from zero, so a typical simulation might go from 0 to 10, or 0 to 200.  However, other simulations might be set up with a negative start time, with a timecourse of -5 to 100, for example, or with a start time greater than zero, i.e. 100 to 200.  In all of these simulations, it must be assumed that the SBML model is set up such that the initial time of the simulation (whether 0, -5, or 100 in our examples) is the time at which each \InitialAssignment is applied, i.e. $t_i$, and that the \token{initialValue} of the \Trigger child of an \Event applies at that time.  Care should be taken that a simulation experiment's initial time corresponds with this initial state of the model.
 
-\begin{example}
-<math xmlns="http://www.w3.org/1998/Math/MathML"
-      xmlns:sbml="http://www.sbml.org/sbml/level3/\verdiff{version1}{version2}/core">
-    <apply>
-        <minus/>
-        <csymbol encoding="text" definitionURL="http://www.sbml.org/sbml/symbols/time"/> 
-        <cn sbml:units="second"> 2 </cn>
-    </apply>
-</math>
-\end{example}
-
-SBML's assignment rules (\sec*{sec:assignmentrule}) can be
-used to express mathematical statements that hold true at all
-moments, so using an assignment rule with the expression above
-will result in the value being equal to $t - 2$ at every point in
-time.  A parameter assigned this value could then be used
-elsewhere in the model.
+  It is not recommended to simulate an SBML model backwards in time, i.e. with an end time $t_f \leq t_i$.  In some cases, the mathematics may be tractable, but too many concepts in SBML (events, delays, initial states) rely on the forward progress of time to reliably assure reproducibility across backwards simulations.  Depending on the desired outcome, it may be possible to create a new nigh-identical SBML model with negative kinetic laws and rate laws, that may satisfy the modeling requirements of the desired simulation experiment instead.
+\end{blockChanged}
 
 
 \subsubsection{Initial conditions and special considerations}
@@ -1639,24 +1616,22 @@ determined by the system of equations constructed from the model's
 reactions, initial assignments, rules, and events.
 
 As described in \sec*{sec:meaning-of-time}, an SBML model's
-simulation is assumed to begin at $t = 0$.  The availability of
+simulation is assumed to begin at \changed{$t_i$}.  The availability of
 the \emph{delay} \token{csymbol} (\sec{sec:csymbol-token})
-introduces the possibility that at $t \geq 0$, mathematical
+introduces the possibility that at \changed{$t \geq t_i$}, mathematical
 expressions in a model may draw on values of model components from
-time \emph{prior} to $t = 0$.  A simulator may therefore need to
-compute the values of symbols at time points $t_i \leq 0$ to
+time \emph{prior} to \changed{$t_i$}.  A simulator may therefore need to
+compute the values of symbols at time points \changed{$t \leq t_i$} to
 allow the calculation of values required for the evaluation of
-delay expressions in the model for $t \geq 0$.  If there are no
-delays in the model, then $t_i = 0$.
+delay expressions in the model for \changed{$t \geq t_i$}.  If there are no
+delays in the model, then \changed{the earliest time for which anything needs to be computed is $t_i$}.
 
 The following is how the definitions of the model should be
 applied:
 
-%\todo{anyone}{revise to include speces ref id's}
-
 \begin{enumerate}
 
-\item At time $t_i$:
+\item At time \changed{$t < t_i$ (only necessary in certain delay equations)}:
   \begin{itemize}
     
   \item Every \Species, \SpeciesReference, \Compartment, \verdiff{and \Parameter}{\Parameter, and package element with mathematical meaning} whose
@@ -1669,33 +1644,17 @@ applied:
     
   \item All \InitialAssignment definitions take effect,
     overriding any initial values on any \Species, \SpeciesReference,
-    \Compartment, \verdiff{or \Parameter}{\Parameter, or package element with mathematical meaning}.
+    \Compartment, \verdiff{or \Parameter}{\Parameter, or package element with mathematical meaning}.  \changed{Since these contain mathematical formulas, different values may be computed at each time $t$ \leq $t_i$.  }
 
-  \item All \AssignmentRule and \AlgebraicRule definitions take effect.  These rules also override any initial values of any \Species, \SpeciesReference, \Compartment, \Parameter, or package element with mathematical meaning.  Only elements set \token{constant}=\val{false} can be affected in this way.  (Note there cannot be both an \AssignmentRule and an \InitialAssignment for the same identifier, nor may an \AlgebraicRule determine the value of any element that has an \InitialAssignment; see \ref{sec:rules}.)
+  \item All \AssignmentRule and \AlgebraicRule definitions take effect.  These rules also override any initial values of any \Species, \SpeciesReference, \Compartment, \verdiff{or \Parameter}{\Parameter, or package element with mathematical meaning}.  Only elements set \token{constant}=\val{false} can be affected in this way.  (Note there cannot be both an \AssignmentRule and an \InitialAssignment for the same identifier, nor may an \AlgebraicRule determine the value of any element that has an \InitialAssignment; see \ref{sec:rules}.)
 
-  \item The identifier of any \Reaction has the value of its \KineticLaw.  This cannot yet affect the \Species referenced by the \Reaction, but the identifier may appear in other \Math elements calculated above.
+  \item The identifier of any \Reaction has the value of its \KineticLaw.  This cannot yet affect the \Species referenced by the \Reaction, but the identifier may appear in other \Math elements calculated above.  Again, different values may be computed at each time value $t$ \leq $t_i$.
 
-  \item The value of any \Event \Trigger is the value of that \Trigger's \token{initialValue} attribute.  This cannot be overridden.
-
-  \end{itemize}
-
-\item For time $t_i < t < 0$
-  \begin{itemize}
-
-  \item Any element with mathematical meaning with no \InitialAssignment or \Rule that targets it continues to have its initial value, as defined by the relevant attribute.
-
-  \item Any \InitialAssignment definition continues to take effect.  Since these contain mathematical formulas, different values may be computed at each time step $t$ in $t_i \leq t \leq 0$.
-
-  \item Any \AssignmentRule or \AlgebraicRule definition continues to take effect, and may not be overridden.  Again, different values may be computed at each time step $t$ in $t_i \leq t \leq 0$.
-
-  \item The identifier of any \Reaction continues to be the value of its \KineticLaw.  Again, different values may be computed at each time step $t$ in $t_i \leq t \leq 0$.
-
-  \item The value of any \Event \Trigger continues to be the value of that \Trigger's \token{initialValue} attribute.
+  \item The value of any \Event \Trigger is the value of that \Trigger's \token{initialValue} attribute.  This cannot be overridden, and no event may trigger at $t < t_i$.
 
   \end{itemize}
 
-
-\item At time $t = 0$:
+\item At time $t = t_i$:
   \begin{itemize}  
 
   \item The value of any \Event \Trigger is now calculated according to the \Trigger's \Math child, and may therefore cause the \Event to \emph{trigger} and its \EventAssignment children to \emph{execute}.  This can happen directly due to its value changing from an \token{initialValue} of \val{false} to a now-calculated value of \val{true}; it can happen indirectly due to an event cascade initated by a direct change in a different \Event\verone{; or it can happen due to a change in \Species levels due to the activation of a fast \Reaction (below)}.
@@ -1703,7 +1662,7 @@ applied:
     defined to change the value of a symbol that is also the
     subject of an \AssignmentRule, nor can it change the value of a symbol whose value is determined by an \AlgebraicRule; see \sec{sec:events}.)
 
-  \item The identifier of any \Reaction continues to be the value of its \KineticLaw\verone{, but may begin to affect its referenced \Species.  A \Reaction with a \token{fast} attribute of \val{false} affects its \Species at a rate, that is, an amount per time.  As the time that has passed is still zero, the change in the referenced \Species is also zero.  But reactions with a \token{fast} attribute of \val{true} \emph{do} affect the levels of their referenced \Species, regardless of the timeframe involved, and thus may change the value of their referenced \Species even at time $t=0$}.
+  \item The identifier of any \Reaction continues to be the value of its \KineticLaw\verone{, but may begin to affect its referenced \Species.  A \Reaction with a \token{fast} attribute of \val{false} affects its \Species at a rate, that is, an amount per time.  As the time that has passed is still zero, the change in the referenced \Species is also zero.  But reactions with a \token{fast} attribute of \val{true} \emph{do} affect the levels of their referenced \Species, regardless of the timeframe involved, and thus may change the value of their referenced \Species even at time \changed{$t=t_i$}}.
 
   \item Any element with mathematical meaning with no \InitialAssignment or \Rule that targets it continues to have its initial value, as defined by the relevant attribute, but may now be overridden by any \EventAssignment\verone{ or fast \Reaction}, executed as above.
 
@@ -1717,7 +1676,7 @@ applied:
 
   \end{itemize}
   
-\item For time $t > 0$:
+\item For time $t > t_i$:
   \begin{itemize}
 
   \item The value of any element with mathematical meaning may now be overridden (subject to normal restrictions) by any construct in SBML (though it may retain its original value if no such constructs apply).
@@ -1732,6 +1691,8 @@ applied:
 
   \item Each \Event may \emph{fire}, and their \EventAssignment children \emph{execute}.
 
+  \item \changed{\Constraint definitions continue to take effect (and a constraint violation may result; see \ref{sec:constraints}).}
+
   \item System simulation proceeds.
 
   \end{itemize}
@@ -1739,8 +1700,8 @@ applied:
 \end{enumerate}  
 
 To reiterate: in modeling situations that do not involve the use
-of the \emph{delay} \token{csymbol}, then $t_i$ becomes $t_i = 0$,
-but this does not alter the steps numbers 1--4 above.
+of the \emph{delay} \token{csymbol}, then only \changed{times $t \geq t_i$ are ever calculated},
+but this does not alter the steps numbers 1--3 above.
 
 \subsubsection{Underdetermined models}
 \label{sec:underdetermined}
